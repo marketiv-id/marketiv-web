@@ -17,6 +17,13 @@ const sora = Sora({
 export const metadata: Metadata = {
   title: "Marketiv Admin Control Plane",
   description: "Marketiv Operational Admin Dashboard",
+  icons: {
+    icon: [
+      { url: "/icon.png", type: "image/png" },
+    ],
+    shortcut: "/icon.png",
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({

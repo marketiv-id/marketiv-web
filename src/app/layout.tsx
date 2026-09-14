@@ -19,6 +19,13 @@ const sora = Sora({
 export const metadata: Metadata = {
   title: "Marketiv",
   description: "Marketplace for UMKM and Creators",
+  icons: {
+    icon: [
+      { url: "/icon.png", type: "image/png" },
+    ],
+    shortcut: "/icon.png",
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({
