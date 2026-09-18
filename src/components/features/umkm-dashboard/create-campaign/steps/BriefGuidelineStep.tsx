@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FormSectionCard } from "../cards/FormSectionCard";
 import { SelectableOptionCard } from "../cards/SelectableOptionCard";
 import {
@@ -12,6 +12,7 @@ import {
   CREATOR_GUIDELINES,
   getRecommendedGuidelines,
 } from "../create-campaign.constants";
+import { parseRequiredPoints, formatCombinedRequiredPoints } from "../create-campaign.utils";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,8 @@ interface BriefGuidelineStepProps {
   onChangeCallToAction: (val: string) => void;
   hashtags: string;
   onChangeHashtags: (val: string) => void;
+  selectedDirections?: string[];
+  onChangeSelectedDirections?: (val: string[]) => void;
   validationErrors?: Record<string, string>;
   /** Aksi AI diangkat ke wizard — wizard yang memiliki description/title/type. */
   onGenerateAi: (directions?: string[]) => void;
@@ -49,6 +52,8 @@ export function BriefGuidelineStep({
   onChangeCallToAction,
   hashtags,
   onChangeHashtags,
+  selectedDirections,
+  onChangeSelectedDirections,
   validationErrors = {},
   onGenerateAi,
   isGeneratingAi = false,
@@ -57,27 +62,44 @@ export function BriefGuidelineStep({
   productCategory = "",
   aiGenerated = false,
 }: BriefGuidelineStepProps) {
-  const [selectedDirections, setSelectedDirections] = useState<string[]>([]);
+  const [localDirections, setLocalDirections] = useState<string[]>([]);
+  const activeDirections = selectedDirections ?? localDirections;
+  const setActiveDirections = onChangeSelectedDirections ?? setLocalDirections;
+
   const [isExpandedCatalog, setIsExpandedCatalog] = useState(false);
 
-  // Guidelines shortcut states
-  const [selectedReqGuidelines, setSelectedReqGuidelines] = useState<string[]>([]);
-  const [selectedRestGuidelines, setSelectedRestGuidelines] = useState<string[]>([]);
-  const [customRequiredPoints, setCustomRequiredPoints] = useState<string>("");
+  // Guidelines shortcut states initialized via parser
+  const initialGuidelines = parseRequiredPoints(requiredPoints);
+  const [selectedReqGuidelines, setSelectedReqGuidelines] = useState<string[]>(initialGuidelines.selectedReqGuidelines);
+  const [selectedRestGuidelines, setSelectedRestGuidelines] = useState<string[]>(initialGuidelines.selectedRestGuidelines);
+  const [customRequiredPoints, setCustomRequiredPoints] = useState<string>(initialGuidelines.customRequiredPoints);
   const [isExpandedGuidelines, setIsExpandedGuidelines] = useState(false);
+
+  const lastEmittedRef = useRef<string>(requiredPoints);
+
+  // Synchronize guideline chips & custom text when requiredPoints changes externally (e.g. draft restore or AI generate)
+  useEffect(() => {
+    if (requiredPoints !== lastEmittedRef.current) {
+      const parsed = parseRequiredPoints(requiredPoints);
+      setSelectedReqGuidelines(parsed.selectedReqGuidelines);
+      setSelectedRestGuidelines(parsed.selectedRestGuidelines);
+      setCustomRequiredPoints(parsed.customRequiredPoints);
+      lastEmittedRef.current = requiredPoints;
+    }
+  }, [requiredPoints]);
 
   const recommendedChips = getRecommendedDirections(productCategory);
   const guidelineRecommendations = getRecommendedGuidelines(productCategory);
   const nicheLabel = NICHE_OPTIONS.find((n) => n.id === productCategory?.toLowerCase())?.label;
 
   const handleToggleChip = (label: string) => {
-    if (selectedDirections.includes(label)) {
-      setSelectedDirections(selectedDirections.filter((l) => l !== label));
+    if (activeDirections.includes(label)) {
+      setActiveDirections(activeDirections.filter((l) => l !== label));
     } else {
-      if (selectedDirections.length >= 3) {
-        setSelectedDirections([...selectedDirections.slice(1), label]);
+      if (activeDirections.length >= 3) {
+        setActiveDirections([...activeDirections.slice(1), label]);
       } else {
-        setSelectedDirections([...selectedDirections, label]);
+        setActiveDirections([...activeDirections, label]);
       }
     }
   };
@@ -87,13 +109,9 @@ export function BriefGuidelineStep({
     rests: string[],
     customText: string
   ) => {
-    const lines: string[] = [];
-    reqs.forEach((r) => lines.push(`- Wajib: ${r}`));
-    rests.forEach((r) => lines.push(`- Hindari: ${r}`));
-    if (customText.trim()) {
-      lines.push(customText.trim());
-    }
-    onChangeRequiredPoints(lines.join("\n"));
+    const formatted = formatCombinedRequiredPoints(reqs, rests, customText);
+    lastEmittedRef.current = formatted;
+    onChangeRequiredPoints(formatted);
   };
 
   const handleToggleReqGuideline = (label: string) => {
@@ -160,7 +178,7 @@ export function BriefGuidelineStep({
               Arahan Cepat
             </span>
             <span className="text-[10.5px] font-bold tabular-nums text-text-muted bg-white px-2 py-0.5 rounded-full border border-neutral-200/60">
-              {selectedDirections.length}/3 dipilih
+              {activeDirections.length}/3 dipilih
             </span>
           </div>
 
@@ -177,7 +195,7 @@ export function BriefGuidelineStep({
           {/* Quick chips list */}
           <div className="flex flex-wrap gap-2">
             {recommendedChips.map((chip) => {
-              const isSelected = selectedDirections.includes(chip.label);
+              const isSelected = activeDirections.includes(chip.label);
               return (
                 <button
                   key={chip.id}
@@ -224,7 +242,7 @@ export function BriefGuidelineStep({
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {cat.items.map((item) => {
-                      const isSel = selectedDirections.includes(item.label);
+                      const isSel = activeDirections.includes(item.label);
                       return (
                         <button
                           key={item.id}
@@ -252,7 +270,7 @@ export function BriefGuidelineStep({
           <div className="pt-2">
             <button
               type="button"
-              onClick={() => onGenerateAi(selectedDirections)}
+              onClick={() => onGenerateAi(activeDirections)}
               disabled={isGeneratingAi || !canGenerateAi}
               title={!canGenerateAi ? "Lengkapi Deskripsi Produk (langkah 1) minimal 30 karakter." : undefined}
               className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
@@ -310,7 +328,7 @@ export function BriefGuidelineStep({
       </div>
 
       {/* Video Style/Tone Cards */}
-      <div className="space-y-3">
+      <div id="field-video-style" className="space-y-3">
         <label className="block text-sm font-medium text-text-primary">
           Gaya / Tone Video Konten <span className="text-primary">*</span>
         </label>
@@ -331,7 +349,7 @@ export function BriefGuidelineStep({
       </div>
 
       {/* Call To Action options */}
-      <div className="space-y-3">
+      <div id="field-call-to-action" className="space-y-3">
         <label className="block text-sm font-medium text-text-primary">
           Call to Action (CTA) yang Diinginkan <span className="text-primary">*</span>
         </label>

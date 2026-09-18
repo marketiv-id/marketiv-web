@@ -85,10 +85,10 @@ const MOCK_USERS: Record<UserRole, SessionUser> = {
   },
   creator: {
     userId: "creator_002",
-    email: "nadia.visuals@example.com",
+    email: "dimas.visuals@example.com",
     role: "creator",
     status: "active",
-    name: "Nadia Visuals",
+    name: "Dimas Visuals",
     emailVerified: true,
     isProfileCompleted: true,
   },
@@ -122,16 +122,29 @@ const MOCK_ROLE_KEY = "marketiv.mock.role";
 const isRole = (v: unknown): v is UserRole =>
   v === "umkm" || v === "creator" || v === "admin";
 
-const nonEmptyString = (v: unknown): string | undefined =>
-  typeof v === "string" && v.trim() ? v : undefined;
-
 /**
  * Guard `typeof window` wajib: getSession() terjangkau dari
  * service-result.ts:requireUserId yang bisa dipanggil di server.
  */
 export function getMockRole(): UserRole {
   if (typeof window !== "undefined") {
+    // Mode mock: otomatis sesuaikan role dengan rute dashboard yang dituju
+    const path = window.location.pathname;
+    if (path.startsWith("/dashboard/kreator")) {
+      window.localStorage.setItem(MOCK_ROLE_KEY, "creator");
+      return "creator";
+    }
+    if (path.startsWith("/dashboard/umkm")) {
+      window.localStorage.setItem(MOCK_ROLE_KEY, "umkm");
+      return "umkm";
+    }
+    if (path.startsWith("/admin")) {
+      window.localStorage.setItem(MOCK_ROLE_KEY, "admin");
+      return "admin";
+    }
+
     const stored = window.localStorage.getItem(MOCK_ROLE_KEY);
+    if (stored === "creator" || stored === "kreator") return "creator";
     if (isRole(stored)) return stored;
   }
   const fromEnv = process.env.NEXT_PUBLIC_MOCK_ROLE;
@@ -218,8 +231,8 @@ export async function getSession(): Promise<ServiceResult<SessionUser>> {
     }
 
     const role = doc.role as UserRole;
-    const tosVersion = nonEmptyString(doc.tos_version);
-    const tosAcceptedAt = nonEmptyString(doc.tos_accepted_at);
+    const tosVersion = doc.tos_version ? String(doc.tos_version) : undefined;
+    const tosAcceptedAt = doc.tos_accepted_at ? String(doc.tos_accepted_at) : undefined;
 
     // `users` hanya menyimpan userId/role/status/email/phone/createdAt — tidak
     // ada `name` maupun `avatarUrl` di sana. Nama tampilan datang dari akun Auth;

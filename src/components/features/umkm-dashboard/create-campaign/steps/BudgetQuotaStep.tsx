@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FormSectionCard } from "../cards/FormSectionCard";
 import { BudgetCalculatorCard } from "../cards/BudgetCalculatorCard";
 import { formatCurrency } from "@/lib/formatters";
@@ -26,9 +26,17 @@ export function BudgetQuotaStep({
   onChangeCreatorQuota,
   validationErrors = {},
 }: BudgetQuotaStepProps) {
-  const [customPriceActive, setCustomPriceActive] = useState(
-    pricePerThousandViews > 0 && ![3000, 5000, 8000].includes(pricePerThousandViews)
-  );
+  const isCustomPrice =
+    pricePerThousandViews > 0 && ![3000, 5000, 8000].includes(pricePerThousandViews);
+  const [customPriceActive, setCustomPriceActive] = useState(isCustomPrice);
+
+  useEffect(() => {
+    if (pricePerThousandViews > 0 && ![3000, 5000, 8000].includes(pricePerThousandViews)) {
+      setCustomPriceActive(true);
+    } else if ([3000, 5000, 8000].includes(pricePerThousandViews)) {
+      setCustomPriceActive(false);
+    }
+  }, [pricePerThousandViews]);
 
   const priceTiers = [
     { id: 3000, label: "Rp 3.000" },
@@ -71,7 +79,7 @@ export function BudgetQuotaStep({
       description="Tentukan dana kampanye, bayaran untuk kreator, dan jumlah kreator yang dapat mengikuti kampanye."
     >
       {/* ── 1. Berapa dana yang ingin disiapkan? ──────────────── */}
-      <div className="space-y-3.5 rounded-2xl bg-neutral-50/50 border border-neutral-200/60 p-4.5 sm:p-5">
+      <div id="field-total-budget" className="space-y-3.5 rounded-2xl bg-neutral-50/50 border border-neutral-200/60 p-4.5 sm:p-5">
         <div className="flex items-center justify-between gap-4 border-b border-neutral-200/50 pb-3">
           <label htmlFor="total-budget" className="text-sm font-bold text-text-primary">
             1. Berapa dana yang ingin disiapkan? <span className="text-primary">*</span>
@@ -127,7 +135,7 @@ export function BudgetQuotaStep({
       </div>
 
       {/* ── 2. Bayaran Kreator per 1.000 Tayangan ───────────── */}
-      <div className="space-y-3.5 rounded-2xl bg-neutral-50/50 border border-neutral-200/60 p-4.5 sm:p-5">
+      <div id="field-price-per-views" className="space-y-3.5 rounded-2xl bg-neutral-50/50 border border-neutral-200/60 p-4.5 sm:p-5">
         <label className="block text-sm font-bold text-text-primary border-b border-neutral-200/50 pb-3">
           2. Bayaran Kreator per 1.000 Tayangan <span className="text-primary">*</span>
         </label>
@@ -196,7 +204,7 @@ export function BudgetQuotaStep({
       </div>
 
       {/* ── 3. Jumlah Kreator ───────────────────────────────── */}
-      <div className="space-y-3.5 rounded-2xl bg-neutral-50/50 border border-neutral-200/60 p-4.5 sm:p-5">
+      <div id="field-creator-quota" className="space-y-3.5 rounded-2xl bg-neutral-50/50 border border-neutral-200/60 p-4.5 sm:p-5">
         <label className="block text-sm font-bold text-text-primary border-b border-neutral-200/50 pb-3">
           3. Jumlah Kreator <span className="text-primary">*</span>
         </label>

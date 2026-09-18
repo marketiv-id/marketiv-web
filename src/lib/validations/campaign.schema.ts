@@ -30,9 +30,35 @@ export const campaignWizardSchema = z.object({
   totalBudgetEscrow: z.number(),
   creatorQuota: z.number(),
   termsAgreed: z.boolean(),
+  selectedDirections: z.array(z.string()).optional(),
 });
 
 export type CampaignWizardInput = z.infer<typeof campaignWizardSchema>;
+
+export const APPROVED_CLOUD_STORAGE_DOMAINS = [
+  "drive.google.com",
+  "dropbox.com",
+  "www.dropbox.com",
+  "onedrive.live.com",
+  "1drv.ms",
+  "sharepoint.com",
+] as const;
+
+export function isCloudStorageFolderUrl(urlString: string): boolean {
+  if (!urlString || typeof urlString !== "string") return false;
+  const trimmed = urlString.trim();
+  if (!trimmed.startsWith("https://")) return false;
+
+  try {
+    const parsed = new URL(trimmed);
+    const host = parsed.hostname.toLowerCase();
+    return APPROVED_CLOUD_STORAGE_DOMAINS.some(
+      (domain) => host === domain || host.endsWith(`.${domain}`)
+    );
+  } catch {
+    return false;
+  }
+}
 
 /** Aturan per langkah. Object non-strict → key ekstra dari state di-strip, bukan error. */
 export const campaignStepSchemas: Record<1 | 2 | 3 | 4 | 5, z.ZodType> = {
@@ -61,8 +87,8 @@ export const campaignStepSchemas: Record<1 | 2 | 3 | 4 | 5, z.ZodType> = {
       .string()
       .trim()
       .min(1, "Tautan aset eksternal wajib diisi.")
-      .refine((v) => v.startsWith("https://"), {
-        message: "Format tautan salah. Harus menggunakan HTTPS link (https://).",
+      .refine((v) => isCloudStorageFolderUrl(v), {
+        message: "Tautan harus berupa link folder Google Drive, Dropbox, atau OneDrive (awali https://).",
       }),
   }),
   4: z.object({
@@ -129,9 +155,13 @@ export function composeBriefDetail(input: {
   hashtags?: string;
   location?: string;
   assetNotes?: string;
+  selectedDirections?: string[];
 }): string {
   const sections: string[] = [];
   if (input.brief.trim()) sections.push(input.brief.trim());
+  if (input.selectedDirections && input.selectedDirections.length > 0) {
+    sections.push(`Arahan Cepat: ${input.selectedDirections.join(", ")}`);
+  }
   if (input.requiredPoints?.trim()) sections.push(`Poin Wajib:\n${input.requiredPoints.trim()}`);
   if (input.hashtags?.trim()) sections.push(`Hashtag: ${input.hashtags.trim()}`);
   if (input.location?.trim()) sections.push(`Target Lokasi Kreator: ${input.location.trim()}`);
@@ -157,11 +187,36 @@ export function decomposeBriefDetail(briefDetail: string): {
   hashtags: string;
   location: string;
   assetNotes: string;
+  selectedDirections: string[];
   lossy: boolean;
 } {
-  const empty = { brief: briefDetail, requiredPoints: "", hashtags: "", location: "", assetNotes: "", lossy: true };
-  if (!briefDetail.trim()) {
-    return { brief: "", requiredPoints: "", hashtags: "", location: "", assetNotes: "", lossy: false };
+  if (!briefDetail || !briefDetail.trim()) {
+    return {
+      brief: "",
+      requiredPoints: "",
+      hashtags: "",
+      location: "",
+      assetNotes: "",
+      selectedDirections: [],
+      lossy: false,
+    };
+  }
+
+  const HEADER_REGEX = /(?:^|\n\n)(Arahan Cepat:|Poin Wajib:\n|Poin Wajib:|Hashtag:|Target Lokasi Kreator:|Catatan Aset:)/g;
+
+  const matches: Array<{
+    header: string;
+    startIndex: number;
+    contentStartIndex: number;
+  }> = [];
+
+  let match: RegExpExecArray | null;
+  while ((match = HEADER_REGEX.exec(briefDetail)) !== null) {
+    const fullMatch = match[0];
+    const header = match[1];
+    const startIndex = match.index + (fullMatch.length - header.length);
+    const contentStartIndex = startIndex + header.length;
+    matches.push({ header, startIndex, contentStartIndex });
   }
 
   let brief = "";
@@ -169,32 +224,47 @@ export function decomposeBriefDetail(briefDetail: string): {
   let hashtags = "";
   let location = "";
   let assetNotes = "";
+  let selectedDirections: string[] = [];
 
-  for (const chunk of briefDetail.split("\n\n")) {
-    if (chunk.startsWith("Poin Wajib:\n")) {
-      requiredPoints = chunk.slice("Poin Wajib:\n".length);
-    } else if (chunk.startsWith("Hashtag: ")) {
-      hashtags = chunk.slice("Hashtag: ".length);
-    } else if (chunk.startsWith("Target Lokasi Kreator: ")) {
-      location = chunk.slice("Target Lokasi Kreator: ".length);
-    } else if (chunk.startsWith("Catatan Aset: ")) {
-      assetNotes = chunk.slice("Catatan Aset: ".length);
-    } else if (!brief) {
-      // Blok pertama yang tidak punya header = brief utama
-      brief = chunk;
-    } else {
-      // Blok ekstra yang tidak dikenal → lossy
-      return empty;
+  if (matches.length === 0) {
+    brief = briefDetail.trim();
+  } else {
+    const firstHeader = matches[0];
+    brief = briefDetail.slice(0, firstHeader.startIndex).trim();
+
+    for (let i = 0; i < matches.length; i++) {
+      const current = matches[i];
+      const next = matches[i + 1];
+      const rawContent = briefDetail
+        .slice(current.contentStartIndex, next ? next.startIndex : undefined)
+        .trim();
+
+      if (current.header.startsWith("Arahan Cepat:")) {
+        selectedDirections = rawContent
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+      } else if (current.header.startsWith("Poin Wajib:")) {
+        requiredPoints = rawContent;
+      } else if (current.header.startsWith("Hashtag:")) {
+        hashtags = rawContent;
+      } else if (current.header.startsWith("Target Lokasi Kreator:")) {
+        location = rawContent;
+      } else if (current.header.startsWith("Catatan Aset:")) {
+        assetNotes = rawContent;
+      }
     }
   }
 
-  // Self-verify: komposisi ulang harus byte-identik dengan input asli
-  const recomposed = composeBriefDetail({ brief, requiredPoints, hashtags, location, assetNotes });
-  if (recomposed !== briefDetail.slice(0, 10000)) {
-    return empty;
-  }
-
-  return { brief, requiredPoints, hashtags, location, assetNotes, lossy: false };
+  return {
+    brief,
+    requiredPoints,
+    hashtags,
+    location,
+    assetNotes,
+    selectedDirections,
+    lossy: false,
+  };
 }
 
 export const CAMPAIGN_TYPE_OPTIONS = [

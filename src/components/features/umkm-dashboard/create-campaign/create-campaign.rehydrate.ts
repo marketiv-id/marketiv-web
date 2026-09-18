@@ -76,25 +76,38 @@ export function rehydrateWizard(raw: CampaignEditRaw): RehydratedWizard {
     state.hashtags = decomposed.hashtags;
     state.location = decomposed.location;
     state.assetNotes = decomposed.assetNotes;
+    state.selectedDirections = decomposed.selectedDirections;
 
     // Reverse-match TONE_OPTIONS lewat `contentAngle`
-    // Format yang disimpan: "{label} — {desc}" (lihat CreateCampaignWizard.tsx saveDraft)
-    const matchedTone = TONE_OPTIONS.find(
-      (o) => brief.contentAngle.startsWith(`${o.label} — `) || brief.contentAngle === o.id
-    );
+    const matchedTone = TONE_OPTIONS.find((o) => {
+      const angle = brief.contentAngle.trim().toLowerCase();
+      const id = o.id.toLowerCase();
+      const label = o.label.toLowerCase();
+      return (
+        angle === id ||
+        angle === label ||
+        angle.startsWith(`${label} — `) ||
+        angle.startsWith(label)
+      );
+    });
     state.videoStyle = matchedTone ? matchedTone.id : "";
     if (!matchedTone && brief.contentAngle.trim()) {
-      // Nilai tersimpan tidak cocok dengan konstanta saat ini → reset, beri warning
       warnings.push(
         "Gaya/tone video tidak bisa dipulihkan secara otomatis. Pilih ulang pada langkah 2."
       );
     }
 
     // Reverse-match CTA_OPTIONS lewat `cta`
-    // Format yang disimpan: label saja (lihat CreateCampaignWizard.tsx saveDraft)
-    const matchedCta = CTA_OPTIONS.find(
-      (o) => brief.cta === o.label || brief.cta === o.id
-    );
+    const matchedCta = CTA_OPTIONS.find((o) => {
+      const ctaVal = brief.cta.trim().toLowerCase();
+      const id = o.id.toLowerCase();
+      const label = o.label.toLowerCase();
+      return (
+        ctaVal === id ||
+        ctaVal === label ||
+        ctaVal.startsWith(label)
+      );
+    });
     state.callToAction = matchedCta ? matchedCta.id : "";
     if (!matchedCta && brief.cta.trim()) {
       warnings.push(

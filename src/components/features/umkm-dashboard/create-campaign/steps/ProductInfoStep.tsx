@@ -65,7 +65,7 @@ export function ProductInfoStep({
       />
 
       {/* Niche category grid */}
-      <div className="space-y-2.5">
+      <div id="field-category" className="space-y-2.5">
         <div className="flex items-center justify-between">
           <label className="text-[.84rem] font-[700] text-ink-800">
             Kategori Kreator <span className="text-primary ml-0.5">*</span>
@@ -97,7 +97,7 @@ export function ProductInfoStep({
       </div>
 
       {/* Campaign type (UGC vs Clipping) */}
-      <div className="space-y-2.5">
+      <div id="field-type" className="space-y-2.5">
         <div className="flex items-center justify-between">
           <label className="text-[.84rem] font-[700] text-ink-800">
             Jenis Kampanye <span className="text-primary ml-0.5">*</span>
@@ -140,7 +140,7 @@ export function ProductInfoStep({
       {/* Product description */}
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-4">
-          <label htmlFor="product-desc" className="text-[.84rem] font-[700] text-ink-800">
+          <label htmlFor="campaign-description" className="text-[.84rem] font-[700] text-ink-800">
             Deskripsi Singkat Produk <span className="text-primary ml-0.5">*</span>
           </label>
           <span
@@ -152,7 +152,7 @@ export function ProductInfoStep({
           </span>
         </div>
         <Textarea
-          id="product-desc"
+          id="campaign-description"
           rows={4}
           placeholder="Tuliskan tentang kelebihan produk Anda, bahan, rasa, kegunaan, atau penawaran spesial yang membuat produk ini menarik..."
           value={description}

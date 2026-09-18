@@ -52,15 +52,15 @@ export function AssetLinkStep({
         message: "✓ Tautan Dropbox dikenali",
         className: "bg-emerald-50 text-emerald-800 border-emerald-200",
       });
-    } else if (trimmed.includes("onedrive") || trimmed.includes("1drv.ms")) {
+    } else if (trimmed.includes("onedrive") || trimmed.includes("1drv.ms") || trimmed.includes("sharepoint.com")) {
       setLinkStatus({
         message: "✓ Tautan OneDrive dikenali",
         className: "bg-emerald-50 text-emerald-800 border-emerald-200",
       });
     } else {
       setLinkStatus({
-        message: "✓ Tautan penyimpanan web terverifikasi",
-        className: "bg-emerald-50 text-emerald-800 border-emerald-200",
+        message: "⚠️ Hanya tautan Google Drive, Dropbox, atau OneDrive yang diperbolehkan",
+        className: "bg-red-50 text-red-800 border-red-200",
       });
     }
   };

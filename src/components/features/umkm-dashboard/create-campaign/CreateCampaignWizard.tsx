@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { useCampaignAutoDraft } from "./create-campaign.autodraft";
 
 // Subcomponents & steps
 import { CampaignWizardHeader } from "./CampaignWizardHeader";
@@ -22,6 +24,7 @@ import { BriefQualityCard } from "./cards/BriefQualityCard";
 import { BudgetCalculatorCard } from "./cards/BudgetCalculatorCard";
 import { CampaignWizardState } from "./types";
 import { validateStepFields, isStepCompleted } from "./create-campaign.validation";
+import { scrollToFirstInvalidField } from "./create-campaign.utils";
 import { TONE_OPTIONS, CTA_OPTIONS } from "./create-campaign.constants";
 import { composeBriefDetail, packDoAndDontJson } from "@/lib/validations/campaign.schema";
 import {
@@ -53,6 +56,7 @@ interface CreateCampaignWizardProps {
 
 export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: CreateCampaignWizardProps = {}) {
   const router = useRouter();
+  const { user } = useAuth();
 
   // Wizard state machine
   const [currentStep, setCurrentStep] = useState(1);
@@ -69,6 +73,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
   const [requiredPoints, setRequiredPoints] = useState(initialState?.requiredPoints ?? "");
   const [callToAction, setCallToAction] = useState(initialState?.callToAction ?? "");
   const [hashtags, setHashtags] = useState(initialState?.hashtags ?? "");
+  const [selectedDirections, setSelectedDirections] = useState<string[]>(initialState?.selectedDirections ?? []);
   const [externalAssetUrl, setExternalAssetUrl] = useState(initialState?.externalAssetUrl ?? "");
   const [assetNotes, setAssetNotes] = useState(initialState?.assetNotes ?? "");
   const [pricePerThousandViews, setPricePerThousandViews] = useState(initialState?.pricePerThousandViews ?? 0);
@@ -118,6 +123,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
     requiredPoints,
     callToAction,
     hashtags,
+    selectedDirections,
     externalAssetUrl,
     assetNotes,
     pricePerThousandViews,
@@ -125,6 +131,65 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
     creatorQuota,
     termsAgreed,
   };
+
+  const handleRestoreDraft = useCallback(
+    (restored: Omit<CampaignWizardState, "termsAgreed">, restoredStep: number) => {
+      if (restored.title !== undefined) setTitle(restored.title);
+      if (restored.category !== undefined) setCategory(restored.category);
+      if (restored.type !== undefined) setType(restored.type);
+      if (restored.description !== undefined) setDescription(restored.description);
+      if (restored.location !== undefined) setLocation(restored.location);
+      if (restored.brief !== undefined) setBrief(restored.brief);
+      if (restored.videoStyle !== undefined) setVideoStyle(restored.videoStyle);
+      if (restored.requiredPoints !== undefined) setRequiredPoints(restored.requiredPoints);
+      if (restored.callToAction !== undefined) setCallToAction(restored.callToAction);
+      if (restored.hashtags !== undefined) setHashtags(restored.hashtags);
+      if (restored.selectedDirections !== undefined) setSelectedDirections(restored.selectedDirections);
+      if (restored.externalAssetUrl !== undefined) setExternalAssetUrl(restored.externalAssetUrl);
+      if (restored.assetNotes !== undefined) setAssetNotes(restored.assetNotes);
+      if (restored.pricePerThousandViews !== undefined) setPricePerThousandViews(restored.pricePerThousandViews);
+      if (restored.totalBudgetEscrow !== undefined) setTotalBudgetEscrow(restored.totalBudgetEscrow);
+      if (restored.creatorQuota !== undefined) setCreatorQuota(restored.creatorQuota);
+      if (restoredStep && restoredStep >= 1 && restoredStep <= stepsCount) {
+        setCurrentStep(restoredStep);
+      }
+    },
+    [stepsCount]
+  );
+
+  const handleDiscardDraft = useCallback(() => {
+    setTitle("");
+    setCategory("");
+    setType("");
+    setDescription("");
+    setLocation("");
+    setBrief("");
+    setVideoStyle("");
+    setRequiredPoints("");
+    setCallToAction("");
+    setHashtags("");
+    setSelectedDirections([]);
+    setExternalAssetUrl("");
+    setAssetNotes("");
+    setPricePerThousandViews(5000);
+    setTotalBudgetEscrow(3200000);
+    setCreatorQuota(4);
+    setTermsAgreed(false);
+    setCurrentStep(1);
+    setValidationErrors({});
+    setStepValidationTried({});
+    toast.success("Draf berhasil dihapus.");
+  }, []);
+
+  const { clearDraft } = useCampaignAutoDraft({
+    userId: user?.userId || "umkm_local",
+    campaignId,
+    currentStep,
+    state: wizardState,
+    onRestoreDraft: handleRestoreDraft,
+    onDiscardDraft: handleDiscardDraft,
+    enabled: true,
+  });
 
   // Real-time validations for checklist markers using validation helpers
   const productInfoValid = isStepCompleted(1, wizardState);
@@ -142,7 +207,11 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
   };
 
   const handleNext = () => {
-    if (validateStep(currentStep)) {
+    const errs = validateStepFields(currentStep, wizardState);
+    setValidationErrors(errs);
+    setStepValidationTried((prev) => ({ ...prev, [currentStep]: true }));
+
+    if (Object.keys(errs).length === 0) {
       if (currentStep < stepsCount) {
         setCurrentStep((prev) => prev + 1);
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -150,6 +219,9 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
         // Last step: Buka modal konfirmasi sebelum lanjut ke Midtrans Snap
         setIsPaymentOpen(true);
       }
+    } else {
+      toast.warning("Harap lengkapi kolom wajib sebelum melanjutkan.");
+      scrollToFirstInvalidField(errs);
     }
   };
 
@@ -226,8 +298,6 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
    * operasi berikutnya mengembalikan id langsung (idempoten).
    */
   const saveDraft = async (): Promise<string | null> => {
-    if (createdCampaignId) return createdCampaignId;
-
     // Kolom wajib campaigns (title/category/type/description) = langkah 1.
     if (!isStepCompleted(1, wizardState)) {
       setCurrentStep(1);
@@ -248,7 +318,14 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
       rewardPer1000Views: pricePerThousandViews,
       claimLimit: creatorQuota,
       brief: {
-        briefDetail: composeBriefDetail({ brief, requiredPoints, hashtags, location, assetNotes }),
+        briefDetail: composeBriefDetail({
+          brief,
+          requiredPoints,
+          hashtags,
+          location,
+          assetNotes,
+          selectedDirections,
+        }),
         contentAngle: tone ? `${tone.label} — ${tone.desc}` : videoStyle,
         cta: ctaOpt ? ctaOpt.label : callToAction,
         doAndDont: requiredPoints.trim() ? packDoAndDontJson(requiredPoints) : "",
@@ -258,9 +335,9 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
       asset: externalAssetUrl.trim() ? { fileUrl: externalAssetUrl.trim() } : undefined,
     };
 
-    const isEdit = !!campaignId;
-    const res = isEdit
-      ? await updateCampaignDraft(campaignId, draftInput)
+    const targetId = campaignId || createdCampaignId;
+    const res = targetId
+      ? await updateCampaignDraft(targetId, draftInput)
       : await createCampaignDraft(draftInput);
 
     if (res.success && res.data) {
@@ -284,6 +361,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
     const id = await saveDraft();
     setIsSubmitting(false);
     if (!id) return;
+    clearDraft();
     toast.success("Draft campaign berhasil disimpan.");
     router.push("/dashboard/umkm/campaign");
   };
@@ -353,6 +431,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
     }
 
     const intent = res.data;
+    clearDraft();
 
     // Snap token → buka popup pembayaran.
     if (intent.snapToken) {
@@ -396,6 +475,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
   };
 
   const handleResetWizard = () => {
+    clearDraft();
     setIsCreatedOpen(false);
     setCurrentStep(1);
     setTitle("");
@@ -408,6 +488,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
     setRequiredPoints("");
     setCallToAction("");
     setHashtags("");
+    setSelectedDirections([]);
     setExternalAssetUrl("");
     setAssetNotes("");
     setPricePerThousandViews(5000);
@@ -456,6 +537,8 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
             onChangeCallToAction={setCallToAction}
             hashtags={hashtags}
             onChangeHashtags={setHashtags}
+            selectedDirections={selectedDirections}
+            onChangeSelectedDirections={setSelectedDirections}
             validationErrors={validationErrors}
             onGenerateAi={handleGenerateAiBrief}
             isGeneratingAi={isGeneratingAi}

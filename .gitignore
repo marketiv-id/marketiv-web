@@ -56,3 +56,8 @@ __pycache__/
 
 # appwrite
 appwrite.config.json
+
+# local ide & docs
+.cursor/
+.mcp.json
+*.pdf

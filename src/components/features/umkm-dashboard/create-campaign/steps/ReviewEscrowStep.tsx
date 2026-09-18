@@ -384,7 +384,7 @@ export function ReviewEscrowStep({
       </div>
 
       {/* Confirmation Checkbox */}
-      <div className="space-y-2 pt-3 border-t border-neutral-200/60">
+      <div id="field-terms-agreed" className="space-y-2 pt-3 border-t border-neutral-200/60">
         <div className="flex items-start gap-3">
           <Checkbox
             id="terms-agreed"

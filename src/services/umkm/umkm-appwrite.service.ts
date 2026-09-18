@@ -763,10 +763,13 @@ export async function createCampaignDraftInAppwrite(
   const auth = await requireUserId<CampaignDraftResult>(empty);
   if (!auth.ok) return auth.result;
   const uid = auth.userId;
-  // Permission.update TIDAK diberikan ke klien — semua update campaign disalurkan
-  // lewat patch-campaign-draft / patch-campaign-status (fix SEC-H1 2026-08-08).
-  const perms = [
+  const campaignPerms = [
     Permission.read(Role.user(uid)),
+    Permission.delete(Role.user(uid)),
+  ];
+  const subDocPerms = [
+    Permission.read(Role.any()),
+    Permission.update(Role.user(uid)),
     Permission.delete(Role.user(uid)),
   ];
 
@@ -792,7 +795,7 @@ export async function createCampaignDraftInAppwrite(
         spentAmount: 0,
         remainingBudget: 0,
       },
-      perms
+      campaignPerms
     )) as unknown as Doc;
   } catch (err) {
     return failFromWriteError<CampaignDraftResult>(err, empty);
@@ -816,9 +819,10 @@ export async function createCampaignDraftInAppwrite(
           doAndDont: input.brief.doAndDont ?? "",
           generatedByAi: input.brief.generatedByAi ?? false,
         },
-        perms
+        subDocPerms
       );
-    } catch {
+    } catch (err) {
+      console.error("[createCampaignDraft] Failed to write brief:", err);
       warnings.push("Brief belum tersimpan — buka draft untuk melengkapi.");
     }
   }
@@ -836,9 +840,10 @@ export async function createCampaignDraftInAppwrite(
           fileUrl: input.asset.fileUrl,
           fileName: input.asset.fileName ?? "Folder Aset Eksternal",
         },
-        perms
+        subDocPerms
       );
-    } catch {
+    } catch (err) {
+      console.error("[createCampaignDraft] Failed to write asset:", err);
       warnings.push("Tautan aset belum tersimpan — buka draft untuk melengkapi.");
     }
   }
@@ -1665,11 +1670,17 @@ export async function updateCampaignDraftInAppwrite(
         generatedByAi: input.brief.generatedByAi ?? false,
       };
       if (existingBrief) {
-        await databases.updateDocument(DB, COLLECTIONS.campaignBriefs, str(existingBrief.$id), briefData);
+        try {
+          await databases.updateDocument(DB, COLLECTIONS.campaignBriefs, str(existingBrief.$id), briefData);
+        } catch {
+          await databases.deleteDocument(DB, COLLECTIONS.campaignBriefs, str(existingBrief.$id));
+          await databases.createDocument(DB, COLLECTIONS.campaignBriefs, ID.unique(), { campaignId, ...briefData }, perms);
+        }
       } else {
         await databases.createDocument(DB, COLLECTIONS.campaignBriefs, ID.unique(), { campaignId, ...briefData }, perms);
       }
-    } catch {
+    } catch (err) {
+      console.error("[updateCampaignDraft] Failed to update brief:", err);
       warnings.push("Brief belum tersimpan — buka draft untuk melengkapi.");
     }
   }
@@ -1689,11 +1700,17 @@ export async function updateCampaignDraftInAppwrite(
         fileName: input.asset.fileName ?? "Folder Aset Eksternal",
       };
       if (existingAsset) {
-        await databases.updateDocument(DB, COLLECTIONS.campaignAssets, str(existingAsset.$id), assetData);
+        try {
+          await databases.updateDocument(DB, COLLECTIONS.campaignAssets, str(existingAsset.$id), assetData);
+        } catch {
+          await databases.deleteDocument(DB, COLLECTIONS.campaignAssets, str(existingAsset.$id));
+          await databases.createDocument(DB, COLLECTIONS.campaignAssets, ID.unique(), { campaignId, ...assetData }, perms);
+        }
       } else {
         await databases.createDocument(DB, COLLECTIONS.campaignAssets, ID.unique(), { campaignId, ...assetData }, perms);
       }
-    } catch {
+    } catch (err) {
+      console.error("[updateCampaignDraft] Failed to update asset:", err);
       warnings.push("Tautan aset belum tersimpan — buka draft untuk melengkapi.");
     }
   }
