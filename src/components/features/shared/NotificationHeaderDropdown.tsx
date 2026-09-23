@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -24,15 +24,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { AppNotification, NotifType } from "@/types/notification.types";
-import type { UserRole } from "@/types/domain";
 import {
-  getNotifications,
-  markNotificationRead,
-  markAllNotificationsRead,
-  deleteNotification,
-} from "@/services/shared/notification.service";
-import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
-import { realtimeClient, tableChannels } from "@/lib/appwrite/realtime";
+  useNotifications,
+  formatUnreadBadge,
+} from "./NotificationProvider";
 import { AppNotificationDetailDialog } from "./AppNotificationDetailDialog";
 
 export interface NotificationHeaderDropdownProps {
@@ -68,54 +63,25 @@ function relativeTimeShort(iso: string): string {
 
 export function NotificationHeaderDropdown({ theme }: NotificationHeaderDropdownProps) {
   const router = useRouter();
-  const role: UserRole = theme === "kreator" ? "creator" : "umkm";
 
-  const [notifs, setNotifs] = useState<AppNotification[]>([]);
   const [selectedNotif, setSelectedNotif] = useState<AppNotification | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const {
+    notifs,
+    unreadCount,
+    markAsRead,
+    markAllRead,
+    deleteNotif,
+  } = useNotifications();
 
   const isKreator = theme === "kreator";
   const viewAllHref = isKreator ? "/dashboard/kreator/notifikasi" : "/dashboard/umkm/notifikasi";
   const badgeBg = isKreator ? "bg-violet-600" : "bg-orange-500";
   const textAccent = isKreator ? "text-violet-600 hover:text-violet-700" : "text-orange-600 hover:text-orange-700";
 
-  const loadNotifs = useCallback(() => {
-    void getNotifications(role).then((res) => {
-      if (res.success && res.data) {
-        setNotifs(res.data);
-      }
-    });
-  }, [role]);
-
-  useEffect(() => {
-    loadNotifs();
-  }, [loadNotifs]);
-
-  useEffect(() => {
-    if (DATA_SOURCE_CONFIG.useMockData) return;
-    const channels = tableChannels("notifications");
-    if (channels.length === 0) return;
-
-    return realtimeClient.subscribe(channels, () => loadNotifs());
-  }, [loadNotifs]);
-
-  const unreadCount = notifs.filter((n) => !n.isRead).length;
   const recentNotifs = notifs.slice(0, 6);
-
-  const markAsRead = async (id: string) => {
-    setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
-    const res = await markNotificationRead(id);
-    if (!res.success) void loadNotifs();
-  };
-
-  const handleMarkAllRead = async () => {
-    const unreadIds = notifs.filter((n) => !n.isRead).map((n) => n.id);
-    if (!unreadIds.length) return;
-    setNotifs((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    const res = await markAllNotificationsRead(unreadIds);
-    if (!res.success) void loadNotifs();
-  };
 
   const handleOpenDetail = (notif: AppNotification) => {
     setIsDropdownOpen(false);
@@ -124,12 +90,6 @@ export function NotificationHeaderDropdown({ theme }: NotificationHeaderDropdown
     if (!notif.isRead) {
       void markAsRead(notif.id);
     }
-  };
-
-  const handleDeleteNotif = async (id: string) => {
-    setNotifs((prev) => prev.filter((n) => n.id !== id));
-    const res = await deleteNotification(id);
-    if (!res.success) void loadNotifs();
   };
 
   return (
@@ -148,9 +108,13 @@ export function NotificationHeaderDropdown({ theme }: NotificationHeaderDropdown
           >
             <Bell size={20} strokeWidth={2} />
             {unreadCount > 0 && (
-              <span className="absolute top-[10px] right-[10px] flex h-2.5 w-2.5">
-                <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", badgeBg)} />
-                <span className={cn("relative inline-flex rounded-full h-2.5 w-2.5 border-2 border-white", badgeBg)} />
+              <span
+                className={cn(
+                  "absolute -top-1 -right-1 z-10 flex h-4 min-w-[16px] max-w-[28px] items-center justify-center rounded-full border-2 border-white px-0.5 text-[10px] font-black leading-none text-white",
+                  badgeBg,
+                )}
+              >
+                {formatUnreadBadge(unreadCount)}
               </span>
             )}
           </button>
@@ -182,7 +146,7 @@ export function NotificationHeaderDropdown({ theme }: NotificationHeaderDropdown
             {unreadCount > 0 && (
               <button
                 type="button"
-                onClick={handleMarkAllRead}
+                onClick={() => void markAllRead()}
                 className={cn(
                   "text-[11px] font-extrabold cursor-pointer flex items-center gap-1 transition-all",
                   textAccent
@@ -288,7 +252,7 @@ export function NotificationHeaderDropdown({ theme }: NotificationHeaderDropdown
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
         onActionClick={(href) => router.push(href)}
-        onDelete={handleDeleteNotif}
+        onDelete={(id) => void deleteNotif(id)}
         theme={theme}
       />
     </>

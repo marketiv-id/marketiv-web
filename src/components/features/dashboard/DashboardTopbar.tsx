@@ -1,15 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { logoMarketivPng } from "@/assets/icons";
 import { useSidebar } from "@/components/ui/sidebar";
-import { getNotifications } from "@/services/shared/notification.service";
-import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
-import { realtimeClient, tableChannels } from "@/lib/appwrite/realtime";
 
 import { useUmkmIdentity } from "./UmkmIdentityContext";
 import { DashboardProfileAvatar } from "@/components/features/dashboard/shared/DashboardProfileAvatar";
@@ -119,30 +115,10 @@ export function DashboardTopbar({ avatarUrl: propAvatarUrl }: DashboardTopbarPro
   const { title } = getPageMeta(pathname);
   const { toggleSidebar } = useSidebar();
   const { identity } = useUmkmIdentity();
-  const [unreadCount, setUnreadCount] = useState(0);
 
   const avatarUrl = identity?.avatarUrl ?? propAvatarUrl;
   const businessName = identity?.businessName;
 
-  const loadUnreadCount = useCallback(() => {
-    void getNotifications("umkm").then((result) => {
-      if (result.success && result.data) {
-        setUnreadCount(result.data.filter((notification) => !notification.isRead).length);
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    loadUnreadCount();
-  }, [loadUnreadCount]);
-
-  useEffect(() => {
-    if (DATA_SOURCE_CONFIG.useMockData) return;
-    const channels = tableChannels("notifications");
-    if (channels.length === 0) return;
-
-    return realtimeClient.subscribe(channels, () => loadUnreadCount());
-  }, [loadUnreadCount]);
   const breadcrumbs = getBreadcrumbs(pathname);
 
   return (

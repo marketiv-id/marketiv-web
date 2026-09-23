@@ -15,16 +15,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AppNotification, NotifType } from "@/types/notification.types";
-import type { UserRole } from "@/types/domain";
-import {
-  getNotifications,
-  markNotificationRead,
-  markAllNotificationsRead,
-  deleteNotification,
-} from "@/services/shared/notification.service";
-import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
-import { realtimeClient, tableChannels } from "@/lib/appwrite/realtime";
 import { AppNotificationDetailDialog } from "./AppNotificationDetailDialog";
+import { useNotifications } from "./NotificationProvider";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -159,11 +151,18 @@ const PAGE_SIZE = 7;
 export function NotificationView({ theme }: NotificationViewProps) {
   const router = useRouter();
   const t = THEME[theme];
-  const role: UserRole = theme === "kreator" ? "creator" : "umkm";
 
-  const [notifs, setNotifs] = useState<AppNotification[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const {
+    notifs,
+    unreadCount,
+    loading: isLoading,
+    error: loadError,
+    reload,
+    markAsRead,
+    markAllRead,
+    deleteNotif,
+  } = useNotifications();
+
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [selectedNotif, setSelectedNotif] = useState<AppNotification | null>(null);
@@ -178,45 +177,9 @@ export function NotificationView({ theme }: NotificationViewProps) {
     }
   };
 
-  /**
-   * State hanya disentuh SETELAH promise selesai — tidak ada setState sinkron di
-   * body effect (pola yang sama dengan AuthProvider). `setIsLoading(true)` jadi
-   * urusan pemanggil ulang, bukan fungsi ini; nilai awalnya sudah `true`.
-   */
-  const load = useCallback(
-    () =>
-      getNotifications(role).then((res) => {
-        if (res.success && res.data) {
-          setNotifs(res.data);
-          setLoadError(null);
-        } else {
-          setNotifs([]);
-          setLoadError(res.error ?? "Gagal memuat notifikasi.");
-        }
-        setIsLoading(false);
-      }),
-    [role]
-  );
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  useEffect(() => {
-    if (DATA_SOURCE_CONFIG.useMockData) return;
-
-    const channels = tableChannels("notifications");
-    if (channels.length === 0) return;
-
-    return realtimeClient.subscribe(channels, () => { void load(); });
-  }, [load]);
-
   const retry = () => {
-    setIsLoading(true);
-    void load();
+    void reload({ showLoading: true });
   };
-
-  const unreadCount = notifs.filter(n => !n.isRead).length;
 
   const filtered = notifs.filter(n => {
     if (activeTab === "all") return true;
@@ -250,32 +213,6 @@ export function NotificationView({ theme }: NotificationViewProps) {
   const selectTab = (id: FilterTab) => {
     setActiveTab(id);
     setVisibleCount(PAGE_SIZE);
-  };
-
-  /**
-   * Optimistis, lalu dikonfirmasi server. Kalau update gagal, daftar dimuat
-   * ulang supaya centang di layar tidak mengklaim lebih dari yang tersimpan.
-   */
-  const markAsRead = async (id: string) => {
-    const target = notifs.find(n => n.id === id);
-    if (!target || target.isRead) return;
-    setNotifs(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
-    const res = await markNotificationRead(id);
-    if (!res.success) void load();
-  };
-
-  const markAllAsRead = async () => {
-    const unreadIds = notifs.filter(n => !n.isRead).map(n => n.id);
-    if (!unreadIds.length) return;
-    setNotifs(prev => prev.map(n => ({ ...n, isRead: true })));
-    const res = await markAllNotificationsRead(unreadIds);
-    if (!res.success) void load();
-  };
-
-  const handleDeleteNotif = async (id: string) => {
-    setNotifs(prev => prev.filter(n => n.id !== id));
-    const res = await deleteNotification(id);
-    if (!res.success) void load();
   };
 
   const tabs: { id: FilterTab; label: string }[] = [
@@ -316,7 +253,7 @@ export function NotificationView({ theme }: NotificationViewProps) {
           <div className="flex gap-2 flex-wrap items-start">
             {unreadCount > 0 && (
               <button
-                onClick={markAllAsRead}
+                onClick={() => void markAllRead()}
                 className={cn(
                   "inline-flex items-center gap-1.5 min-h-[38px] px-3.5 rounded-xl text-xs font-bold border transition-all duration-150 cursor-pointer",
                   t.markAllCls
@@ -521,7 +458,7 @@ export function NotificationView({ theme }: NotificationViewProps) {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        void handleDeleteNotif(notif.id);
+                        void deleteNotif(notif.id);
                       }}
                       className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-all cursor-pointer shrink-0 absolute right-3 top-3"
                       title="Hapus Notifikasi"
@@ -556,7 +493,7 @@ export function NotificationView({ theme }: NotificationViewProps) {
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
         onActionClick={(href) => router.push(href)}
-        onDelete={handleDeleteNotif}
+        onDelete={(id) => void deleteNotif(id)}
         theme={theme}
       />
     </div>

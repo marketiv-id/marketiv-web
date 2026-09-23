@@ -1,17 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { routes } from "@/lib/constants/routes";
-import { Bell, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { logoMarketivPng } from "@/assets/icons";
 import { useSidebar } from "@/components/ui/sidebar";
-import { getNotifications } from "@/services/shared/notification.service";
-import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
-import { realtimeClient, tableChannels } from "@/lib/appwrite/realtime";
 
 import { useCreatorIdentity } from "./CreatorIdentityContext";
 import { DashboardProfileAvatar } from "@/components/features/dashboard/shared/DashboardProfileAvatar";
@@ -56,31 +52,6 @@ export function CreatorDashboardTopbar({ creatorAvatar: propAvatar }: CreatorDas
 
   const avatarUrl = identity?.avatarUrl ?? propAvatar;
   const creatorName = identity?.name;
-
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  const loadUnreadCount = useCallback(async () => {
-    try {
-      const res = await getNotifications("creator");
-      if (res.success && res.data) {
-        setUnreadCount(res.data.filter((n) => !n.isRead).length);
-      }
-    } catch {
-      setUnreadCount(0);
-    }
-  }, []);
-
-  useEffect(() => {
-    void Promise.resolve().then(loadUnreadCount);
-  }, [loadUnreadCount]);
-
-  useEffect(() => {
-    if (DATA_SOURCE_CONFIG.useMockData) return;
-    const channels = tableChannels("notifications");
-    if (channels.length === 0) return;
-
-    return realtimeClient.subscribe(channels, () => loadUnreadCount());
-  }, [loadUnreadCount]);
 
   return (
     <header

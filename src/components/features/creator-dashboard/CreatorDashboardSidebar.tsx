@@ -18,6 +18,7 @@ import {
   BadgeCheck,
   ArrowRight,
   X,
+  Bell,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -35,6 +36,10 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { getCreatorActiveWorks } from "@/services/creator/creator-dashboard.service";
+import {
+  useUnreadNotificationCount,
+  formatUnreadBadge,
+} from "@/components/features/shared/NotificationProvider";
 
 import { useCreatorIdentity } from "./CreatorIdentityContext";
 import { DashboardProfileAvatar } from "@/components/features/dashboard/shared/DashboardProfileAvatar";
@@ -52,6 +57,7 @@ const SIDEBAR_ITEMS: CreatorSidebarItem[] = [
   { label: "Rate Card", href: "/dashboard/kreator/rate-card", icon: Tag },
   { label: "Negosiasi", href: "/dashboard/kreator/negosiasi", icon: MessageCircle },
   { label: "Keuangan", href: "/dashboard/kreator/keuangan", icon: Wallet },
+  { label: "Notifikasi", href: "/dashboard/kreator/notifikasi", icon: Bell },
 ];
 
 export interface CreatorDashboardSidebarProps {
@@ -79,6 +85,9 @@ export function CreatorDashboardSidebar({
   const nameToDisplay = identity?.name || creatorName || displayName || "Kreator";
   const avatarUrl = identity?.avatarUrl ?? propAvatarUrl;
   const isVerified = identity ? identity.isVerified : verificationStatus === "terverifikasi";
+
+  const unreadNotifCount = useUnreadNotificationCount();
+  const notifBadge = formatUnreadBadge(unreadNotifCount);
 
   const [activeJobsCount, setActiveJobsCount] = useState<number>(0);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -174,6 +183,8 @@ export function CreatorDashboardSidebar({
               item.href === "/dashboard/kreator"
                 ? pathname === "/dashboard/kreator"
                 : pathname.startsWith(item.href);
+            const badge =
+              item.href === "/dashboard/kreator/notifikasi" ? notifBadge : null;
 
             return (
               <SidebarMenuItem key={item.label}>
@@ -218,14 +229,28 @@ export function CreatorDashboardSidebar({
                         aria-hidden="true"
                       />
                     )}
-                    <item.icon
-                      className={cn(
-                        "h-5 w-5 shrink-0 transition-all duration-200",
-                        isActive
-                          ? "text-violet-400 group-hover:text-violet-400"
-                          : "text-white/30 group-hover:text-white/70"
+                    <span className="relative shrink-0">
+                      <item.icon
+                        className={cn(
+                          "h-5 w-5 shrink-0 transition-all duration-200",
+                          isActive
+                            ? "text-violet-400 group-hover:text-violet-400"
+                            : "text-white/30 group-hover:text-white/70",
+                        )}
+                      />
+                      {badge && (
+                        <span
+                          className={cn(
+                            "hidden group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:-top-1 group-data-[collapsible=icon]:-right-1.5",
+                            "group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:min-w-[16px] group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center",
+                            "group-data-[collapsible=icon]:rounded-full group-data-[collapsible=icon]:px-0.5 group-data-[collapsible=icon]:text-[9px] group-data-[collapsible=icon]:font-black group-data-[collapsible=icon]:leading-none",
+                            "bg-violet-500 text-white border border-[#0d1b2e]",
+                          )}
+                        >
+                          {badge}
+                        </span>
                       )}
-                    />
+                    </span>
                     <span
                       className={cn(
                         "text-[0.95rem] tracking-[-0.015em] group-data-[collapsible=icon]:hidden transition-colors duration-200 flex-1 flex items-center justify-between",
@@ -234,7 +259,12 @@ export function CreatorDashboardSidebar({
                           : "font-[640] text-white/45 group-hover:text-white/80"
                       )}
                     >
-                      <span>{item.label}</span>
+                      <span className="truncate">{item.label}</span>
+                      {badge && (
+                        <span className="ml-2 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-violet-500 px-1 text-[9px] font-black leading-none text-white shrink-0">
+                          {badge}
+                        </span>
+                      )}
                       {item.href === "/dashboard/kreator/pekerjaan-aktif" && activeJobsCount > 0 && (
                         <span className="ml-2 inline-flex items-center justify-center h-5 px-1.5 rounded-full text-[0.68rem] font-extrabold bg-violet-500/25 text-violet-300 border border-violet-500/30">
                           {activeJobsCount}

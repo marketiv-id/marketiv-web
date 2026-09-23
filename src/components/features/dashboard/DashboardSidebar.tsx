@@ -21,9 +21,14 @@ import {
   BadgeCheck,
   ArrowRight,
   X,
+  Bell,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import {
+  useUnreadNotificationCount,
+  formatUnreadBadge,
+} from "@/components/features/shared/NotificationProvider";
 import { LogoutConfirmDialog } from "@/components/features/dashboard/shared/LogoutConfirmDialog";
 import { HelpAdminModal } from "@/components/features/dashboard/shared/HelpAdminModal";
 import {
@@ -69,6 +74,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
   { label: "Review Pekerjaan", href: "/dashboard/umkm/review-rate-card", icon: ClipboardCheck },
   { label: "Keuangan",   href: "/dashboard/umkm/keuangan",   icon: Wallet },
   { label: "Analitik",   href: "/dashboard/umkm/analitik",   icon: TrendingUp },
+  { label: "Notifikasi", href: "/dashboard/umkm/notifikasi", icon: Bell },
 ];
 
 interface DashboardSidebarProps {
@@ -87,6 +93,8 @@ export function DashboardSidebar({
   const { state, toggleSidebar } = useSidebar();
   const { identity } = useUmkmIdentity();
   const isCollapsed = state === "collapsed";
+  const unreadNotifCount = useUnreadNotificationCount();
+  const notifBadge = formatUnreadBadge(unreadNotifCount);
 
   const businessName = identity?.businessName || propBusinessName || "";
   const isVerified = identity ? identity.isVerified : (propIsVerified ?? false);
@@ -204,6 +212,9 @@ export function DashboardSidebar({
               ? pathname === item.href
               : pathname.startsWith(item.href);
 
+            const badge =
+              item.href === "/dashboard/umkm/notifikasi" ? notifBadge : null;
+
             return (
               <SidebarMenuItem key={item.label}>
                 <SidebarMenuButton
@@ -242,20 +253,43 @@ export function DashboardSidebar({
                         aria-hidden="true"
                       />
                     )}
-                    <item.icon
-                      size={22}
-                      className={cn(
-                        "shrink-0 transition-all duration-200",
-                        isActive ? "text-orange-400 group-hover:text-orange-400" : "text-white/30 group-hover:text-white/70"
+                    <span className="relative shrink-0">
+                      <item.icon
+                        size={22}
+                        className={cn(
+                          "shrink-0 transition-all duration-200",
+                          isActive
+                            ? "text-orange-400 group-hover:text-orange-400"
+                            : "text-white/30 group-hover:text-white/70",
+                        )}
+                      />
+                      {badge && (
+                        <span
+                          className={cn(
+                            "hidden group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:-top-1 group-data-[collapsible=icon]:-right-1.5",
+                            "group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:min-w-[16px] group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center",
+                            "group-data-[collapsible=icon]:rounded-full group-data-[collapsible=icon]:px-0.5 group-data-[collapsible=icon]:text-[9px] group-data-[collapsible=icon]:font-black group-data-[collapsible=icon]:leading-none",
+                            "bg-orange-500 text-white border border-[#0d1b2e]",
+                          )}
+                        >
+                          {badge}
+                        </span>
                       )}
-                    />
+                    </span>
                     <span
                       className={cn(
-                        "text-[0.95rem] tracking-[-0.015em] group-data-[collapsible=icon]:hidden transition-colors duration-200",
-                        isActive ? "font-[760] text-white group-hover:text-white" : "font-[640] text-white/45 group-hover:text-white/80"
+                        "text-[0.95rem] tracking-[-0.015em] group-data-[collapsible=icon]:hidden transition-colors duration-200 flex-1 flex items-center justify-between gap-2 min-w-0",
+                        isActive
+                          ? "font-[760] text-white group-hover:text-white"
+                          : "font-[640] text-white/45 group-hover:text-white/80",
                       )}
                     >
-                      {item.label}
+                      <span className="truncate">{item.label}</span>
+                      {badge && (
+                        <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-orange-500 px-1 text-[9px] font-black leading-none text-white shrink-0">
+                          {badge}
+                        </span>
+                      )}
                     </span>
                   </Link>
                 </SidebarMenuButton>
