@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { routes } from "@/lib/constants/routes";
-import { Bell, Menu, Sparkles } from "lucide-react";
+import { Bell, Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { logoMarketivPng } from "@/assets/icons";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -148,10 +148,6 @@ export function CreatorDashboardTopbar({ creatorAvatar: propAvatar }: CreatorDas
             );
           })}
 
-          <span className="ml-1.5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-violet-500/10 via-purple-500/10 to-blue-500/10 border border-violet-500/25 text-violet-600 text-[0.66rem] font-[850] shadow-3xs">
-            <Sparkles className="h-3 w-3 text-violet-500 animate-pulse" />
-            BETA TESTER (s.d 31 Agt)
-          </span>
         </nav>
       </div>
 

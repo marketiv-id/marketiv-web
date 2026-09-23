@@ -3,7 +3,6 @@
 import { type ReactNode } from "react";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { PageTransition } from "@/components/ui/page-transition";
-import { BetaNoticeBanner } from "@/components/ui/BetaNoticeBanner";
 
 interface DashboardShellProps {
   children: ReactNode;
