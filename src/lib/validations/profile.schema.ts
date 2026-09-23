@@ -27,29 +27,30 @@ export const CREATOR_NICHES = [
 export const umkmProfileUpdateSchema = z.object({
   businessName: requiredStringMax("Nama bisnis", 255),
   category: requiredStringMax("Kategori", 100),
-  description: optionalString(2000, "Deskripsi"),
-  city: optionalString(100, "Kota"),
+  description: requiredStringMax("Deskripsi", 2000).min(
+    20,
+    "Deskripsi minimal 20 karakter."
+  ),
+  city: requiredStringMax("Kota", 100),
   address: optionalString(500, "Alamat"),
   tiktok: optionalString(255, "TikTok"),
+  phone: indonesianPhone,
 });
 export type UmkmProfileUpdateInput = z.infer<typeof umkmProfileUpdateSchema>;
 
 export const creatorProfileUpdateSchema = z.object({
   displayName: requiredStringMax("Nama display", 255),
-  bio: optionalString(2000, "Bio"),
-  city: optionalString(100, "Kota/Lokasi"),
-  niche: enumOf(CREATOR_NICHES, "Niche").optional(),
+  niche: enumOf(CREATOR_NICHES, "Niche"),
+  city: requiredStringMax("Kota", 100),
+  bio: requiredStringMax("Bio", 2000).min(20, "Bio minimal 20 karakter."),
 });
 export type CreatorProfileUpdateInput = z.infer<typeof creatorProfileUpdateSchema>;
 
 /**
- * Skema onboarding — lebih ketat daripada skema update di atas.
- *
- * Bedanya disengaja. Update profil boleh menyisakan field kosong; onboarding
- * tidak, karena hasilnya menyetel `isProfileCompleted = true` dan itulah yang
- * dipakai `get-creator-directory` untuk memutuskan siapa yang tampil ke UMKM.
- * Menandai profil "lengkap" tanpa niche atau kota berarti menerbitkan kartu
- * kreator yang tidak bisa difilter maupun dicari.
+ * Skema onboarding — aturan completion sama dengan `creatorProfileUpdateSchema`
+ * (displayName, niche, city, bio ≥ 20). Keduanya harus lolos evaluasi
+ * server-side Function `update-profile`; client tidak menulis
+ * `isProfileCompleted`.
  */
 export const creatorOnboardingSchema = z.object({
   displayName: requiredStringMax("Nama display", 255),

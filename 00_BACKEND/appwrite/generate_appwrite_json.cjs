@@ -1163,6 +1163,22 @@ const functions = [
     path: "../functions/accept-tos",
   },
   {
+    // Update profil UMKM/Kreator + hitung isProfileCompleted server-side.
+    // Client tidak boleh menulis flag completion (RoleGuard/claim/direktori).
+    $id: "update-profile",
+    name: "Update Profile",
+    runtime: "node-22",
+    execute: ["users"],
+    events: [],
+    schedule: "",
+    timeout: 15,
+    enabled: true,
+    logging: true,
+    entrypoint: "src/main.js",
+    commands: "npm install",
+    path: "../functions/update-profile",
+  },
+  {
     $id: "validate-and-upload",
     name: "Validate And Upload",
     runtime: "node-22",

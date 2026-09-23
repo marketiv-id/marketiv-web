@@ -21,10 +21,6 @@ import {
   uploadUmkmLogo,
   getUmkmSettingsProfile,
 } from "@/services/umkm/umkm-dashboard.service";
-import {
-  setOAuthAccountPrefs,
-  provisionUserProfile,
-} from "@/services/auth/auth.service";
 import { umkmOnboardingSchema } from "@/lib/validations/profile.schema";
 import { parseOrErrors } from "@/lib/validations/to-field-errors";
 import { markOnboardingSkipped } from "@/lib/onboarding-skip";
@@ -146,16 +142,15 @@ export function UmkmOnboarding({
       return;
     }
 
-    // phone tidak punya kolom di umkm_profiles — ia mendarat di users.phone lewat
-    // prefs → create-user-profile. Pisahkan dari payload profil.
-    const { phone: phoneValue, ...profileFields } = parsed.data;
+    // phone dikirim ke Function `update-profile` — mendarat di users.phone dan
+    // ikut evaluasi completion server-side. Client TIDAK menulis isProfileCompleted.
+    const profilePayload = {
+      ...parsed.data,
+      ...(logoUrl ? { logoUrl } : {}),
+    };
 
     setPending(true);
-    const res = await updateUmkmProfile({
-      ...profileFields,
-      ...(logoUrl ? { logoUrl } : {}),
-      isProfileCompleted: true,
-    });
+    const res = await updateUmkmProfile(profilePayload);
 
     if (!res.success) {
       setPending(false);
@@ -167,14 +162,6 @@ export function UmkmOnboarding({
       return;
     }
 
-    // Best-effort: titipkan nomor ke prefs lalu jalankan ulang provisioning yang
-    // idempoten. create-user-profile menyalin prefs.phone ke users.phone bila
-    // kolomnya masih kosong (mis. daftar via Google). Kegagalan di sini TIDAK
-    // membatalkan penyelesaian profil — profilnya sendiri sudah tersimpan.
-    if (phoneValue) {
-      const prefs = await setOAuthAccountPrefs("umkm", { phone: phoneValue });
-      if (prefs.success) await provisionUserProfile();
-    }
     setPending(false);
 
     await refresh();

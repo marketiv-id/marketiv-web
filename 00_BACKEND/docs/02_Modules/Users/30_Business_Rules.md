@@ -3,8 +3,12 @@
 ## Kelengkapan Profil
 
 - Setiap profil memiliki flag `isProfileCompleted`.
-  - UMKM: default-nya dapat dianggap lengkap setelah onboarding wizard, tanpa mewajibkan social media.
-  - Creator: `isProfileCompleted` awalnya `false`; menjadi `true` setelah profil dilengkapi.
+- **Flag hanya ditulis server-side** oleh Function `update-profile`. Client tidak boleh mengirim/menulis field ini (whitelist FE & `user.service.updateProfile` tidak menyertakannya).
+- **Aturan evaluasi (canonical, source of truth):**
+  - **UMKM**: `businessName`, `category`, `city`, `description` ≥ 20 char, `phone` (di `users.phone`). TikTok UMKM opsional — tidak menentukan completion.
+  - **Creator**: `displayName`, `niche`, `city`, `bio` ≥ 20 char, TikTok username (di `creator_social_accounts`).
+- **Never downgrade**: flag hanya false→true. Profil yang sudah `true` tidak pernah turun walau field diubah jadi kosong.
+- Onboarding dan Settings memanggil Function yang sama — aturan completion identik.
 - Profil yang belum lengkap dapat memblokir aksi tertentu (mis. claim campaign membutuhkan profil lengkap).
 
 ## Atribut Opsional di Onboarding

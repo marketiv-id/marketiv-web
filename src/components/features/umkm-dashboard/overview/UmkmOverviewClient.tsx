@@ -17,6 +17,7 @@ import type { UmkmOverviewData } from "@/types/umkm-dashboard.types";
 import { UmkmPageSkeleton } from "../shared/UmkmPageSkeleton";
 import { UmkmDashboardTour } from "./UmkmDashboardTour";
 import { navigateUmkmCampaignForOnboarding } from "@/lib/onboarding/umkm-dashboard-tour-flow";
+import { ProfileCompletionCard } from "@/components/features/dashboard/shared/ProfileCompletionCard";
 
 /**
  * Overview UMKM.
@@ -117,6 +118,11 @@ export function UmkmOverviewClient() {
               ? formatCompactCurrency(data.kpis.escrowBalance)
               : "—"
           }
+        />
+
+        <ProfileCompletionCard
+          isProfileCompleted={user?.isProfileCompleted}
+          href="/dashboard/umkm/pengaturan"
         />
 
         {/* 2. Middle Row: Campaign Section (Left 2/3) + Activity Timeline (Right 1/3) */}

@@ -3,6 +3,10 @@
     "documents.read",
     "documents.write"
   ],
+  "update-profile": [
+    "documents.read",
+    "documents.write"
+  ],
   "ai-brief": [
     "documents.read",
     "documents.write"

@@ -39,6 +39,8 @@ import { MetricCard } from "@/components/ui/metric-card";
 import { claimCampaign } from "@/services/creator/creator-dashboard.service";
 import { formatCurrency, formatCompactCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { ProfileCompletionCard } from "@/components/features/dashboard/shared/ProfileCompletionCard";
 
 // ─── Niche theme maps ────────────────────────────────────────────────────────
 
@@ -328,6 +330,8 @@ export function CreatorDashboardView({
   onRefresh,
 }: CreatorDashboardViewProps) {
 
+  const { user } = useAuth();
+
   // ── State ──────────────────────────────────────────────────────────────────
   //
   // Seluruh isi layar datang dari props dan dibaca ulang lewat `onRefresh`.
@@ -598,6 +602,11 @@ export function CreatorDashboardView({
               </div>
             </div>
           </div>
+
+          <ProfileCompletionCard
+            isProfileCompleted={user?.isProfileCompleted}
+            href="/dashboard/kreator/settings"
+          />
 
           {/* 3 ── Campaign Recommendations — full width 3-col grid */}
           <div>

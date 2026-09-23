@@ -266,9 +266,11 @@ export const updateProfile = async (data: UpdateProfileInput): Promise<Profile> 
   try {
     const user = await account.get();
     const profile = await getProfileDocument(data.userId || user.$id, data.role);
+    // isProfileCompleted TIDAK boleh ditulis dari service client-side —
+    // hanya Function `update-profile` yang menghitung flag (never downgrade).
     const allowedFields = profile.role === 'umkm'
-      ? ['businessName', 'category', 'description', 'city', 'address', 'tiktok', 'logoUrl', 'isProfileCompleted']
-      : ['displayName', 'bio', 'city', 'avatarUrl', 'isProfileCompleted'];
+      ? ['businessName', 'category', 'description', 'city', 'address', 'tiktok', 'logoUrl']
+      : ['displayName', 'bio', 'city', 'avatarUrl'];
     const payload = Object.fromEntries(
       allowedFields
         .filter((field) => data[field as keyof UpdateProfileInput] !== undefined)

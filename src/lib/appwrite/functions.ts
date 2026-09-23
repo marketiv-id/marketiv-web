@@ -81,6 +81,14 @@ export const FUNCTION_IDS = {
    */
   createUserProfile: "create-user-profile",
   acceptTos: "accept-tos",
+  /**
+   * Update profil + hitung `isProfileCompleted` server-side. Client TIDAK boleh
+   * menulis flag completion — Function membaca role dari users, evaluasi field
+   * canonical (UMKM: businessName/category/city/desc≥20/phone; Creator:
+   * displayName/niche/city/bio≥20 + TikTok), lalu set false→true saja
+   * (never downgrade).
+   */
+  updateProfile: "update-profile",
   requestPasswordOtp: "request-password-otp",
   resetPasswordWithOtp: "reset-password-with-otp",
 } as const;

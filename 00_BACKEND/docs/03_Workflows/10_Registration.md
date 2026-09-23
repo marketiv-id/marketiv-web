@@ -62,7 +62,7 @@ User submit form pendaftaran dari halaman Landing Page:
 13. **Users** — Wizard onboarding sesuai role, di route `/onboarding` (3 langkah):
     - UMKM: nama usaha + kategori + kota → deskripsi + logo → alamat & TikTok (keduanya opsional). Tidak ada input website pada MVP.
     - Creator: nama display + niche + kota → bio + avatar → akun TikTok (**wajib**) & Instagram (opsional).
-14. `isProfileCompleted` di-set `true` setelah wizard selesai.
+14. `isProfileCompleted` di-set `true` oleh Function `update-profile` (server-side) setelah evaluasi field canonical pass — client tidak mengirim flag. Flag never downgrade.
 
 > **Wajib, bukan kosmetik.** Selama flag ini `false`, kreator tidak muncul di
 > `get-creator-directory` (UMKM tidak melihat kreator maupun rate card-nya sama

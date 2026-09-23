@@ -8,8 +8,6 @@ const mocks = vi.hoisted(() => ({
   refresh: vi.fn(),
   getProfile: vi.fn(),
   updateProfile: vi.fn(),
-  setPrefs: vi.fn(),
-  provision: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: mocks.replace }) }));
@@ -20,10 +18,6 @@ vi.mock("@/services/umkm/umkm-dashboard.service", () => ({
   getUmkmSettingsProfile: mocks.getProfile,
   updateUmkmProfile: mocks.updateProfile,
   uploadUmkmLogo: vi.fn(),
-}));
-vi.mock("@/services/auth/auth.service", () => ({
-  setOAuthAccountPrefs: mocks.setPrefs,
-  provisionUserProfile: mocks.provision,
 }));
 vi.mock("@/lib/onboarding-skip", () => ({ markOnboardingSkipped: vi.fn() }));
 vi.mock("../OnboardingShell", () => ({
@@ -73,8 +67,6 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.getProfile.mockResolvedValue({ success: true, data: null });
   mocks.updateProfile.mockResolvedValue({ success: true, data: {} });
-  mocks.setPrefs.mockResolvedValue({ success: true, data: null });
-  mocks.provision.mockResolvedValue({ success: true, data: null });
   mocks.refresh.mockResolvedValue({ success: true, data: {} });
 });
 
@@ -109,9 +101,11 @@ describe("UMKM profile onboarding", () => {
     await click("Selesaikan Profil");
 
     expect(mocks.updateProfile).toHaveBeenCalledWith(expect.objectContaining({
-      businessName: "Usaha Baru", category: "kuliner", city: "Sukabumi", isProfileCompleted: true,
+      businessName: "Usaha Baru", category: "kuliner", city: "Sukabumi", phone: "08123456789",
     }));
-    expect(mocks.setPrefs).toHaveBeenCalledWith("umkm", { phone: "08123456789" });
+    expect(mocks.updateProfile).not.toHaveBeenCalledWith(expect.objectContaining({
+      isProfileCompleted: true,
+    }));
     expect(mocks.replace).toHaveBeenCalledWith("/dashboard/umkm");
   });
 

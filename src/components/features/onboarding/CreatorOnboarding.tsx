@@ -119,6 +119,8 @@ export function CreatorOnboarding({ initialName }: { initialName?: string }) {
 
     setPending(true);
 
+    // Social dulu, lalu profil — Function `update-profile` evaluasi completion
+    // dengan membaca creator_social_accounts. Client TIDAK menulis isProfileCompleted.
     const social = await upsertCreatorSocialAccount({
       platform: "tiktok",
       username: extractSocialUsername(tiktok),
@@ -132,7 +134,6 @@ export function CreatorOnboarding({ initialName }: { initialName?: string }) {
     const res = await updateCreatorProfile({
       ...parsed.data,
       ...(avatarUrl ? { avatarUrl } : {}),
-      isProfileCompleted: true,
     });
     setPending(false);
 

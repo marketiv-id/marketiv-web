@@ -38,6 +38,21 @@ Dokumen ini khusus untuk Appwrite Functions dan aturan backend. Kontrak pemanggi
   3. Soft delete metadata `user_files` (`status = deleted`, set `deletedAt`).
   4. Decrement `usedBytes` dan `fileCount` di `user_storage_usage`.
 
+### update-profile
+
+- **Trigger**: dipanggil frontend (`executeFunction`) dari onboarding & Settings — SATU path untuk keduanya.
+- **Execute**: authenticated users.
+- **Input**: field profil whitelist per role (lihat `UMKM_PROFILE_FIELDS` / `CREATOR_PROFILE_FIELDS` di `functions/update-profile/src/main.js`). `isProfileCompleted` di body SELALU diabaikan.
+- **Aksi**:
+  1. Baca `users.role` (identitas dari header `x-appwrite-user-id`).
+  2. Tulis field whitelist ke `umkm_profiles` / `creator_profiles`; `phone`/`address` UMKM ke `users`.
+  3. Evaluasi completion (server-side source of truth — lihat [30_Business_Rules.md](30_Business_Rules.md)):
+     - UMKM: `businessName`, `category`, `city`, `description` ≥ 20 char, `phone`.
+     - Creator: `displayName`, `niche`, `city`, `bio` ≥ 20 char, TikTok username dari `creator_social_accounts`.
+  4. Tulis `isProfileCompleted` **never downgrade**: `true` tetap `true`; `false` → `true` hanya jika evaluasi pass.
+- **Output**: `{ success, role, isProfileCompleted, ...field }`.
+- **Kenapa Function**: client tidak boleh menulis flag (RoleGuard, claim campaign, `get-creator-directory` bergantung padanya).
+
 ### get-umkm-profile
 
 - **Trigger**: dipanggil frontend (`executeFunction`), bukan event.
@@ -75,7 +90,7 @@ Kolom `umkm_profiles.whatsappNumber` baru layak ditambahkan kalau nomor WhatsApp
 ## Aturan Backend
 
 - Setiap user memiliki satu wallet (dibuat oleh modul Payments).
-- `isProfileCompleted` diatur menjadi `true` setelah onboarding wizard selesai.
+- `isProfileCompleted` dihitung server-side oleh Function `update-profile` (never downgrade) — lihat [30_Business_Rules.md](30_Business_Rules.md).
 - Search creator menggunakan query terindeks pada `creator_profiles` (city, rating, totalFollowers) dan `rate_cards` (price) milik modul [RateCards](../RateCards/50_Database.md).
 - Data denormalisasi (`totalFollowers`, `totalOrders`, `rating`) diperbarui oleh event dari modul terkait (Orders, Campaigns).
 

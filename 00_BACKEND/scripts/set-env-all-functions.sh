@@ -45,6 +45,7 @@ FUNCTIONS=(
   get-creator-profile
   get-creator-dashboard-summary
   get-creator-negotiations
+  update-profile
 )
 
 TOTAL=${#FUNCTIONS[@]}

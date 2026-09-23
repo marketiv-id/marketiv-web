@@ -10,9 +10,9 @@ Fungsi-fungsi berikut dipanggil langsung dari frontend Next.js via **Appwrite Cl
 
 Mengembalikan profil sesuai role (umkm/creator).
 
-### `updateProfile()` — [Client SDK]
+### `updateProfile()` — via Function `update-profile`
 
-Memperbarui field profil (deskripsi, kota, logo/avatar, dll.).
+Memperbarui field profil (deskripsi, kota, logo/avatar, phone UMKM, dll.) lewat Function `update-profile`, bukan `updateDocument` langsung. Flag `isProfileCompleted` dihitung server-side (lihat [30_Business_Rules.md](30_Business_Rules.md)). Onboarding dan Settings memanggil path yang sama.
 
 ---
 

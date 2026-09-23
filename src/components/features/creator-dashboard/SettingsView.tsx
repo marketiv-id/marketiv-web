@@ -307,6 +307,7 @@ function GhostBtn({
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { useCreatorIdentity } from "./CreatorIdentityContext";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 interface SettingsViewProps {
   initialProfile: CreatorProfile;
@@ -315,6 +316,7 @@ interface SettingsViewProps {
 
 export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewProps) {
   const { refreshIdentity } = useCreatorIdentity();
+  const { refresh: refreshAuth } = useAuth();
   const [activeTab, setActiveTab] = useState<SettingsTab>("profil");
 
   // ── Profile state ──
@@ -384,13 +386,28 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
       setFormError(Object.values(parsed.errors)[0] ?? "Periksa kembali isian profil.");
       return;
     }
-    if (tiktokUrl && !extractSocialUsername(tiktokUrl)) {
-      setFormError("Tautan/username TikTok tidak valid.");
+    // TikTok wajib untuk completion evaluator (server baca creator_social_accounts).
+    const tiktokUsername = extractSocialUsername(tiktokUrl);
+    if (!tiktokUsername) {
+      setFormError("Tautan/username TikTok wajib diisi untuk melengkapi profil.");
       return;
     }
 
     setFormError(null);
     setIsSavingProfile(true);
+
+    // Social dulu — Function update-profile evaluasi completion dengan
+    // membaca creator_social_accounts; urutan terbalik = flag tidak naik.
+    const socialRes = await upsertCreatorSocialAccount({
+      platform: "tiktok",
+      username: tiktokUsername,
+    });
+    if (!socialRes.success) {
+      setIsSavingProfile(false);
+      setFormError(socialRes.error ?? "Gagal menyimpan akun TikTok.");
+      return;
+    }
+
     const res = await updateCreatorProfile(parsed.data);
 
     if (!res.success || !res.data) {
@@ -403,22 +420,12 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
       return;
     }
 
-    if (tiktokUrl.trim()) {
-      const socialRes = await upsertCreatorSocialAccount({
-        platform: "tiktok",
-        username: extractSocialUsername(tiktokUrl),
-      });
-      if (!socialRes.success) {
-        setIsSavingProfile(false);
-        setFormError(socialRes.error ?? "Profil tersimpan, tapi akun TikTok gagal disimpan.");
-        return;
-      }
-    }
-
     setIsSavingProfile(false);
     setProfile(res.data);
     setIsEditing(false);
     setIsProfileSuccessOpen(true);
+    // Baca ulang isProfileCompleted dari koleksi profil ke AuthProvider.
+    await refreshAuth({ background: true, preserveUserOnError: true });
     await refreshIdentity();
   };
 

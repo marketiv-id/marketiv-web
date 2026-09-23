@@ -1018,7 +1018,11 @@ export async function getUmkmSettingsProfileFromAppwrite(): Promise<
   }
 }
 
-/** Kolom yang boleh ditulis klien — identik allow-list user.service.ts:269. */
+/**
+ * Kolom yang boleh dikirim ke Function `update-profile`.
+ * `isProfileCompleted` TIDAK ada di sini — flag hanya dihitung server-side.
+ * `phone`/`address` mendarat di `users` (bukan `umkm_profiles`).
+ */
 const UMKM_PROFILE_WRITABLE = [
   "businessName",
   "category",
@@ -1027,11 +1031,11 @@ const UMKM_PROFILE_WRITABLE = [
   "address",
   "tiktok",
   "logoUrl",
-  "isProfileCompleted",
+  "phone",
 ] as const;
 
 export type UmkmProfileWriteInput = Partial<
-  Record<(typeof UMKM_PROFILE_WRITABLE)[number], string | boolean>
+  Record<(typeof UMKM_PROFILE_WRITABLE)[number], string>
 >;
 
 export async function updateUmkmProfileInAppwrite(
@@ -1041,7 +1045,7 @@ export async function updateUmkmProfileInAppwrite(
   const auth = await requireUserId<UmkmSettingsProfile>(empty);
   if (!auth.ok) return auth.result;
 
-  const payload: Record<string, string | boolean> = {};
+  const payload: Record<string, string> = {};
   for (const key of UMKM_PROFILE_WRITABLE) {
     const value = input[key];
     if (value !== undefined) payload[key] = value;
@@ -1051,38 +1055,7 @@ export async function updateUmkmProfileInAppwrite(
   }
 
   try {
-    const res = await databases.listDocuments(DB, COLLECTIONS.umkmProfiles, [
-      Query.equal("userId", auth.userId),
-      Query.limit(1),
-    ]);
-    const doc = res.documents[0] as unknown as Doc | undefined;
-    if (!doc) return fail("Profil UMKM tidak ditemukan.", "not_found", empty);
-
-    const address = payload.address;
-    delete payload.address;
-
-    let updated = doc;
-    if (Object.keys(payload).length > 0) {
-      updated = await databases.updateDocument(
-        DB,
-        COLLECTIONS.umkmProfiles,
-        str(doc.$id),
-        payload
-      ) as unknown as Doc;
-    }
-
-    if (address !== undefined) {
-      const resUser = await databases.listDocuments(DB, COLLECTIONS.users, [
-        Query.equal("userId", auth.userId),
-        Query.limit(1),
-      ]);
-      const userDoc = resUser.documents[0];
-      if (userDoc) {
-        await databases.updateDocument(DB, COLLECTIONS.users, userDoc.$id, { address });
-      }
-    }
-
-    // Refresh data using the updated fetch function to ensure consistency
+    await executeFunction(FUNCTION_IDS.updateProfile, payload);
     return getUmkmSettingsProfileFromAppwrite();
   } catch (err) {
     return failFromWriteError<UmkmSettingsProfile>(err, empty);

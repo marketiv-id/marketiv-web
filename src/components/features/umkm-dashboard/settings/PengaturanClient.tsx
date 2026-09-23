@@ -8,6 +8,7 @@ import {
   uploadUmkmLogo,
 } from "@/services/umkm/umkm-dashboard.service";
 import { getSession } from "@/services/auth/session.service";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { umkmProfileUpdateSchema } from "@/lib/validations/profile.schema";
 import { parseOrErrors } from "@/lib/validations/to-field-errors";
 import { NICHE_OPTIONS } from "@/components/features/umkm-dashboard/create-campaign/create-campaign.constants";
@@ -77,6 +78,7 @@ function Toggle({
 
 export function PengaturanClient() {
   const { refreshIdentity } = useUmkmIdentity();
+  const { refresh: refreshAuth } = useAuth();
 
   // Preferensi notifikasi belum punya target tulis (tak ada collection
   // notification_preferences) — toggle dinonaktifkan, lihat handoff Sprint 3.
@@ -101,7 +103,7 @@ export function PengaturanClient() {
     isVerified: false,
   });
 
-  /** Dikelola collection `users` (read-only dari klien) — prefil dari sesi. */
+  /** Dikelola collection `users` — phone sekarang editable via Function update-profile. */
   const [account, setAccount] = useState({ email: "", phone: "" });
 
   const handleInputChange = (field: keyof typeof profile, value: string) => {
@@ -110,6 +112,16 @@ export function PengaturanClient() {
       if (!prev[field]) return prev;
       const next = { ...prev };
       delete next[field];
+      return next;
+    });
+  };
+
+  const handlePhoneChange = (value: string) => {
+    setAccount((prev) => ({ ...prev, phone: value }));
+    setFieldErrors((prev) => {
+      if (!prev.phone) return prev;
+      const next = { ...prev };
+      delete next.phone;
       return next;
     });
   };
@@ -149,7 +161,10 @@ export function PengaturanClient() {
   }, [fetchData]);
 
   const handleSaveChanges = async () => {
-    const parsed = parseOrErrors(umkmProfileUpdateSchema, profile);
+    const parsed = parseOrErrors(umkmProfileUpdateSchema, {
+      ...profile,
+      phone: account.phone.trim(),
+    });
     if (!parsed.ok) {
       setFieldErrors(parsed.errors);
       toast.error("Periksa kembali isian yang ditandai.");
@@ -157,10 +172,16 @@ export function PengaturanClient() {
     }
     setFieldErrors({});
     setIsSaving(true);
-    const res = await updateUmkmProfile({ ...parsed.data, logoUrl: profile.logoUrl });
+    const res = await updateUmkmProfile({
+      ...parsed.data,
+      logoUrl: profile.logoUrl,
+      phone: parsed.data.phone,
+    });
     setIsSaving(false);
     if (res.success) {
       toast.success("Pengaturan berhasil disimpan!");
+      // Baca ulang isProfileCompleted dari koleksi profil ke AuthProvider.
+      await refreshAuth({ background: true, preserveUserOnError: true });
       await refreshIdentity();
     } else {
       toast.error(
@@ -331,19 +352,24 @@ export function PengaturanClient() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* WhatsApp — kolom `users.phone`, tidak client-writable */}
+              {/* WhatsApp — kolom `users.phone`, editable via Function update-profile */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[0.74rem] font-[800] text-ink-600 flex items-center gap-1.5">
                   <Phone size={12} className="text-ink-400" /> Nomor WhatsApp
                 </label>
                 <input
-                  type="text"
-                  value={account.phone || "—"}
-                  readOnly
-                  className={readOnlyCls}
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  value={account.phone}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  disabled={loading}
+                  className={inputCls}
+                  placeholder="08xxxxxxxxxx"
                 />
+                {fieldErrors.phone && <span className={errCls}>{fieldErrors.phone}</span>}
                 <span className="text-[0.68rem] font-bold text-ink-400">
-                  Dikelola akun — hubungi support untuk mengubah.
+                  Wajib untuk melengkapi profil — format 08xx / 628xx.
                 </span>
               </div>
 

@@ -925,9 +925,11 @@ export async function deleteCreatorRateCardPackageInAppwrite(pkg: {
 // ── profil kreator (Sprint 3) ────────────────────────────────────────────────
 
 /**
- * Kolom `creator_profiles` yang boleh ditulis klien.
+ * Kolom `creator_profiles` yang boleh dikirim ke Function `update-profile`.
  * Menambah `niche` dibanding allow-list user.service.ts:270 — kolomnya ada dan
  * UI mengeditnya (temuan handoff Sprint 3).
+ * `isProfileCompleted` TIDAK ada — flag hanya dihitung server-side
+ * (evaluasi baca profil + `creator_social_accounts` TikTok).
  */
 const CREATOR_PROFILE_WRITABLE = [
   "displayName",
@@ -936,25 +938,16 @@ const CREATOR_PROFILE_WRITABLE = [
   "avatarUrl",
   "bannerUrl",
   "niche",
-  "isProfileCompleted",
 ] as const;
 
 export type CreatorProfileWriteInput = Partial<
-  Record<(typeof CREATOR_PROFILE_WRITABLE)[number], string | boolean>
+  Record<(typeof CREATOR_PROFILE_WRITABLE)[number], string>
 >;
 
-/** Cari dokumen creator_profiles milik user aktif. */
-async function findOwnCreatorProfileDoc(userId: string): Promise<Doc | undefined> {
-  const res = await databases.listDocuments(DB, COLLECTIONS.creatorProfiles, [
-    Query.equal("userId", userId),
-    Query.limit(1),
-  ]);
-  return res.documents[0] as unknown as Doc | undefined;
-}
-
 /**
- * Update profil kreator lalu baca ulang DTO gabungan lewat Function agar UI
- * mendapat bentuk CreatorProfile yang sama seperti saat load.
+ * Update profil kreator lewat Function `update-profile` lalu baca ulang DTO
+ * gabungan agar UI mendapat bentuk CreatorProfile yang sama seperti saat load.
+ * Flag `isProfileCompleted` dihitung server-side (never downgrade).
  */
 export async function updateCreatorProfileInAppwrite(
   input: CreatorProfileWriteInput
@@ -963,7 +956,7 @@ export async function updateCreatorProfileInAppwrite(
   const auth = await requireUserId<CreatorProfile>(empty);
   if (!auth.ok) return auth.result;
 
-  const payload: Record<string, string | boolean> = {};
+  const payload: Record<string, string> = {};
   for (const key of CREATOR_PROFILE_WRITABLE) {
     const value = input[key];
     if (value !== undefined) payload[key] = value;
@@ -973,10 +966,7 @@ export async function updateCreatorProfileInAppwrite(
   }
 
   try {
-    const doc = await findOwnCreatorProfileDoc(auth.userId);
-    if (!doc) return fail("Profil kreator tidak ditemukan.", "not_found", empty);
-
-    await databases.updateDocument(DB, COLLECTIONS.creatorProfiles, str(doc.$id), payload);
+    await executeFunction(FUNCTION_IDS.updateProfile, payload);
     return getCreatorProfileFromAppwrite();
   } catch (err) {
     return failFromWriteError<CreatorProfile>(err, empty);

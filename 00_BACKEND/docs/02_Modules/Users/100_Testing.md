@@ -13,10 +13,10 @@
 ### Update Profil (`updateProfile`)
 
 - Update field profil → tersimpan dengan benar (hanya field allowed untuk role).
-- UMKM: allowed fields `businessName`, `category`, `description`, `city`, `address`, `tiktok`, `logoUrl`, `isProfileCompleted`.
-- Creator: allowed fields `displayName`, `bio`, `city`, `avatarUrl`, `isProfileCompleted`.
+- UMKM: allowed fields `businessName`, `category`, `description`, `city`, `address`, `tiktok`, `logoUrl`.
+- Creator: allowed fields `displayName`, `bio`, `city`, `avatarUrl`.
+- `isProfileCompleted` TIDAK ada di allow-list — flag hanya ditulis Function `update-profile`.
 - Tidak ada field valid → throw `UserServiceError('validation', 'Tidak ada data profil untuk diperbarui.')`.
-- `isProfileCompleted` berubah menjadi `true` setelah onboarding.
 
 ### Upload File (`uploadFile`)
 
