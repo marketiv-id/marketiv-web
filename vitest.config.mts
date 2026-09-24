@@ -24,10 +24,12 @@ export default defineConfig({
       "src/lib/validations/__tests__/**/*.test.ts",
       "src/content/__tests__/**/*.test.ts",
       "src/services/**/__tests__/**/*.test.ts",
+      "src/lib/demo/__tests__/**/*.test.ts",
     ],
     exclude: ["node_modules", "00_BACKEND/tests/e2e"],
     environmentMatchGlobs: [
       ["src/components/features/**/__tests__/**/*.test.{ts,tsx}", "jsdom"],
+      ["src/lib/demo/__tests__/**/*.test.ts", "jsdom"],
     ],
   },
 });

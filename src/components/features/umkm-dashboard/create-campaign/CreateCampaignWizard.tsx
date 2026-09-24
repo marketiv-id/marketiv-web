@@ -42,8 +42,9 @@ import { toast } from "sonner";
 
 // Modals
 import { SaveDraftModal } from "./modals/SaveDraftModal";
-import { PaymentSimulationModal } from "./modals/PaymentSimulationModal";
+import { PaymentSimulationModal, SimulatedSnapModal } from "./modals/PaymentSimulationModal";
 import { CampaignCreatedModal } from "./modals/CampaignCreatedModal";
+import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
 
 interface CreateCampaignWizardProps {
   /** Id campaign draft yang sudah ada. Saat diisi, wizard berjalan dalam mode edit. */
@@ -109,6 +110,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
   const [isDraftOpen, setIsDraftOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isCreatedOpen, setIsCreatedOpen] = useState(false);
+  const [isSimulatedSnapOpen, setIsSimulatedSnapOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Unified wizard state object
@@ -464,7 +466,15 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
       return;
     }
 
-    // Tidak ada keduanya (mock) → tampilkan modal berhasil seperti sebelumnya.
+    // Mode demo booth: tampilkan Simulated Snap Modal interaktif
+    if (DATA_SOURCE_CONFIG.useMockData) {
+      setIsSubmitting(false);
+      setCreatedCampaignId(campaignId);
+      setIsSimulatedSnapOpen(true);
+      return;
+    }
+
+    // Tidak ada keduanya (mock fallback) → tampilkan modal berhasil seperti sebelumnya.
     setIsSubmitting(false);
     setIsCreatedOpen(true);
   };
@@ -696,6 +706,28 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
           onClose={() => setIsPaymentOpen(false)}
           onConfirm={handleConfirmPayment}
           totalBudgetEscrow={draftBudget ?? totalBudgetEscrow}
+        />
+      )}
+
+      {isSimulatedSnapOpen && (
+        <SimulatedSnapModal
+          isOpen={isSimulatedSnapOpen}
+          onClose={() => {
+            setIsSimulatedSnapOpen(false);
+            toast.info("Pembayaran dibatalkan. Campaign tersimpan sebagai draft.");
+          }}
+          grossAmount={calculateTotalPayment(draftBudget ?? totalBudgetEscrow)}
+          itemName={title || "Deposit Escrow Kampanye Marketiv"}
+          onSuccess={async () => {
+            setIsSimulatedSnapOpen(false);
+            if (createdCampaignId) {
+              const res = await publishCampaign(createdCampaignId);
+              if (res.success) {
+                toast.success("Campaign berhasil diterbitkan dan kini tayang di Job Pool.");
+              }
+            }
+            setIsCreatedOpen(true);
+          }}
         />
       )}
 

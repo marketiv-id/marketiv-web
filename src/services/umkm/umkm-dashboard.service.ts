@@ -2,6 +2,12 @@ import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
 import { mockDelay } from "@/lib/mock-delay";
 import { MINIMUM_CAMPAIGN_BUDGET } from "@/types/domain";
 import {
+  getDemoStore,
+  addDemoCampaign,
+  updateDemoCampaignStatus,
+  deleteDemoCampaign,
+} from "@/lib/demo/demo-store";
+import {
   ServiceResult,
   UmkmProfile,
   UmkmDashboardSummary,
@@ -21,7 +27,6 @@ import {
 import {
   mockUmkmProfile,
   mockUmkmSettingsProfile,
-  mockCampaigns,
   mockSubmissions,
   mockCreators,
   mockRateCardPackages,
@@ -108,7 +113,8 @@ export async function getUmkmProfile(): Promise<ServiceResult<UmkmProfile>> {
 export async function getOverview(): Promise<ServiceResult<UmkmOverviewData>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(300);
-    return { success: true, data: { ...mockUmkmOverview, campaigns: mockCampaigns } };
+    const store = getDemoStore();
+    return { success: true, data: { ...mockUmkmOverview, campaigns: store.campaigns } };
   }
   return getOverviewFromAppwrite();
 }
@@ -124,7 +130,7 @@ export async function getDashboardSummary(): Promise<ServiceResult<UmkmDashboard
 export async function getCampaigns(): Promise<ServiceResult<Campaign[]>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(300);
-    return { success: true, data: mockCampaigns };
+    return { success: true, data: getDemoStore().campaigns };
   }
   return getCampaignsFromAppwrite();
 }
@@ -132,7 +138,7 @@ export async function getCampaigns(): Promise<ServiceResult<Campaign[]>> {
 export async function getCampaignById(id: string): Promise<ServiceResult<Campaign>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(300);
-    const campaign = mockCampaigns.find((c) => c.id === id);
+    const campaign = getDemoStore().campaigns.find((c) => c.id === id);
     if (!campaign) {
       return { success: false, data: null, error: "Campaign tidak ditemukan", code: "not_found" };
     }
@@ -471,6 +477,7 @@ export async function createCampaignDraft(
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+    addDemoCampaign(campaign);
     return { success: true, data: { campaign, complete: true, warnings: [] } };
   }
   return createCampaignDraftInAppwrite(input);
@@ -480,14 +487,14 @@ export type { DuplicateCampaignOptions, CampaignEditRaw };
 
 /**
  * Baca campaign draft untuk halaman edit wizard.
- * Mock: cari di mockCampaigns berdasarkan id, kembalikan data mentah kosong kalau tidak ada.
+ * Mock: cari di demoStore berdasarkan id, kembalikan data mentah kosong kalau tidak ada.
  */
 export async function getCampaignDraftForEdit(
   campaignId: string
 ): Promise<ServiceResult<CampaignEditRaw>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(300);
-    const campaign = mockCampaigns.find((c) => c.id === campaignId);
+    const campaign = getDemoStore().campaigns.find((c) => c.id === campaignId);
     if (!campaign || campaign.status !== "draft") {
       return { success: false, error: "Campaign draft tidak ditemukan.", code: "not_found", data: null as unknown as CampaignEditRaw };
     }
@@ -497,8 +504,7 @@ export async function getCampaignDraftForEdit(
 }
 
 /**
- * Update campaign draft yang sudah ada.
- * Mock: echo — operasi tulis tidak dimutasi di mock.
+ * Update campaign draft yang sudah ada di demoStore.
  */
 export async function updateCampaignDraft(
   campaignId: string,
@@ -506,23 +512,35 @@ export async function updateCampaignDraft(
 ): Promise<ServiceResult<CampaignDraftResult>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(600);
-    const campaign = mockCampaigns.find((c) => c.id === campaignId);
+    const campaign = getDemoStore().campaigns.find((c) => c.id === campaignId);
     if (!campaign) {
       return { success: false, error: "Campaign tidak ditemukan.", code: "not_found", data: null as unknown as CampaignDraftResult };
     }
-    return { success: true, data: { campaign: { ...campaign, title: input.title }, complete: true, warnings: [] } };
+    const updated: Campaign = {
+      ...campaign,
+      title: input.title,
+      brief: input.brief?.briefDetail ?? campaign.brief,
+      externalAssetUrl: input.asset?.fileUrl ?? campaign.externalAssetUrl,
+      niche: (input.category as Campaign["niche"]) ?? campaign.niche,
+      creatorQuota: input.claimLimit ?? campaign.creatorQuota,
+      pricePerThousandViews: input.rewardPer1000Views ?? campaign.pricePerThousandViews,
+      totalBudgetEscrow: input.budget ?? campaign.totalBudgetEscrow,
+      updatedAt: new Date().toISOString(),
+    };
+    addDemoCampaign(updated);
+    return { success: true, data: { campaign: updated, complete: true, warnings: [] } };
   }
   return updateCampaignDraftInAppwrite(campaignId, input);
 }
 
-/** Jeda / aktifkan kembali campaign. Mock meniru validasi status yang sama. */
+/** Jeda / aktifkan kembali campaign di demoStore. */
 export async function updateCampaignStatus(
   campaignId: string,
   next: "paused" | "active"
 ): Promise<ServiceResult<Campaign>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(400);
-    const c = mockCampaigns.find((x) => x.id === campaignId);
+    const c = getDemoStore().campaigns.find((x) => x.id === campaignId);
     if (!c) return { success: false, data: null, error: "Campaign tidak ditemukan.", code: "not_found" };
     if (next === "paused" && c.status !== "active") {
       return { success: false, data: null, error: "Hanya campaign aktif yang bisa dijeda.", code: "validation" };
@@ -530,12 +548,13 @@ export async function updateCampaignStatus(
     if (next === "active" && c.status !== "paused") {
       return { success: false, data: null, error: "Hanya campaign terjeda yang bisa diaktifkan kembali.", code: "validation" };
     }
+    updateDemoCampaignStatus(campaignId, next);
     return { success: true, data: { ...c, status: next } };
   }
   return updateCampaignStatusInAppwrite(campaignId, next);
 }
 
-/** Duplikasi campaign jadi draft baru. Mock echo dari mockCampaigns. */
+/** Duplikasi campaign jadi draft baru di demoStore. */
 export async function duplicateCampaign(
   sourceId: string,
   newTitle: string,
@@ -543,7 +562,7 @@ export async function duplicateCampaign(
 ): Promise<ServiceResult<CampaignDraftResult>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(600);
-    const src = mockCampaigns.find((x) => x.id === sourceId);
+    const src = getDemoStore().campaigns.find((x) => x.id === sourceId);
     if (!src) return { success: false, data: null, error: "Campaign sumber tidak ditemukan.", code: "not_found" };
     const campaign: Campaign = {
       ...src,
@@ -559,6 +578,7 @@ export async function duplicateCampaign(
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+    addDemoCampaign(campaign);
     return { success: true, data: { campaign, complete: true, warnings: [] } };
   }
   return duplicateCampaignInAppwrite(sourceId, newTitle, options);
@@ -571,7 +591,7 @@ export type { UmkmProfileWriteInput };
 export async function getUmkmSettingsProfile(): Promise<ServiceResult<UmkmSettingsProfile>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(300);
-    return { success: true, data: mockUmkmSettingsProfile };
+    return { success: true, data: getDemoStore().umkmProfile };
   }
   return getUmkmSettingsProfileFromAppwrite();
 }
@@ -686,7 +706,7 @@ export type { ReviewSubmissionInput };
 export async function publishCampaign(campaignId: string): Promise<ServiceResult<Campaign>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(600);
-    const c = mockCampaigns.find((x) => x.id === campaignId);
+    const c = getDemoStore().campaigns.find((x) => x.id === campaignId);
     if (!c) return { success: false, data: null, error: "Campaign tidak ditemukan.", code: "not_found" };
     if (c.status !== "draft") {
       return {
@@ -705,7 +725,8 @@ export async function publishCampaign(campaignId: string): Promise<ServiceResult
         code: "validation",
       };
     }
-    return { success: true, data: { ...c, status: "active" } };
+    updateDemoCampaignStatus(campaignId, "active");
+    return { success: true, data: { ...c, status: "active", remainingBudget: c.totalBudgetEscrow } };
   }
   return publishCampaignInAppwrite(campaignId);
 }
@@ -745,7 +766,7 @@ export async function reviewSubmission(
 export async function deleteCampaignDraft(campaignId: string): Promise<ServiceResult<null>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(500);
-    const c = mockCampaigns.find((x) => x.id === campaignId);
+    const c = getDemoStore().campaigns.find((x) => x.id === campaignId);
     if (!c) return { success: false, data: null, error: "Campaign tidak ditemukan.", code: "not_found" };
     if (c.status !== "draft") {
       return {
@@ -755,6 +776,7 @@ export async function deleteCampaignDraft(campaignId: string): Promise<ServiceRe
         code: "validation",
       };
     }
+    deleteDemoCampaign(campaignId);
     return { success: true, data: null };
   }
   return deleteCampaignDraftInAppwrite(campaignId);

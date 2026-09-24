@@ -1,0 +1,10 @@
+{
+  "name": "booth-local-mock-architecture",
+  "title": "Booth Exhibition Local Mock Architecture (Option A)",
+  "status": "draft",
+  "priority": "P0",
+  "owner": "Antigravity Engineering Team",
+  "targetEvent": "Pameran & Booth Demo Interaktif P2MW 2026",
+  "createdAt": "2026-09-25",
+  "mode": "mock-offline-safe"
+}

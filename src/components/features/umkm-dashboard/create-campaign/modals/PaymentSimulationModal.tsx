@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { formatCurrency } from "@/lib/formatters";
 import { calculatePlatformFee, calculateTotalPayment } from "@/types/domain";
 import { Button } from "@/components/ui/button";
@@ -26,16 +25,8 @@ export function PaymentSimulationModal({
   onConfirm,
   totalBudgetEscrow,
 }: PaymentSimulationModalProps) {
-  const [selectedMethod, setSelectedMethod] = useState<string>("va");
-
   const platformFee = calculatePlatformFee(totalBudgetEscrow);
   const totalPayment = calculateTotalPayment(totalBudgetEscrow);
-
-  // Metode sebenarnya dipilih di popup Midtrans Snap; daftar ini hanya preview.
-  const paymentMethods = [
-    { id: "va", name: "Virtual Account", desc: "Transfer Bank Otomatis 24 Jam" },
-    { id: "wallet", name: "E-Wallet / QRIS", desc: "GoPay, OVO, Dana, ShopeePay" },
-  ];
 
   return (
     <ResponsiveModal open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -70,42 +61,14 @@ export function PaymentSimulationModal({
           </div>
         </div>
 
-        {/* Payment options */}
-        <div className="space-y-2 my-4">
-          <span className="block text-[9px] font-bold text-text-muted uppercase tracking-wider">
-            Pilih Metode Pembayaran
+        {/* Informational notice: metode pembayaran dipilih di Midtrans Snap */}
+        <div className="rounded-xl bg-primary-50/20 border border-primary-100/30 p-3.5 flex gap-2.5 items-start my-4">
+          <span className="h-4.5 w-4.5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-[11px] mt-0.5">
+            i
           </span>
-          <div className="space-y-2">
-            {paymentMethods.map((pm) => {
-              const isSelected = selectedMethod === pm.id;
-              return (
-                <button
-                  key={pm.id}
-                  type="button"
-                  onClick={() => setSelectedMethod(pm.id)}
-                  className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
-                    isSelected
-                      ? "bg-primary-50/20 border-primary shadow-xs"
-                      : "bg-white border-neutral-200/60 hover:bg-neutral-50"
-                  }`}
-                >
-                  <div className="min-w-0">
-                    <span className={`block text-xs font-bold ${isSelected ? "text-primary" : "text-text-primary"}`}>
-                      {pm.name}
-                    </span>
-                    <span className="block text-[10px] text-text-muted truncate mt-0.5 font-semibold">
-                      {pm.desc}
-                    </span>
-                  </div>
-                  <span className={`h-4.5 w-4.5 rounded-full border flex items-center justify-center shrink-0 ${
-                    isSelected ? "border-primary bg-primary text-white" : "border-neutral-300 bg-white"
-                  }`}>
-                    {isSelected && <span className="h-1.5 w-1.5 bg-white rounded-full" />}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          <p className="text-[11px] text-text-muted leading-relaxed font-medium">
+            Metode pembayaran (QRIS, GoPay, OVO, ShopeePay, Virtual Account) dipilih langsung di dalam Midtrans Snap.
+          </p>
         </div>
 
         {/* Action Buttons */}
@@ -122,10 +85,12 @@ export function PaymentSimulationModal({
             onClick={onConfirm}
             className="flex-1 h-10 text-xs bg-primary text-white hover:bg-primary/90"
           >
-            Lanjut ke Pembayaran
+            Lanjut ke Pembayaran Midtrans
           </Button>
         </ResponsiveModalFooter>
       </ResponsiveModalContent>
     </ResponsiveModal>
   );
 }
+
+export { SimulatedSnapModal } from "@/components/features/demo/SimulatedSnapModal";

@@ -245,6 +245,7 @@ export interface ChatMessage {
   /** Terisi saat `type === "offer"`. `offerId` dibutuhkan aksi hapus/terima. */
   offerData?: {
     offerId: string;
+    title?: string;
     finalPrice: number;
     scope: string;
     deadline: string;

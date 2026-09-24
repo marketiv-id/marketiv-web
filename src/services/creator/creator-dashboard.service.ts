@@ -1,5 +1,11 @@
 import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
 import { mockDelay } from "@/lib/mock-delay";
+import {
+  getDemoStore,
+  claimDemoJob,
+  submitDemoProof,
+  unclaimDemoJob,
+} from "@/lib/demo/demo-store";
 import type { ChatMessage } from "@/types/umkm-dashboard.types";
 import {
   sendMessageInAppwrite,
@@ -23,8 +29,6 @@ import {
   mockCreatorProfile,
   mockCreatorPortfolioItems,
   mockCreatorMetrics,
-  mockCreatorJobs,
-  mockCreatorActiveWorks,
   mockCreatorSubmissions,
   mockCreatorNegotiations,
   mockCreatorRateCardPackages,
@@ -77,7 +81,7 @@ import type { RateCardStatus } from "@/types/domain";
 export async function getCreatorProfile(): Promise<ServiceResult<CreatorProfile>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(300);
-    return { success: true, data: mockCreatorProfile };
+    return { success: true, data: getDemoStore().creatorProfile };
   }
   return getCreatorProfileFromAppwrite();
 }
@@ -101,7 +105,7 @@ export async function getCreatorMetrics(): Promise<ServiceResult<CreatorMetric>>
 export async function getCreatorJobs(): Promise<ServiceResult<CreatorJob[]>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(300);
-    return { success: true, data: mockCreatorJobs };
+    return { success: true, data: getDemoStore().creatorJobs };
   }
   return getCreatorJobsFromAppwrite();
 }
@@ -109,7 +113,7 @@ export async function getCreatorJobs(): Promise<ServiceResult<CreatorJob[]>> {
 export async function getCreatorJobById(id: string): Promise<ServiceResult<CreatorJob>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(300);
-    const job = mockCreatorJobs.find((j) => j.id === id);
+    const job = getDemoStore().creatorJobs.find((j) => j.id === id);
     if (!job) {
       return { success: false, data: null, error: "Job tidak ditemukan" };
     }
@@ -121,7 +125,7 @@ export async function getCreatorJobById(id: string): Promise<ServiceResult<Creat
 export async function getCreatorActiveWorks(): Promise<ServiceResult<CreatorActiveWork[]>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(300);
-    return { success: true, data: mockCreatorActiveWorks };
+    return { success: true, data: getDemoStore().creatorActiveWorks };
   }
   return getCreatorActiveWorksFromAppwrite();
 }
@@ -129,7 +133,7 @@ export async function getCreatorActiveWorks(): Promise<ServiceResult<CreatorActi
 export async function getCreatorActiveWorkById(id: string): Promise<ServiceResult<CreatorActiveWork>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(300);
-    const work = mockCreatorActiveWorks.find((w) => w.id === id);
+    const work = getDemoStore().creatorActiveWorks.find((w) => w.id === id);
     if (!work) {
       return { success: false, data: null, error: "Pekerjaan tidak ditemukan" };
     }
@@ -468,7 +472,8 @@ export type { SubmitProofInput };
 export async function claimCampaign(campaignId: string): Promise<ServiceResult<string>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(800);
-    const job = mockCreatorJobs.find((j) => j.id === campaignId);
+    const store = getDemoStore();
+    const job = store.creatorJobs.find((j) => j.id === campaignId);
     if (!job) {
       return { success: false, data: "", error: "Campaign tidak ditemukan.", code: "not_found" };
     }
@@ -480,7 +485,7 @@ export async function claimCampaign(campaignId: string): Promise<ServiceResult<s
         code: "validation",
       };
     }
-    if (mockCreatorActiveWorks.some((w) => w.campaignId === campaignId)) {
+    if (store.creatorActiveWorks.some((w) => w.campaignId === campaignId)) {
       return {
         success: false,
         data: "",
@@ -488,7 +493,16 @@ export async function claimCampaign(campaignId: string): Promise<ServiceResult<s
         code: "validation",
       };
     }
-    return { success: true, data: `mock_claim_${Date.now()}` };
+    const result = claimDemoJob(campaignId);
+    if (!result.success) {
+      return {
+        success: false,
+        data: "",
+        error: result.error || "Gagal mengklaim campaign.",
+        code: "validation",
+      };
+    }
+    return { success: true, data: result.claimId || `mock_claim_${Date.now()}` };
   }
   return claimCampaignInAppwrite(campaignId);
 }
@@ -500,7 +514,8 @@ export async function claimCampaign(campaignId: string): Promise<ServiceResult<s
 export async function submitProof(input: SubmitProofInput): Promise<ServiceResult<null>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(900);
-    const work = mockCreatorActiveWorks.find((w) => w.id === input.claimId);
+    const store = getDemoStore();
+    const work = store.creatorActiveWorks.find((w) => w.id === input.claimId);
     if (!work) {
       return { success: false, data: null, error: "Pekerjaan tidak ditemukan.", code: "not_found" };
     }
@@ -511,6 +526,10 @@ export async function submitProof(input: SubmitProofInput): Promise<ServiceResul
         error: "Bukti untuk pekerjaan ini sudah pernah dikirim.",
         code: "validation",
       };
+    }
+    const result = submitDemoProof(input.claimId, input.postUrl);
+    if (!result.success) {
+      return { success: false, data: null, error: result.error || "Gagal mengirim bukti.", code: "validation" };
     }
     return { success: true, data: null };
   }
@@ -526,7 +545,8 @@ export async function submitProof(input: SubmitProofInput): Promise<ServiceResul
 export async function unclaimCampaign(claimId: string): Promise<ServiceResult<null>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(500);
-    const work = mockCreatorActiveWorks.find((w) => w.id === claimId);
+    const store = getDemoStore();
+    const work = store.creatorActiveWorks.find((w) => w.id === claimId);
     if (!work) {
       return { success: false, data: null, error: "Pekerjaan tidak ditemukan.", code: "not_found" };
     }
@@ -537,6 +557,10 @@ export async function unclaimCampaign(claimId: string): Promise<ServiceResult<nu
         error: "Hanya pekerjaan yang belum dikirim yang bisa dibatalkan.",
         code: "validation",
       };
+    }
+    const result = unclaimDemoJob(claimId);
+    if (!result.success) {
+      return { success: false, data: null, error: result.error || "Gagal membatalkan pekerjaan.", code: "validation" };
     }
     return { success: true, data: null };
   }

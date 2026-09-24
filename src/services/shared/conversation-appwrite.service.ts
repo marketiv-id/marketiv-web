@@ -295,6 +295,7 @@ export async function getMessagesByConversationIdInAppwrite(
         offerData: offer
           ? {
               offerId: str(offer.$id),
+              title: str(offer.title) || str(offer.packageNameSnapshot),
               finalPrice: num(offer.price),
               scope: str(offer.description),
               deadline: str(offer.deadline),

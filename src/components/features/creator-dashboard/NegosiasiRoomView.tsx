@@ -78,6 +78,7 @@ interface ChatMessage {
   isCustomOffer?: boolean;
   offerData?: {
     offerId: string;
+    title?: string;
     price: number;
     scope: string;
     revisions: number;
@@ -153,6 +154,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
     offerData: m.offerData
       ? {
           offerId: m.offerData.offerId,
+          title: m.offerData.title,
           price: m.offerData.finalPrice,
           scope: m.offerData.scope,
           revisions: m.offerData.revisionCount,
@@ -564,7 +566,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
                                     <Sparkles className="w-3 h-3" />
                                     Custom Offer
                                   </span>
-                                  <h5 className="font-extrabold text-kreator-ink text-xs leading-tight">{neg.projectTitle}</h5>
+                                  <h5 className="font-extrabold text-kreator-ink text-xs leading-tight">{msg.offerData.title || (msg.text.startsWith("Penawaran Khusus: ") ? msg.text.replace("Penawaran Khusus: ", "") : null) || neg.projectTitle}</h5>
                                 </div>
                                 <span className="text-lg font-black text-violet-700 shrink-0 leading-none">
                                   {formatCurrency(msg.offerData.price)}

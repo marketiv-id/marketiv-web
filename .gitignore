@@ -60,4 +60,5 @@ appwrite.config.json
 # local ide & docs
 .cursor/
 .mcp.json
+.antigravity/
 *.pdf

@@ -3,6 +3,8 @@ import { Plus_Jakarta_Sans, Sora } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { ChatbotFab } from "@/components/features/chatbot/ChatbotFab";
+import { FloatingDemoBar } from "@/components/features/demo/FloatingDemoBar";
+import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
 import "./globals.css";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -38,6 +40,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <ChatbotFab />
+          {DATA_SOURCE_CONFIG.useMockData && <FloatingDemoBar />}
         </AuthProvider>
         <Toaster />
       </body>

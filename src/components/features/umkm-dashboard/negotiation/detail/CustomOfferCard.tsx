@@ -75,7 +75,7 @@ export function CustomOfferCard({
               Judul Proyek
             </span>
             <h4 className="text-xs font-extrabold text-text-primary leading-tight">
-              {message.content}
+              {offer.title || message.content}
             </h4>
           </div>
 
