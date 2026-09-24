@@ -153,7 +153,7 @@ function getEnv(req) {
     campaignBriefsCollectionId:
       process.env.CAMPAIGN_BRIEFS_COLLECTION_ID ||
       process.env.NEXT_PUBLIC_CAMPAIGN_BRIEF_COLLECTION ||
-      "campaign_briefs",
+      "6ab530d00018edb50097",
     campaignAssetsCollectionId:
       process.env.CAMPAIGN_ASSETS_COLLECTION_ID ||
       process.env.NEXT_PUBLIC_CAMPAIGN_ASSET_COLLECTION ||

@@ -24,7 +24,7 @@ export const COLLECTIONS = {
   withdrawals: process.env.NEXT_PUBLIC_WITHDRAWAL_COLLECTION || 'withdrawals',
   campaigns: process.env.NEXT_PUBLIC_CAMPAIGN_COLLECTION || 'campaigns',
   campaignAssets: process.env.NEXT_PUBLIC_CAMPAIGN_ASSET_COLLECTION || 'campaign_assets',
-  campaignBriefs: process.env.NEXT_PUBLIC_CAMPAIGN_BRIEF_COLLECTION || 'campaign_briefs',
+  campaignBriefs: process.env.NEXT_PUBLIC_CAMPAIGN_BRIEF_COLLECTION || '6ab530d00018edb50097',
   claims: process.env.NEXT_PUBLIC_CLAIM_COLLECTION || 'campaign_claims',
   submissions: process.env.NEXT_PUBLIC_SUBMISSION_COLLECTION || 'campaign_submissions',
   fraudChecks: process.env.NEXT_PUBLIC_FRAUD_CHECK_COLLECTION || 'fraud_checks',

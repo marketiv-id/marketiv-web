@@ -239,7 +239,7 @@ function getEnv(req) {
     submissionsCollectionId: process.env.SUBMISSIONS_COLLECTION_ID || process.env.NEXT_PUBLIC_SUBMISSION_COLLECTION || "campaign_submissions",
     fraudChecksCollectionId: process.env.FRAUD_CHECKS_COLLECTION_ID || process.env.NEXT_PUBLIC_FRAUD_CHECK_COLLECTION || "fraud_checks",
     campaignsCollectionId: process.env.CAMPAIGNS_COLLECTION_ID || process.env.NEXT_PUBLIC_CAMPAIGN_COLLECTION || "campaigns",
-    campaignBriefsCollectionId: process.env.CAMPAIGN_BRIEFS_COLLECTION_ID || "campaign_briefs",
+    campaignBriefsCollectionId: process.env.CAMPAIGN_BRIEFS_COLLECTION_ID || "6ab530d00018edb50097",
     aiRequestsCollectionId: process.env.AI_REQUESTS_COLLECTION_ID || "ai_requests",
   };
   const missing = Object.entries(env).filter(([, value]) => !value).map(([key]) => key);

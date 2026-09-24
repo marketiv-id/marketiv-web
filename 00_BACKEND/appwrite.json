@@ -1450,6 +1450,102 @@
             ]
         },
         {
+            "$id": "6ab530d00018edb50097",
+            "name": "campaign_briefs_v2",
+            "$permissions": [
+                "read(\"any\")",
+                "create(\"users\")"
+            ],
+            "enabled": true,
+            "databaseId": "6a4c8598001da3b0d7f0",
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "campaignId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "objective",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 2000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "contentAngle",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 2000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "cta",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 1000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "briefDetail",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 10000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "doAndDont",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 400,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "materialsJson",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 300,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "generatedByAi",
+                    "type": "boolean",
+                    "required": false,
+                    "array": false,
+                    "default": false
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "idx_campaignId",
+                    "type": "unique",
+                    "status": "available",
+                    "orders": [
+                        "ASC"
+                    ],
+                    "columns": [
+                        "campaignId"
+                    ]
+                }
+            ]
+        },
+        {
             "$id": "campaign_claims",
             "name": "Campaign Claims",
             "$permissions": [

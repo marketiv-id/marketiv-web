@@ -217,7 +217,7 @@ Return a JSON object with this exact structure (no markdown, no code fences, raw
       );
 
       if (campaignId) {
-        const briefCollectionId = env.CAMPAIGN_BRIEFS_COLLECTION_ID || "campaign_briefs";
+        const briefCollectionId = env.CAMPAIGN_BRIEFS_COLLECTION_ID || "6ab530d00018edb50097";
         try {
           const existing = await databases.listDocuments(databaseId, briefCollectionId, [
             (await import("node-appwrite")).Query.equal("campaignId", campaignId),

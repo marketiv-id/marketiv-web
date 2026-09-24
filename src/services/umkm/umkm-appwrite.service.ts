@@ -74,7 +74,7 @@ const DB = appwriteConfig.databaseId;
 
 const COLLECTIONS = {
   campaigns: "campaigns",
-  campaignBriefs: "campaign_briefs",
+  campaignBriefs: "6ab530d00018edb50097",
   campaignAssets: "campaign_assets",
   umkmProfiles: "umkm_profiles",
   creatorProfiles: "creator_profiles",

@@ -64,9 +64,12 @@ if (!camp) {
 
 printRow("campaign", camp);
 
-// 2. Campaign briefs
-const briefs = await fetchAll("campaign_briefs", [q.equal("campaignId", campaignId), q.limit(5)]);
-console.log(`\n  campaign_briefs (${briefs.length} baris):`);
+// 2. Campaign briefs — collection aktif campaign_briefs_v2 (ID Appwrite).
+// Collection lama `campaign_briefs` masih ada untuk rollback/migrasi data;
+// runtime & inspect mengikuti yang v2.
+const BRIEFS_TABLE = process.env.CAMPAIGN_BRIEFS_COLLECTION_ID || "6ab530d00018edb50097";
+const briefs = await fetchAll(BRIEFS_TABLE, [q.equal("campaignId", campaignId), q.limit(5)]);
+console.log(`\n  campaign_briefs_v2 (${briefs.length} baris):`);
 briefs.forEach((b, i) => printRow(`  [${i}]`, b));
 
 // 3. Campaign assets

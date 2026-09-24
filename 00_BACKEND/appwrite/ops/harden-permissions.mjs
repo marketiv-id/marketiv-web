@@ -151,6 +151,15 @@ const TARGETS = [
     rowSecurity: true,
     why: 'update("users") = siapa pun bisa mengubah brief campaign orang lain setelah kreator mengklaimnya; row perm sama dengan campaigns',
   },
+  // Collection brief aktif (migrasi 2026-09-24). Collection lama di atas
+  // dipertahankan untuk data legacy; harden ikut menutup v2 agar permission
+  // konsisten dengan kontrak campaign_briefs.
+  {
+    id: "6ab530d00018edb50097",
+    permissions: ['create("users")'],
+    rowSecurity: true,
+    why: 'campaign_briefs_v2 — collection brief aktif runtime; ikut ditutup update("users") seperti campaign_briefs lama',
+  },
   {
     id: "campaign_assets",
     permissions: ['create("users")'],

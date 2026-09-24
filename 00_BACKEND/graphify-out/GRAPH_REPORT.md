@@ -1,16 +1,16 @@
-# Graph Report - 00_BACKEND  (2026-08-12)
+# Graph Report - 00_BACKEND  (2026-09-24)
 
 ## Corpus Check
-- 484 files · ~339,414 words
+- 488 files · ~325,613 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4922 nodes · 5245 edges · 415 communities (388 shown, 27 thin omitted)
-- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 23 edges (avg confidence: 0.5)
+- 5035 nodes · 5575 edges · 412 communities (377 shown, 35 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 35 edges (avg confidence: 0.58)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `9dab36e2`
+- Built from commit: `ea07e081`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -111,7 +111,6 @@
 - Notifications — Overview
 - Notifications — Business Rules
 - Notifications — Frontend
-- Offers — Testing
 - Offers — Overview
 - Offers — Concepts
 - Community 99
@@ -135,7 +134,6 @@
 - creator.service.js
 - order.service.js
 - submission.service.js
-- user.service.js
 - Community 121
 - Community 122
 - AI — Testing
@@ -359,7 +357,6 @@
 - package.json
 - package.json
 - package.json
-- package.json
 - main.js
 - package.json
 - Bloker Frontend — Fitur Delete/Cancel
@@ -367,15 +364,13 @@
 - Panduan Eksekusi Prompt Backend (Roadmap T&C)
 - Prompt — Penyusunan Syarat & Ketentuan Marketiv V3.1 (Final)
 - configure-google-oauth.mjs
-- package.json
+- main.js
 - main.js
 - main.js
 - main.js
 - require-active-role.test.ts
 - inspect-conversations.mjs
-- package.json
 - main.js
-- package.json
 - Tests — Marketiv
 - fix-function-vars.mjs
 - appwrite/ops
@@ -396,29 +391,29 @@
 2. `Syarat & Ketentuan` - 23 edges
 3. `Appwrite CLI` - 19 edges
 4. `Platform Engineering` - 17 edges
-5. `COLLECTIONS` - 15 edges
-6. `databases` - 15 edges
-7. `Prompt — Perbaikan Google OAuth Redirect ke Form/Login vs Onboarding` - 15 edges
-8. `account` - 14 edges
-9. `OpenAPI 3.1 Specification` - 14 edges
-10. `Express to NestJS Migration Guide` - 14 edges
+5. `createReviewWithdrawalHandler()` - 16 edges
+6. `Appwrite Functions` - 16 edges
+7. `createRequestRatecardRevisionHandler()` - 15 edges
+8. `COLLECTIONS` - 15 edges
+9. `databases` - 15 edges
+10. `Prompt — Perbaikan Google OAuth Redirect ke Form/Login vs Onboarding` - 15 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `listAll()` --calls--> `aw()`  [EXTRACTED]
-  appwrite/ops/audit-live.mjs → appwrite/ops/client.mjs
-- `varsOf()` --calls--> `aw()`  [EXTRACTED]
-  appwrite/ops/fix-function-vars.mjs → appwrite/ops/client.mjs
-- `listAllRows()` --calls--> `aw()`  [EXTRACTED]
-  appwrite/ops/inspect-conversations.mjs → appwrite/ops/client.mjs
-- `auditPlatforms()` --calls--> `aw()`  [EXTRACTED]
-  appwrite/ops/audit-google-oauth.mjs → appwrite/ops/client.mjs
-- `auditProvider()` --calls--> `aw()`  [EXTRACTED]
-  appwrite/ops/audit-google-oauth.mjs → appwrite/ops/client.mjs
+- `createGetAdminDashboardSummaryHandler()` --indirect_call--> `req()`  [INFERRED]
+  functions/get-admin-dashboard-summary/src/main.js → tests/unit/unclaim-campaign.test.ts
+- `createGetAdminSubmissionQueueHandler()` --indirect_call--> `req()`  [INFERRED]
+  functions/get-admin-submission-queue/src/main.js → tests/unit/unclaim-campaign.test.ts
+- `createGetAdminWithdrawalQueueHandler()` --indirect_call--> `req()`  [INFERRED]
+  functions/get-admin-withdrawal-queue/src/main.js → tests/unit/unclaim-campaign.test.ts
+- `createRequestRatecardRevisionHandler()` --indirect_call--> `req()`  [INFERRED]
+  functions/request-ratecard-revision/src/main.js → tests/unit/unclaim-campaign.test.ts
+- `createReviewWithdrawalHandler()` --indirect_call--> `req()`  [INFERRED]
+  functions/review-withdrawal/src/main.js → tests/unit/unclaim-campaign.test.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (415 total, 27 thin omitted)
+## Communities (412 total, 35 thin omitted)
 
 ### Community 0 - "00_Index.md"
 Cohesion: 0.10
@@ -446,7 +441,7 @@ Nodes (41): 1. Over-engineering Simple Applications, 2. Not Understanding Depend
 
 ### Community 6 - "20_Campaign_PPV.md"
 Cohesion: 0.05
-Nodes (37): Akun Suspended / Terminated, Approve → Release Escrow, Deliverable, Orders — Business Rules, Review Process, Revisi, Status Order, deliverables (+29 more)
+Nodes (36): Akun Suspended / Terminated, Approve → Release Escrow, Deliverable, Orders — Business Rules, Review Process, Revisi, Status Order, `approveDeliverable()` — [Client SDK] *(memicu Appwrite Function `release-escrow`)* (+28 more)
 
 ### Community 7 - "40_Folder_Structure"
 Cohesion: 0.06
@@ -478,11 +473,11 @@ Nodes (28): API Architecture Patterns, Architecture Decision Guide, Authenticati
 
 ### Community 14 - "Tech Stack"
 Cohesion: 0.06
-Nodes (27): Archive, Chat — Business Rules, Denormalisasi, Read Receipt, Realtime & Akses, Satu Percakapan per Pasangan, Tipe Pesan, Chat — Database (+19 more)
+Nodes (29): Archive, Chat — Business Rules, Denormalisasi, Read Receipt, Realtime & Akses, Satu Percakapan per Pasangan, Tipe Pesan, Chat — Database (+21 more)
 
 ### Community 15 - "Halaman"
-Cohesion: 0.05
-Nodes (17): Account, authUsers, Client, createCalls, Databases, emailTokens, Functions, ID (+9 more)
+Cohesion: 0.09
+Nodes (16): authUsers, createCalls, emailTokens, Functions, ID, makeReq(), makeRes(), Messaging (+8 more)
 
 ### Community 16 - "Orders — Frontend"
 Cohesion: 0.08
@@ -529,8 +524,8 @@ Cohesion: 0.09
 Nodes (21): Algolia DocSearch, Analytics Integration, Build Optimization, CDN & Caching, Code Example Testing, Custom Analytics, Documentation Systems & Infrastructure, Documentation Testing (+13 more)
 
 ### Community 27 - "Halaman"
-Cohesion: 0.14
-Nodes (10): Daftar Dokumen, Modul AI, Daftar Dokumen, Modul Campaigns, Daftar Dokumen, Modul Chat, Daftar Dokumen, Modul Orders (+2 more)
+Cohesion: 0.11
+Nodes (10): Daftar Dokumen, Modul Chat, Daftar Dokumen, Modul Offers, Daftar Dokumen, Modul Orders, Daftar Dokumen, Modul Payments (+2 more)
 
 ### Community 28 - "Halaman"
 Cohesion: 0.10
@@ -570,15 +565,15 @@ Nodes (18): Accessibility, Accessible Modal, Bundle Analysis, Code Splitting & L
 
 ### Community 37 - "00_Index.md"
 Cohesion: 0.06
-Nodes (31): appwrite, @opendataloader/pdf, dependencies, appwrite, @opendataloader/pdf, devDependencies, node-appwrite, @playwright/test (+23 more)
+Nodes (32): appwrite, @opendataloader/pdf, dependencies, appwrite, @opendataloader/pdf, devDependencies, node-appwrite, @playwright/test (+24 more)
 
 ### Community 38 - "Orders — Testing"
-Cohesion: 0.14
+Cohesion: 0.15
 Nodes (10): AI — Database, ai_requests, rate_card_packages, rate_cards, Rate Cards — Database, Dokumen, Users, Istilah (+2 more)
 
 ### Community 39 - "Community 39"
-Cohesion: 0.11
-Nodes (19): Data Model — Collection yang Terlibat, Edge Cases, Events / Functions, Links, Modules Involved, Notifikasi, Purpose, State Transitions (+11 more)
+Cohesion: 0.15
+Nodes (13): 1. Create & Fund — UMKM, 2. Claim — Creator, 3. Produce & Submit — Creator, 4. Risk Precheck — System, 5. Validate — Admin Marketiv, 6. Reward — Backend, Actors, Flow (+5 more)
 
 ### Community 40 - "Community 40"
 Cohesion: 0.11
@@ -597,8 +592,8 @@ Cohesion: 0.11
 Nodes (17): Backend Patterns, Circuit Breaker Pattern, Connection Pooling, Database Optimization, Distributed Tracing, Docker & Deployment, Graceful Shutdown, Idempotency (+9 more)
 
 ### Community 44 - "30_Naming_Convention"
-Cohesion: 0.12
-Nodes (17): Data Model — Collection yang Terlibat, Edge Cases, Events / Functions, Links, Modules Involved, Notifikasi, Purpose, State Transitions (+9 more)
+Cohesion: 0.20
+Nodes (10): Admin Usage, Creator/UMKM Presentation, Current Behavior, Failure Case, Financial Guardrail, Future Evolution, Purpose, Separation of Concerns (+2 more)
 
 ### Community 45 - "60_Error_Handling"
 Cohesion: 0.22
@@ -620,13 +615,9 @@ Nodes (15): Capture an Execution Plan, Common Operations & Examples, Constraints
 Cohesion: 0.05
 Nodes (42): 0. Refactor: Dashboard UMKM + 4 Function DTO, 10. Docs: Sinkronisasi Global, 11. Chore: Constants & Commits Tracker, 12. Chore: Update Graphify, 13. Feature: Platform Fee 2%, 13. Feature: Platform Fee 2%, 14. Chore: Config Sync, 15. Fix: Env Var Naming Convention di Semua Function (+34 more)
 
-### Community 50 - "Authentication — Backend"
-Cohesion: 0.19
-Nodes (8): Dokumen, Notifications, Istilah, Konsep, Notifications — Concepts, Lihat Juga, Notifications — Events, Pola Implementasi
-
 ### Community 51 - "Campaigns — Testing"
 Cohesion: 0.11
-Nodes (18): Appwrite Functions (Server-side), `cancelPayment()` — [Appwrite Function callable], `create-escrow` — [Appwrite Function], `create-user-wallet` — [Appwrite Function], `createPayment()` — [Appwrite Function callable], `getPayment()` — [Client SDK], `getPayments()` — [Client SDK], `getTransactions()` — [Client SDK] (+10 more)
+Nodes (19): Admin withdrawal Functions, Appwrite Functions (Server-side), `cancelPayment()` — [Appwrite Function callable], `create-escrow` — [Appwrite Function], `create-user-wallet` — [Appwrite Function], `createPayment()` — [Appwrite Function callable], `getPayment()` — [Client SDK], `getPayments()` — [Client SDK] (+11 more)
 
 ### Community 52 - "Campaigns — Concepts"
 Cohesion: 0.12
@@ -657,8 +648,8 @@ Cohesion: 0.12
 Nodes (16): Data Model — Collection yang Terlibat, Edge Cases, Events / Functions, Jalur A: Direct Order (Tanpa Negosiasi), Jalur B: Custom Offer (Dengan Negosiasi), Links, Modules Involved, Notifikasi (+8 more)
 
 ### Community 59 - "Offers — Business Rules"
-Cohesion: 0.15
-Nodes (13): Data Model — Collection yang Terlibat, Edge Cases, Events / Functions, Links, Modules Involved, Notifikasi, Purpose, State Transitions (+5 more)
+Cohesion: 0.22
+Nodes (9): Current Flow, Functions, Links, Provider Boundaries, Purpose, Reward Availability and Legacy State, State Machine, Validation and Audit Rules (+1 more)
 
 ### Community 60 - "Community 60"
 Cohesion: 0.22
@@ -713,8 +704,8 @@ Cohesion: 0.17
 Nodes (11): API Designer, Constraints, Core Workflow, Knowledge Reference, MUST DO, MUST NOT DO, OpenAPI 3.1 Resource Endpoint (copy-paste starter), Output Checklist (+3 more)
 
 ### Community 73 - "Users — API (Profile Service)"
-Cohesion: 0.17
-Nodes (12): Aturan Asset Campaign, Aturan Auto-Expire Claim, Aturan Budget, Aturan Claim, Aturan Fraud, Aturan Submission, Campaigns — Business Rules, Data Denormalisasi (+4 more)
+Cohesion: 0.15
+Nodes (13): 10. Reward Rules, 11. Read/Write Boundary, 12. Migration Status, 1. Campaign Status, 2. Campaign Type & Assets, 3. Platform, 4. Budget & Fee, 5. Claim Rules (+5 more)
 
 ### Community 74 - "ADR-003 — `orders` sebagai Aggregate Utama Alur Rate Card"
 Cohesion: 0.24
@@ -729,8 +720,8 @@ Cohesion: 0.18
 Nodes (10): Common Issues, Deep Nesting, God Functions, Magic Numbers/Strings, Missing Error Handling, Missing Null Checks, Mutable Shared State, N+1 Query Problem (+2 more)
 
 ### Community 78 - "Roadmap Pengembangan"
-Cohesion: 0.21
-Nodes (5): Authentication, Dokumen, Authentication — Concepts, Istilah, Konsep
+Cohesion: 0.12
+Nodes (14): Authentication, Dokumen, Authentication — Concepts, Istilah, Konsep, Appwrite Auth SDK, Appwrite Functions, Aturan Implementasi (+6 more)
 
 ### Community 79 - "50_Security_Guidelines"
 Cohesion: 0.20
@@ -752,10 +743,6 @@ Nodes (9): API Documentation: NestJS & Express, Controller Documentation, DTO Do
 Cohesion: 0.20
 Nodes (9): API + Frontend Flow, Common Patterns, Create, CRUD Implementation, Delete, Form Handling, Quick Reference, Read (List with Pagination) (+1 more)
 
-### Community 84 - "AI — Events"
-Cohesion: 0.22
-Nodes (6): 00_Project — Index, Daftar Dokumen, Dikecualikan dari MVP, Referensi, Ruang Lingkup MVP, Termasuk dalam MVP
-
 ### Community 85 - "Authentication — Overview"
 Cohesion: 0.20
 Nodes (10): AI Layer, Backend (BaaS), Deployment, Frontend, Payment Gateway, Referensi, State Management, Tech Stack (+2 more)
@@ -770,7 +757,7 @@ Nodes (9): Campaigns — Frontend, Create Campaign, Halaman Creator, Halaman UMK
 
 ### Community 88 - "Community 88"
 Cohesion: 0.11
-Nodes (19): Alur 4-state (Pasal 11 T&C), Aturan Refund, Balance vs Pending Balance, Campaign Top-Up (Buyer Side), Escrow, Idempotensi, KYC (Pasal 11.8), Minimum Campaign Budget (+11 more)
+Nodes (19): Advanced Guards, Alur manual Admin, Aturan Refund, Balance vs Pending Balance, Campaign Top-Up (Buyer Side), Escrow, Idempotensi, Minimum Campaign Budget (+11 more)
 
 ### Community 89 - "Chat — Overview"
 Cohesion: 0.20
@@ -782,11 +769,11 @@ Nodes (35): 1. Cek env frontend, 1. OAuth provider atau platform Appwrite salah,
 
 ### Community 91 - "Chat — Events"
 Cohesion: 0.14
-Nodes (11): call(), decrementColumn(), endpointFor(), incrementColumn(), claimLedgerRow(), completeTopup(), deterministicId(), deterministicNotificationId() (+3 more)
+Nodes (13): call(), decrementColumn(), endpointFor(), incrementColumn(), claimLedgerRow(), completeTopup(), createEscrowOnce(), deterministicId() (+5 more)
 
 ### Community 92 - "Notifications — Testing"
-Cohesion: 0.22
-Nodes (5): createMidtransTransaction(), json(), PURPOSE_PREFIX, PURPOSES, validatePayload()
+Cohesion: 0.16
+Nodes (6): createMidtransTransaction(), existingPaymentResponse(), json(), PURPOSE_PREFIX, PURPOSES, validatePayload()
 
 ### Community 93 - "Notifications — Overview"
 Cohesion: 0.22
@@ -805,8 +792,8 @@ Cohesion: 0.33
 Nodes (6): escrows, payments, Payments — Database, transactions, wallets, withdrawals
 
 ### Community 98 - "Offers — Concepts"
-Cohesion: 0.12
-Nodes (16): Appwrite Functions, Aturan Backend, cancel-payment, create-escrow, create-payment, create-user-wallet, get-umkm-finance-summary, mature-pending-balance (+8 more)
+Cohesion: 0.11
+Nodes (18): Appwrite Functions, Aturan Backend, cancel-payment, create-escrow, create-payment, create-user-wallet, get-admin-withdrawal-queue, get-umkm-finance-summary (+10 more)
 
 ### Community 99 - "Community 99"
 Cohesion: 0.22
@@ -821,7 +808,7 @@ Cohesion: 0.22
 Nodes (8): Browse Creator, Edit Profile, Halaman, Komponen, Onboarding, Profile Creator, Profile UMKM, Users — Frontend
 
 ### Community 102 - "Community 102"
-Cohesion: 0.12
+Cohesion: 0.11
 Nodes (10): call(), decrementColumn(), endpointFor(), incrementColumn(), deterministicNotificationId(), deterministicTransactionId(), ensureTransaction(), ADR-0008 (+2 more)
 
 ### Community 103 - "Community 103"
@@ -873,8 +860,8 @@ Cohesion: 0.12
 Nodes (15): campaign_assets, campaign_briefs, campaign_claims, campaign_submissions, campaigns, Campaigns — Database, fraud_checks, Cara Menambahkan Footage (Foto, Video, Dokumen) ke Marketiv (+7 more)
 
 ### Community 115 - "ADR-002 — Abstraksi Service Layer Wajib"
-Cohesion: 0.20
-Nodes (9): Chat — Testing, Conversation (`createConversation`), Di Luar MVP, Notifikasi, Offer dari Chat, Pesan (`sendMessage`), Read Receipt (`markConversationAsRead`), Realtime (+1 more)
+Cohesion: 0.18
+Nodes (10): Archive per Participant, Chat — Testing, Conversation (`createConversation`), Di Luar MVP, Notifikasi, Offer dari Chat, Pesan (`sendMessage`), Read Receipt (`markConversationAsRead`) (+2 more)
 
 ### Community 116 - "ADR-006 — Gunakan Zustand untuk State Management, Bukan Redux"
 Cohesion: 0.22
@@ -889,12 +876,8 @@ Cohesion: 0.29
 Nodes (6): Halaman, Komponen, Payments — Frontend, Top Up, Wallet Dashboard, Withdrawal
 
 ### Community 119 - "submission.service.js"
-Cohesion: 0.20
-Nodes (10): Appwrite Functions, Aturan Backend, create-user-profile, Cross-Module Dependencies, delete-file ⚠️ DORMANT, get-creator-directory, get-umkm-profile, Lihat Juga (+2 more)
-
-### Community 120 - "user.service.js"
-Cohesion: 0.11
-Nodes (10): node-appwrite, runContentAnalysis(), @google/generative-ai, dependencies, @google/generative-ai, node-appwrite, main, name (+2 more)
+Cohesion: 0.18
+Nodes (11): Appwrite Functions, Aturan Backend, create-user-profile, Cross-Module Dependencies, delete-file ⚠️ DORMANT, get-creator-directory, get-umkm-profile, Lihat Juga (+3 more)
 
 ### Community 121 - "Community 121"
 Cohesion: 0.06
@@ -913,12 +896,12 @@ Cohesion: 0.25
 Nodes (7): node-appwrite, dependencies, node-appwrite, main, name, type, version
 
 ### Community 125 - "AI — User Flow"
-Cohesion: 0.25
-Nodes (7): node-appwrite, dependencies, node-appwrite, main, name, type, version
+Cohesion: 0.05
+Nodes (50): byKey(), chunk(), compareDeliverablesDesc(), createdAt(), createUmkmRatecardReviewsHandler(), getEnv(), getUserId(), groupBy() (+42 more)
 
 ### Community 126 - "Authentication — Concepts"
-Cohesion: 0.25
-Nodes (7): node-appwrite, dependencies, node-appwrite, main, name, type, version
+Cohesion: 0.08
+Nodes (34): ACTIONS, buildTransition(), conflict(), createClient(), createDatabasesClient(), createReviewWithdrawalHandler(), createUsersClient(), deterministicLedgerId() (+26 more)
 
 ### Community 127 - "Campaigns — User Flow"
 Cohesion: 0.25
@@ -933,8 +916,8 @@ Cohesion: 0.25
 Nodes (7): node-appwrite, dependencies, node-appwrite, main, name, type, version
 
 ### Community 131 - "package.json"
-Cohesion: 0.25
-Nodes (7): node-appwrite, dependencies, node-appwrite, main, name, type, version
+Cohesion: 0.07
+Nodes (28): evaluateCreatorCompletion(), evaluateUmkmCompletion(), longEnough(), nextProfileCompleted(), nonEmpty(), umkmFailedFields(), validPhone(), CREATOR_PROFILE_FIELDS (+20 more)
 
 ### Community 132 - "Orders — User Flow"
 Cohesion: 0.06
@@ -945,8 +928,8 @@ Cohesion: 0.06
 Nodes (33): 0. Ringkasan 1 menit, A-1. Akar masalah: `appwrite push functions` mencabut hak akses Function, A-2. Kenapa lolos berbulan-bulan, A-3. Skrip pemulih kami sendiri ikut merusak, A. Insiden — kenapa "NO DRIFT" kemarin adalah lampu hijau palsu, B-1. Generator sekarang menulis `scopes`, B-2. Pagar regresi yang sebenarnya, B-3. Skrip perusak dimatikan, perkakas ops pindah ke repo (+25 more)
 
 ### Community 134 - "Community 134"
-Cohesion: 0.25
-Nodes (7): node-appwrite, dependencies, node-appwrite, main, name, type, version
+Cohesion: 0.07
+Nodes (26): backendRoot, configIds, configIdsRaw, configPath, configWithoutDir, counts, dirIds, duplicateConfig (+18 more)
 
 ### Community 135 - "Community 135"
 Cohesion: 0.29
@@ -978,7 +961,7 @@ Nodes (7): Authentication — User Flow, Creator, Forgot Password, Lihat Juga, L
 
 ### Community 142 - "Offers — User Flow"
 Cohesion: 0.25
-Nodes (7): Approve Deliverable (`approveDeliverable`), Deliverable (`uploadDeliverable`), Get Orders (`getOrders`), Orders — Testing, Revision (`requestRevision`), Service Layer (`order.service.ts`), Status Flow
+Nodes (7): Approve Deliverable (`approveDeliverable`), Deliverable (`submit-ratecard-deliverable`), Get Orders (`getOrders`), Orders — Testing, Revision (`request-ratecard-revision`), Service Layer (`order.service.ts`), Status Flow
 
 ### Community 143 - "Community 143"
 Cohesion: 0.17
@@ -989,7 +972,7 @@ Cohesion: 0.29
 Nodes (6): Istilah, Konsep, Payments — Concepts, Status Escrow, Status Payment, Status Withdrawal
 
 ### Community 145 - "chat.service.js"
-Cohesion: 0.20
+Cohesion: 0.22
 Nodes (9): Campaign Budget Refund (T-02), Checkout Created → Midtrans Payment, Deliverable Approved → Release Escrow, Midtrans Notification → Payment Status, Order Cancelled/Expired → Refund Escrow (T-02), Payment Success → Escrow Hold, Payments — Events, User Registered → Create Wallet (+1 more)
 
 ### Community 146 - "notification.service.js"
@@ -997,8 +980,8 @@ Cohesion: 0.17
 Nodes (11): Delete File (`deleteFile`), Discovery (`searchCreators`), Get My Files (`getMyFiles`), Get Storage Usage (`getStorageUsage`), Onboarding, Profil, Service Layer (`user.service.ts`), Social Accounts (`addSocialAccount`, `removeSocialAccount`) (+3 more)
 
 ### Community 147 - "wallet.service.js"
-Cohesion: 0.29
-Nodes (6): node-appwrite, dependencies, node-appwrite, name, type, version
+Cohesion: 0.14
+Nodes (17): createRequestRatecardRevisionHandler(), findLatestDeliverable(), getDocumentOrNull(), getUser(), getUserId(), isMatchingRevision(), json(), mapRevision() (+9 more)
 
 ### Community 148 - "graphify.js"
 Cohesion: 0.29
@@ -1009,8 +992,8 @@ Cohesion: 0.06
 Nodes (32): 0. Ringkasan 1 menit, 1. Respons atas §C Handoff — Daftar Kerja Tim Backend, 2. Respons atas Temuan Verifikasi Event Prefix, 3. ⛔ BLOCKER — `doAndDont` Tidak Bisa Dinaikkan ke 4000, 4. DTO `get-creator-negotiations` — `conversationId` + `isArchived`, §5 (Claim `expired` mengunci kreator) — FIX DITERAPKAN ✅, 5. Temuan Tambahan Saat Eksekusi, 5a. Endpoint region salah di prefs.json (+24 more)
 
 ### Community 150 - "Community 150"
-Cohesion: 0.29
-Nodes (6): node-appwrite, dependencies, node-appwrite, name, type, version
+Cohesion: 0.15
+Nodes (14): createClient(), createDatabasesClient(), createGetAdminWithdrawalQueueHandler(), createUsersClient(), findActiveAdmin(), getEnv(), getUserId(), json() (+6 more)
 
 ### Community 152 - "Community 152"
 Cohesion: 0.29
@@ -1054,7 +1037,7 @@ Nodes (6): 80_Deployment, Deploy Appwrite Functions, Deploy Backend (Appwrite Cl
 
 ### Community 162 - "Community 162"
 Cohesion: 0.12
-Nodes (15): Approve Submission (`approveSubmission`), Campaigns — Testing, Claim Campaign (`claimCampaign`), Claim Service Layer (`claim.service.ts`), Create Campaign (`createCampaign`), Create Submission (`createSubmission`), Denormalisasi, Generate Brief (`generateBrief`) (+7 more)
+Nodes (16): Approve Submission (`approveSubmission`), Campaign Reward (`calculate-campaign-reward`), Campaigns — Testing, Claim Campaign (`claimCampaign`), Claim Service Layer (`claim.service.ts`), Create Campaign (`createCampaign`), Create Submission (`createSubmission`), Denormalisasi (+8 more)
 
 ### Community 163 - "Community 163"
 Cohesion: 0.20
@@ -1137,8 +1120,8 @@ Cohesion: 0.40
 Nodes (5): Authentication — Overview, Batasan Kepemilikan, Ketergantungan, Lihat Juga, Ringkasan
 
 ### Community 184 - "Community 184"
-Cohesion: 0.40
-Nodes (5): Appwrite Auth SDK, Appwrite Functions, Aturan Implementasi, Authentication — Backend, Lihat Juga
+Cohesion: 0.12
+Nodes (4): DECISIONS, notificationId(), notify(), ORDER_STATUSES
 
 ### Community 185 - "Community 185"
 Cohesion: 0.40
@@ -1221,8 +1204,8 @@ Cohesion: 0.40
 Nodes (5): 03_Workflows — Index, Daftar Workflow, Lihat Juga, Prinsip Penulisan, Relasi Antar Workflow
 
 ### Community 205 - "Community 205"
-Cohesion: 0.18
-Nodes (10): ADR-001 — Gunakan Appwrite BaaS, Bukan Backend Custom, Consequences, Context, Decision, Status, ADR-002 — Abstraksi Service Layer Wajib, Consequences, Context (+2 more)
+Cohesion: 0.40
+Nodes (5): ADR-001 — Gunakan Appwrite BaaS, Bukan Backend Custom, Consequences, Context, Decision, Status
 
 ### Community 206 - "Community 206"
 Cohesion: 0.06
@@ -1237,8 +1220,8 @@ Cohesion: 0.25
 Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
 
 ### Community 210 - "Community 210"
-Cohesion: 0.10
-Nodes (18): call(), decrementColumn(), endpointFor(), incrementColumn(), ACTIVE_STATUSES, createIrisPayout(), creditBackReversal(), deterministicLedgerId() (+10 more)
+Cohesion: 0.09
+Nodes (26): ACTIVE_STATUSES, buildRequestedReceipt(), countTodayWithdrawals(), createWithdrawalTransaction(), deterministicLedgerId(), deterministicNotificationId(), findRecentDuplicate(), findUnresolvedInternalWithdrawal() (+18 more)
 
 ### Community 211 - "Community 211"
 Cohesion: 0.50
@@ -1261,8 +1244,8 @@ Cohesion: 0.07
 Nodes (26): 12.2. Kewajiban dan Larangan Kreator, 13.3. Terlepas dari hasil pemeriksaan otomatis, UMKM tetap dapat menyetujui atau menolak Bukti Tayang yang masih berstatus menunggu. Bukti Tayang yang telah ditolak otomatis oleh sistem hanya dapat ditinjau ulang oleh admin., 14.2. Sengketa dapat diajukan oleh UMKM maupun Kreator yang menjadi pihak dalam transaksi terkait, misalnya karena hasil kerja tidak sesuai kesepakatan, Kreator tidak menyerahkan hasil hingga tenggat waktu, atau ketidaksesuaian lain., 5.1. Ketentuan Umum, 5.2. Ketentuan Khusus UMKM, 5.3. Ketentuan Khusus Kreator, 7.3. Custom Offer / Negosiasi, 8.1. Seluruh pembayaran diproses melalui Midtrans sebagai payment gateway. Marketiv tidak menerima pembayaran tunai maupun transfer langsung di luar Platform, dan tidak menyimpan nomor kartu, CVV, atau kredensial pembayaran mentah. (+18 more)
 
 ### Community 216 - "Community 216"
-Cohesion: 0.50
-Nodes (3): Alur Creator, Alur UMKM, Campaigns — User Flow
+Cohesion: 0.29
+Nodes (6): Admin Marketiv, Backend, Campaigns — User Flow, Creator, Migration Note, UMKM
 
 ### Community 217 - "Community 217"
 Cohesion: 0.50
@@ -1281,16 +1264,24 @@ Cohesion: 0.50
 Nodes (3): Alur Creator, Alur UMKM, Rate Cards — User Flow
 
 ### Community 221 - "Community 221"
-Cohesion: 0.29
-Nodes (6): call(), decrementColumn(), endpointFor(), incrementColumn(), deterministicNotificationId(), notify()
+Cohesion: 0.35
+Nodes (10): call(), decrementColumn(), endpointFor(), incrementColumn(), calculateCampaignReward(), createDatabasesClient(), deterministicNotificationId(), findOrCreateWallet() (+2 more)
 
 ### Community 222 - "Community 222"
 Cohesion: 0.50
 Nodes (3): dependencies, @opencode-ai/plugin, @opencode-ai/plugin
 
 ### Community 223 - "Authentication — Events"
-Cohesion: 0.50
-Nodes (4): Authentication — Events, Email Verified, Lihat Juga, User Registered
+Cohesion: 0.23
+Nodes (12): by(), createGetAdminSubmissionQueueHandler(), getEnv(), getUserId(), json(), optionalString(), parseInput(), platform() (+4 more)
+
+### Community 224 - "Community 224"
+Cohesion: 0.24
+Nodes (6): createGetAdminDashboardSummaryHandler(), findActiveAdmin(), getEnv(), getUserId(), json(), env
+
+### Community 226 - "Community 226"
+Cohesion: 0.18
+Nodes (10): 1. MVP Model, 2. Locked View Fields, 3. Validation Rules, 4. Reward Formula, 5. Creator UI, 6. UMKM UI, 7. Admin UI, 8. Audit Requirement (+2 more)
 
 ### Community 227 - "Community 227"
 Cohesion: 0.31
@@ -1336,10 +1327,6 @@ Nodes (22): 1. Deploy Functions, 2. Sync Environment Variables, 3. Push Database
 Cohesion: 0.09
 Nodes (22): Halaman 1, Halaman 10, Halaman 11, Halaman 12, Halaman 13, Halaman 14, Halaman 15, Halaman 16 (+14 more)
 
-### Community 251 - "Task List"
-Cohesion: 0.09
-Nodes (21): Badge sumber views, Banner informasi (info tone), ❌ `CampaignSubmissionCard.tsx`, ❌ Creator Side — `ActiveWorkDetailView.tsx`, Desain Visual (Referensi v5.8), Links, Reward preview inline, Tab 14 — Views Audit & UI Consistency Sprint Plan (+13 more)
-
 ### Community 252 - "auth.service.ts"
 Cohesion: 0.18
 Nodes (20): AuthResult, AuthServiceError, buildAuthResult(), ensureUserRole(), forgotPassword(), getCurrentUser(), getWalletSafe(), LoginInput (+12 more)
@@ -1353,8 +1340,12 @@ Cohesion: 0.13
 Nodes (14): BACKEND_FIELDS, { endpoint: ENDPOINT, key: KEY }, MANAGED_FIELDS, PASSTHROUGH_FIELDS, q, APPLY, found, argv (+6 more)
 
 ### Community 255 - "Campaigns — Views Tracking & Verifikasi Tayangan"
+Cohesion: 0.20
+Nodes (8): 04_Decisions — Index, Daftar ADR, ADR-010 — Campaign Submission Validation Authority pada Admin Marketiv, Consequences, Context, Decision, References, Status
+
+### Community 256 - "main.js"
 Cohesion: 0.10
-Nodes (20): Alur MVP, API yang Digunakan, Aturan Bisnis Views (CTO-01, Pasal 7.1.f–g), Audit Log (T-04), Campaigns — Views Tracking & Verifikasi Tayangan, Cloud Functions Baru (Phase 2), Fraud Enhancement (Phase 2B), Keputusan T-04 (+12 more)
+Nodes (7): listAll(), listByIds(), loadConversationDealState(), pickLatest(), TERMINAL_ORDER_STATUSES, httpError(), requireActiveRole()
 
 ### Community 257 - "main.js"
 Cohesion: 0.16
@@ -1437,8 +1428,8 @@ Cohesion: 0.12
 Nodes (15): 1. Skema, 2. Function `track-order-review` (event: deliverable dikirim → set tenggat + revisi), 3. Function cron `auto-approve-orders`, 4. Definisi "satu revisi" — dokumentasi, AKSES CONSOLE APPWRITE — WAJIB VIA MCP, CONSTRAINT — jangan lakukan ini, DEFINISI SELESAI, KONTEKS SISTEM (baca sebelum mulai) (+7 more)
 
 ### Community 277 - "main.js"
-Cohesion: 0.18
-Nodes (7): call(), decrementColumn(), endpointFor(), incrementColumn(), deterministicNotificationId(), notify(), VALID_STATUS
+Cohesion: 0.15
+Nodes (9): call(), decrementColumn(), endpointFor(), incrementColumn(), deterministicNotificationId(), notify(), VALID_STATUS, getViewValidationEligibility() (+1 more)
 
 ### Community 278 - "Sprint 4 Alur A (Campaign / PPV) — Handoff Frontend"
 Cohesion: 0.13
@@ -1473,8 +1464,8 @@ Cohesion: 0.15
 Nodes (12): 1. `mark-notifications-read`, 1. `mark-notifications-read`, 1b. Remediation live `mark-notifications-read`, 2. `get-umkm-finance-summary`, 2. `get-umkm-finance-summary`, 3. `mark-conversation-read`, Audit code + schema, Audit `mark-notifications-read` + `get-umkm-finance-summary` — 2026-08-11 (+4 more)
 
 ### Community 286 - "package.json"
-Cohesion: 0.15
-Nodes (12): dependencies, node-appwrite, devDependencies, vitest, node-appwrite, vitest, main, name (+4 more)
+Cohesion: 0.50
+Nodes (6): auditLegacyMoneyState(), groupByStatus(), listAllRows(), query(), RELEVANT_FUNCTION_IDS, summarizeLegacyMoneyState()
 
 ### Community 287 - "main.js"
 Cohesion: 0.19
@@ -1616,10 +1607,6 @@ Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
 Cohesion: 0.25
 Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
 
-### Community 326 - "package.json"
-Cohesion: 0.25
-Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
-
 ### Community 327 - "package.json"
 Cohesion: 0.25
 Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
@@ -1632,49 +1619,29 @@ Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
 Cohesion: 0.25
 Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
 
-### Community 330 - "package.json"
-Cohesion: 0.25
-Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
-
 ### Community 331 - "package.json"
-Cohesion: 0.25
-Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
+Cohesion: 0.40
+Nodes (5): deliverables, orders, Orders — Database, revisions, Updates
 
 ### Community 332 - "package.json"
-Cohesion: 0.25
-Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
-
-### Community 333 - "package.json"
-Cohesion: 0.25
-Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
+Cohesion: 0.40
+Nodes (5): ADR-002 — Abstraksi Service Layer Wajib, Consequences, Context, Decision, Status
 
 ### Community 334 - "package.json"
-Cohesion: 0.25
-Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
+Cohesion: 0.70
+Nodes (4): call(), decrementColumn(), endpointFor(), incrementColumn()
 
 ### Community 336 - "package.json"
-Cohesion: 0.25
-Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
+Cohesion: 0.50
+Nodes (4): Dikecualikan dari MVP, Referensi, Ruang Lingkup MVP, Termasuk dalam MVP
 
 ### Community 337 - "package.json"
-Cohesion: 0.25
-Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
+Cohesion: 0.50
+Nodes (3): Istilah, Konsep, Notifications — Concepts
 
 ### Community 338 - "package.json"
-Cohesion: 0.25
-Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
-
-### Community 339 - "package.json"
-Cohesion: 0.25
-Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
-
-### Community 340 - "package.json"
-Cohesion: 0.25
-Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
-
-### Community 342 - "package.json"
-Cohesion: 0.25
-Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
+Cohesion: 0.50
+Nodes (3): name, private, type
 
 ### Community 343 - "package.json"
 Cohesion: 0.25
@@ -1685,14 +1652,10 @@ Cohesion: 0.25
 Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
 
 ### Community 345 - "package.json"
-Cohesion: 0.25
-Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
+Cohesion: 0.67
+Nodes (3): Lihat Juga, Notifications — Events, Pola Implementasi
 
 ### Community 346 - "package.json"
-Cohesion: 0.25
-Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
-
-### Community 347 - "package.json"
 Cohesion: 0.25
 Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
 
@@ -1708,23 +1671,11 @@ Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
 Cohesion: 0.25
 Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
 
-### Community 351 - "package.json"
-Cohesion: 0.25
-Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
-
 ### Community 352 - "package.json"
 Cohesion: 0.25
 Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
 
-### Community 353 - "package.json"
-Cohesion: 0.25
-Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
-
 ### Community 354 - "package.json"
-Cohesion: 0.25
-Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
-
-### Community 355 - "package.json"
 Cohesion: 0.25
 Nodes (7): dependencies, node-appwrite, node-appwrite, main, name, type, version
 
@@ -1756,9 +1707,9 @@ Nodes (7): CONSTRAINT — jangan lakukan ini, DEFINISI SELESAI, FAKTA IMPLEMENTA
 Cohesion: 0.29
 Nodes (4): APPLY, DISABLE, missing, PROMPT
 
-### Community 366 - "package.json"
-Cohesion: 0.29
-Nodes (6): dependencies, node-appwrite, node-appwrite, name, type, version
+### Community 364 - "main.js"
+Cohesion: 0.10
+Nodes (8): Client, Databases, invoke(), makeReq(), makeRes(), Query, store, updateCalls
 
 ### Community 372 - "require-active-role.test.ts"
 Cohesion: 0.29
@@ -1767,14 +1718,6 @@ Nodes (3): DatabasesMock, Query, store
 ### Community 373 - "inspect-conversations.mjs"
 Cohesion: 0.33
 Nodes (4): badIds, brokenPerms, FIX, listAllRows()
-
-### Community 374 - "package.json"
-Cohesion: 0.33
-Nodes (5): dependencies, node-appwrite, node-appwrite, name, type
-
-### Community 379 - "package.json"
-Cohesion: 0.33
-Nodes (5): dependencies, node-appwrite, node-appwrite, name, type
 
 ### Community 381 - "Tests — Marketiv"
 Cohesion: 0.33
@@ -1813,19 +1756,19 @@ Cohesion: 0.83
 Nodes (3): is_secret(), sync-env-all-functions.sh script, sync_function()
 
 ## Knowledge Gaps
-- **2808 isolated node(s):** `$schema`, `.agents/skills`, `/home/panjiangka1/Documents/dev/marketiv-web/00_BACKEND/.opencode/plugins/graphify.js`, `@opencode-ai/plugin`, `DRY` (+2803 more)
+- **2709 isolated node(s):** `$schema`, `.agents/skills`, `/home/panjiangka1/Documents/dev/marketiv-web/00_BACKEND/.opencode/plugins/graphify.js`, `@opencode-ai/plugin`, `DRY` (+2704 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **27 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **35 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Campaigns — API` connect `Community 24` to `Offers — Testing`?**
-  _High betweenness centrality (0.005) - this node is a cross-community bridge._
-- **Why does `Users — API` connect `Community 69` to `Orders — Testing`?**
-  _High betweenness centrality (0.004) - this node is a cross-community bridge._
+- **Why does `Payments — API` connect `Campaigns — Testing` to `Offers — Testing`?**
+  _High betweenness centrality (0.002) - this node is a cross-community bridge._
+- **Why does `Payments — Backend` connect `Offers — Concepts` to `Offers — Testing`?**
+  _High betweenness centrality (0.002) - this node is a cross-community bridge._
 - **What connects `$schema`, `.agents/skills`, `/home/panjiangka1/Documents/dev/marketiv-web/00_BACKEND/.opencode/plugins/graphify.js` to the rest of the system?**
-  _2809 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _2710 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `00_Index.md` be split into smaller, more focused modules?**
   _Cohesion score 0.09581646423751687 - nodes in this community are weakly interconnected._
 - **Should `AGENTS.md` be split into smaller, more focused modules?**

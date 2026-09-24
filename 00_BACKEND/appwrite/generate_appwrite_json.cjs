@@ -401,6 +401,30 @@ const collections = [
     ],
     indexes: [createIndex("idx_campaignId", "unique", ["campaignId"])],
   },
+  // ── Migrasi runtime brief (2026-09-24) ─────────────────────────────────────
+  // Collection lama `campaign_briefs` SENGAJA dipertahankan (data + definisi).
+  // Runtime web & Functions sudah menunjuk ID baru ini; jangan dihapus dari
+  // config selama collection lama masih hidup di Appwrite.
+  // $updatedAt adalah sistem-attribute Appwrite — tidak dideklarasikan sebagai
+  // column di sini (sama seperti collection lain).
+  {
+    $id: "6ab530d00018edb50097",
+    name: "campaign_briefs_v2",
+    $permissions: ['read("any")', 'create("users")'],
+    documentSecurity: true,
+    enabled: true,
+    attributes: [
+      createStringAttr("campaignId", true),
+      createStringAttr("objective", false, 2000),
+      createStringAttr("contentAngle", false, 2000),
+      createStringAttr("cta", false, 1000),
+      createStringAttr("briefDetail", false, 10000),
+      createStringAttr("doAndDont", false, 400),
+      createStringAttr("materialsJson", false, 300),
+      createBoolAttr("generatedByAi", false, false),
+    ],
+    indexes: [createIndex("idx_campaignId", "unique", ["campaignId"])],
+  },
   {
     $id: "campaign_claims",
     name: "Campaign Claims",
