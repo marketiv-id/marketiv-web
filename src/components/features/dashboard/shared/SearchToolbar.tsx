@@ -146,14 +146,21 @@ export function SearchToolbar({
                 className={cn(
                   "flex h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 text-xs font-bold transition-all shadow-3xs",
                   hasActiveFilters || isMobileFiltersOpen
-                    ? "border-violet-300 bg-violet-50 text-violet-700"
+                    ? theme === "umkm"
+                      ? "border-orange-300 bg-orange-50 text-orange-700"
+                      : "border-violet-300 bg-violet-50 text-violet-700"
                     : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                 )}
               >
                 <SlidersHorizontal size={14} />
                 <span>Filter &amp; Opsi</span>
                 {activeFiltersCount > 0 && (
-                  <span className="h-5 min-w-[20px] px-1 rounded-full bg-violet-600 text-[10px] font-black text-white flex items-center justify-center">
+                  <span
+                    className={cn(
+                      "h-5 min-w-[20px] px-1 rounded-full text-[10px] font-black text-white flex items-center justify-center",
+                      theme === "umkm" ? "bg-orange-600" : "bg-violet-600"
+                    )}
+                  >
                     {activeFiltersCount}
                   </span>
                 )}

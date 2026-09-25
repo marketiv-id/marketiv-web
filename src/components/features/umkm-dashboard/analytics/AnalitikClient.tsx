@@ -17,6 +17,7 @@ import { UmkmDashboardChrome } from "@/components/features/dashboard/UmkmDashboa
 import { UmkmPageWrapper } from "@/components/features/umkm-dashboard/shared/UmkmPageWrapper";
 import { MetricCard } from "@/components/ui/metric-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PerformanceChart } from "./PerformanceChart";
 import {
   getDashboardSummary,
   getCampaigns,
@@ -317,26 +318,8 @@ export function AnalitikClient() {
           )}
         </div>
 
-        {/* ── Grafik — Coming Soon ── */}
-        <div className="bg-white border border-neutral-200/80 rounded-3xl p-5 sm:p-6 space-y-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-neutral-50 border border-neutral-200 text-neutral-400 shrink-0">
-              <BarChart2 size={15} />
-            </div>
-            <h4 className="text-[0.92rem] font-[800] text-ink-900 font-display">
-              Grafik Performa
-            </h4>
-            <span className="ml-auto inline-flex items-center min-h-[24px] px-2.5 rounded-full bg-amber-50 border border-amber-200/60 text-amber-700 text-[0.68rem] font-[800]">
-              Segera tersedia
-            </span>
-          </div>
-          <div className="flex flex-col items-center justify-center gap-3 py-12 rounded-2xl bg-neutral-50/60 border border-dashed border-neutral-200">
-            <BarChart2 size={36} className="text-neutral-200" />
-            <p className="text-[0.82rem] font-[600] text-ink-400 text-center max-w-xs leading-relaxed">
-              Grafik views per bulan dan performa kreator akan ditampilkan setelah pipeline data historis tersedia.
-            </p>
-          </div>
-        </div>
+        {/* ── Grafik Performa Views ── */}
+        <PerformanceChart campaigns={campaigns} summary={summary} />
 
       </UmkmPageWrapper>
     </UmkmDashboardChrome>

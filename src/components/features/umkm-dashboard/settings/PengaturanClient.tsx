@@ -24,6 +24,8 @@ import {
 import { useUmkmIdentity } from "@/components/features/dashboard/UmkmIdentityContext";
 import { UmkmDashboardChrome } from "@/components/features/dashboard/UmkmDashboardChrome";
 import { UmkmPageWrapper } from "@/components/features/umkm-dashboard/shared/UmkmPageWrapper";
+import { HelpAdminModal } from "@/components/features/dashboard/shared/HelpAdminModal";
+import { cn } from "@/lib/utils";
 
 // Custom inline SVG icon to avoid dependency package issues
 const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -40,11 +42,12 @@ interface NotificationSetting {
 }
 
 const INITIAL_NOTIFICATIONS: NotificationSetting[] = [
-  { id: "kreator", label: "Kreator baru bergabung", desc: "Notifikasi saat kreator join campaign", enabled: false },
-  { id: "submission", label: "Submission masuk", desc: "Notifikasi saat ada konten dikirim", enabled: false },
-  { id: "completed", label: "Campaign selesai", desc: "Ringkasan saat campaign berakhir", enabled: false },
-  { id: "escrow", label: "Dana escrow siap cair", desc: "Alert saat dana perlu diverifikasi", enabled: false },
-  { id: "promo", label: "Promosi & update platform", desc: "Info fitur baru dari Marketiv", enabled: false },
+  { id: "kreator", label: "Aktivitas Kreator", desc: "Pemberitahuan saat kreator mengambil kampanye Anda", enabled: true },
+  { id: "submission", label: "Pengiriman Konten", desc: "Pemberitahuan saat bukti tayang video baru dikirim", enabled: true },
+  { id: "completed", label: "Penyelesaian Kampanye", desc: "Ringkasan performa saat target penayangan tercapai", enabled: true },
+  { id: "escrow", label: "Pembaruan Escrow", desc: "Status keamanan dan konfirmasi pencairan dana reward", enabled: true },
+  { id: "negosiasi", label: "Penawaran & Negosiasi", desc: "Notifikasi pesan dan tawaran kustom Rate Card baru", enabled: true },
+  { id: "promo", label: "Kabar & Fitur Baru", desc: "Tips promosi bisnis dan pembaruan sistem Marketiv", enabled: false },
 ];
 
 function Toggle({
@@ -58,19 +61,22 @@ function Toggle({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-disabled={disabled}
-      className={`w-11 h-6 rounded-full relative transition-all duration-200 shadow-3xs outline-none border-none ${
-        disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
-      } ${
+      aria-pressed={enabled}
+      aria-label="Toggle notifikasi"
+      className={cn(
+        "w-11 h-6 rounded-full relative transition-all duration-200 shadow-3xs outline-none border-none shrink-0",
+        disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:opacity-90",
         enabled ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-orange-500/20" : "bg-neutral-200"
-      }`}
+      )}
     >
       <div
-        className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-all duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${
+        className={cn(
+          "absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-all duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
           enabled ? "left-[21px]" : "left-0.5"
-        }`}
+        )}
       />
     </button>
   );
@@ -80,9 +86,17 @@ export function PengaturanClient() {
   const { refreshIdentity } = useUmkmIdentity();
   const { refresh: refreshAuth } = useAuth();
 
-  // Preferensi notifikasi belum punya target tulis (tak ada collection
-  // notification_preferences) — toggle dinonaktifkan, lihat handoff Sprint 3.
-  const notifications: NotificationSetting[] = INITIAL_NOTIFICATIONS;
+  const [notifications, setNotifications] = useState<NotificationSetting[]>(INITIAL_NOTIFICATIONS);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+
+  const handleToggleNotification = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, enabled: !item.enabled } : item
+      )
+    );
+    toast.success("Preferensi notifikasi berhasil diperbarui.");
+  };
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -446,60 +460,67 @@ export function PengaturanClient() {
         {/* Notifications Preference */}
         <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-8 shadow-3xs space-y-6">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-purple-50 border border-purple-200/50 text-purple-600">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-orange-50 border border-orange-200/50 text-orange-600 shrink-0">
               <Bell size={16} />
             </div>
-            <h4 className="text-[0.92rem] font-extrabold text-ink-900 font-display">
-              Preferensi Notifikasi
-            </h4>
-            <span className="ml-auto inline-flex items-center min-h-[24px] px-2.5 rounded-full bg-neutral-100 border border-neutral-200 text-ink-500 text-[0.68rem] font-extrabold">
-              Segera tersedia
-            </span>
+            <div>
+              <h4 className="text-[0.92rem] font-extrabold text-ink-900 font-display leading-tight">
+                Preferensi Notifikasi
+              </h4>
+              <p className="text-[0.72rem] text-ink-400 font-medium mt-0.5">
+                Atur pemberitahuan penting terkait aktivitas kampanye dan transaksi Anda
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             {notifications.map((n) => (
               <div
-                key={n.label}
-                className="flex items-center justify-between gap-4 p-4.5 rounded-2xl bg-neutral-50/60 border border-neutral-200/60 hover:bg-neutral-50 transition-all duration-200"
+                key={n.id}
+                className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-neutral-50/70 border border-neutral-200/60 hover:bg-neutral-50 hover:border-neutral-300 transition-all duration-200 min-w-0"
               >
                 <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                   <strong className="text-xs font-extrabold text-ink-900 truncate">
                     {n.label}
                   </strong>
-                  <span className="text-[0.7rem] font-bold text-ink-400 truncate">
+                  <span className="text-[0.72rem] font-medium text-ink-500 line-clamp-1">
                     {n.desc}
                   </span>
                 </div>
-                <Toggle enabled={n.enabled} onClick={() => {}} disabled />
+                <Toggle enabled={n.enabled} onClick={() => handleToggleNotification(n.id)} />
               </div>
             ))}
           </div>
         </div>
 
-        {/* Danger Zone */}
-        <div className="bg-red-50/30 border border-red-200 rounded-3xl p-6 sm:p-8 space-y-5">
-          <h4 className="text-[0.9rem] font-extrabold text-red-700 font-display">
-            Zona Berbahaya
-          </h4>
-          <div className="flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
-            <div className="flex flex-col gap-0.5">
-              <strong className="text-xs font-extrabold text-ink-900">
-                Nonaktifkan Akun
+        {/* Zona Berbahaya */}
+        <div className="bg-red-50/40 border border-red-200/80 rounded-3xl p-6 sm:p-8 space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-red-500" />
+            <h4 className="text-[0.88rem] font-[850] text-red-700 font-display">
+              Zona Berbahaya
+            </h4>
+          </div>
+          <div className="flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap pt-1">
+            <div className="flex flex-col gap-1 max-w-xl">
+              <strong className="text-xs font-extrabold text-neutral-900">
+                Penonaktifan Akun
               </strong>
-              <span className="text-[0.7rem] font-bold text-ink-400">
-                Hubungi support untuk menonaktifkan akun — `users.status` tidak bisa diubah dari aplikasi.
-              </span>
+              <p className="text-[0.74rem] text-neutral-500 leading-relaxed">
+                Untuk melindungi keamanan saldo escrow dan kampanye yang sedang berjalan, penonaktifan akun diproses melalui verifikasi Tim Bantuan Marketiv.
+              </p>
             </div>
             <button
-              disabled
-              aria-disabled
-              className="px-5 py-2.5 bg-white text-red-400 border border-red-200 text-xs font-bold rounded-xl shadow-3xs cursor-not-allowed opacity-60"
+              type="button"
+              onClick={() => setIsHelpModalOpen(true)}
+              className="px-4 py-2.5 bg-white hover:bg-red-50 text-red-600 border border-red-300 hover:border-red-400 text-xs font-bold rounded-xl shadow-3xs hover:shadow-xs transition-all cursor-pointer shrink-0 active:scale-95"
             >
-              Nonaktifkan
+              Hubungi Bantuan
             </button>
           </div>
         </div>
+
+        <HelpAdminModal open={isHelpModalOpen} onOpenChange={setIsHelpModalOpen} role="umkm" />
       </UmkmPageWrapper>
     </UmkmDashboardChrome>
   );

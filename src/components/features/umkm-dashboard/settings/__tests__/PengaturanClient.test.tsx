@@ -44,6 +44,9 @@ vi.mock("@/components/features/dashboard/UmkmDashboardChrome", () => ({
 vi.mock("@/components/features/umkm-dashboard/shared/UmkmPageWrapper", () => ({
   UmkmPageWrapper: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
+vi.mock("@/components/features/dashboard/shared/HelpAdminModal", () => ({
+  HelpAdminModal: () => <div data-testid="mock-help-admin-modal" />,
+}));
 
 let root: Root | undefined;
 let host: HTMLDivElement;
@@ -156,5 +159,42 @@ describe("PengaturanClient", () => {
     expect(mocks.updateProfile).toHaveBeenCalledWith(
       expect.objectContaining({ phone: "08123456789" })
     );
+  });
+
+  it("merender 6 preferensi notifikasi seimbang dan bebas dari teks teknis users.status", async () => {
+    await render();
+
+    const bodyText = document.body.textContent || "";
+    // 6 balanced notification categories
+    expect(bodyText).toContain("Aktivitas Kreator");
+    expect(bodyText).toContain("Pengiriman Konten");
+    expect(bodyText).toContain("Penyelesaian Kampanye");
+    expect(bodyText).toContain("Pembaruan Escrow");
+    expect(bodyText).toContain("Penawaran & Negosiasi");
+    expect(bodyText).toContain("Kabar & Fitur Baru");
+
+    // Danger zone clean copywriting
+    expect(bodyText).toContain("Zona Berbahaya");
+    expect(bodyText).toContain("Penonaktifan Akun");
+    expect(bodyText).toContain("Untuk melindungi keamanan saldo escrow dan kampanye yang sedang berjalan");
+
+    const dangerZone = document.querySelector(".bg-red-50\\/40");
+    expect(dangerZone?.textContent).not.toContain("users.status");
+    expect(dangerZone?.textContent).not.toContain("—");
+
+    // Help button exists
+    const helpBtn = [...document.querySelectorAll("button")].find((node) =>
+      node.textContent?.includes("Hubungi Bantuan")
+    );
+    expect(helpBtn).toBeDefined();
+
+    // Toggle interaction
+    const toggles = [...document.querySelectorAll("button[aria-label='Toggle notifikasi']")];
+    expect(toggles.length).toBe(6);
+
+    await act(async () => {
+      (toggles[0] as HTMLButtonElement).click();
+    });
+    expect(mocks.toastSuccess).toHaveBeenCalledWith("Preferensi notifikasi berhasil diperbarui.");
   });
 });

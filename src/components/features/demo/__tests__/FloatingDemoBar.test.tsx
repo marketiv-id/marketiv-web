@@ -72,7 +72,7 @@ describe("FloatingDemoBar [Task 6]", () => {
     expect(bodyText).toContain("Ya, Reset Sekarang");
   });
 
-  it("can minimize and restore floating bar", async () => {
+  it("can minimize and restore floating bar via button", async () => {
     await renderBar();
 
     const closeBtn = getButtonByText("✕");
@@ -82,7 +82,7 @@ describe("FloatingDemoBar [Task 6]", () => {
       closeBtn?.click();
     });
 
-    // Should now show collapsed pill
+    // Should now show collapsed discreet button
     const collapsedBtn = getButtonByText("Demo Booth");
     expect(collapsedBtn).toBeDefined();
 
@@ -92,5 +92,49 @@ describe("FloatingDemoBar [Task 6]", () => {
 
     // Should restore full bar
     expect(document.body.textContent).toContain("Offline Booth Mode");
+  });
+
+  it("toggles minimize state via Alt+D keyboard shortcut", async () => {
+    await renderBar();
+
+    expect(document.body.textContent).toContain("Offline Booth Mode");
+
+    // Press Alt + D
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "d", altKey: true }));
+    });
+
+    expect(getButtonByText("Demo Booth")).toBeDefined();
+
+    // Press Alt + D again
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "d", altKey: true }));
+    });
+
+    expect(document.body.textContent).toContain("Offline Booth Mode");
+  });
+
+  it("auto-hides on scroll down and reappears on scroll up", async () => {
+    await renderBar();
+
+    const aside = document.querySelector("aside[aria-label='Booth Demo Controller']");
+    expect(aside).not.toBeNull();
+    expect(aside?.className).toContain("translate-y-0");
+
+    // Simulate scroll down
+    Object.defineProperty(window, "scrollY", { value: 200, writable: true });
+    await act(async () => {
+      window.dispatchEvent(new Event("scroll"));
+    });
+
+    expect(aside?.className).toContain("translate-y-24");
+
+    // Simulate scroll up
+    Object.defineProperty(window, "scrollY", { value: 100, writable: true });
+    await act(async () => {
+      window.dispatchEvent(new Event("scroll"));
+    });
+
+    expect(aside?.className).toContain("translate-y-0");
   });
 });

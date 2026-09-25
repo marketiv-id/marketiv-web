@@ -70,13 +70,34 @@ export function CreatorDirectoryPage() {
       return 0;
     });
 
+  const verifiedCount = creators.filter((c) => c.isVerified).length;
+  const avgEngagement =
+    creators.length > 0
+      ? Number(
+          (
+            creators.reduce((acc, c) => acc + (c.engagementRate || 0), 0) /
+            creators.length
+          ).toFixed(1)
+        )
+      : 0;
+  const validPrices = creators
+    .map((c) => c.startingPrice || 0)
+    .filter((p) => p > 0);
+  const lowestStartingPrice = validPrices.length > 0 ? Math.min(...validPrices) : 0;
+
   return (
     <UmkmPageWrapper>
       {/* Header */}
       <CreatorDirectoryHeader />
 
       {/* Stats Cards */}
-      <CreatorSummaryCards totalCreators={totalCreatorsCount} />
+      <CreatorSummaryCards
+        totalCreators={totalCreatorsCount}
+        verifiedCount={verifiedCount}
+        avgEngagement={avgEngagement}
+        lowestStartingPrice={lowestStartingPrice}
+        isLoading={loading}
+      />
 
       {/* Sticky toolbar — direct grid child so sticky has full grid-container height to work with */}
       <CreatorToolbar

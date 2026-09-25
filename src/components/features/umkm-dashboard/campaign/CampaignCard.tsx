@@ -194,22 +194,25 @@ export function CampaignCard({
 
         {/* Budget Progress */}
         <div className="space-y-1.5 min-w-0">
-          <div className="flex justify-between items-baseline text-xs">
-            <span className="font-extrabold uppercase tracking-wider text-[10px] text-slate-400">
+          <div className="flex items-center justify-between gap-1.5 text-xs min-w-0">
+            <span className="font-extrabold uppercase tracking-wider text-[10px] text-slate-400 shrink-0">
               Anggaran Terpakai
             </span>
-            <span className="font-extrabold text-slate-900 text-xs">
-              {formatCompactCurrency(campaign.usedBudget)}{" "}
-              <span className="text-slate-400 font-normal">/ {formatCompactCurrency(campaign.totalBudgetEscrow)}</span>{" "}
-              <span className={cn(
-                "ml-1 text-[10px] px-1.5 py-0.5 rounded-md font-black border",
-                progressPercent >= 100
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                  : "bg-orange-50 text-orange-700 border-orange-200"
-              )}>
+            <div className="flex items-center gap-1 text-xs font-extrabold text-slate-900 whitespace-nowrap shrink-0">
+              <span>{formatCompactCurrency(campaign.usedBudget)}</span>
+              <span className="text-slate-400 font-normal">/</span>
+              <span className="text-slate-400 font-normal">{formatCompactCurrency(campaign.totalBudgetEscrow)}</span>
+              <span
+                className={cn(
+                  "ml-0.5 text-[10px] px-1.5 py-0.5 rounded-md font-black border",
+                  progressPercent >= 100
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-orange-50 text-orange-700 border-orange-200"
+                )}
+              >
                 {progressPercent}%
               </span>
-            </span>
+            </div>
           </div>
           <div className="relative h-2 w-full rounded-full bg-slate-100 overflow-hidden">
             <div
@@ -225,11 +228,11 @@ export function CampaignCard({
         </div>
 
         {/* Content Validation Badges */}
-        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 text-xs">
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 truncate">
+        <div className="flex items-center justify-between gap-1.5 pt-1 border-t border-slate-100 text-xs min-w-0">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 shrink-0">
             Validasi
           </span>
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
             <DashboardBadge tone="amber" className="h-5 px-2 text-[10px] font-bold">
               {pendingCount} Pending
             </DashboardBadge>

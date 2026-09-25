@@ -1,19 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { resetDemoStore } from "@/lib/demo/demo-store";
 import { getMockRole, setMockRole } from "@/services/auth/session.service";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export function FloatingDemoBar() {
-  const router = useRouter();
   const pathname = usePathname();
   const [currentRole, setCurrentRole] = useState<"umkm" | "creator" | "admin">("umkm");
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isScrolledDown, setIsScrolledDown] = useState(false);
+  const [isBottomHovered, setIsBottomHovered] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     setMounted(true);
@@ -23,13 +26,46 @@ export function FloatingDemoBar() {
     }
   }, [pathname]);
 
+  // Keyboard shortcut: Alt+D / Option+D toggles demo bar visibility
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey && (e.key === "d" || e.key === "D")) {
+        e.preventDefault();
+        setIsCollapsed((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Auto-hide on scroll: hides when scrolling down > 15px, reappears on scroll up or top
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const delta = currentScrollY - lastScrollY.current;
+
+      if (currentScrollY < 30) {
+        setIsScrolledDown(false);
+      } else if (delta > 15) {
+        setIsScrolledDown(true);
+      } else if (delta < -10) {
+        setIsScrolledDown(false);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   if (!mounted) return null;
 
   const handleSwitchRole = (role: "umkm" | "creator") => {
     setMockRole(role);
     setCurrentRole(role);
     const targetUrl = role === "umkm" ? "/dashboard/umkm" : "/dashboard/kreator";
-    // window.location.assign memastikan reload context dan state bersih
     window.location.assign(targetUrl);
   };
 
@@ -42,25 +78,49 @@ export function FloatingDemoBar() {
     }, 400);
   };
 
+  // Minimized state: ultra-discreet trigger in corner with shortcut support
   if (isCollapsed) {
     return (
-      <aside aria-label="Booth Demo Controller" className="fixed bottom-4 left-4 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+      <aside
+        aria-label="Booth Demo Controller"
+        className="fixed bottom-3 left-3 z-50 animate-in fade-in duration-200"
+      >
         <button
           type="button"
           onClick={() => setIsCollapsed(false)}
-          className="flex items-center gap-2 px-3 py-2 bg-neutral-900/90 hover:bg-neutral-900 text-white rounded-full shadow-2xl border border-neutral-700/80 backdrop-blur-md text-xs font-bold transition-all hover:scale-105 active:scale-95"
-          title="Buka Menu Demo Booth"
+          className="group flex items-center gap-1.5 px-2.5 py-1.5 bg-neutral-900/40 hover:bg-neutral-900/90 text-neutral-300 hover:text-white rounded-full shadow-lg border border-neutral-700/40 hover:border-neutral-600 backdrop-blur-md text-[11px] font-medium transition-all opacity-40 hover:opacity-100 hover:scale-105 active:scale-95 cursor-pointer"
+          title="Buka Demo Booth (Alt+D)"
         >
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Demo Booth</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+          <span className="text-[10px] tracking-tight">Demo Booth</span>
         </button>
       </aside>
     );
   }
 
+  const shouldSlideDown = isScrolledDown && !isBottomHovered;
+
   return (
     <>
-      <aside aria-label="Booth Demo Controller" className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-auto max-w-[94vw] animate-in fade-in slide-in-from-bottom-4 duration-200">
+      {/* Invisible bottom hover detection zone to recall bar effortlessly */}
+      <div
+        className="fixed bottom-0 left-0 right-0 h-6 z-40 pointer-events-auto"
+        onMouseEnter={() => setIsBottomHovered(true)}
+        onMouseLeave={() => setIsBottomHovered(false)}
+        aria-hidden="true"
+      />
+
+      <aside
+        aria-label="Booth Demo Controller"
+        onMouseEnter={() => setIsBottomHovered(true)}
+        onMouseLeave={() => setIsBottomHovered(false)}
+        className={cn(
+          "fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-auto max-w-[94vw] transition-all duration-300 ease-out",
+          shouldSlideDown
+            ? "translate-y-24 opacity-0 pointer-events-none"
+            : "translate-y-0 opacity-100 pointer-events-auto"
+        )}
+      >
         <div className="flex items-center gap-2 sm:gap-2.5 px-3.5 py-2 rounded-full bg-neutral-900/90 text-white shadow-2xl border border-neutral-700/70 backdrop-blur-md text-xs">
           {/* Status Indicator */}
           <div className="flex items-center gap-1.5 pl-1 pr-1.5 shrink-0">
@@ -78,7 +138,7 @@ export function FloatingDemoBar() {
               type="button"
               onClick={() => handleSwitchRole("umkm")}
               className={cn(
-                "px-2.5 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1",
+                "px-2.5 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer",
                 currentRole === "umkm"
                   ? "bg-primary text-white shadow-xs"
                   : "text-neutral-400 hover:text-white hover:bg-neutral-700/50"
@@ -92,7 +152,7 @@ export function FloatingDemoBar() {
               type="button"
               onClick={() => handleSwitchRole("creator")}
               className={cn(
-                "px-2.5 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1",
+                "px-2.5 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer",
                 currentRole === "creator"
                   ? "bg-sky-600 text-white shadow-xs"
                   : "text-neutral-400 hover:text-white hover:bg-neutral-700/50"
@@ -109,7 +169,7 @@ export function FloatingDemoBar() {
           <button
             type="button"
             onClick={() => setIsResetConfirmOpen(true)}
-            className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-rose-300 hover:text-rose-200 hover:bg-rose-950/60 border border-rose-800/50 rounded-full transition-all shrink-0 active:scale-95"
+            className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-rose-300 hover:text-rose-200 hover:bg-rose-950/60 border border-rose-800/50 rounded-full transition-all shrink-0 active:scale-95 cursor-pointer"
             title="Reset data demo pameran ke kondisi default"
           >
             <span>🔄</span>
@@ -120,8 +180,9 @@ export function FloatingDemoBar() {
           <button
             type="button"
             onClick={() => setIsCollapsed(true)}
-            className="w-6 h-6 flex items-center justify-center rounded-full text-neutral-400 hover:text-white hover:bg-neutral-800 transition shrink-0 ml-0.5"
-            title="Sembunyikan Menu"
+            className="w-6 h-6 flex items-center justify-center rounded-full text-neutral-400 hover:text-white hover:bg-neutral-800 transition shrink-0 ml-0.5 cursor-pointer"
+            title="Sembunyikan Menu (Alt+D)"
+            aria-label="Sembunyikan Menu"
           >
             ✕
           </button>
@@ -149,14 +210,14 @@ export function FloatingDemoBar() {
               <button
                 type="button"
                 onClick={() => setIsResetConfirmOpen(false)}
-                className="flex-1 h-10 text-xs font-semibold text-text-secondary bg-neutral-100 hover:bg-neutral-200 rounded-xl transition"
+                className="flex-1 h-10 text-xs font-semibold text-text-secondary bg-neutral-100 hover:bg-neutral-200 rounded-xl transition cursor-pointer"
               >
                 Batal
               </button>
               <button
                 type="button"
                 onClick={handleConfirmReset}
-                className="flex-1 h-10 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] rounded-xl shadow-xs transition"
+                className="flex-1 h-10 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] rounded-xl shadow-xs transition cursor-pointer"
               >
                 Ya, Reset Sekarang
               </button>

@@ -160,7 +160,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
             <span className="text-[8px] sm:text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
               ANGGARAN
             </span>
-            <div className="flex items-center gap-1 text-slate-900 font-extrabold text-[9px] sm:text-xs">
+            <div className="flex items-center gap-1 text-slate-900 font-extrabold text-[9px] sm:text-xs whitespace-nowrap shrink-0">
               <span>{formatBudget(campaign.usedBudget)}</span>
               <span className="text-slate-300 font-normal">/</span>
               <span className="text-slate-500">{formatBudget(campaign.totalBudgetEscrow)}</span>
