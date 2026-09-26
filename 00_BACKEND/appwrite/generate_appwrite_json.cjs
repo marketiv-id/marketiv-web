@@ -340,6 +340,7 @@ const collections = [
       createIntAttr("spentAmount", false, 0),
       createIntAttr("remainingBudget", false, 0),
       createDatetimeAttr("publishedAt", false),
+      createStringAttr("thumbnailUrl", false, 2048, ""),
     ],
     indexes: [
       createIndex("idx_umkmId", "key", ["umkmId"]),

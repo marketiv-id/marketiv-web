@@ -2578,6 +2578,15 @@
                     "required": false,
                     "array": false,
                     "default": null
+                },
+                {
+                    "key": "thumbnailUrl",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 2048,
+                    "default": "",
+                    "encrypt": false
                 }
             ],
             "indexes": [
