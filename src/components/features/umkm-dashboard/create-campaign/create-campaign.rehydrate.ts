@@ -45,6 +45,7 @@ export function rehydrateWizard(raw: CampaignEditRaw): RehydratedWizard {
   // ── Step 1 fields ─────────────────────────────────────────────────────────
   const state: Partial<CampaignWizardState> = {
     title: campaign.title,
+    thumbnailUrl: campaign.thumbnailUrl, // "" untuk campaign legacy tanpa gambar
     category: campaign.niche,       // campaigns.category → niche
     type: campaign.type ?? "",       // campaigns.type → "ugc" / "clipping"
     description: campaign.brief,    // campaigns.description (mapped as brief)

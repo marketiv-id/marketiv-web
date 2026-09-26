@@ -63,9 +63,11 @@ import {
  *   melarang klien menghitungnya. Nilai sebenarnya ada di `transactions` sebagai
  *   baris `release` — perlu Function tersendiri bila UI benar-benar butuh angka
  *   per-submission.
- * - `CreatorJob.targetViews`, `productDescription`, `targetAudience`,
- *   `thumbnailUrl` dan `CreatorActiveWork.rejectedReason` tidak punya kolom
+ * - `CreatorJob.targetViews`, `productDescription`, `targetAudience`
+ *   dan `CreatorActiveWork.rejectedReason` tidak punya kolom
  *   sumber; dibiarkan undefined, bukan diisi tebakan.
+ *   (`CreatorJob.thumbnailUrl` & `CreatorActiveWork.thumbnailUrl` kini dipetakan
+ *   dari `campaigns.thumbnailUrl` yang sudah ada.)
  * - `CreatorActivity` berasal dari `notifications`, yang baru terbaca setelah
  *   perbaikan permission baris di 4 Function penulis notifikasi dideploy.
  */
@@ -181,6 +183,8 @@ const mapJob = (d: Doc, umkm?: Doc): CreatorJob => ({
   createdAt: str(d.$createdAt),
   type: str(d.type) || undefined,
   platforms: strList(d.platforms),
+  // campaigns.thumbnailUrl (opsional) — "" → undefined, campaign legacy tanpa gambar.
+  thumbnailUrl: orUndefined(str(d.thumbnailUrl)),
 });
 
 const mapSubmission = (d: Doc): CreatorSubmission => ({
@@ -550,6 +554,7 @@ async function buildActiveWorks(claims: Doc[]): Promise<CreatorActiveWork[]> {
         submission && str(submission.status) !== "pending" ? str(submission.$updatedAt) : undefined,
       rejectedReason: submission ? orUndefined(str(submission.reviewNotes)) : undefined,
       assetUrl: orUndefined(assetUrlByCampaignId.get(str(claim.campaignId)) ?? ""),
+      thumbnailUrl: orUndefined(str(campaign?.thumbnailUrl)),
       viewsCount: lockedViewsNum,
       viewsCapturedAt: submission ? orUndefined(str(submission.views_captured_at || submission.viewsCapturedAt)) : undefined,
       viewsSource: submission ? orUndefined(str(submission.views_source || submission.viewsSource)) : undefined,

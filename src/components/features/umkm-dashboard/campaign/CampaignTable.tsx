@@ -100,7 +100,16 @@ export function CampaignTable({
     return (
       <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-border-soft bg-neutral-100">
         {campaign.thumbnailUrl ? (
-          <Image src={campaign.thumbnailUrl} alt={campaign.title} fill sizes="40px" className="object-cover" />
+          <Image
+            src={campaign.thumbnailUrl}
+            alt={campaign.title}
+            fill
+            sizes="40px"
+            className="object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+          />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-[9px] font-bold text-neutral-400">—</div>
         )}

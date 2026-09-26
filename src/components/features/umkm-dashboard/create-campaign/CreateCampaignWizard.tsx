@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useCampaignAutoDraft } from "./create-campaign.autodraft";
@@ -33,6 +33,8 @@ import {
   generateCampaignBrief,
   createCampaignPayment,
   publishCampaign,
+  uploadCampaignThumbnail,
+  deleteCampaignThumbnail,
 } from "@/services/umkm/umkm-dashboard.service";
 import type { RehydratedWizard } from "./create-campaign.rehydrate";
 import { loadSnap } from "@/lib/midtrans/snap";
@@ -65,6 +67,21 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
 
   // Form states — seeded dari initialState kalau dalam mode edit
   const [title, setTitle] = useState(initialState?.title ?? "");
+  /**
+   * Thumbnail produk campaign. Hanya berisi URL publik NYATA (https://...)
+   * atau "" — tidak pernah `blob:`. Pratinjau blob saat unggah hidup di
+   * `thumbnailPreview` (transien, tidak masuk wizardState/autodraft).
+   */
+  const [thumbnailUrl, setThumbnailUrl] = useState(initialState?.thumbnailUrl ?? "");
+  const [thumbnailPreview, setThumbnailPreview] = useState("");
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+  /** Guard sinkron (state bisa tertinggal satu tick) — cegah double-upload. */
+  const uploadingThumbnailRef = useRef(false);
+  /** `thumbnailUrl` yang benar-benar ada di DB — dasar Model B & cleanup. */
+  const persistedThumbnailUrlRef = useRef(initialState?.thumbnailUrl ?? "");
+  /** Mirror terbaru dari state untuk cleanup saat unmount. */
+  const thumbnailUrlRef = useRef(thumbnailUrl);
+  const thumbnailPreviewRef = useRef("");
   const [category, setCategory] = useState(initialState?.category ?? "");
   const [type, setType] = useState(initialState?.type ?? "");
   const [description, setDescription] = useState(initialState?.description ?? "");
@@ -113,9 +130,84 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
   const [isSimulatedSnapOpen, setIsSimulatedSnapOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Mirror state → ref (dibaca effect cleanup & guard sinkron).
+  useEffect(() => {
+    thumbnailUrlRef.current = thumbnailUrl;
+  }, [thumbnailUrl]);
+  useEffect(() => {
+    thumbnailPreviewRef.current = thumbnailPreview;
+  }, [thumbnailPreview]);
+
+  /**
+   * Pilih thumbnail → langsung diunggah ke `campaign-assets` (upload saat
+   * dipilih, bukan saat submit akhir). Urutan Model B: file BARU diunggah
+   * dulu; file lama hanya dihapus setelah persistensi berhasil.
+   */
+  const handleSelectThumbnail = async (file: File) => {
+    if (uploadingThumbnailRef.current) {
+      toast.warning("Gambar lain sedang diunggah. Tunggu sebentar.");
+      return;
+    }
+    const previousStaged = thumbnailUrlRef.current;
+    const preview = URL.createObjectURL(file);
+    uploadingThumbnailRef.current = true;
+    setThumbnailPreview(preview);
+    setIsUploadingThumbnail(true);
+    try {
+      const res = await uploadCampaignThumbnail(file);
+      if (!res.success || !res.data) {
+        toast.error(res.error ?? "Gagal mengunggah gambar produk. Coba lagi.");
+        return;
+      }
+      // Unggah baru sukses → staged lama yang belum pernah tersimpan dibuang
+      // supaya replace sebelum save tidak menumpuk file yatim.
+      if (previousStaged && previousStaged !== persistedThumbnailUrlRef.current) {
+        void deleteCampaignThumbnail(previousStaged);
+      }
+      setThumbnailUrl(res.data);
+    } finally {
+      URL.revokeObjectURL(preview);
+      setThumbnailPreview("");
+      uploadingThumbnailRef.current = false;
+      setIsUploadingThumbnail(false);
+    }
+  };
+
+  /**
+   * Saat wizard ditinggalkan: file terunggah yang belum pernah tersimpan
+   * dibersihkan best-effort (mis. pilih gambar lalu navigasi tanpa simpan).
+   * Tidak menyentuh nilai yang sudah ada di DB.
+   */
+  useEffect(() => {
+    return () => {
+      const staged = thumbnailUrlRef.current;
+      if (staged && staged !== persistedThumbnailUrlRef.current) {
+        void deleteCampaignThumbnail(staged);
+      }
+      if (thumbnailPreviewRef.current) {
+        URL.revokeObjectURL(thumbnailPreviewRef.current);
+      }
+    };
+  }, []);
+
+  /** Buang staged thumbnail (reset/discard) — file tak-terpersist dibersihkan. */
+  const discardStagedThumbnail = useCallback(() => {
+    const staged = thumbnailUrlRef.current;
+    if (staged && staged !== persistedThumbnailUrlRef.current) {
+      void deleteCampaignThumbnail(staged);
+    }
+    if (thumbnailPreviewRef.current) {
+      URL.revokeObjectURL(thumbnailPreviewRef.current);
+      setThumbnailPreview("");
+    }
+    setThumbnailUrl("");
+    thumbnailUrlRef.current = "";
+  }, []);
+
   // Unified wizard state object
   const wizardState: CampaignWizardState = {
     title,
+    thumbnailUrl,
     category,
     type,
     description,
@@ -137,6 +229,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
   const handleRestoreDraft = useCallback(
     (restored: Omit<CampaignWizardState, "termsAgreed">, restoredStep: number) => {
       if (restored.title !== undefined) setTitle(restored.title);
+      if (restored.thumbnailUrl !== undefined) setThumbnailUrl(restored.thumbnailUrl);
       if (restored.category !== undefined) setCategory(restored.category);
       if (restored.type !== undefined) setType(restored.type);
       if (restored.description !== undefined) setDescription(restored.description);
@@ -161,6 +254,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
 
   const handleDiscardDraft = useCallback(() => {
     setTitle("");
+    discardStagedThumbnail();
     setCategory("");
     setType("");
     setDescription("");
@@ -181,7 +275,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
     setValidationErrors({});
     setStepValidationTried({});
     toast.success("Draf berhasil dihapus.");
-  }, []);
+  }, [discardStagedThumbnail]);
 
   const { clearDraft } = useCampaignAutoDraft({
     userId: user?.userId || "umkm_local",
@@ -193,23 +287,34 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
     enabled: true,
   });
 
+  // Mode edit (campaignId prop ada = campaign sudah ada sebelum sesi wizard):
+  // campaign legacy tanpa thumbnail dikecualikan dari syarat thumbnail campaign
+  // baru (grandfathered). Tanpa prop → campaign baru → thumbnail wajib.
+  const stepValidationOptions = { thumbnailOptional: Boolean(campaignId) };
+
   // Real-time validations for checklist markers using validation helpers
-  const productInfoValid = isStepCompleted(1, wizardState);
-  const briefValid = isStepCompleted(2, wizardState);
-  const assetValid = isStepCompleted(3, wizardState);
-  const budgetValid = isStepCompleted(4, wizardState);
-  const reviewValid = isStepCompleted(5, wizardState);
+  const productInfoValid = isStepCompleted(1, wizardState, stepValidationOptions);
+  const briefValid = isStepCompleted(2, wizardState, stepValidationOptions);
+  const assetValid = isStepCompleted(3, wizardState, stepValidationOptions);
+  const budgetValid = isStepCompleted(4, wizardState, stepValidationOptions);
+  const reviewValid = isStepCompleted(5, wizardState, stepValidationOptions);
 
   // Validate step specific fields using validation helpers
   const validateStep = (step: number): boolean => {
-    const errs = validateStepFields(step, wizardState);
+    const errs = validateStepFields(step, wizardState, stepValidationOptions);
     setValidationErrors(errs);
     setStepValidationTried((prev) => ({ ...prev, [step]: true }));
     return Object.keys(errs).length === 0;
   };
 
   const handleNext = () => {
-    const errs = validateStepFields(currentStep, wizardState);
+    // Jangan loloskan langkah 1 sementara thumbnail masih diunggah —
+    // state belum menunjuk URL final saat upload berjalan.
+    if (currentStep === 1 && uploadingThumbnailRef.current) {
+      toast.warning("Tunggu gambar produk selesai diunggah.");
+      return;
+    }
+    const errs = validateStepFields(currentStep, wizardState, stepValidationOptions);
     setValidationErrors(errs);
     setStepValidationTried((prev) => ({ ...prev, [currentStep]: true }));
 
@@ -218,6 +323,19 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
         setCurrentStep((prev) => prev + 1);
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
+        // Final submission (langkah terakhir): syarat thumbnail campaign BARU
+        // dicek ulang di sini — campaign legacy (thumbnailOptional) lolos tanpa
+        // thumbnail, campaign baru tanpa thumbnail diblokir + scroll ke field.
+        const finalErrs = validateStepFields(1, wizardState, stepValidationOptions);
+        if (Object.keys(finalErrs).length > 0) {
+          setCurrentStep(1);
+          setValidationErrors(finalErrs);
+          setStepValidationTried((prev) => ({ ...prev, 1: true }));
+          toast.warning("Harap lengkapi kolom wajib sebelum melanjutkan.");
+          // Tunggu render langkah 1 dulu supaya elemen field-… sudah ada.
+          setTimeout(() => scrollToFirstInvalidField(finalErrs), 0);
+          return;
+        }
         // Last step: Buka modal konfirmasi sebelum lanjut ke Midtrans Snap
         setIsPaymentOpen(true);
       }
@@ -300,8 +418,15 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
    * operasi berikutnya mengembalikan id langsung (idempoten).
    */
   const saveDraft = async (): Promise<string | null> => {
+    // Simpan sementara thumbnail masih diunggah → DB bisa menunjuk URL yang
+    // belum ada atau salah. Tunggu upload selesai dulu.
+    if (uploadingThumbnailRef.current) {
+      toast.error("Gambar produk masih diunggah. Tunggu sebentar lalu coba lagi.");
+      return null;
+    }
     // Kolom wajib campaigns (title/category/type/description) = langkah 1.
-    if (!isStepCompleted(1, wizardState)) {
+    // Thumbnail wajib hanya untuk campaign baru; legacy (thumbnailOptional) boleh "".
+    if (!isStepCompleted(1, wizardState, stepValidationOptions)) {
       setCurrentStep(1);
       validateStep(1);
       toast.error("Lengkapi Informasi Produk (langkah 1) sebelum menyimpan draft.");
@@ -313,6 +438,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
 
     const draftInput = {
       title,
+      thumbnailUrl,
       category,
       type: type as CampaignType,
       description,
@@ -346,7 +472,27 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
       res.data.warnings.forEach((w) => toast.warning(w));
       setCreatedCampaignId(res.data.campaign.id);
       setDraftBudget(res.data.campaign.totalBudgetEscrow);
+      // Model B: staged kini tersimpan di DB → file thumbnail LAMA (jika
+      // diganti) dihapus best-effort. Kegagalan hapus hanya meninggalkan
+      // file yatim — tidak membatalkan simpan.
+      const persistedNow = res.data.campaign.thumbnailUrl || thumbnailUrl;
+      const oldPersisted = persistedThumbnailUrlRef.current;
+      persistedThumbnailUrlRef.current = persistedNow;
+      thumbnailUrlRef.current = persistedNow;
+      setThumbnailUrl(persistedNow);
+      if (oldPersisted && oldPersisted !== persistedNow) {
+        void deleteCampaignThumbnail(oldPersisted);
+      }
       return res.data.campaign.id;
+    }
+
+    // Persist GAGAL → staged yang belum pernah tersimpan dibersihkan dan
+    // state dikembalikan ke nilai DB (create: "" → ulangi pilih gambar;
+    // replace: kembali ke thumbnail A yang masih utuh di DB & storage).
+    if (thumbnailUrl && thumbnailUrl !== persistedThumbnailUrlRef.current) {
+      void deleteCampaignThumbnail(thumbnailUrl);
+      setThumbnailUrl(persistedThumbnailUrlRef.current);
+      thumbnailUrlRef.current = persistedThumbnailUrlRef.current;
     }
 
     toast.error(
@@ -489,6 +635,9 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
     setIsCreatedOpen(false);
     setCurrentStep(1);
     setTitle("");
+    // Reset total untuk campaign BARU berikutnya — staged & jejak DB dikosongkan.
+    discardStagedThumbnail();
+    persistedThumbnailUrlRef.current = "";
     setCategory("");
     setType("");
     setDescription("");
@@ -523,6 +672,10 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
           <ProductInfoStep
             title={title}
             onChangeTitle={setTitle}
+            thumbnailUrl={thumbnailUrl}
+            thumbnailPreviewUrl={thumbnailPreview}
+            isUploadingThumbnail={isUploadingThumbnail}
+            onSelectThumbnail={handleSelectThumbnail}
             category={category}
             onChangeCategory={setCategory}
             type={type}
@@ -619,6 +772,8 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
           pricePerThousandViews={pricePerThousandViews}
           totalBudgetEscrow={totalBudgetEscrow}
           creatorQuota={creatorQuota}
+          coverUrl={thumbnailPreview || thumbnailUrl}
+          onSelectCoverFile={handleSelectThumbnail}
         />
 
         {/* Dynamic Insight Indicators */}

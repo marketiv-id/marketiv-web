@@ -42,6 +42,7 @@ export function getDerivedBudgetValues(
 export const STEP_FIELD_ANCHORS: Record<string, string> = {
   // Step 1: Informasi Produk
   title: "campaign-title",
+  thumbnailUrl: "field-thumbnailUrl",
   category: "field-category",
   type: "field-type",
   description: "campaign-description",

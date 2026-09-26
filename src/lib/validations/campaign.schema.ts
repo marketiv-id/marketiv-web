@@ -15,6 +15,7 @@ import { currencyAmountIDR } from "./common";
  */
 export const campaignWizardSchema = z.object({
   title: z.string(),
+  thumbnailUrl: z.string(),
   category: z.string(),
   type: z.string(),
   description: z.string(),
@@ -61,21 +62,36 @@ export function isCloudStorageFolderUrl(urlString: string): boolean {
 }
 
 /** Aturan per langkah. Object non-strict → key ekstra dari state di-strip, bukan error. */
+
+/** Field langkah 1 selain thumbnail — dipakai skema wajib (campaign baru) dan legacy (edit). */
+const step1Shape = {
+  // max = size kolom `campaigns` di appwrite.config.json (title 255, description 2000).
+  title: z
+    .string()
+    .trim()
+    .min(1, "Judul campaign wajib diisi.")
+    .max(255, "Judul campaign maksimal 255 karakter."),
+  category: z.string().min(1, "Kategori Niche wajib dipilih."),
+  type: z.enum(["ugc", "clipping"], { error: "Tipe campaign wajib dipilih." }),
+  description: z
+    .string()
+    .trim()
+    .min(30, "Deskripsi produk minimal 30 karakter.")
+    .max(2000, "Deskripsi produk maksimal 2000 karakter."),
+};
+
 export const campaignStepSchemas: Record<1 | 2 | 3 | 4 | 5, z.ZodType> = {
+  // Thumbnail WAJIB hanya untuk campaign BARU (keputusan produk: campaign
+  // legacy tanpa thumbnail dikecualikan via legacyEditStep1Schema — jangan
+  // opsional-kan skema ini).
+  // max = size kolom thumbnailUrl (2048) di appwrite.config.json.
   1: z.object({
-    // max = size kolom `campaigns` di appwrite.config.json (title 255, description 2000).
-    title: z
-      .string()
+    ...step1Shape,
+    thumbnailUrl: z
+      .string({ error: "Gambar produk campaign wajib diunggah." })
       .trim()
-      .min(1, "Judul campaign wajib diisi.")
-      .max(255, "Judul campaign maksimal 255 karakter."),
-    category: z.string().min(1, "Kategori Niche wajib dipilih."),
-    type: z.enum(["ugc", "clipping"], { error: "Tipe campaign wajib dipilih." }),
-    description: z
-      .string()
-      .trim()
-      .min(30, "Deskripsi produk minimal 30 karakter.")
-      .max(2000, "Deskripsi produk maksimal 2000 karakter."),
+      .min(1, "Gambar produk campaign wajib diunggah.")
+      .max(2048, "URL gambar produk maksimal 2048 karakter."),
   }),
   2: z.object({
     brief: z.string().trim().optional(),
@@ -105,6 +121,22 @@ export const campaignStepSchemas: Record<1 | 2 | 3 | 4 | 5, z.ZodType> = {
     }),
   }),
 };
+
+/**
+ * Variant langkah 1 untuk EDIT campaign yang sudah ada (grandfathered):
+ * thumbnailUrl TIDAK wajib — campaign legacy tanpa thumbnail tetap valid
+ * saat disimpan ulang. Validasi format tetap berlaku (max 2048). Begitu user
+ * memilih thumbnail, URL disimpan dan siklus Model B berjalan seperti biasa.
+ * Dipakai oleh validateStepFields({ thumbnailOptional: true }) — jangan
+ * dipakai untuk campaign baru.
+ */
+export const legacyEditStep1Schema = z.object({
+  ...step1Shape,
+  thumbnailUrl: z
+    .string()
+    .trim()
+    .max(2048, "URL gambar produk maksimal 2048 karakter."),
+});
 
 // ---------------------------------------------------------------------------
 // Pemetaan brief → campaign_briefs (kolom tak semua ada, lihat handoff Sprint 3)

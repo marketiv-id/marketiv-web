@@ -71,6 +71,8 @@ import {
   getUmkmSettingsProfileFromAppwrite,
   updateUmkmProfileInAppwrite,
   uploadUmkmLogoInAppwrite,
+  uploadCampaignThumbnailInAppwrite,
+  deleteCampaignThumbnailInAppwrite,
   generateCampaignBriefFromAppwrite,
   createCampaignPaymentInAppwrite,
   deleteCampaignDraftInAppwrite,
@@ -462,9 +464,9 @@ export async function createCampaignDraft(
       id: `mock_campaign_${Date.now()}`,
       umkmId: "mock_umkm",
       title: input.title,
+      thumbnailUrl: input.thumbnailUrl ?? "",
       brief: input.brief?.briefDetail ?? "",
       externalAssetUrl: input.asset?.fileUrl ?? "",
-      thumbnailUrl: "",
       niche: input.category as Campaign["niche"],
       status: "draft",
       creatorQuota: input.claimLimit,
@@ -519,6 +521,7 @@ export async function updateCampaignDraft(
     const updated: Campaign = {
       ...campaign,
       title: input.title,
+      thumbnailUrl: input.thumbnailUrl ?? campaign.thumbnailUrl,
       brief: input.brief?.briefDetail ?? campaign.brief,
       externalAssetUrl: input.asset?.fileUrl ?? campaign.externalAssetUrl,
       niche: (input.category as Campaign["niche"]) ?? campaign.niche,
@@ -624,6 +627,23 @@ export async function uploadUmkmLogo(file: File): Promise<ServiceResult<string>>
     return { success: true, data: URL.createObjectURL(file) };
   }
   return uploadUmkmLogoInAppwrite(file);
+}
+
+/**
+ * Unggah thumbnail produk campaign — TIDAK punya cabang mock: thumbnail harus
+ * selalu berupa URL publik nyata, tidak pernah `blob:` (dilarang persist ke
+ * `campaigns.thumbnailUrl` maupun autodraft localStorage).
+ */
+export async function uploadCampaignThumbnail(file: File): Promise<ServiceResult<string>> {
+  return uploadCampaignThumbnailInAppwrite(file);
+}
+
+/**
+ * Hapus file thumbnail best-effort (cleanup setelah replace/gagal simpan/
+ * hapus draft). URL di luar bucket campaign-assets → no-op.
+ */
+export async function deleteCampaignThumbnail(url: string): Promise<ServiceResult<null>> {
+  return deleteCampaignThumbnailInAppwrite(url);
 }
 
 // ── AI brief (Sprint 3) ──────────────────────────────────────────────────────

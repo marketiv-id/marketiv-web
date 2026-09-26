@@ -7,6 +7,11 @@ import {
   FUNCTION_IDS,
 } from "@/lib/appwrite/functions";
 import { uploadPublicFile, FileRuleError } from "@/lib/appwrite/storage";
+import {
+  uploadCampaignThumbnail,
+  deleteCampaignThumbnailByUrl,
+  copyCampaignThumbnail,
+} from "@/lib/appwrite/campaign-thumbnail";
 import { type CampaignType, MINIMUM_CAMPAIGN_BUDGET, PLATFORM_FEE_RATE } from "@/types/domain";
 import {
   createOfferSchema,
@@ -63,9 +68,11 @@ import {
  * lihat docs/.../08-frontend-data-contract.md §6, §15, §28.
  *
  * CATATAN JUJUR (belum bisa runtime-test — NEXT_PUBLIC_USE_MOCK_DATA=true):
- * - Field view-model berikut masih tanpa kolom sumber: Campaign.thumbnailUrl/
+ * - Field view-model berikut masih tanpa kolom sumber:
  *   externalAssetUrl/totalViews, Negotiation.projectTitle/scope/creatorName.
  *   Diberi default terdokumentasi sampai kolom/Function-nya ada.
+ *   (thumbnailUrl SUDAH punya kolom: `campaigns.thumbnailUrl` — dipetakan apa
+ *   adanya, "" untuk campaign legacy.)
  * - CreatorProfile.niche baru terisi setelah kolom `creator_profiles.niche`
  *   di-push dan di-backfill; sebelum itu Function mengembalikan "lainnya".
  */
@@ -119,7 +126,7 @@ const mapCampaign = (d: Doc): Campaign => ({
   title: str(d.title),
   brief: str(d.description),
   externalAssetUrl: "", // tak ada kolom sumber — aset ada di campaign_assets
-  thumbnailUrl: "", // tak ada kolom sumber
+  thumbnailUrl: str(d.thumbnailUrl), // kolom opsional — "" untuk campaign legacy
   niche: (str(d.category) as CreatorNiche) || "lainnya",
   type: str(d.type) || undefined,
   status: str(d.status) as CampaignStatus,
@@ -722,6 +729,8 @@ export async function getTransactionByIdFromAppwrite(id: string): Promise<Servic
 
 export type CreateCampaignDraftInput = {
   title: string;
+  /** URL publik thumbnail produk di bucket campaign-assets. */
+  thumbnailUrl?: string;
   category: string;
   type: CampaignType;
   description: string;
@@ -782,6 +791,7 @@ export async function createCampaignDraftInAppwrite(
       {
         umkmId: uid,
         title: input.title.trim(),
+        thumbnailUrl: input.thumbnailUrl ?? "",
         category: input.category,
         type: input.type,
         platforms: ["tiktok"],
@@ -940,8 +950,29 @@ export async function duplicateCampaignInAppwrite(
       if (a) asset = { fileUrl: str(a.fileUrl), fileName: str(a.fileName) || undefined };
     }
 
-    return createCampaignDraftInAppwrite({
+    // Thumbnail: salin sebagai file BARU (duplikasi tidak boleh berbagi file).
+    // Sumber tanpa thumbnail (campaign legacy) boleh terduplikasi tanpa
+    // thumbnail; sumber DENGAN thumbnail yang gagal disalin membatalkan
+    // seluruh duplikasi — jangan diam-diam membuat draft tanpa gambar.
+    const sourceThumbnail = str(src.thumbnailUrl);
+    let thumbnailUrl = "";
+    if (sourceThumbnail) {
+      try {
+        const copied = await copyCampaignThumbnail(sourceThumbnail, auth.userId);
+        thumbnailUrl = copied.url;
+      } catch (err) {
+        console.error("[duplicateCampaign] Failed to copy thumbnail:", err);
+        return fail(
+          "Gambar produk campaign sumber gagal disalin. Duplikasi dibatalkan.",
+          "unknown",
+          empty
+        );
+      }
+    }
+
+    const result = await createCampaignDraftInAppwrite({
       title: newTitle,
+      thumbnailUrl,
       category: str(src.category),
       type: (str(src.type) as CampaignType) || "ugc",
       description: str(src.description),
@@ -952,6 +983,17 @@ export async function duplicateCampaignInAppwrite(
       brief,
       asset,
     });
+
+    // Persist gagal setelah salinan terunggah → bersihkan file salinan
+    // best-effort supaya tidak meninggalkan file yatim.
+    if (!result.success && thumbnailUrl) {
+      try {
+        await deleteCampaignThumbnailByUrl(thumbnailUrl);
+      } catch (err) {
+        console.error("[duplicateCampaign] Failed to clean up copied thumbnail:", err);
+      }
+    }
+    return result;
   } catch (err) {
     return failFromWriteError<CampaignDraftResult>(err, empty);
   }
@@ -1073,6 +1115,38 @@ export async function uploadUmkmLogoInAppwrite(file: File): Promise<ServiceResul
     if (err instanceof FileRuleError) return failValidation(err.message, "");
     return failFromWriteError<string>(err, "");
   }
+}
+
+/** Unggah thumbnail produk campaign (STEP 1) ke bucket `campaign-assets`. */
+export async function uploadCampaignThumbnailInAppwrite(
+  file: File
+): Promise<ServiceResult<string>> {
+  const auth = await requireUserId<string>("");
+  if (!auth.ok) return auth.result;
+  try {
+    const uploaded = await uploadCampaignThumbnail(file, auth.userId);
+    return ok(uploaded.url);
+  } catch (err) {
+    if (err instanceof FileRuleError) return failValidation(err.message, "");
+    return failFromWriteError<string>(err, "");
+  }
+}
+
+/**
+ * Hapus file thumbnail best-effort — SELALU sukses; kegagalan cleanup hanya
+ * di-log (file mungkin jadi yatim, tidak ada risiko data konsistensi).
+ * URL yang bukan milik bucket campaign-assets tidak diapa-apakan.
+ */
+export async function deleteCampaignThumbnailInAppwrite(
+  url: string
+): Promise<ServiceResult<null>> {
+  if (!url) return ok(null);
+  try {
+    await deleteCampaignThumbnailByUrl(url);
+  } catch (err) {
+    console.error("[deleteCampaignThumbnail] Cleanup failed (non-fatal):", err);
+  }
+  return ok(null);
 }
 
 // ── AI brief (Sprint 3) ──────────────────────────────────────────────────────
@@ -1355,6 +1429,10 @@ export async function deleteCampaignDraftInAppwrite(
       );
     }
 
+    // Thumbnail diambil SEBELUM penghapusan baris — setelah DB terhapus tidak
+    // ada lagi referensi ke file-nya.
+    const thumbnailUrl = str(doc.thumbnailUrl);
+
     for (const collection of [COLLECTIONS.campaignBriefs, COLLECTIONS.campaignAssets]) {
       try {
         const children = await databases.listDocuments(DB, collection, [
@@ -1369,7 +1447,22 @@ export async function deleteCampaignDraftInAppwrite(
       }
     }
 
+    // DB dulu, file belakangan: penghapusan file yang lebih dulu sukses lalu
+    // penghapusan baris gagal akan meninggalkan campaign yang menunjuk file
+    // yang sudah mati. Kegagalan cleanup setelah DB terhapus NON-FATAL —
+    // campaign tetap terhapus, jangan dibuat ulang.
     await databases.deleteDocument(DB, COLLECTIONS.campaigns, campaignId);
+
+    if (thumbnailUrl) {
+      try {
+        await deleteCampaignThumbnailByUrl(thumbnailUrl);
+      } catch (err) {
+        console.error(
+          "[deleteCampaignDraft] Thumbnail cleanup failed (non-fatal):",
+          err
+        );
+      }
+    }
     return ok(null);
   } catch (err) {
     return failDelete(err, "Campaign");
@@ -1605,6 +1698,8 @@ export async function updateCampaignDraftInAppwrite(
       rewardPer1000Views: input.rewardPer1000Views,
       claimLimit: input.claimLimit,
       submissionDays: input.submissionDays ?? 7,
+      // Opsional: field diabaikan CF bila tidak dikirim (allowlist ketat).
+      ...(input.thumbnailUrl !== undefined && { thumbnailUrl: input.thumbnailUrl }),
     });
     // Baca ulang untuk dapatkan doc terbaru (CF tidak mereturn doc lengkap)
     const refreshed = await databases.listDocuments(DB, COLLECTIONS.campaigns, [
@@ -1614,6 +1709,12 @@ export async function updateCampaignDraftInAppwrite(
     ]);
     const d = refreshed.documents[0] as unknown as Doc | undefined;
     if (!d) return fail("Campaign draft tidak ditemukan setelah update.", "not_found", empty);
+    // Verifikasi persistensi thumbnail: bila tidak cocok, anggap GAGAL supaya
+    // pemanggil melakukan cleanup (Model B: file lama tetap valid, file baru
+    // dibersihkan).
+    if (input.thumbnailUrl !== undefined && str(d.thumbnailUrl) !== input.thumbnailUrl) {
+      return fail("Thumbnail campaign belum tersimpan. Coba lagi.", "validation", empty);
+    }
     campaignDoc = d;
   } catch (err) {
     return failFromError<CampaignDraftResult>(err, empty);

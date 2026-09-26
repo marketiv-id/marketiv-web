@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { Eye, Users, Zap, Camera } from "lucide-react";
 import { formatCurrency, formatCompactNumber } from "@/lib/formatters";
 import { DashboardBadge } from "../shared/DashboardBadge";
@@ -12,8 +12,14 @@ interface CampaignLivePreviewCardProps {
   pricePerThousandViews: number;
   totalBudgetEscrow: number;
   creatorQuota: number;
+  /** Thumbnail campaign terpilih/terunggah — dikontrol penuh oleh wizard. */
   coverUrl?: string;
-  onChangeCoverUrl?: (url: string) => void;
+  /**
+   * Dipanggil saat user memilih file — wizard yang mengunggah & menyimpan
+   * thumbnail. TIDAK menerima blob URL: URL pratinjau transien tidak boleh
+   * menjadi `thumbnailUrl` permanen.
+   */
+  onSelectCoverFile?: (file: File) => void;
 }
 
 export function CampaignLivePreviewCard({
@@ -24,14 +30,13 @@ export function CampaignLivePreviewCard({
   totalBudgetEscrow,
   creatorQuota,
   coverUrl = "",
-  onChangeCoverUrl,
+  onSelectCoverFile,
 }: CampaignLivePreviewCardProps) {
-  const [localCoverUrl, setLocalCoverUrl] = useState<string>(coverUrl);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const displayTitle = title.trim() || null;
   const displayBrief = brief.trim() || null;
-  const activeCoverUrl = coverUrl || localCoverUrl;
+  const activeCoverUrl = coverUrl;
 
   const estimatedViews =
     pricePerThousandViews > 0
@@ -40,12 +45,10 @@ export function CampaignLivePreviewCard({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setLocalCoverUrl(imageUrl);
-      if (onChangeCoverUrl) {
-        onChangeCoverUrl(imageUrl);
-      }
+    // Reset supaya file yang sama bisa dipilih ulang.
+    e.target.value = "";
+    if (file && onSelectCoverFile) {
+      onSelectCoverFile(file);
     }
   };
 

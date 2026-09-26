@@ -196,8 +196,18 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
       <div className="relative overflow-hidden" style={{ minHeight: 340 }}>
         {/* Blurred bg image */}
         {job.thumbnailUrl ? (
-          <div className="absolute inset-0 scale-110">
-            <Image src={job.thumbnailUrl} alt="" fill className="object-cover" priority sizes="100vw" />
+          <div className="absolute inset-0 scale-110" style={{ background: CREATOR_DARK_GRADIENT }}>
+            <Image
+              src={job.thumbnailUrl}
+              alt=""
+              fill
+              className="object-cover"
+              priority
+              sizes="100vw"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
           </div>
         ) : (
           <div className="absolute inset-0" style={{ background: CREATOR_DARK_GRADIENT }} />
@@ -293,9 +303,22 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
             </div>
 
             {/* Right: thumbnail */}
-            <div className="relative w-full lg:w-[400px] xl:w-[440px] aspect-video rounded-2xl overflow-hidden shadow-2xl shrink-0 border-2 border-white/20">
+            <div
+              className="relative w-full lg:w-[400px] xl:w-[440px] aspect-video rounded-2xl overflow-hidden shadow-2xl shrink-0 border-2 border-white/20"
+              style={{ background: CREATOR_PLACEHOLDER_GRADIENT }}
+            >
               {job.thumbnailUrl ? (
-                <Image src={job.thumbnailUrl} alt={job.title} fill sizes="(max-width: 1024px) 100vw, 440px" className="object-cover" priority />
+                <Image
+                  src={job.thumbnailUrl}
+                  alt={job.title}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 440px"
+                  className="object-cover"
+                  priority
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center font-black text-8xl text-white/10 select-none" style={{ background: CREATOR_PLACEHOLDER_GRADIENT }}>
                   {job.brandName?.charAt(0) ?? "M"}

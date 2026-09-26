@@ -1,6 +1,16 @@
 "use client";
 
-import { UtensilsCrossed, Shirt, MapPin, BookOpen, Sparkles, LayoutGrid } from "lucide-react";
+import { useRef } from "react";
+import {
+  UtensilsCrossed,
+  Shirt,
+  MapPin,
+  BookOpen,
+  Sparkles,
+  LayoutGrid,
+  Upload,
+  Image as ImageIcon,
+} from "lucide-react";
 import { FormSectionCard } from "../cards/FormSectionCard";
 import { SelectableOptionCard } from "../cards/SelectableOptionCard";
 import { Input } from "@/components/ui/input";
@@ -20,6 +30,12 @@ const NICHE_ICONS: Record<string, React.ReactNode> = {
 interface ProductInfoStepProps {
   title: string;
   onChangeTitle: (val: string) => void;
+  /** URL thumbnail tersimpan/terunggah — "" untuk campaign baru belum dipilih. */
+  thumbnailUrl: string;
+  /** Blob URL pratinjau sesaat saat unggah berlangsung (transien, tak pernah disimpan). */
+  thumbnailPreviewUrl?: string;
+  isUploadingThumbnail?: boolean;
+  onSelectThumbnail: (file: File) => void;
   category: string;
   onChangeCategory: (val: string) => void;
   type: string;
@@ -34,6 +50,10 @@ interface ProductInfoStepProps {
 export function ProductInfoStep({
   title,
   onChangeTitle,
+  thumbnailUrl,
+  thumbnailPreviewUrl,
+  isUploadingThumbnail = false,
+  onSelectThumbnail,
   category,
   onChangeCategory,
   type,
@@ -44,6 +64,17 @@ export function ProductInfoStep({
   onChangeLocation,
   validationErrors = {},
 }: ProductInfoStepProps) {
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
+
+  const displayThumbnailUrl = thumbnailPreviewUrl || thumbnailUrl;
+
+  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // Reset supaya file yang sama bisa dipilih ulang setelah error.
+    e.target.value = "";
+    if (file) onSelectThumbnail(file);
+  };
+
   return (
     <FormSectionCard
       title="Informasi Produk"
@@ -63,6 +94,72 @@ export function ProductInfoStep({
             : undefined
         }
       />
+
+      {/* Product thumbnail — gambar produk campaign (bucket campaign-assets) */}
+      <div id="field-thumbnailUrl" className="space-y-2.5">
+        <label className="text-[.84rem] font-[700] text-ink-800">
+          Gambar Produk Campaign <span className="text-primary ml-0.5">*</span>
+        </label>
+        <div className="flex items-start gap-3.5">
+          <div className="relative w-24 h-24 shrink-0 rounded-xl border border-neutral-200 bg-neutral-50 overflow-hidden flex items-center justify-center">
+            {displayThumbnailUrl ? (
+              /* <img> biasa: blob: URL sementara tidak boleh lewat next/image */
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={displayThumbnailUrl}
+                alt="Pratinjau gambar produk campaign"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            ) : (
+              <ImageIcon size={26} className="text-ink-300" />
+            )}
+            {isUploadingThumbnail && (
+              <div className="absolute inset-0 bg-black/45 backdrop-blur-[1px] flex items-center justify-center">
+                <span className="text-[.62rem] font-extrabold text-white uppercase tracking-wider">
+                  Mengunggah…
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 space-y-1.5 min-w-0">
+            <input
+              ref={thumbnailInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleThumbnailChange}
+            />
+            <button
+              type="button"
+              onClick={() => thumbnailInputRef.current?.click()}
+              disabled={isUploadingThumbnail}
+              className="px-4 py-2 bg-white hover:bg-neutral-50 text-ink-700 hover:text-ink-800 border border-neutral-200 text-xs font-bold rounded-xl shadow-3xs transition-all active:scale-[0.98] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
+            >
+              <Upload size={13} />
+              {isUploadingThumbnail
+                ? "Mengunggah…"
+                : displayThumbnailUrl
+                  ? "Ganti Gambar"
+                  : "Upload Gambar"}
+            </button>
+            <p className="text-[.74rem] leading-relaxed text-ink-400 font-[550]">
+              Upload foto produk yang akan dipromosikan dalam campaign ini. Gambar
+              ini akan ditampilkan kepada creator sebagai representasi utama
+              campaign.
+            </p>
+          </div>
+        </div>
+        {validationErrors.thumbnailUrl && (
+          <p className="text-[.76rem] text-red-500 font-[600] flex items-center gap-1">
+            <span className="inline-block w-1 h-1 rounded-full bg-red-500" />
+            {validationErrors.thumbnailUrl}
+          </p>
+        )}
+      </div>
 
       {/* Niche category grid */}
       <div id="field-category" className="space-y-2.5">

@@ -57,6 +57,12 @@ export function loadLocalDraft(key: string): CampaignWizardDraftPayload | null {
       return null;
     }
 
+    // `blob:` hanya pratinjau transien — tidak pernah boleh jadi thumbnail
+    // permanen. Kosongkan bila ada di draft lama/corrupt, sisanya dipulihkan.
+    if (typeof parsed.state?.thumbnailUrl === "string" && parsed.state.thumbnailUrl.startsWith("blob:")) {
+      parsed.state.thumbnailUrl = "";
+    }
+
     // Check expiration (7 days)
     if (Date.now() - parsed.savedAt > DRAFT_MAX_AGE_MS) {
       removeLocalDraft(key);
@@ -84,6 +90,7 @@ export function removeLocalDraft(key: string): void {
 function hasMeaningfulContent(state: CampaignWizardState): boolean {
   return Boolean(
     state.title?.trim() ||
+    state.thumbnailUrl?.trim() ||
     state.category?.trim() ||
     state.type?.trim() ||
     state.description?.trim() ||

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   isCloudStorageFolderUrl,
   campaignStepSchemas,
+  legacyEditStep1Schema,
   APPROVED_CLOUD_STORAGE_DOMAINS,
 } from "../campaign.schema";
 
@@ -213,3 +214,97 @@ describe("parseRequiredPoints & formatCombinedRequiredPoints", () => {
   });
 });
 
+
+describe("campaignStepSchemas[1] thumbnailUrl", () => {
+  const schema = campaignStepSchemas[1];
+  const base = {
+    title: "Kopi susu gula aren",
+    category: "kuliner",
+    type: "ugc" as const,
+    description: "Deskripsi produk campaign yang cukup panjang untuk lolos validasi.",
+  };
+  const validUrl =
+    "https://api.example.test/v1/storage/buckets/campaign-assets/files/abc123XYZ_-1/view";
+
+  it("passes with valid Appwrite campaign-assets URL", () => {
+    const result = schema.safeParse({ ...base, thumbnailUrl: validUrl });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.thumbnailUrl).toBe(validUrl);
+  });
+
+  it("trims surrounding whitespace", () => {
+    const result = schema.safeParse({ ...base, thumbnailUrl: `  ${validUrl}  ` });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.thumbnailUrl).toBe(validUrl);
+  });
+
+  it("fails when thumbnailUrl is missing", () => {
+    const result = schema.safeParse(base);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const error = result.error.flatten().fieldErrors.thumbnailUrl;
+      expect(error).toContain("Gambar produk campaign wajib diunggah.");
+    }
+  });
+
+  it("fails when thumbnailUrl is empty or whitespace", () => {
+    for (const thumbnailUrl of ["", "   "]) {
+      const result = schema.safeParse({ ...base, thumbnailUrl });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const error = result.error.flatten().fieldErrors.thumbnailUrl;
+        expect(error).toContain("Gambar produk campaign wajib diunggah.");
+      }
+    }
+  });
+
+  it("fails when thumbnailUrl exceeds 2048 characters", () => {
+    const tooLong = `https://api.example.test/${"a".repeat(2100)}`;
+    const result = schema.safeParse({ ...base, thumbnailUrl: tooLong });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const error = result.error.flatten().fieldErrors.thumbnailUrl;
+      expect(error).toContain("URL gambar produk maksimal 2048 karakter.");
+    }
+  });
+});
+
+describe("legacyEditStep1Schema (campaign legacy tanpa thumbnail)", () => {
+  const schema = legacyEditStep1Schema;
+  const base = {
+    title: "Kopi susu gula aren",
+    category: "kuliner",
+    type: "ugc" as const,
+    description: "Deskripsi produk campaign yang cukup panjang untuk lolos validasi.",
+  };
+
+  it("passes with empty thumbnailUrl (legacy campaign stays valid)", () => {
+    expect(schema.safeParse({ ...base, thumbnailUrl: "" }).success).toBe(true);
+  });
+
+  it("passes when legacy campaign adds a thumbnail", () => {
+    const thumbnailUrl =
+      "https://api.example.test/v1/storage/buckets/campaign-assets/files/abc1/view";
+    const result = schema.safeParse({ ...base, thumbnailUrl });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.thumbnailUrl).toBe(thumbnailUrl);
+  });
+
+  it("still enforces 2048 max when a thumbnail is present", () => {
+    const result = schema.safeParse({ ...base, thumbnailUrl: `https://x.test/${"a".repeat(2100)}` });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const error = result.error.flatten().fieldErrors.thumbnailUrl;
+      expect(error).toContain("URL gambar produk maksimal 2048 karakter.");
+    }
+  });
+
+  it("still enforces other required step-1 fields", () => {
+    const result = schema.safeParse({ ...base, title: "", thumbnailUrl: "" });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const error = result.error.flatten().fieldErrors.title;
+      expect(error).toContain("Judul campaign wajib diisi.");
+    }
+  });
+});

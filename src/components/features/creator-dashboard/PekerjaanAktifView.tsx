@@ -198,7 +198,7 @@ function ActiveJobCard({
       )}
     >
       {/* Cover image — same 4:3 as Job Pool */}
-      <div className="relative w-full overflow-hidden shrink-0" style={{ aspectRatio: "4/3" }}>
+      <div className="relative w-full overflow-hidden shrink-0 bg-neutral-100" style={{ aspectRatio: "4/3" }}>
         {work.thumbnailUrl ? (
           <Image
             src={work.thumbnailUrl}
@@ -206,6 +206,9 @@ function ActiveJobCard({
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
           />
         ) : (
           <div

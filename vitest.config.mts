@@ -25,6 +25,7 @@ export default defineConfig({
       "src/content/__tests__/**/*.test.ts",
       "src/services/**/__tests__/**/*.test.ts",
       "src/lib/demo/__tests__/**/*.test.ts",
+      "src/lib/appwrite/__tests__/**/*.test.ts",
     ],
     exclude: ["node_modules", "00_BACKEND/tests/e2e"],
     environmentMatchGlobs: [

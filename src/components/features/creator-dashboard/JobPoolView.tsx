@@ -111,7 +111,7 @@ function CampaignCard({ job, onClaim, hasClaimed = false }: CampaignCardProps) {
     <div className="group bg-white rounded-[20px] border border-neutral-200/50 overflow-hidden shadow-1 hover:shadow-kreator-avatar hover:-translate-y-1.5 hover:border-kreator-400/20 transition-all duration-300 flex flex-col">
 
       {/* Cover image — 4:3 aspect ratio */}
-      <div className="relative w-full overflow-hidden" style={{ aspectRatio: "4/3" }}>
+      <div className="relative w-full overflow-hidden bg-neutral-100" style={{ aspectRatio: "4/3" }}>
         {job.thumbnailUrl ? (
           <Image
             src={job.thumbnailUrl}
@@ -119,6 +119,9 @@ function CampaignCard({ job, onClaim, hasClaimed = false }: CampaignCardProps) {
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
           />
         ) : (
           <div
