@@ -14,6 +14,8 @@ export default defineConfig({
     environment: "node",
     env: {
       NEXT_PUBLIC_ADMIN_APP_URL: "https://admin.example.test",
+      // UMKM onboarding tour mati di app, tapi tetap diuji di sini.
+      NEXT_PUBLIC_UMKM_ONBOARDING_TOUR_ENABLED: "true",
     },
     include: [
       "00_BACKEND/tests/unit/oauth-callback.service.test.ts",

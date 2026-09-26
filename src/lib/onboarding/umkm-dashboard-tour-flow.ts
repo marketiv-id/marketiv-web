@@ -14,10 +14,12 @@ import {
   restoreUmkmCampaignHandoff,
 } from "./umkm-dashboard-tour-session";
 import { umkmCampaignTourSteps } from "./umkm-campaign-tour";
+import { UMKM_ONBOARDING_TOUR_ENABLED } from "./umkm-tour-feature";
 import { routes } from "../constants/routes";
 
 /** Single T03 seam from eligible UMKM Dashboard session into T02 adapter. */
 export function startUmkmDashboardTourForSession(userId: string): boolean {
+  if (!UMKM_ONBOARDING_TOUR_ENABLED) return false;
   if (!beginUmkmDashboardTourSession(userId)) return false;
 
   const tour = startUmkmOnboardingTour(umkmDashboardTourSteps, {
@@ -30,6 +32,7 @@ export function startUmkmDashboardTourForSession(userId: string): boolean {
 
 /** Call only from existing user-triggered Dashboard Campaign navigation. */
 export function beginUmkmCampaignHandoffForSession(userId: string): boolean {
+  if (!UMKM_ONBOARDING_TOUR_ENABLED) return false;
   return beginUmkmCampaignHandoff(userId);
 }
 
@@ -50,6 +53,7 @@ export function replayUmkmDashboardOnboarding(
   userId: string | undefined,
   navigate: (href: string) => void
 ): boolean {
+  if (!UMKM_ONBOARDING_TOUR_ENABLED) return false;
   if (!userId || !prepareUmkmDashboardTourReplay(userId)) return false;
   navigate(routes.dashboardUmkm);
   return true;
@@ -57,6 +61,7 @@ export function replayUmkmDashboardOnboarding(
 
 /** Campaign-side continuation. It never performs navigation. */
 export function startUmkmCampaignTourForSession(userId: string): boolean {
+  if (!UMKM_ONBOARDING_TOUR_ENABLED) return false;
   if (!claimUmkmCampaignTour(userId)) return false;
 
   const tour = startUmkmOnboardingTour(umkmCampaignTourSteps, {

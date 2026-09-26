@@ -27,6 +27,7 @@ import { UmkmPageWrapper } from "@/components/features/umkm-dashboard/shared/Umk
 import { getUmkmProfile } from "@/services/umkm/umkm-dashboard.service";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { replayUmkmDashboardOnboarding } from "@/lib/onboarding/umkm-dashboard-tour-flow";
+import { UMKM_ONBOARDING_TOUR_ENABLED } from "@/lib/onboarding/umkm-tour-feature";
 import { TERMS_CHAPTERS } from "@/content/terms";
 
 type TabType = "rules" | "faq" | "terms";
@@ -268,15 +269,17 @@ export default function FAQRulesDashboardPage() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0 self-start md:self-auto">
-            <button
-              type="button"
-              onClick={handleReplayOnboarding}
-              disabled={isReplaying || user?.role !== "umkm"}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-orange-300 bg-white text-orange-700 text-xs font-bold shadow-sm transition-colors hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <BookOpen size={14} />
-              <span>{isReplaying ? "Memulai Panduan..." : "Ulangi Panduan"}</span>
-            </button>
+            {UMKM_ONBOARDING_TOUR_ENABLED && (
+              <button
+                type="button"
+                onClick={handleReplayOnboarding}
+                disabled={isReplaying || user?.role !== "umkm"}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-orange-300 bg-white text-orange-700 text-xs font-bold shadow-sm transition-colors hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <BookOpen size={14} />
+                <span>{isReplaying ? "Memulai Panduan..." : "Ulangi Panduan"}</span>
+              </button>
+            )}
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-orange-50 border border-orange-200/80 text-orange-800 text-xs font-bold">
               <CheckCircle2 size={14} className="text-orange-600" />
               <span>Versi Resmi 3.1 (Agustus 2026)</span>
