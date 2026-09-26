@@ -197,8 +197,8 @@ function ActiveJobCard({
           : "border-neutral-200/50 shadow-1 hover:shadow-kreator-avatar hover:-translate-y-1.5 hover:border-kreator-400/20"
       )}
     >
-      {/* Cover image — same 4:3 as Job Pool */}
-      <div className="relative w-full overflow-hidden shrink-0 bg-neutral-100" style={{ aspectRatio: "4/3" }}>
+      {/* Cover image — same 16:9 as Job Pool */}
+      <div className="relative aspect-video w-full overflow-hidden shrink-0 bg-neutral-100">
         {work.thumbnailUrl ? (
           <Image
             src={work.thumbnailUrl}

@@ -101,7 +101,7 @@ export function CampaignCard({
   return (
     <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white shadow-3xs hover:shadow-md hover:-translate-y-1 hover:border-orange-300/60 transition-all duration-300">
       {/* Cover Header */}
-      <div className="relative h-32 sm:h-36 w-full overflow-hidden shrink-0" style={{ background: coverGradient }}>
+      <div className="relative aspect-video w-full overflow-hidden shrink-0" style={{ background: coverGradient }}>
         {campaign.thumbnailUrl ? (
           <Image
             src={campaign.thumbnailUrl}

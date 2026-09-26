@@ -95,4 +95,51 @@ describe("CampaignCard responsive layout", () => {
     expect(text).toContain("4 Valid");
     expect(text).toContain("1 Sengketa");
   });
+
+  it("renders thumbnail cover as 16:9 aspect-video container", async () => {
+    await act(async () => {
+      root?.render(
+        <CampaignCard
+          campaign={{ ...baseCampaign, thumbnailUrl: "https://cdn.test/thumb.webp" }}
+          pendingCount={0}
+          validCount={0}
+          onDuplicate={vi.fn()}
+          onCancel={vi.fn()}
+          onDelete={vi.fn()}
+          onPublish={vi.fn()}
+          onExport={vi.fn()}
+          onEdit={vi.fn()}
+        />
+      );
+    });
+
+    const img = host.querySelector("img");
+    expect(img).not.toBeNull();
+    const cover = img?.parentElement;
+    expect(cover).not.toBeNull();
+    expect(cover?.className).toContain("aspect-video");
+    expect(cover?.className).toContain("overflow-hidden");
+    expect(img?.className).toContain("object-cover");
+  });
+
+  it("renders fallback (no thumbnail) in the same 16:9 container", async () => {
+    await act(async () => {
+      root?.render(
+        <CampaignCard
+          campaign={baseCampaign}
+          pendingCount={0}
+          validCount={0}
+          onDuplicate={vi.fn()}
+          onCancel={vi.fn()}
+          onDelete={vi.fn()}
+          onPublish={vi.fn()}
+          onExport={vi.fn()}
+          onEdit={vi.fn()}
+        />
+      );
+    });
+
+    expect(host.querySelector("img")).toBeNull();
+    expect(host.querySelector(".aspect-video")).not.toBeNull();
+  });
 });

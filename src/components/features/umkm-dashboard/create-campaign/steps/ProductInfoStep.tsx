@@ -101,7 +101,7 @@ export function ProductInfoStep({
           Gambar Produk Campaign <span className="text-primary ml-0.5">*</span>
         </label>
         <div className="flex items-start gap-3.5">
-          <div className="relative w-24 h-24 shrink-0 rounded-xl border border-neutral-200 bg-neutral-50 overflow-hidden flex items-center justify-center">
+          <div className="relative w-24 aspect-video shrink-0 rounded-xl border border-neutral-200 bg-neutral-50 overflow-hidden flex items-center justify-center">
             {displayThumbnailUrl ? (
               /* <img> biasa: blob: URL sementara tidak boleh lewat next/image */
               // eslint-disable-next-line @next/next/no-img-element

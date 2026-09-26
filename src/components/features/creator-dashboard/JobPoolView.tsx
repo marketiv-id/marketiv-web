@@ -110,8 +110,8 @@ function CampaignCard({ job, onClaim, hasClaimed = false }: CampaignCardProps) {
   return (
     <div className="group bg-white rounded-[20px] border border-neutral-200/50 overflow-hidden shadow-1 hover:shadow-kreator-avatar hover:-translate-y-1.5 hover:border-kreator-400/20 transition-all duration-300 flex flex-col">
 
-      {/* Cover image — 4:3 aspect ratio */}
-      <div className="relative w-full overflow-hidden bg-neutral-100" style={{ aspectRatio: "4/3" }}>
+      {/* Cover image — 16:9 aspect ratio */}
+      <div className="relative aspect-video w-full overflow-hidden bg-neutral-100">
         {job.thumbnailUrl ? (
           <Image
             src={job.thumbnailUrl}

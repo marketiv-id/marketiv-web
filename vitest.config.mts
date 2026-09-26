@@ -26,11 +26,13 @@ export default defineConfig({
       "src/services/**/__tests__/**/*.test.ts",
       "src/lib/demo/__tests__/**/*.test.ts",
       "src/lib/appwrite/__tests__/**/*.test.ts",
+      "src/lib/__tests__/**/*.test.ts",
     ],
     exclude: ["node_modules", "00_BACKEND/tests/e2e"],
     environmentMatchGlobs: [
       ["src/components/features/**/__tests__/**/*.test.{ts,tsx}", "jsdom"],
       ["src/lib/demo/__tests__/**/*.test.ts", "jsdom"],
+      ["src/lib/__tests__/**/*.test.ts", "jsdom"],
     ],
   },
 });

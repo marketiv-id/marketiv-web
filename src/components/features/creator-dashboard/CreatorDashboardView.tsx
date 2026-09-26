@@ -180,7 +180,7 @@ function CampaignCard({ job, onClaim }: CampaignCardProps) {
     <div className="group flex flex-col h-full overflow-hidden rounded-2xl sm:rounded-[20px] border border-neutral-200/60 bg-white shadow-[0_2px_16px_rgba(15,23,42,.05)] transition-all duration-300 hover:-translate-y-1.5 hover:border-kreator-400/30 hover:shadow-kreator">
 
       {/* Cover image */}
-      <div className="relative w-full overflow-hidden aspect-[16/10] sm:aspect-[4/3] bg-neutral-100 shrink-0">
+      <div className="relative w-full overflow-hidden aspect-video bg-neutral-100 shrink-0">
         {job.thumbnailUrl ? (
           <Image
             src={job.thumbnailUrl}

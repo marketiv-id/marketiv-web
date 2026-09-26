@@ -80,7 +80,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
     >
       {/* Cover Header */}
       <div
-        className="h-28 sm:h-36 relative overflow-hidden shrink-0 flex flex-col justify-between p-2.5 sm:p-3.5"
+        className="aspect-video relative overflow-hidden shrink-0 flex flex-col justify-between p-2.5 sm:p-3.5"
         style={{
           background: coverGradient,
         }}

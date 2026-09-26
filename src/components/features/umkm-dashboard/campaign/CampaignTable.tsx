@@ -98,13 +98,13 @@ export function CampaignTable({
 
   function renderThumbnail(campaign: Campaign) {
     return (
-      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-border-soft bg-neutral-100">
+      <div className="relative aspect-video w-14 shrink-0 overflow-hidden rounded-lg border border-border-soft bg-neutral-100">
         {campaign.thumbnailUrl ? (
           <Image
             src={campaign.thumbnailUrl}
             alt={campaign.title}
             fill
-            sizes="40px"
+            sizes="56px"
             className="object-cover"
             onError={(e) => {
               e.currentTarget.style.display = "none";

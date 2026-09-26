@@ -72,7 +72,7 @@ export function CampaignListSkeleton({ viewMode = "card" }: { viewMode?: "card" 
         <div className="divide-y divide-border-soft">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="p-4 flex gap-4 items-center">
-              <Skeleton className="h-10 w-10 rounded-lg shrink-0" />
+              <Skeleton className="aspect-video w-14 rounded-lg shrink-0" />
               <Skeleton className="h-4 flex-1" />
               <Skeleton className="h-4 w-20" />
               <Skeleton className="h-4 w-24" />

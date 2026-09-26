@@ -36,6 +36,8 @@ import {
   uploadCampaignThumbnail,
   deleteCampaignThumbnail,
 } from "@/services/umkm/umkm-dashboard.service";
+import { assertCampaignThumbnailFile } from "@/lib/appwrite/campaign-thumbnail";
+import { compressImageToWebP } from "@/lib/compress-image";
 import type { RehydratedWizard } from "./create-campaign.rehydrate";
 import { loadSnap } from "@/lib/midtrans/snap";
 import { type CampaignType, calculateTotalPayment } from "@/types/domain";
@@ -139,22 +141,42 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
   }, [thumbnailPreview]);
 
   /**
-   * Pilih thumbnail → langsung diunggah ke `campaign-assets` (upload saat
-   * dipilih, bukan saat submit akhir). Urutan Model B: file BARU diunggah
-   * dulu; file lama hanya dihapus setelah persistensi berhasil.
+   * Pilih thumbnail → validasi sumber → KOMPRES dulu (WebP ≤1600px) →
+   * pratinjau memakai file hasil kompresi (bytes yang benar-benar akan
+   * disimpan) → unggah file hasil kompresi ke `campaign-assets`.
+   * Urutan Model B TIDAK berubah: file BARU diunggah dulu; file lama hanya
+   * dihapus setelah persistensi berhasil.
    */
   const handleSelectThumbnail = async (file: File) => {
     if (uploadingThumbnailRef.current) {
-      toast.warning("Gambar lain sedang diunggah. Tunggu sebentar.");
+      toast.warning("Gambar lain sedang diproses. Tunggu sebentar.");
+      return;
+    }
+    // Tolak file invalid SEBELUM kompresi/upload — validasi tidak dilewati.
+    try {
+      assertCampaignThumbnailFile(file);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "File gambar tidak valid.");
       return;
     }
     const previousStaged = thumbnailUrlRef.current;
-    const preview = URL.createObjectURL(file);
     uploadingThumbnailRef.current = true;
-    setThumbnailPreview(preview);
     setIsUploadingThumbnail(true);
+    let preview = "";
     try {
-      const res = await uploadCampaignThumbnail(file);
+      let optimized: File;
+      try {
+        optimized = await compressImageToWebP(file);
+      } catch (err) {
+        // Decode/encode gagal → TIDAK upload file asli (thumbnail wajib terkompresi).
+        toast.error(
+          err instanceof Error ? err.message : "Gagal memproses gambar. Coba gambar lain."
+        );
+        return;
+      }
+      preview = URL.createObjectURL(optimized);
+      setThumbnailPreview(preview);
+      const res = await uploadCampaignThumbnail(optimized);
       if (!res.success || !res.data) {
         toast.error(res.error ?? "Gagal mengunggah gambar produk. Coba lagi.");
         return;
@@ -166,7 +188,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
       }
       setThumbnailUrl(res.data);
     } finally {
-      URL.revokeObjectURL(preview);
+      if (preview) URL.revokeObjectURL(preview);
       setThumbnailPreview("");
       uploadingThumbnailRef.current = false;
       setIsUploadingThumbnail(false);

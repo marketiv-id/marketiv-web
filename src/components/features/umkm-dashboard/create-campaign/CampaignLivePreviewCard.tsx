@@ -59,7 +59,7 @@ export function CampaignLivePreviewCard({
     >
       {/* ── Cover banner ──────────────────────────────────── */}
       <div
-        className="relative h-36 w-full flex items-center justify-center overflow-hidden group transition-all"
+        className="relative aspect-video w-full flex items-center justify-center overflow-hidden group transition-all"
         style={{
           background: activeCoverUrl
             ? `linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.65) 100%), url(${activeCoverUrl}) center/cover no-repeat`
