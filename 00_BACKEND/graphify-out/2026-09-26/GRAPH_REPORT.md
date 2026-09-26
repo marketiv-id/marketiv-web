@@ -1,16 +1,16 @@
-# Graph Report - 00_BACKEND  (2026-09-26)
+# Graph Report - 00_BACKEND  (2026-09-24)
 
 ## Corpus Check
-- 488 files · ~326,598 words
+- 488 files · ~325,613 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 5036 nodes · 5576 edges · 405 communities (376 shown, 29 thin omitted)
+- 5035 nodes · 5575 edges · 412 communities (377 shown, 35 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 35 edges (avg confidence: 0.58)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `cd1de74f`
+- Built from commit: `ea07e081`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -351,6 +351,12 @@
 - package.json
 - package.json
 - package.json
+- package.json
+- package.json
+- package.json
+- package.json
+- package.json
+- package.json
 - main.js
 - package.json
 - Bloker Frontend — Fitur Delete/Cancel
@@ -393,21 +399,21 @@
 10. `Prompt — Perbaikan Google OAuth Redirect ke Form/Login vs Onboarding` - 15 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `createGetAdminDashboardSummaryHandler()` --indirect_call--> `req()`  [INFERRED]
+  functions/get-admin-dashboard-summary/src/main.js → tests/unit/unclaim-campaign.test.ts
+- `createGetAdminSubmissionQueueHandler()` --indirect_call--> `req()`  [INFERRED]
+  functions/get-admin-submission-queue/src/main.js → tests/unit/unclaim-campaign.test.ts
 - `createGetAdminWithdrawalQueueHandler()` --indirect_call--> `req()`  [INFERRED]
   functions/get-admin-withdrawal-queue/src/main.js → tests/unit/unclaim-campaign.test.ts
-- `createUmkmRatecardReviewsHandler()` --indirect_call--> `req()`  [INFERRED]
-  functions/get-umkm-ratecard-reviews/src/main.js → tests/unit/unclaim-campaign.test.ts
 - `createRequestRatecardRevisionHandler()` --indirect_call--> `req()`  [INFERRED]
   functions/request-ratecard-revision/src/main.js → tests/unit/unclaim-campaign.test.ts
 - `createReviewWithdrawalHandler()` --indirect_call--> `req()`  [INFERRED]
   functions/review-withdrawal/src/main.js → tests/unit/unclaim-campaign.test.ts
-- `createSubmitRatecardDeliverableHandler()` --indirect_call--> `req()`  [INFERRED]
-  functions/submit-ratecard-deliverable/src/main.js → tests/unit/unclaim-campaign.test.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (405 total, 29 thin omitted)
+## Communities (412 total, 35 thin omitted)
 
 ### Community 0 - "00_Index.md"
 Cohesion: 0.10
@@ -470,8 +476,8 @@ Cohesion: 0.06
 Nodes (29): Archive, Chat — Business Rules, Denormalisasi, Read Receipt, Realtime & Akses, Satu Percakapan per Pasangan, Tipe Pesan, Chat — Database (+21 more)
 
 ### Community 15 - "Halaman"
-Cohesion: 0.04
-Nodes (20): Account, authUsers, Client, createCalls, Databases, emailTokens, Functions, ID (+12 more)
+Cohesion: 0.09
+Nodes (16): authUsers, createCalls, emailTokens, Functions, ID, makeReq(), makeRes(), Messaging (+8 more)
 
 ### Community 16 - "Orders — Frontend"
 Cohesion: 0.08
@@ -518,8 +524,8 @@ Cohesion: 0.09
 Nodes (21): Algolia DocSearch, Analytics Integration, Build Optimization, CDN & Caching, Code Example Testing, Custom Analytics, Documentation Systems & Infrastructure, Documentation Testing (+13 more)
 
 ### Community 27 - "Halaman"
-Cohesion: 0.08
-Nodes (18): 02 — Modules, Daftar Modul, Lihat Juga, Daftar Dokumen, Modul Chat, Daftar Dokumen, Modul Offers, Daftar Dokumen (+10 more)
+Cohesion: 0.11
+Nodes (10): Daftar Dokumen, Modul Chat, Daftar Dokumen, Modul Offers, Daftar Dokumen, Modul Orders, Daftar Dokumen, Modul Payments (+2 more)
 
 ### Community 28 - "Halaman"
 Cohesion: 0.10
@@ -562,8 +568,8 @@ Cohesion: 0.06
 Nodes (32): appwrite, @opendataloader/pdf, dependencies, appwrite, @opendataloader/pdf, devDependencies, node-appwrite, @playwright/test (+24 more)
 
 ### Community 38 - "Orders — Testing"
-Cohesion: 0.17
-Nodes (7): Authentication, Dokumen, rate_card_packages, rate_cards, Rate Cards — Database, Dokumen, Users
+Cohesion: 0.15
+Nodes (10): AI — Database, ai_requests, rate_card_packages, rate_cards, Rate Cards — Database, Dokumen, Users, Istilah (+2 more)
 
 ### Community 39 - "Community 39"
 Cohesion: 0.15
@@ -714,8 +720,8 @@ Cohesion: 0.18
 Nodes (10): Common Issues, Deep Nesting, God Functions, Magic Numbers/Strings, Missing Error Handling, Missing Null Checks, Mutable Shared State, N+1 Query Problem (+2 more)
 
 ### Community 78 - "Roadmap Pengembangan"
-Cohesion: 0.18
-Nodes (10): Authentication — Overview, Batasan Kepemilikan, Ketergantungan, Lihat Juga, Ringkasan, Appwrite Auth SDK, Appwrite Functions, Aturan Implementasi (+2 more)
+Cohesion: 0.12
+Nodes (14): Authentication, Dokumen, Authentication — Concepts, Istilah, Konsep, Appwrite Auth SDK, Appwrite Functions, Aturan Implementasi (+6 more)
 
 ### Community 79 - "50_Security_Guidelines"
 Cohesion: 0.20
@@ -736,10 +742,6 @@ Nodes (9): API Documentation: NestJS & Express, Controller Documentation, DTO Do
 ### Community 83 - "Komponen"
 Cohesion: 0.20
 Nodes (9): API + Frontend Flow, Common Patterns, Create, CRUD Implementation, Delete, Form Handling, Quick Reference, Read (List with Pagination) (+1 more)
-
-### Community 84 - "AI — Events"
-Cohesion: 0.24
-Nodes (6): 00_Project — Index, Daftar Dokumen, Dikecualikan dari MVP, Referensi, Ruang Lingkup MVP, Termasuk dalam MVP
 
 ### Community 85 - "Authentication — Overview"
 Cohesion: 0.20
@@ -894,8 +896,8 @@ Cohesion: 0.25
 Nodes (7): node-appwrite, dependencies, node-appwrite, main, name, type, version
 
 ### Community 125 - "AI — User Flow"
-Cohesion: 0.07
-Nodes (40): byKey(), chunk(), compareDeliverablesDesc(), createdAt(), createUmkmRatecardReviewsHandler(), getEnv(), getUserId(), groupBy() (+32 more)
+Cohesion: 0.05
+Nodes (50): byKey(), chunk(), compareDeliverablesDesc(), createdAt(), createUmkmRatecardReviewsHandler(), getEnv(), getUserId(), groupBy() (+42 more)
 
 ### Community 126 - "Authentication — Concepts"
 Cohesion: 0.08
@@ -970,7 +972,7 @@ Cohesion: 0.29
 Nodes (6): Istilah, Konsep, Payments — Concepts, Status Escrow, Status Payment, Status Withdrawal
 
 ### Community 145 - "chat.service.js"
-Cohesion: 0.20
+Cohesion: 0.22
 Nodes (9): Campaign Budget Refund (T-02), Checkout Created → Midtrans Payment, Deliverable Approved → Release Escrow, Midtrans Notification → Payment Status, Order Cancelled/Expired → Refund Escrow (T-02), Payment Success → Escrow Hold, Payments — Events, User Registered → Create Wallet (+1 more)
 
 ### Community 146 - "notification.service.js"
@@ -1062,7 +1064,7 @@ Cohesion: 0.22
 Nodes (8): Access Control, Create Rate Card (`createRateCard`), Discovery (via `user.service.ts` `searchCreators`), Get Rate Cards (`getRateCards`), Publish (via Flag Status), Rate Cards — Testing, Service Layer (`creator.service.ts`), Update Rate Card (`updateRateCard`)
 
 ### Community 169 - "Community 169"
-Cohesion: 0.40
+Cohesion: 0.33
 Nodes (5): Discovery Creator, File Manager, Onboarding Creator, Onboarding UMKM, Users — User Flow
 
 ### Community 170 - "Community 170"
@@ -1078,7 +1080,7 @@ Cohesion: 0.33
 Nodes (5): ADR-005 — Simpan Counter Denormalisasi di `campaigns`, Consequences, Context, Decision, Status
 
 ### Community 173 - "Community 173"
-Cohesion: 0.40
+Cohesion: 0.33
 Nodes (5): ADR-006 — Gunakan Zustand untuk State Management, Bukan Redux, Consequences, Context, Decision, Status
 
 ### Community 174 - "Community 174"
@@ -1114,8 +1116,8 @@ Cohesion: 0.13
 Nodes (14): Authentication — Testing, Email Verification Sync (`user-email-verified`), Error Mapping (`mapError`), Forgot Password (`forgotPassword`), Get Current User (`getCurrentUser`), Google OAuth (`loginWithGoogle`), Login (`loginUser`), Logout (`logoutUser`) (+6 more)
 
 ### Community 183 - "Community 183"
-Cohesion: 0.50
-Nodes (3): Authentication — Concepts, Istilah, Konsep
+Cohesion: 0.40
+Nodes (5): Authentication — Overview, Batasan Kepemilikan, Ketergantungan, Lihat Juga, Ringkasan
 
 ### Community 184 - "Community 184"
 Cohesion: 0.12
@@ -1198,8 +1200,8 @@ Cohesion: 0.40
 Nodes (4): Event yang Dikonsumsi, Event yang Diterbitkan, Lihat Juga, Users — Events
 
 ### Community 204 - "Community 204"
-Cohesion: 0.50
-Nodes (4): Authentication — Events, Email Verified, Lihat Juga, User Registered
+Cohesion: 0.40
+Nodes (5): 03_Workflows — Index, Daftar Workflow, Lihat Juga, Prinsip Penulisan, Relasi Antar Workflow
 
 ### Community 205 - "Community 205"
 Cohesion: 0.40
@@ -1223,7 +1225,7 @@ Nodes (26): ACTIVE_STATUSES, buildRequestedReceipt(), countTodayWithdrawals(), c
 
 ### Community 211 - "Community 211"
 Cohesion: 0.50
-Nodes (3): Istilah, Konsep, Users — Concepts
+Nodes (3): 02 — Modules, Daftar Modul, Lihat Juga
 
 ### Community 212 - "Community 212"
 Cohesion: 0.50
@@ -1270,8 +1272,12 @@ Cohesion: 0.50
 Nodes (3): dependencies, @opencode-ai/plugin, @opencode-ai/plugin
 
 ### Community 223 - "Authentication — Events"
-Cohesion: 0.07
-Nodes (30): createGetAdminDashboardSummaryHandler(), findActiveAdmin(), getEnv(), getUserId(), json(), by(), createGetAdminSubmissionQueueHandler(), findActiveAdmin() (+22 more)
+Cohesion: 0.23
+Nodes (12): by(), createGetAdminSubmissionQueueHandler(), getEnv(), getUserId(), json(), optionalString(), parseInput(), platform() (+4 more)
+
+### Community 224 - "Community 224"
+Cohesion: 0.24
+Nodes (6): createGetAdminDashboardSummaryHandler(), findActiveAdmin(), getEnv(), getUserId(), json(), env
 
 ### Community 226 - "Community 226"
 Cohesion: 0.18
@@ -1334,8 +1340,8 @@ Cohesion: 0.13
 Nodes (14): BACKEND_FIELDS, { endpoint: ENDPOINT, key: KEY }, MANAGED_FIELDS, PASSTHROUGH_FIELDS, q, APPLY, found, argv (+6 more)
 
 ### Community 255 - "Campaigns — Views Tracking & Verifikasi Tayangan"
-Cohesion: 0.29
-Nodes (6): ADR-010 — Campaign Submission Validation Authority pada Admin Marketiv, Consequences, Context, Decision, References, Status
+Cohesion: 0.20
+Nodes (8): 04_Decisions — Index, Daftar ADR, ADR-010 — Campaign Submission Validation Authority pada Admin Marketiv, Consequences, Context, Decision, References, Status
 
 ### Community 256 - "main.js"
 Cohesion: 0.10
@@ -1625,6 +1631,10 @@ Nodes (5): ADR-002 — Abstraksi Service Layer Wajib, Consequences, Context, Dec
 Cohesion: 0.70
 Nodes (4): call(), decrementColumn(), endpointFor(), incrementColumn()
 
+### Community 336 - "package.json"
+Cohesion: 0.50
+Nodes (4): Dikecualikan dari MVP, Referensi, Ruang Lingkup MVP, Termasuk dalam MVP
+
 ### Community 337 - "package.json"
 Cohesion: 0.50
 Nodes (3): Istilah, Konsep, Notifications — Concepts
@@ -1632,10 +1642,6 @@ Nodes (3): Istilah, Konsep, Notifications — Concepts
 ### Community 338 - "package.json"
 Cohesion: 0.50
 Nodes (3): name, private, type
-
-### Community 340 - "package.json"
-Cohesion: 0.25
-Nodes (4): Daftar Dokumen, Modul AI, 04_Decisions — Index, Daftar ADR
 
 ### Community 343 - "package.json"
 Cohesion: 0.25
@@ -1752,14 +1758,14 @@ Nodes (3): is_secret(), sync-env-all-functions.sh script, sync_function()
 ## Knowledge Gaps
 - **2709 isolated node(s):** `$schema`, `.agents/skills`, `/home/panjiangka1/Documents/dev/marketiv-web/00_BACKEND/.opencode/plugins/graphify.js`, `@opencode-ai/plugin`, `DRY` (+2704 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **29 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **35 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Payments — Backend` connect `Offers — Concepts` to `Offers — Testing`?**
+- **Why does `Payments — API` connect `Campaigns — Testing` to `Offers — Testing`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
-- **Why does `Tech Stack` connect `Authentication — Overview` to `package.json`?**
+- **Why does `Payments — Backend` connect `Offers — Concepts` to `Offers — Testing`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
 - **What connects `$schema`, `.agents/skills`, `/home/panjiangka1/Documents/dev/marketiv-web/00_BACKEND/.opencode/plugins/graphify.js` to the rest of the system?**
   _2710 weakly-connected nodes found - possible documentation gaps or missing edges._

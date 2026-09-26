@@ -3537,3 +3537,131 @@ describe('patch-campaign-status function (publish guard)', () => {
     expect(res.json.mock.calls[0][0].error).toContain('mencukupi target budget');
   });
 });
+
+describe('patch-campaign-draft function (thumbnailUrl)', () => {
+  const THUMB = 'https://cloud.example.test/v1/storage/buckets/campaign-assets/files/thumb001/view';
+  const setup = async () => {
+    process.env.CAMPAIGNS_COLLECTION_ID = 'campaigns';
+    const main = (await import('../../functions/patch-campaign-draft/src/main.js')).default;
+    return main;
+  };
+  const patch = async (main: any, body: any, userId = 'u1') => {
+    const req = makeReq({ bodyJson: body, headers: { 'x-appwrite-user-id': userId } });
+    const res = { json: vi.fn(), status: vi.fn().mockReturnThis() };
+    await main({ req, res, log: vi.fn(), error: vi.fn() });
+    return res;
+  };
+
+  it('accepts valid campaign-assets thumbnail URL on unfunded draft', async () => {
+    const main = await setup();
+    seed('campaigns', [{ $id: 't1', umkmId: 'u1', status: 'draft', remainingBudget: 0, thumbnailUrl: '' }]);
+
+    const res = await patch(main, { campaignId: 't1', thumbnailUrl: THUMB });
+    expect(res.json.mock.calls[0][0].campaignId).toBe('t1');
+    const update = updateCalls.find((c) => c.collection === 'campaigns' && c.docId === 't1');
+    expect(update?.data.thumbnailUrl).toBe(THUMB);
+  });
+
+  it('clears thumbnail with empty string on unfunded draft', async () => {
+    const main = await setup();
+    seed('campaigns', [{ $id: 't2', umkmId: 'u1', status: 'draft', remainingBudget: 0, thumbnailUrl: THUMB }]);
+
+    const res = await patch(main, { campaignId: 't2', thumbnailUrl: '' });
+    expect(res.json.mock.calls[0][0].campaignId).toBe('t2');
+    const update = updateCalls.find((c) => c.collection === 'campaigns' && c.docId === 't2');
+    expect(update?.data.thumbnailUrl).toBe('');
+  });
+
+  it('rejects thumbnail URL longer than 2048 characters', async () => {
+    const main = await setup();
+    seed('campaigns', [{ $id: 't3', umkmId: 'u1', status: 'draft', remainingBudget: 0 }]);
+
+    const res = await patch(main, {
+      campaignId: 't3',
+      thumbnailUrl: `https://cloud.example.test/${'a'.repeat(2100)}`,
+    });
+    expect(res.json.mock.calls[0][0].error).toContain('URL gambar produk maksimal 2048 karakter.');
+  });
+
+  it('rejects URL outside campaign-assets bucket', async () => {
+    const main = await setup();
+    seed('campaigns', [{ $id: 't4', umkmId: 'u1', status: 'draft', remainingBudget: 0 }]);
+
+    const res = await patch(main, {
+      campaignId: 't4',
+      thumbnailUrl: 'https://cloud.example.test/v1/storage/buckets/avatars/files/abc123/view',
+    });
+    expect(res.json.mock.calls[0][0].error).toContain('URL gambar produk tidak valid.');
+  });
+
+  it('rejects non-https and malformed URLs', async () => {
+    const main = await setup();
+    seed('campaigns', [{ $id: 't5', umkmId: 'u1', status: 'draft', remainingBudget: 0 }]);
+
+    let res = await patch(main, {
+      campaignId: 't5',
+      thumbnailUrl: 'http://cloud.example.test/v1/storage/buckets/campaign-assets/files/a/view',
+    });
+    expect(res.json.mock.calls[0][0].error).toContain('URL gambar produk tidak valid.');
+
+    res = await patch(main, { campaignId: 't5', thumbnailUrl: 'javascript:alert(1)' });
+    expect(res.json.mock.calls[0][0].error).toContain('URL gambar produk tidak valid.');
+  });
+
+  it('rejects thumbnail change after funding', async () => {
+    const main = await setup();
+    seed('campaigns', [
+      { $id: 't6', umkmId: 'u1', status: 'draft', remainingBudget: 50000, thumbnailUrl: THUMB },
+    ]);
+
+    const res = await patch(main, {
+      campaignId: 't6',
+      thumbnailUrl: THUMB.replace('thumb001', 'thumb002'),
+    });
+    expect(res.json.mock.calls[0][0].error).toContain(
+      'Tidak dapat mengubah gambar campaign setelah pendanaan masuk.'
+    );
+  });
+
+  it('allows re-submitting unchanged thumbnail after funding', async () => {
+    const main = await setup();
+    seed('campaigns', [
+      { $id: 't7', umkmId: 'u1', status: 'draft', remainingBudget: 50000, thumbnailUrl: THUMB },
+    ]);
+
+    const res = await patch(main, { campaignId: 't7', thumbnailUrl: THUMB });
+    expect(res.json.mock.calls[0][0].campaignId).toBe('t7');
+    const update = updateCalls.find((c) => c.collection === 'campaigns' && c.docId === 't7');
+    expect(update?.data.thumbnailUrl).toBe(THUMB);
+  });
+
+  it('rejects thumbnail patch from non-owner', async () => {
+    const main = await setup();
+    seed('campaigns', [{ $id: 't8', umkmId: 'u1', status: 'draft', remainingBudget: 0 }]);
+
+    const res = await patch(main, { campaignId: 't8', thumbnailUrl: THUMB }, 'intruder');
+    expect(res.json.mock.calls[0][0].error).toContain('tidak ditemukan atau bukan milik Anda');
+  });
+});
+
+describe('patch-campaign-draft function (thumbnail replacement)', () => {
+  it('replaces existing thumbnail A with B on unfunded draft', async () => {
+    process.env.CAMPAIGNS_COLLECTION_ID = 'campaigns';
+    const thumbA = 'https://cloud.example.test/v1/storage/buckets/campaign-assets/files/thumbA/view';
+    const thumbB = 'https://cloud.example.test/v1/storage/buckets/campaign-assets/files/thumbB/view';
+    seed('campaigns', [{ $id: 'r1', umkmId: 'u1', status: 'draft', remainingBudget: 0, thumbnailUrl: thumbA }]);
+
+    const main = (await import('../../functions/patch-campaign-draft/src/main.js')).default;
+    const req = makeReq({
+      bodyJson: { campaignId: 'r1', thumbnailUrl: thumbB },
+      headers: { 'x-appwrite-user-id': 'u1' },
+    });
+    const res = { json: vi.fn(), status: vi.fn().mockReturnThis() };
+    await main({ req, res, log: vi.fn(), error: vi.fn() });
+
+    expect(res.json.mock.calls[0][0].campaignId).toBe('r1');
+    const update = updateCalls.find((c) => c.collection === 'campaigns' && c.docId === 'r1');
+    expect(update?.data.thumbnailUrl).toBe(thumbB);
+    expect(store['campaigns'].find((c) => c.$id === 'r1').thumbnailUrl).toBe(thumbB);
+  });
+});
