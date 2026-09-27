@@ -16,6 +16,10 @@ import { CampaignDetailSkeleton } from "./CampaignDetailSkeleton";
 import { CampaignNotFoundState } from "./CampaignNotFoundState";
 import { routes } from "@/lib/constants/routes";
 import {
+  getFraudStatusLabel,
+  getSubmissionStatusLabel,
+} from "@/lib/dashboard-labels";
+import {
   getCampaignById,
   getCampaignSubmissions,
   getUmkmProfile,
@@ -76,7 +80,7 @@ export function CampaignDetailPage({ campaignId }: CampaignDetailPageProps) {
       if (campaignRes.success && campaignRes.data) {
         setCampaign(campaignRes.data);
       } else {
-        setError(campaignRes.error || "Campaign tidak ditemukan.");
+        setError(campaignRes.error || "Kampanye tidak ditemukan.");
       }
 
       if (submissionsRes.success && submissionsRes.data) {
@@ -100,9 +104,9 @@ export function CampaignDetailPage({ campaignId }: CampaignDetailPageProps) {
     const res = await updateCampaignStatus(target.id, "paused");
     if (res.success && res.data) {
       setCampaign(res.data);
-      showToast(`Campaign "${target.title}" berhasil dijeda.`);
+      showToast(`Kampanye "${target.title}" berhasil dijeda.`);
     } else {
-      toast.error(res.error ?? "Gagal menjeda campaign.");
+      toast.error(res.error ?? "Gagal menjeda kampanye.");
     }
   };
 
@@ -113,9 +117,9 @@ export function CampaignDetailPage({ campaignId }: CampaignDetailPageProps) {
     setIsResuming(false);
     if (res.success && res.data) {
       setCampaign(res.data);
-      showToast(`Campaign "${campaign.title}" berhasil diaktifkan kembali.`);
+      showToast(`Kampanye "${campaign.title}" berhasil diaktifkan kembali.`);
     } else {
-      toast.error(res.error ?? "Gagal mengaktifkan campaign.");
+      toast.error(res.error ?? "Gagal mengaktifkan kampanye.");
     }
   };
 
@@ -223,15 +227,15 @@ export function CampaignDetailPage({ campaignId }: CampaignDetailPageProps) {
           <ExportReportModal
             isOpen={isExportModalOpen}
             onClose={() => setIsExportModalOpen(false)}
-            filename={`Laporan_${campaign?.title?.replace(/\s+/g, "_") ?? "Campaign"}_Marketiv`}
+            filename={`Laporan_${campaign?.title?.replace(/\s+/g, "_") ?? "Kampanye"}_Marketiv`}
             rows={submissions.map((s) => ({
-              "ID Submission": s.id,
+              "ID Bukti Konten": s.id,
               "Kreator": s.creatorName,
               "Platform": s.platform,
               "URL Konten": s.contentUrl,
-              "Views": s.actualViews,
-              "Status": s.validationStatus,
-              "Fraud Status": s.fraudStatus,
+              "Tayangan": s.actualViews,
+              "Status": getSubmissionStatusLabel(s.validationStatus),
+              "Status Kecurangan": getFraudStatusLabel(s.fraudStatus),
               "Dana Dicairkan (Rp)": s.releasedFund,
               "Dikirim": s.submittedAt,
               "Divalidasi": s.validatedAt ?? "-",

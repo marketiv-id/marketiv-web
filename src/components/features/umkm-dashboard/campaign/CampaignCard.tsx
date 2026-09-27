@@ -9,6 +9,7 @@ import { formatCompactViews, formatCompactCurrency, formatCurrency } from "@/lib
 import type { Campaign, CampaignStatus } from "@/types/umkm-dashboard.types";
 import { DashboardBadge } from "../shared/DashboardBadge";
 import { DashboardActionMenu } from "../shared/DashboardActionMenu";
+import { getCampaignStatusLabel } from "@/lib/dashboard-labels";
 
 interface CampaignCardProps {
   campaign: Campaign;
@@ -39,13 +40,6 @@ const STATUS_DOT_COLOR: Record<CampaignStatus, string> = {
   draft:     "text-ink-500 border-ink-200/60",
   paused:    "text-orange-700 border-orange-200/60",
   completed: "text-blue-700 border-blue-200/60",
-};
-
-const STATUS_LABEL: Record<CampaignStatus, string> = {
-  active:    "Aktif",
-  draft:     "Draft",
-  paused:    "Dijeda",
-  completed: "Selesai",
 };
 
 // Niche (kategori) color configuration untuk label bervariasi sesuai best practices
@@ -85,16 +79,16 @@ export function CampaignCard({
 
   const actionItems = [
     { label: "Lihat Detail",       onClick: () => router.push(`/dashboard/umkm/campaign/${campaign.id}`) },
-    ...(isDeleteVisible ? [{ label: "Terbitkan Campaign", onClick: onPublish }] : []),
-    ...(isEditVisible ? [{ label: "Edit Draft", onClick: onEdit }] : []),
-    { label: "Duplikasi Campaign", onClick: onDuplicate },
+    ...(isDeleteVisible ? [{ label: "Terbitkan Kampanye", onClick: onPublish }] : []),
+    ...(isEditVisible ? [{ label: "Ubah Draf", onClick: onEdit }] : []),
+    { label: "Duplikasi Kampanye", onClick: onDuplicate },
     { label: "Unduh Laporan",      onClick: onExport    },
-    ...(!isCancelDisabled ? [{ label: "Batalkan Campaign", onClick: onCancel, danger: true }] : []),
-    ...(isDeleteVisible ? [{ label: "Hapus Draft", onClick: onDelete, danger: true }] : []),
+    ...(!isCancelDisabled ? [{ label: "Batalkan Kampanye", onClick: onCancel, danger: true }] : []),
+    ...(isDeleteVisible ? [{ label: "Hapus Draf", onClick: onDelete, danger: true }] : []),
   ];
 
   const statusDotClass = STATUS_DOT_COLOR[campaign.status] ?? STATUS_DOT_COLOR.active;
-  const statusLabel    = STATUS_LABEL[campaign.status] ?? "Aktif";
+  const statusLabel    = getCampaignStatusLabel(campaign.status);
   
   const nicheCfg = NICHE_COLOR_CONFIG[campaign.niche] ?? NICHE_COLOR_CONFIG.lainnya;
 
@@ -177,7 +171,7 @@ export function CampaignCard({
         {/* CPM / Komisi Rate Box */}
         <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-orange-50/90 border border-orange-200/70 text-xs font-bold text-orange-800 w-fit select-none">
           <span className="text-orange-600 font-extrabold">💰</span>
-          <span>Komisi: <strong className="font-black text-orange-950">{formatCurrency(campaign.pricePerThousandViews)}</strong> / 1K tayangan</span>
+          <span>Komisi: <strong className="font-black text-orange-950">{formatCurrency(campaign.pricePerThousandViews)}</strong> / 1.000 tayangan</span>
         </div>
 
         {/* Metadata stats row */}
@@ -188,7 +182,7 @@ export function CampaignCard({
           </span>
           <span className="flex items-center gap-1">
             <Eye size={13} className="text-slate-400 shrink-0" />
-            <span>{campaign.totalViews === undefined ? "—" : formatCompactViews(campaign.totalViews)} Views</span>
+            <span>{campaign.totalViews === undefined ? "—" : formatCompactViews(campaign.totalViews)} Tayangan</span>
           </span>
           <span className="flex items-center gap-1 text-slate-500">
             <Calendar size={13} className="text-slate-400 shrink-0" />
@@ -238,10 +232,10 @@ export function CampaignCard({
           </span>
           <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
             <DashboardBadge tone="amber" className="h-5 px-2 text-[10px] font-bold">
-              {pendingCount} Pending
+              {pendingCount} Menunggu
             </DashboardBadge>
             <DashboardBadge tone="green" className="h-5 px-2 text-[10px] font-bold">
-              {validCount} Valid
+              {validCount} Disetujui
             </DashboardBadge>
             {disputeCount > 0 && (
               <DashboardBadge tone="red" className="h-5 px-2 text-[10px] font-bold">
@@ -262,7 +256,7 @@ export function CampaignCard({
                 : "bg-gradient-to-b from-[#fb7a18] to-[#ea580c] text-white hover:shadow-md hover:from-[#ea580c] hover:to-[#c2410c] hover:-translate-y-0.5 active:translate-y-0"
             )}
           >
-            {campaign.status === "draft" ? "Lanjutkan Draft" : "Lihat Detail"}
+            {campaign.status === "draft" ? "Lanjutkan Draf" : "Lihat Detail"}
           </Link>
         </div>
       </div>

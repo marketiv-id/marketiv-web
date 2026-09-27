@@ -38,7 +38,7 @@ describe("StartNegotiationModal package context", () => {
       <StartNegotiationModal isOpen onClose={vi.fn()} creatorId="creator-1" creatorName="Ayu" packageId="pkg-special&1" packageName="Review" packagePrice="Rp200.000" />
     ));
     await act(async () => {
-      [...document.querySelectorAll("button")].find((button) => button.textContent?.includes("Masuk ke Chat"))?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      [...document.querySelectorAll("button")].find((button) => button.textContent?.includes("Masuk ke Obrolan"))?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
     expect(mocks.createConversation).toHaveBeenCalledWith("creator-1");
     expect(mocks.push).toHaveBeenCalledWith("/dashboard/umkm/negosiasi/conv-existing?packageId=pkg-special%261");

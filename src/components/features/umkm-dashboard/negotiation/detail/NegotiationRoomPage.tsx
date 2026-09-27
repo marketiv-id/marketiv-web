@@ -42,24 +42,26 @@ import {
 import { canStartNewDeal } from "@/lib/negotiation/deal-stage";
 import { useNegotiationRoomSync } from "@/lib/negotiation/use-negotiation-room-sync";
 
+import { getOrderStatusLabel } from "@/lib/dashboard-labels";
+import type { NegotiationStage } from "@/types/domain";
 import { SendCustomOfferModal } from "../modals/SendCustomOfferModal";
 import { PaymentSimulationModal } from "../modals/PaymentSimulationModal";
 import { OrderSuccessModal } from "../modals/OrderSuccessModal";
 
-const STATUS_CFG: Record<string, { label: string; color: string; bg: string; border: string }> = {
+const STATUS_CFG: Record<string, { color: string; bg: string; border: string }> = {
   // Tiga tahap sebelum order ada — di Alur B order lahir paling akhir, jadi
   // sebagian besar hidup ruang ini justru berada di sini.
-  chatting:        { label: "Negosiasi",           color: "#687386", bg: "#f8fafc", border: "rgba(148,163,184,.28)" },
-  offer_pending:   { label: "Menunggu Kreator",    color: "#a15b0b", bg: "#fffbeb", border: "rgba(245,158,11,.24)"  },
-  offer_rejected:  { label: "Penawaran Ditolak",   color: "#b4232a", bg: "#fff3f3", border: "rgba(248,113,113,.24)" },
-  awaiting_order:  { label: "Menyiapkan Pesanan",  color: "#2d5bd1", bg: "#f0f6ff", border: "rgba(96,165,250,.25)"  },
-  pending_payment: { label: "Menunggu Pembayaran", color: "#a15b0b", bg: "#fffbeb", border: "rgba(245,158,11,.24)"  },
-  escrow:          { label: "Dalam Escrow",        color: "#177b42", bg: "#f1fbf5", border: "rgba(74,222,128,.25)"  },
-  in_progress:     { label: "Sedang Dikerjakan",   color: "#2d5bd1", bg: "#f0f6ff", border: "rgba(96,165,250,.25)"  },
-  revision:        { label: "Revisi",              color: "#b4232a", bg: "#fff3f3", border: "rgba(248,113,113,.24)" },
-  approved:        { label: "Disetujui",           color: "#177b42", bg: "#f1fbf5", border: "rgba(74,222,128,.25)"  },
-  completed:       { label: "Selesai",             color: "#177b42", bg: "#f1fbf5", border: "rgba(74,222,128,.25)"  },
-  cancelled:       { label: "Dibatalkan",          color: "#687386", bg: "#f8fafc", border: "rgba(148,163,184,.28)" },
+  chatting:        { color: "#687386", bg: "#f8fafc", border: "rgba(148,163,184,.28)" },
+  offer_pending:   { color: "#a15b0b", bg: "#fffbeb", border: "rgba(245,158,11,.24)"  },
+  offer_rejected:  { color: "#b4232a", bg: "#fff3f3", border: "rgba(248,113,113,.24)" },
+  awaiting_order:  { color: "#2d5bd1", bg: "#f0f6ff", border: "rgba(96,165,250,.25)"  },
+  pending_payment: { color: "#a15b0b", bg: "#fffbeb", border: "rgba(245,158,11,.24)"  },
+  escrow:          { color: "#177b42", bg: "#f1fbf5", border: "rgba(74,222,128,.25)"  },
+  in_progress:     { color: "#2d5bd1", bg: "#f0f6ff", border: "rgba(96,165,250,.25)"  },
+  revision:        { color: "#b4232a", bg: "#fff3f3", border: "rgba(248,113,113,.24)" },
+  approved:        { color: "#177b42", bg: "#f1fbf5", border: "rgba(74,222,128,.25)"  },
+  completed:       { color: "#177b42", bg: "#f1fbf5", border: "rgba(74,222,128,.25)"  },
+  cancelled:       { color: "#687386", bg: "#f8fafc", border: "rgba(148,163,184,.28)" },
 };
 interface NegotiationRoomPageProps {
   /**
@@ -186,7 +188,7 @@ export function NegotiationRoomPage({ conversationId }: NegotiationRoomPageProps
       if (!active) return;
       const selected = result.data?.find((pkg) => pkg.id === selectedPackageId) ?? null;
       setPackagePrefill(selected);
-      setPackageContextWarning(selected ? null : "Paket acuan tidak tersedia atau tidak lagi dipublikasikan. Kamu tetap dapat membuat penawaran tanpa paket.");
+      setPackageContextWarning(selected ? null : "Paket acuan tidak tersedia atau tidak lagi dipublikasikan. Anda tetap dapat membuat penawaran tanpa paket.");
     })();
     return () => { active = false; };
   }, [order?.creatorId, order?.stage, selectedPackageId]);
@@ -320,7 +322,7 @@ export function NegotiationRoomPage({ conversationId }: NegotiationRoomPageProps
   if (error) return <div className="p-4 sm:p-6 lg:p-8"><NegotiationErrorState message={error} onRetry={loadData} /></div>;
   if (!order) return <div className="p-4 sm:p-6 lg:p-8"><NegotiationNotFoundState /></div>;
 
-  const statusCfg = STATUS_CFG[order.stage] ?? STATUS_CFG.chatting;
+  const statusCfg = { ...(STATUS_CFG[order.stage] ?? STATUS_CFG.chatting), label: getOrderStatusLabel(order.stage as NegotiationStage) };
   const latestDeliverable = deliverables[deliverables.length - 1];
   const contextualReviewState = order.stage === "completed" || order.stage === "approved"
     ? "completed"
@@ -484,8 +486,8 @@ export function NegotiationRoomPage({ conversationId }: NegotiationRoomPageProps
               <button
                 type="button"
                 onClick={() => setIsChatFullscreen((v) => !v)}
-                aria-label={isChatFullscreen ? "Keluar dari fullscreen chat" : "Fullscreen chat"}
-                title={isChatFullscreen ? "Keluar fullscreen" : "Fullscreen chat"}
+                aria-label={isChatFullscreen ? "Keluar dari mode layar penuh" : "Layar penuh obrolan"}
+                title={isChatFullscreen ? "Keluar dari mode layar penuh" : "Layar penuh obrolan"}
                 className="w-9 h-9 rounded-[12px] border border-neutral-200/70 bg-white text-[#737f91] hover:text-[#f97316] hover:border-orange-200 hover:bg-orange-50/60 flex items-center justify-center transition-colors cursor-pointer"
               >
                 {isChatFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}

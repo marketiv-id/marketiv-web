@@ -9,9 +9,9 @@ interface EscrowOverviewCardProps {
 
 const ESCROW_FLOW_STEPS = [
   { number: "1", title: "Simpan Dana Kolaborasi", desc: "Anda menyimpan dana di awal transaksi" },
-  { number: "2", title: "Dana Aman Tersimpan", desc: "Dana diamankan di sistem Escrow Marketiv" },
+  { number: "2", title: "Dana Aman Tersimpan", desc: "Dana ditahan sementara di sistem Dana Aman Marketiv" },
   { number: "3", title: "Kreator Menyelesaikan Konten", desc: "Kreator memposting dan mengunggah tautan bukti" },
-  { number: "4", title: "Dana Dicairkan ke Kreator", desc: "Dana dirilis setelah lolos verifikasi sistem" },
+  { number: "4", title: "Dana Dicairkan ke Kreator", desc: "Dana dicairkan setelah lolos verifikasi sistem" },
 ];
 
 export function EscrowOverviewCard({ overview }: EscrowOverviewCardProps) {
@@ -90,11 +90,11 @@ export function EscrowOverviewCard({ overview }: EscrowOverviewCardProps) {
           </div>
           <div className="space-y-2 flex-1 min-w-0">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
-              <h4 className="text-[.84rem] font-black text-ink-900 tracking-tight">Mode Kampanye (Pay-Per-View)</h4>
+              <h4 className="text-[.84rem] font-black text-ink-900 tracking-tight">Mode Kampanye (Bayar per Tayangan)</h4>
               <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-orange-50 border border-orange-200/60 text-[10px] font-extrabold text-orange-700">{feeLabel}</span>
             </div>
             <p className="text-[.74rem] text-ink-400 leading-relaxed font-medium">
-              Bayar per tayangan. Anggaran kampanye disimpan di awal dan dikenakan {feeDisclosure} (buyer-side). Dana reward dirilis ke kreator sebanding dengan tayangan postingan yang valid.
+              Bayar per tayangan. Anggaran kampanye disimpan di awal dan dikenakan {feeDisclosure} (dibebankan ke UMKM). Dana imbalan dicairkan ke kreator sebanding dengan tayangan postingan yang valid.
             </p>
             <div className="flex flex-col gap-1 pt-1 text-xs sm:flex-row sm:items-center sm:justify-between border-t border-dashed border-neutral-200/60 mt-1">
               <span className="text-ink-400 font-semibold">Dana Aman Kampanye</span>
@@ -110,11 +110,11 @@ export function EscrowOverviewCard({ overview }: EscrowOverviewCardProps) {
           </div>
           <div className="space-y-2 flex-1 min-w-0">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
-              <h4 className="text-[.84rem] font-black text-ink-900 tracking-tight">Mode Paket Harga (Rate Card)</h4>
+              <h4 className="text-[.84rem] font-black text-ink-900 tracking-tight">Mode Paket Harga</h4>
               <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200/60 text-[10px] font-extrabold text-blue-700">{feeLabel}</span>
             </div>
             <p className="text-[.74rem] text-ink-400 leading-relaxed font-medium">
-              Harga tetap dan negosiasi langsung. Dana pesanan disimpan 100% di Escrow ({feeLabel.toLowerCase()} ditanggung kreator). Dana dicairkan setelah tautan Postingan Bersama (Collab Post) terverifikasi.
+              Harga tetap dan negosiasi langsung. Dana pesanan disimpan 100% di Dana Aman ({feeLabel.toLowerCase()} ditanggung kreator). Dana dicairkan setelah tautan Postingan Bersama terverifikasi.
             </p>
             <div className="flex flex-col gap-1 pt-1 text-xs sm:flex-row sm:items-center sm:justify-between border-t border-dashed border-neutral-200/60 mt-1">
               <span className="text-ink-400 font-semibold">Dana Aman Paket Harga</span>

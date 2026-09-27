@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import { CampaignSubmission } from "@/types/umkm-dashboard.types";
-import { formatCurrency, formatDate } from "@/lib/formatters";
+import { formatCompactNumber, formatCurrency, formatDate } from "@/lib/formatters";
+import { getFraudStatusLabel } from "@/lib/dashboard-labels";
 import { DashboardBadge } from "../../shared";
 import {
   ResponsiveModal,
@@ -67,27 +68,27 @@ export function SubmissionDetailModal({
         <div className="grid grid-cols-2 gap-3.5 mb-5">
           <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-200/60">
             <span className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-0.5">
-              Tayangan Views
+              Tayangan
             </span>
             <span className="text-sm font-black text-text-primary font-display">
               {isPending
                 ? "Belum diverifikasi"
                 : submission.actualViews > 0
-                ? submission.actualViews.toLocaleString("id-ID")
-                : "0"}
+                ? formatCompactNumber(submission.actualViews)
+                : "—"}
             </span>
           </div>
           <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-200/60">
             <span className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-0.5">
               Indikator Risiko
             </span>
-            <span className="text-xs font-extrabold text-text-primary capitalize">
-              {submission.fraudStatus || "Normal"}
+            <span className="text-xs font-extrabold text-text-primary">
+              {submission.fraudStatus ? getFraudStatusLabel(submission.fraudStatus) : "—"}
             </span>
           </div>
           <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-200/60">
             <span className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-0.5">
-              Reward Terhitung
+              Hadiah Terhitung
             </span>
             <span className="text-sm font-black text-emerald-700 font-display">
               {isPending ? "Belum dihitung" : formatCurrency(submission.releasedFund)}

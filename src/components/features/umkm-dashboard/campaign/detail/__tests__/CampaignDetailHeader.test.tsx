@@ -47,14 +47,14 @@ function renderHeader(status: Campaign["status"]) {
 
 describe("CampaignDetailHeader", () => {
   it("shows stop action only for active campaign", () => {
-    expect(renderHeader("draft")).not.toContain("Hentikan Kampanye");
-    expect(renderHeader("paused")).not.toContain("Hentikan Kampanye");
-    expect(renderHeader("completed")).not.toContain("Hentikan Kampanye");
-    expect(renderHeader("active")).toContain("Hentikan Kampanye");
+    expect(renderHeader("draft")).not.toContain("Hentikan Sementara Kampanye");
+    expect(renderHeader("paused")).not.toContain("Hentikan Sementara Kampanye");
+    expect(renderHeader("completed")).not.toContain("Hentikan Sementara Kampanye");
+    expect(renderHeader("active")).toContain("Hentikan Sementara Kampanye");
   });
 
   it("keeps primary action aligned with campaign status", () => {
-    expect(renderHeader("draft")).toContain("Lanjutkan Draft");
+    expect(renderHeader("draft")).toContain("Lanjutkan Draf");
     expect(renderHeader("paused")).toContain("Aktifkan Kembali Kampanye");
     expect(renderHeader("active")).toContain("Unduh Laporan Kampanye");
   });

@@ -1,18 +1,13 @@
-import { ToolbarStatusFilterOption, ToolbarSortOption, EscrowStep } from "./negotiation.types";
+import type { ToolbarStatusFilterOption, ToolbarSortOption, EscrowStep } from "./negotiation.types";
+import { getOrderStatusLabel, getOrderStatusOptions } from "@/lib/dashboard-labels";
 
+/**
+ * Filter status diturunkan dari peta label bersama supaya badge dan filter tidak
+ * pernah memakai kata berbeda untuk tahap yang sama.
+ */
 export const NEGOTIATION_STATUS_FILTERS: ToolbarStatusFilterOption[] = [
   { id: "all", label: "Semua" },
-  { id: "chatting", label: "Diskusi" },
-  { id: "offer_pending", label: "Penawaran Dikirim" },
-  { id: "offer_rejected", label: "Ditolak Kreator" },
-  { id: "awaiting_order", label: "Menyiapkan Order" },
-  { id: "pending_payment", label: "Menunggu Pembayaran" },
-  { id: "escrow", label: "Dana Aman" },
-  { id: "in_progress", label: "Sedang Dikerjakan" },
-  { id: "revision", label: "Revisi" },
-  { id: "approved", label: "Disetujui" },
-  { id: "completed", label: "Selesai" },
-  { id: "cancelled", label: "Dibatalkan" },
+  ...getOrderStatusOptions().map((option) => ({ id: option.value, label: option.label })),
 ];
 
 export const NEGOTIATION_SORT_OPTIONS: ToolbarSortOption[] = [
@@ -25,8 +20,8 @@ export const NEGOTIATION_SORT_OPTIONS: ToolbarSortOption[] = [
 export const ESCROW_STEPS: EscrowStep[] = [
   { label: "Penawaran Dibuat", desc: "Tawaran kolaborasi diajukan" },
   { label: "Pembayaran Anda", desc: "Anda membayar via Virtual Account atau QRIS" },
-  { label: "Dana Tersimpan Aman", desc: "Sistem menyimpan anggaran Anda" },
+  { label: getOrderStatusLabel("escrow"), desc: "Sistem menyimpan anggaran Anda" },
   { label: "Kreator Mengerjakan Konten", desc: "Kreator membuat dan mengirim video" },
-  { label: "Verifikasi Postingan Bersama", desc: "Sistem memeriksa tautan video yang diunggah" },
+  { label: "Verifikasi Postingan Kolaborasi", desc: "Sistem memeriksa tautan video yang diunggah" },
   { label: "Dana Cair ke Kreator", desc: "Pembayaran diselesaikan" },
 ];

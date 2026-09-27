@@ -22,10 +22,10 @@ const MAX_REVISION_MESSAGE = 2000;
  * `http://` berarti bukti kerja bisa dikirim lewat kanal yang bisa disadap dan
  * diubah di tengah jalan.
  */
-export const externalDeliverableUrl = requiredString("Link deliverable")
-  .max(MAX_FILE_URL, `Link deliverable maksimal ${MAX_FILE_URL} karakter.`)
+export const externalDeliverableUrl = requiredString("Tautan hasil kerja")
+  .max(MAX_FILE_URL, `Tautan hasil kerja maksimal ${MAX_FILE_URL} karakter.`)
   .refine((value) => value.startsWith("https://"), {
-    message: "Link harus diawali https:// — http biasa tidak diterima.",
+    message: "Tautan harus diawali https://. Tautan http biasa tidak diterima.",
   })
   .refine((value) => {
     try {
@@ -34,7 +34,7 @@ export const externalDeliverableUrl = requiredString("Link deliverable")
     } catch {
       return false;
     }
-  }, { message: "Format link tidak valid." });
+  }, { message: "Format tautan tidak valid." });
 
 /**
  * Dua sumber deliverable.
@@ -52,11 +52,11 @@ export const uploadDeliverableSchema = z
   .object({
     orderId: requiredString("Order"),
     source: z.enum(["external_url", "storage"], {
-      error: "Sumber deliverable tidak valid.",
+      error: "Sumber hasil kerja tidak valid.",
     }),
-    fileUrl: requiredString("Link deliverable").max(
+    fileUrl: requiredString("Tautan hasil kerja").max(
       MAX_FILE_URL,
-      `Link deliverable maksimal ${MAX_FILE_URL} karakter.`
+      `Tautan hasil kerja maksimal ${MAX_FILE_URL} karakter.`
     ),
     /** Wajib untuk `storage` — `$id` baris `user_files`. */
     fileId: optionalString(255, "File ID"),
@@ -69,7 +69,7 @@ export const uploadDeliverableSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["fileUrl"],
-          message: result.error.issues[0]?.message ?? "Link deliverable tidak valid.",
+          message: result.error.issues[0]?.message ?? "Tautan hasil kerja tidak valid.",
         });
       }
       return;

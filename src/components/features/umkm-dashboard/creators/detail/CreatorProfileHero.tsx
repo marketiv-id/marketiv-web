@@ -80,7 +80,7 @@ export function CreatorProfileHero({ creator }: CreatorProfileHeroProps) {
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs font-bold text-text-secondary pt-1">
             <div className="flex items-center gap-1">
               <span className="text-text-primary font-extrabold">{creator.followers || "—"}</span>
-              <span className="text-[10px] text-text-muted">Followers</span>
+              <span className="text-[10px] text-text-muted">Pengikut</span>
             </div>
 
             {/* Rating hanya tampil kalau ada datanya — `rating` 0 berarti belum
@@ -106,7 +106,7 @@ export function CreatorProfileHero({ creator }: CreatorProfileHeroProps) {
               <span className="text-text-primary font-extrabold">
                 {creator.completedJobs && creator.completedJobs > 0 ? creator.completedJobs : "—"}
               </span>
-              <span className="text-[10px] text-text-muted">Order Selesai</span>
+              <span className="text-[10px] text-text-muted">Pesanan Selesai</span>
             </div>
           </div>
         </div>

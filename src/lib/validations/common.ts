@@ -117,7 +117,7 @@ export const currencyAmountIDR = (min = MIN_CURRENCY_IDR) =>
  * Used for raw video assets (Google Drive, Dropbox, OneDrive).
  * Must be HTTPS. Raw video files must NOT be uploaded to Appwrite Storage.
  */
-export const externalAssetUrl = requiredHttpsUrl("Link aset eksternal");
+export const externalAssetUrl = requiredHttpsUrl("Tautan aset eksternal");
 
 /**
  * @deprecated Lihat MAX_FILE_SIZE_BYTES — gunakan assertFileAllowed per bucket.

@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { UNKNOWN_STATUS_LABEL } from "@/lib/dashboard-labels";
 
 export interface DashboardBadgeProps {
   type?: "status" | "category" | "count" | "tone";
@@ -20,7 +21,7 @@ export function DashboardBadge({
     const s = status.toLowerCase();
     switch (s) {
       case "draft":
-        return { label: "Draft", badgeClass: "badge gray" };
+        return { label: "Draf", badgeClass: "badge gray" };
       case "active":
         return { label: "Aktif", badgeClass: "badge green" };
       case "full":
@@ -30,15 +31,15 @@ export function DashboardBadge({
       case "cancelled":
         return { label: "Dibatalkan", badgeClass: "badge red" };
       case "pending":
-        return { label: "Pending", badgeClass: "badge yellow" };
+        return { label: "Menunggu", badgeClass: "badge yellow" };
       case "valid":
         return { label: "Valid", badgeClass: "badge green" };
       case "fraud":
-        return { label: "Fraud", badgeClass: "badge red" };
+        return { label: "Kecurangan", badgeClass: "badge red" };
       case "dispute":
         return { label: "Sengketa", badgeClass: "badge red" };
       default:
-        return { label: status, badgeClass: "badge gray" };
+        return { label: UNKNOWN_STATUS_LABEL, badgeClass: "badge gray" };
     }
   };
 

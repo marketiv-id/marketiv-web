@@ -68,7 +68,7 @@ export function CreatorSummaryCards({
     },
     {
       id: "engagement",
-      label: "Rata-rata Engagement",
+      label: "Rata-rata Tingkat Keterlibatan",
       value: `${avgEngagement}%`,
       unit: "Tinggi",
       subtext: "Interaksi audiens aktif",

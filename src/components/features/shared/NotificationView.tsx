@@ -39,7 +39,7 @@ const THEME = {
     markAllCls: "bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200",
     actionCls: "text-blue-600 hover:text-blue-800",
     eyebrow: "Dashboard Kreator",
-    pageTitle: "Notifikasi Kreator",
+    pageTitle: "Notifikasi",
   },
   umkm: {
     accent: "#ea580c",
@@ -69,7 +69,7 @@ const NOTIF_CFG: Record<
 > = {
   campaign: {
     icon: Megaphone,
-    label: "Campaign",
+    label: "Kampanye",
     iconBg: "#fff7ed",
     iconColor: "#ea580c",
     iconBorder: "rgba(234,88,12,.18)",
@@ -93,7 +93,7 @@ const NOTIF_CFG: Record<
   },
   rate_card: {
     icon: Tag,
-    label: "Rate Card",
+    label: "Paket Harga",
     iconBg: "#f7f3ff",
     iconColor: "#7c3aed",
     iconBorder: "rgba(124,58,237,.18)",
@@ -220,7 +220,7 @@ export function NotificationView({ theme }: NotificationViewProps) {
     { id: "unread", label: "Belum Dibaca" },
     { id: "campaign", label: "Campaign" },
     { id: "negosiasi", label: "Negosiasi" },
-    ...(theme === "kreator" ? [{ id: "rate_card" as FilterTab, label: "Rate Card" }] : []),
+    ...(theme === "kreator" ? [{ id: "rate_card" as FilterTab, label: "Paket Harga" }] : []),
     { id: "keuangan", label: "Keuangan" },
     { id: "sistem", label: "Sistem" },
   ];

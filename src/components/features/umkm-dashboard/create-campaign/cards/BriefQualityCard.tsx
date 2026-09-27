@@ -22,7 +22,7 @@ export function BriefQualityCard({
   // Score calculations — brief is optional enrichment
   const checklist = [
     { label: "Informasi Produk Jelas", met: campaignTitle.trim().length > 3 && productDescription.trim().length >= 30, isOptional: false },
-    { label: "Kategori Niche Terpilih", met: productCategory.trim().length > 0, isOptional: false },
+    { label: "Kategori Terpilih", met: productCategory.trim().length > 0, isOptional: false },
     { label: "CTA Kampanye Ditentukan", met: callToAction.trim().length > 0, isOptional: false },
     { label: "Arahan Konten Ditambahkan", met: mainBrief.trim().length > 0, isOptional: true },
     { label: "Tautan Aset Terhubung", met: externalAssetUrl.trim().startsWith("https://"), isOptional: true },

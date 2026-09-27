@@ -86,7 +86,7 @@ export function TransactionDetailModal({ transaction, isOpen, onClose }: Transac
 
             {transaction.midtransOrderId && (
               <div className="flex justify-between items-center gap-4">
-                <span className="text-text-muted font-semibold">Midtrans Order ID</span>
+                <span className="text-text-muted font-semibold">ID Pesanan Midtrans</span>
                 <span className="font-mono text-xs text-ink-950 font-bold">{transaction.midtransOrderId}</span>
               </div>
             )}

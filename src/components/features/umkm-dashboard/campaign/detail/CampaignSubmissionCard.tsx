@@ -56,7 +56,7 @@ export function CampaignSubmissionCard({
             rel="noreferrer"
             className="text-[10px] text-primary hover:underline font-extrabold inline-flex items-center gap-0.5 truncate max-w-full"
           >
-            <span>Buka Link Tayang</span>
+            <span>Buka Tautan Tayangan</span>
             <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
@@ -65,7 +65,7 @@ export function CampaignSubmissionCard({
       </div>
 
       {/* Views */}
-      <ResponsiveDataCell label="Views" className="w-full md:w-auto">
+      <ResponsiveDataCell label="Tayangan" className="w-full md:w-auto">
         <span className="font-extrabold text-text-primary text-xs sm:text-sm">
           {submission.actualViews > 0 ? formatCompactNumber(submission.actualViews) : "—"}
         </span>
@@ -75,7 +75,7 @@ export function CampaignSubmissionCard({
       </ResponsiveDataCell>
 
       {/* Reward Terhitung */}
-      <ResponsiveDataCell label="Reward" className="w-full md:w-auto">
+      <ResponsiveDataCell label="Hadiah" className="w-full md:w-auto">
         <span className="font-extrabold text-success text-xs sm:text-sm">
           {isPending ? "—" : formatCurrency(submission.releasedFund)}
         </span>

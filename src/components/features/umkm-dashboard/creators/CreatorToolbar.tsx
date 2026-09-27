@@ -22,10 +22,10 @@ const CATEGORIES = [
 ];
 
 const SORT_OPTIONS = [
-  { value: "rating", label: "Rating Tertinggi" },
+  { value: "rating", label: "Peringkat Tertinggi" },
   { value: "price_asc", label: "Harga Terendah" },
   { value: "jobs", label: "Pesanan Terbanyak" },
-  { value: "engagement", label: "Engagement Tertinggi" },
+  { value: "engagement", label: "Tingkat Keterlibatan Tertinggi" },
 ];
 
 export function CreatorToolbar({

@@ -23,7 +23,7 @@ export function RateCardPackagesSection({
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-orange-100/70 text-orange-700 border border-orange-200/80 text-[10px] font-black uppercase tracking-wider">
             <Sparkles className="w-3 h-3 text-orange-600" />
-            Rate Card Kolaborasi
+            Paket Harga Kolaborasi
           </span>
         </div>
         <h3 className="text-base sm:text-lg font-black text-slate-900 uppercase tracking-wide font-display pt-0.5">

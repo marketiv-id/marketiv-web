@@ -42,7 +42,7 @@ describe("CreatorSummaryCards", () => {
     expect(text).toContain("12");
     expect(text).toContain("75%");
 
-    expect(text).toContain("Rata-rata Engagement");
+    expect(text).toContain("Rata-rata Tingkat Keterlibatan");
     expect(text).toContain("5.8%");
 
     expect(text).toContain("Tarif Mulai Dari");

@@ -4,7 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { Users, Eye, Calendar, ChevronRight, Plus } from "lucide-react";
 import type { Campaign, CampaignStatus } from "@/types/umkm-dashboard.types";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCompactCurrency, formatCompactViews, formatCurrency } from "@/lib/formatters";
+import { getCampaignStatusLabel } from "@/lib/dashboard-labels";
 
 interface CampaignSectionProps {
   campaigns?: Campaign[];
@@ -13,11 +14,12 @@ interface CampaignSectionProps {
   onViewAllClick?: () => void;
 }
 
-const STATUS_CONFIG: Record<CampaignStatus, { label: string; bg: string; color: string; border: string }> = {
-  active: { label: "Aktif", bg: "#f1fbf5", color: "#177b42", border: "rgba(22,163,74,.22)" },
-  draft: { label: "Konsep", bg: "#f8fafc", color: "#687386", border: "rgba(148,163,184,.28)" },
-  paused: { label: "Dijeda", bg: "#fff7ed", color: "#bd4b0b", border: "rgba(251,146,60,.24)" },
-  completed: { label: "Selesai", bg: "#f0f6ff", color: "#2d5bd1", border: "rgba(96,165,250,.25)" },
+// Warna badge per status. Teks label-nya dari peta label bersama.
+const STATUS_CONFIG: Record<CampaignStatus, { bg: string; color: string; border: string }> = {
+  active: { bg: "#f1fbf5", color: "#177b42", border: "rgba(22,163,74,.22)" },
+  draft: { bg: "#f8fafc", color: "#687386", border: "rgba(148,163,184,.28)" },
+  paused: { bg: "#fff7ed", color: "#bd4b0b", border: "rgba(251,146,60,.24)" },
+  completed: { bg: "#f0f6ff", color: "#2d5bd1", border: "rgba(96,165,250,.25)" },
 };
 
 function CampaignSkeleton() {
@@ -43,22 +45,9 @@ function CampaignSkeleton() {
   );
 }
 
-function formatViews(num: number): string {
-  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}jt`;
-  if (num >= 1000) return `${(num / 1000).toFixed(0)}rb`;
-  return String(num);
-}
-
-function formatBudget(num: number): string {
-  if (num >= 1000000) return `Rp ${(num / 1000000).toFixed(1)}jt`;
-  if (num >= 1000) return `Rp ${(num / 1000).toFixed(0)}rb`;
-  return `Rp ${num}`;
-}
-
-
-
 function CampaignCard({ campaign }: { campaign: Campaign }) {
   const statusCfg = STATUS_CONFIG[campaign.status] || STATUS_CONFIG.active;
+  const statusLabel = getCampaignStatusLabel(campaign.status);
   const progressPercent = campaign.totalBudgetEscrow > 0 ? Math.min(100, Math.round((campaign.usedBudget / campaign.totalBudgetEscrow) * 100)) : 0;
   
   // Custom cover gradients based on niche
@@ -108,7 +97,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
           <div className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-white/95 backdrop-blur-md shadow-xs border border-white/40">
             <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full" style={{ background: statusCfg.color }} />
             <span className="text-[9px] sm:text-[11px] font-black tracking-tight" style={{ color: statusCfg.color }}>
-              {statusCfg.label}
+              {statusLabel}
             </span>
           </div>
 
@@ -120,7 +109,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
         {/* Bottom Banner Row: Budget chip */}
         <div className="relative z-10 flex justify-end">
           <div className="px-2 sm:px-3 py-0.5 sm:py-1.5 rounded-lg sm:rounded-xl bg-white/95 backdrop-blur-md shadow-xs border border-white/60 text-slate-900 font-black text-[10px] sm:text-xs tracking-tight">
-            {formatBudget(campaign.totalBudgetEscrow)}
+            {formatCompactCurrency(campaign.totalBudgetEscrow)}
           </div>
         </div>
       </div>
@@ -137,7 +126,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
           <div className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl bg-orange-50 border border-orange-200/80 text-orange-700 text-[10px] sm:text-xs font-black flex-wrap">
             <span className="hidden sm:inline">Komisi:</span>
             <span>{formatCurrency(campaign.pricePerThousandViews)}</span>
-            <span className="text-orange-500 font-semibold text-[9px] sm:text-xs">/ 1rb Tayangan</span>
+            <span className="text-orange-500 font-semibold text-[9px] sm:text-xs">/ 1.000 tayangan</span>
           </div>
         </div>
 
@@ -149,7 +138,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
           </div>
           <div className="flex items-center gap-1 sm:gap-1.5">
             <Eye size={12} className="text-slate-500 shrink-0 sm:w-3.5 sm:h-3.5" />
-            <span>{campaign.totalViews === undefined ? "—" : formatViews(campaign.totalViews)} <span className="hidden sm:inline">tayangan</span></span>
+            <span>{campaign.totalViews === undefined ? "—" : formatCompactViews(campaign.totalViews)} <span className="hidden sm:inline">tayangan</span></span>
           </div>
           <div className="flex items-center gap-1 sm:gap-1.5 hidden sm:flex">
             <Calendar size={12} className="text-slate-500 shrink-0 sm:w-3.5 sm:h-3.5" />
@@ -164,9 +153,9 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
               ANGGARAN
             </span>
             <div className="flex items-center gap-1 text-slate-900 font-extrabold text-[9px] sm:text-xs whitespace-nowrap shrink-0">
-              <span>{formatBudget(campaign.usedBudget)}</span>
+              <span>{formatCompactCurrency(campaign.usedBudget)}</span>
               <span className="text-slate-300 font-normal">/</span>
-              <span className="text-slate-500">{formatBudget(campaign.totalBudgetEscrow)}</span>
+              <span className="text-slate-500">{formatCompactCurrency(campaign.totalBudgetEscrow)}</span>
               <span
                 className={`px-1 py-0.2 sm:px-1.5 sm:py-0.5 rounded text-[8px] sm:text-[10px] font-black border ${
                   progressPercent >= 100
@@ -205,7 +194,7 @@ const UMKM_EMPTY_CAMPAIGN_VARIANTS = [
     icon: Plus,
     iconBg: "bg-orange-50 text-orange-600 border-orange-200/80",
     title: "Buat Kampanye Baru",
-    desc: "Siapkan brief produk dan reward per views untuk kreator.",
+    desc: "Siapkan arahan produk dan hadiah per tayangan untuk kreator.",
     href: "/dashboard/umkm/campaign/buat",
     btnLabel: "Buat Kampanye",
     isPrimary: true,
@@ -215,7 +204,7 @@ const UMKM_EMPTY_CAMPAIGN_VARIANTS = [
     icon: Users,
     iconBg: "bg-blue-50 text-blue-600 border-blue-200/80",
     title: "Jelajahi Kreator",
-    desc: "Temukan kreator terbaik untuk kolaborasi paket Rate Card.",
+    desc: "Temukan kreator terbaik untuk kolaborasi melalui Paket Harga.",
     href: "/dashboard/umkm/kreator",
     btnLabel: "Cari Kreator",
     isPrimary: false,

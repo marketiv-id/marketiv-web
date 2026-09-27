@@ -23,7 +23,7 @@ export function HelpAdminModal({ open, onOpenChange, role }: HelpAdminModalProps
   const handleGroupClick = (e: React.MouseEvent) => {
     if (!isUmkm) {
       e.preventDefault();
-      toast.info("Link grup WhatsApp Konten Kreator akan segera tersedia!");
+      toast.info("Tautan grup WhatsApp Konten Kreator akan segera tersedia!");
     }
   };
 

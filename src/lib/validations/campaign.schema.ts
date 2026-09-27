@@ -69,10 +69,10 @@ const step1Shape = {
   title: z
     .string()
     .trim()
-    .min(1, "Judul campaign wajib diisi.")
-    .max(255, "Judul campaign maksimal 255 karakter."),
-  category: z.string().min(1, "Kategori Niche wajib dipilih."),
-  type: z.enum(["ugc", "clipping"], { error: "Tipe campaign wajib dipilih." }),
+    .min(1, "Judul kampanye wajib diisi.")
+    .max(255, "Judul kampanye maksimal 255 karakter."),
+  category: z.string().min(1, "Kategori wajib dipilih."),
+  type: z.enum(["ugc", "clipping"], { error: "Tipe kampanye wajib dipilih." }),
   description: z
     .string()
     .trim()
@@ -88,15 +88,15 @@ export const campaignStepSchemas: Record<1 | 2 | 3 | 4 | 5, z.ZodType> = {
   1: z.object({
     ...step1Shape,
     thumbnailUrl: z
-      .string({ error: "Gambar produk campaign wajib diunggah." })
+      .string({ error: "Gambar produk kampanye wajib diunggah." })
       .trim()
-      .min(1, "Gambar produk campaign wajib diunggah.")
+      .min(1, "Gambar produk kampanye wajib diunggah.")
       .max(2048, "URL gambar produk maksimal 2048 karakter."),
   }),
   2: z.object({
     brief: z.string().trim().optional(),
-    videoStyle: z.string().min(1, "Gaya/tone video wajib dipilih."),
-    callToAction: z.string().min(1, "Call to Action (CTA) wajib dipilih."),
+    videoStyle: z.string().min(1, "Gaya/nada video wajib dipilih."),
+    callToAction: z.string().min(1, "Ajakan Bertindak (CTA) wajib dipilih."),
   }),
   3: z.object({
     externalAssetUrl: z
@@ -104,20 +104,20 @@ export const campaignStepSchemas: Record<1 | 2 | 3 | 4 | 5, z.ZodType> = {
       .trim()
       .min(1, "Tautan aset eksternal wajib diisi.")
       .refine((v) => isCloudStorageFolderUrl(v), {
-        message: "Tautan harus berupa link folder Google Drive, Dropbox, atau OneDrive (awali https://).",
+        message: "Tautan harus berupa folder Google Drive, Dropbox, atau OneDrive (awali https://).",
       }),
   }),
   4: z.object({
     pricePerThousandViews: z
       .number()
-      .positive("Bayaran per 1.000 views harus lebih besar dari Rp 0."),
+      .positive("Bayaran per 1.000 tayangan harus lebih besar dari Rp 0."),
     creatorQuota: z.number().min(1, "Kuota rekrutmen kreator minimal 1 slot."),
     // Kanon MINIMUM_CAMPAIGN_BUDGET (50.000) — pesan datang dari currencyAmountIDR.
     totalBudgetEscrow: currencyAmountIDR(MINIMUM_CAMPAIGN_BUDGET),
   }),
   5: z.object({
     termsAgreed: z.literal(true, {
-      error: "Anda wajib menyetujui rincian escrow dan brief sebelum lanjut.",
+      error: "Anda wajib menyetujui rincian Dana Aman dan Arahan sebelum lanjut.",
     }),
   }),
 };

@@ -94,7 +94,7 @@ export function CampaignLivePreviewCard({
         {/* Live badge */}
         <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full">
           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-          <span className="text-[9px] font-[800] text-white uppercase tracking-wider">Live Preview</span>
+          <span className="text-[9px] font-[800] text-white uppercase tracking-wider">Pratinjau Langsung</span>
         </div>
 
         {/* Cover upload / change action button */}
@@ -105,11 +105,11 @@ export function CampaignLivePreviewCard({
             className="px-3.5 py-1.5 rounded-xl bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/35 text-white text-[10.5px] font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:scale-105"
           >
             <Camera size={14} className="text-white shrink-0" />
-            <span>{activeCoverUrl ? "Ganti Gambar Cover" : "Upload Gambar Cover"}</span>
+            <span>{activeCoverUrl ? "Ganti Gambar Sampul" : "Unggah Gambar Sampul"}</span>
           </button>
           {!activeCoverUrl && (
             <span className="text-[9px] font-[600] tracking-wider uppercase opacity-85 mt-1 text-white/90">
-              Pilih foto background card
+              Pilih foto latar kartu
             </span>
           )}
         </div>
@@ -129,7 +129,7 @@ export function CampaignLivePreviewCard({
         {/* Title & brief */}
         <div className="space-y-1.5">
           <h4 className={`text-[.86rem] font-[760] leading-snug line-clamp-1 font-display ${displayTitle ? "text-ink-950" : "text-ink-300 italic"}`}>
-            {displayTitle ?? "Judul campaign akan muncul di sini"}
+            {displayTitle ?? "Judul kampanye akan muncul di sini"}
           </h4>
           <p className={`text-[.74rem] leading-relaxed line-clamp-2 ${displayBrief ? "text-ink-500 font-[550]" : "text-ink-300 italic"}`}>
             {displayBrief ?? "Tambahkan arahan konten jika Anda memiliki preferensi khusus."}
@@ -145,7 +145,7 @@ export function CampaignLivePreviewCard({
           <div className="space-y-0.5">
             <span className="flex items-center gap-1 text-[.66rem] font-[700] text-ink-400 uppercase tracking-wider">
               <Zap size={9} className="text-orange-400" />
-              Anggaran Escrow
+              Anggaran Dana Aman
             </span>
             <span className="text-[.84rem] font-[800] text-orange-600 font-display leading-none">
               {formatCurrency(totalBudgetEscrow)}
@@ -155,7 +155,7 @@ export function CampaignLivePreviewCard({
           {/* Rate */}
           <div className="space-y-0.5">
             <span className="text-[.66rem] font-[700] text-ink-400 uppercase tracking-wider block">
-              Bayaran / 1K Views
+              Bayaran / 1.000 Tayangan
             </span>
             <span className="text-[.84rem] font-[800] text-ink-800 font-display leading-none">
               {formatCurrency(pricePerThousandViews)}
@@ -169,7 +169,7 @@ export function CampaignLivePreviewCard({
               Kuota Kreator
             </span>
             <span className="text-[.84rem] font-[800] text-ink-800 font-display leading-none">
-              {creatorQuota} Slot
+              {creatorQuota} Kreator
             </span>
           </div>
 
@@ -177,10 +177,10 @@ export function CampaignLivePreviewCard({
           <div className="space-y-0.5">
             <span className="flex items-center gap-1 text-[.66rem] font-[700] text-ink-400 uppercase tracking-wider">
               <Eye size={9} className="text-emerald-400" />
-              Target Views
+              Target Tayangan
             </span>
             <span className="text-[.84rem] font-[800] text-emerald-600 font-display leading-none">
-              {formatCompactNumber(estimatedViews)} Views
+              {formatCompactNumber(estimatedViews)} Tayangan
             </span>
           </div>
         </div>

@@ -169,14 +169,14 @@ describe("PengaturanClient", () => {
     expect(bodyText).toContain("Aktivitas Kreator");
     expect(bodyText).toContain("Pengiriman Konten");
     expect(bodyText).toContain("Penyelesaian Kampanye");
-    expect(bodyText).toContain("Pembaruan Escrow");
+    expect(bodyText).toContain("Pembaruan Dana Aman");
     expect(bodyText).toContain("Penawaran & Negosiasi");
     expect(bodyText).toContain("Kabar & Fitur Baru");
 
     // Danger zone clean copywriting
     expect(bodyText).toContain("Zona Berbahaya");
     expect(bodyText).toContain("Penonaktifan Akun");
-    expect(bodyText).toContain("Untuk melindungi keamanan saldo escrow dan kampanye yang sedang berjalan");
+    expect(bodyText).toContain("Untuk melindungi keamanan saldo dana aman dan kampanye yang sedang berjalan");
 
     const dangerZone = document.querySelector(".bg-red-50\\/40");
     expect(dangerZone?.textContent).not.toContain("users.status");
@@ -189,7 +189,7 @@ describe("PengaturanClient", () => {
     expect(helpBtn).toBeDefined();
 
     // Toggle interaction
-    const toggles = [...document.querySelectorAll("button[aria-label='Toggle notifikasi']")];
+    const toggles = [...document.querySelectorAll("button[aria-label='Alihkan notifikasi']")];
     expect(toggles.length).toBe(6);
 
     await act(async () => {

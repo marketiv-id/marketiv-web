@@ -23,12 +23,12 @@ interface PageMeta {
 
 function getPageMeta(pathname: string): PageMeta {
   const map: Record<string, PageMeta> = {
-    [BASE]:                      { title: "Dashboard",    subtitle: "Ringkasan bisnis Anda" },
+    [BASE]:                      { title: "Ringkasan",    subtitle: "Ringkasan bisnis Anda" },
     [`${BASE}/campaign`]:        { title: "Kampanye",     subtitle: "Kelola semua kampanye" },
     [`${BASE}/campaign/buat`]:   { title: "Buat Kampanye", subtitle: "Panduan pembuatan kampanye" },
     [`${BASE}/kreator`]:         { title: "Kreator",      subtitle: "Temukan & kelola kreator" },
     [`${BASE}/negosiasi`]:       { title: "Negosiasi",    subtitle: "Kelola penawaran & diskusi" },
-    [`${BASE}/review-rate-card`]: { title: "Review Pekerjaan", subtitle: "Tinjau hasil kerja Rate Card" },
+    [`${BASE}/review-rate-card`]: { title: "Tinjauan Pekerjaan", subtitle: "Tinjau hasil kerja Paket Harga" },
     [`${BASE}/keuangan`]:        { title: "Keuangan",     subtitle: "Transaksi & Dana Aman" },
     [`${BASE}/analitik`]:        { title: "Analitik",     subtitle: "Performa & Laporan" },
     [`${BASE}/pengaturan`]:      { title: "Pengaturan",   subtitle: "Profil & Pengaturan Akun" },
@@ -43,7 +43,7 @@ function getPageMeta(pathname: string): PageMeta {
   if (new RegExp(`^${BASE}/negosiasi/[^/]+$`).test(pathname))
     return { title: "Ruang Negosiasi", subtitle: "Detail sesi negosiasi" };
   if (new RegExp(`^${BASE}/review-rate-card/[^/]+$`).test(pathname))
-    return { title: "Detail Review", subtitle: "Tinjau hasil kerja Rate Card" };
+    return { title: "Detail Tinjauan", subtitle: "Tinjau hasil kerja Paket Harga" };
   return { title: "Marketiv", subtitle: "" };
 }
 
@@ -54,7 +54,7 @@ interface BreadcrumbItem {
 
 function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
   const parts = pathname.split("/").filter(Boolean);
-  const items: BreadcrumbItem[] = [{ label: "Dashboard", href: "/dashboard/umkm" }];
+  const items: BreadcrumbItem[] = [{ label: "Ringkasan", href: "/dashboard/umkm" }];
   
   if (parts.length <= 2) {
     return items;
@@ -65,7 +65,7 @@ function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
     campaign: "Kampanye",
     kreator: "Direktori Kreator",
     negosiasi: "Negosiasi",
-    "review-rate-card": "Review Pekerjaan",
+    "review-rate-card": "Tinjauan Pekerjaan",
     keuangan: "Keuangan",
     analitik: "Analitik",
     pengaturan: "Pengaturan",

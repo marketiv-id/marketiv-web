@@ -193,7 +193,7 @@ describe("CreatorDetailPage", { timeout: 15000 }, () => {
     const { CreatorDetailPage } = await import("../CreatorDetailPage");
     await render(<CreatorDetailPage creatorId="creator_001" />);
 
-    await waitFor(() => expect(text()).toContain("Order Selesai"));
+    await waitFor(() => expect(text()).toContain("Pesanan Selesai"));
     expect(text()).not.toContain("Kreator Terverifikasi");
   });
 
@@ -210,7 +210,7 @@ describe("CreatorDetailPage", { timeout: 15000 }, () => {
 
     // creatorProfile fixture: rating 0, completedJobs 0 → keduanya "—",
     // dan tidak ada label ulasan palsu.
-    await waitFor(() => expect(text()).toContain("Order Selesai"));
+    await waitFor(() => expect(text()).toContain("Pesanan Selesai"));
     expect(text()).not.toContain("Ulasan");
   });
 
@@ -225,7 +225,7 @@ describe("CreatorDetailPage", { timeout: 15000 }, () => {
 
     await waitFor(() => {
       expect(text()).toContain("4.8");
-      expect(text()).toContain("Order Selesai");
+      expect(text()).toContain("Pesanan Selesai");
       expect(text()).toContain("12");
     });
     expect(text()).not.toContain("Ulasan");
@@ -272,13 +272,13 @@ describe("CreatorDetailPage", { timeout: 15000 }, () => {
     const { CreatorDetailPage } = await import("../CreatorDetailPage");
     await render(<CreatorDetailPage creatorId="creator_002" />);
 
-    await waitFor(() => expect(text()).toContain("Order Selesai"));
+    await waitFor(() => expect(text()).toContain("Pesanan Selesai"));
     for (const dummy of LEGACY_DUMMY_TITLES) expect(text()).not.toContain(dummy);
     expect(text()).not.toContain("@ahmadfauzi");
     expect(text()).not.toContain("15.4K");
     // Hero tidak boleh menaruh engagementRate di slot followers.
     const followersLabel = [...host.querySelectorAll("span")].find(
-      (el) => el.textContent === "Followers"
+      (el) => el.textContent === "Pengikut"
     );
     expect(followersLabel?.previousElementSibling?.textContent).toBe("—");
   });
@@ -297,7 +297,7 @@ describe("CreatorDetailPage", { timeout: 15000 }, () => {
 
     await waitFor(() => {
       const followersLabel = [...host.querySelectorAll("span")].find(
-        (el) => el.textContent === "Followers"
+        (el) => el.textContent === "Pengikut"
       );
       expect((followersLabel?.previousElementSibling?.textContent ?? "").replace(/\u00a0/g, " ")).toBe(
         "25,2 rb"

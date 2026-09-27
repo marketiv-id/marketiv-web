@@ -90,7 +90,7 @@ export function SendCustomOfferModal({ isOpen, onClose, onConfirm, creatorName, 
           {packageContext && (
             <div className="rounded-xl bg-orange-50/80 border border-orange-200/80 p-3 text-xs">
               <p className="font-extrabold text-orange-950">Paket Acuan: {packageContext.name}</p>
-              <p className="text-orange-700 mt-1">Harga paket menjadi acuan. Harga, scope, deadline, dan revisi di bawah tetap dapat diubah.</p>
+              <p className="text-orange-700 mt-1">Harga paket menjadi acuan. Harga, lingkup, batas waktu, dan revisi di bawah tetap dapat diubah.</p>
             </div>
           )}
 

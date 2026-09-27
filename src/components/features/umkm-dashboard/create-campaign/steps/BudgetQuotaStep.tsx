@@ -182,7 +182,7 @@ export function BudgetQuotaStep({
         {/* Custom Price Input */}
         {customPriceActive && (
           <div className="pt-2 max-w-xs space-y-1.5 animate-in fade-in duration-150">
-            <span className="block text-[10px] font-bold text-text-muted uppercase tracking-wide">Nominal Lain (Rupiah / 1.000 views)</span>
+            <span className="block text-[10px] font-bold text-text-muted uppercase tracking-wide">Nominal Lain (Rupiah / 1.000 Tayangan)</span>
             <div className="relative flex items-center">
               <span className="absolute left-3 text-xs font-bold text-text-muted z-10">Rp</span>
               <Input

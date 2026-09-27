@@ -62,7 +62,7 @@ export function CreatorDetailPage({ creatorId }: CreatorDetailPageProps) {
       setCreator(creatorRes.data);
 
       if (!packagesRes.success) {
-        setPackagesError(packagesRes.error || "Gagal memuat paket rate card.");
+        setPackagesError(packagesRes.error || "Gagal memuat paket harga.");
         setPackages([]);
       } else {
         setPackagesError(null);

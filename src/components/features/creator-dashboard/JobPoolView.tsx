@@ -44,9 +44,9 @@ const CREATOR_PROGRESS_GRADIENT =
 const NICHE_LABELS: Record<string, string> = {
   kuliner:    "Kuliner",
   fashion:     "Fashion",
-  pariwisata: "Travel",
+  pariwisata: "Pariwisata",
   edukasi:    "Edukasi",
-  kecantikan: "Beauty",
+  kecantikan: "Kecantikan",
   lainnya:    "Lainnya",
 };
 
@@ -154,7 +154,7 @@ function CampaignCard({ job, onClaim, hasClaimed = false }: CampaignCardProps) {
             className="shrink-0 ml-2 px-2 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wider text-white border border-white/20"
             style={{ background: "rgba(255,255,255,.15)", backdropFilter: "blur(4px)" }}
           >
-            PPV
+            Bayar per Tayangan
           </span>
         </div>
 
@@ -172,7 +172,7 @@ function CampaignCard({ job, onClaim, hasClaimed = false }: CampaignCardProps) {
               )}
               style={{ backdropFilter: "blur(4px)" }}
             >
-              {isFull ? "Kuota Penuh" : isNearLimit ? "Hampir Penuh" : "Reward Tinggi"}
+              {isFull ? "Kuota Penuh" : isNearLimit ? "Hampir Penuh" : "Imbalan Tinggi"}
             </span>
           </div>
         )}
@@ -187,7 +187,7 @@ function CampaignCard({ job, onClaim, hasClaimed = false }: CampaignCardProps) {
           <span className="font-display text-[1.1rem] font-black text-kreator-600 tracking-tight leading-none">
             {formatCurrency(job.ratePerThousandViews)}
           </span>
-          <span className="text-[10px] text-neutral-400 font-semibold">/ 1K views</span>
+          <span className="text-[10px] text-neutral-400 font-semibold">/ 1.000 tayangan</span>
         </div>
 
         {/* Tags row */}
@@ -202,7 +202,7 @@ function CampaignCard({ job, onClaim, hasClaimed = false }: CampaignCardProps) {
           )}
           <span className="flex items-center gap-1 text-[9px] font-bold text-neutral-400 ml-auto shrink-0">
             <Users className="w-3 h-3" />
-            {slotsLeft} slot
+            {slotsLeft} kuota
           </span>
         </div>
 
@@ -210,7 +210,7 @@ function CampaignCard({ job, onClaim, hasClaimed = false }: CampaignCardProps) {
         <div className="space-y-1.5">
           <div className="hidden sm:flex justify-between text-[9px] font-bold text-neutral-400 uppercase tracking-wider">
             <span>Kuota Kreator</span>
-            <span>{job.usedQuota} / {job.quota} Klaim</span>
+            <span>{job.usedQuota} / {job.quota} diambil</span>
           </div>
           <div className="w-full h-1.5 bg-neutral-100 rounded-full overflow-hidden">
             <div
@@ -247,7 +247,7 @@ function CampaignCard({ job, onClaim, hasClaimed = false }: CampaignCardProps) {
               boxShadow: "var(--shadow-kreator)",
             }}
           >
-            {hasClaimed ? "Sudah Diklaim ✓" : isFull ? "Kuota Penuh" : "Klaim Job"}
+            {hasClaimed ? "Sudah Diklaim ✓" : isFull ? "Kuota Penuh" : "Klaim Lowongan"}
           </button>
         </div>
       </div>
@@ -366,8 +366,8 @@ export function JobPoolView({ initialJobs }: JobPoolViewProps) {
 
   const sortOptions = [
     { label: "Terbaru",         value: "latest" },
-    { label: "Reward Tertinggi", value: "highest-rate" },
-    { label: "Reward Terendah",  value: "lowest-rate" },
+    { label: "Imbalan Tertinggi", value: "highest-rate" },
+    { label: "Imbalan Terendah",  value: "lowest-rate" },
   ];
 
   const hasActiveFilters = search !== "" || selectedNiche !== "all" || filterAvailableOnly;
@@ -402,23 +402,23 @@ export function JobPoolView({ initialJobs }: JobPoolViewProps) {
         <div>
           {/* Header */}
           <CreatorPageHeader
-            title="Job Pool Kampanye"
-            description="Pilih campaign UMKM yang cocok dengan niche kamu."
+            title="Lowongan Kampanye"
+            description="Pilih kampanye UMKM yang cocok dengan kategori Anda."
           />
 
           {/* Summary Metric Tiles — 2/3/4 grid per Dashboard Rule */}
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 mb-7">
             <MetricTile
-              label="Job Tersedia"
+              label="Lowongan Tersedia"
               value={totalJobsAvailable}
               helper="Klaim instan"
               iconClass="text-violet-600 bg-violet-50 border-violet-200/50"
               icon={<Briefcase className="w-4 h-4" />}
             />
             <MetricTile
-              label="Reward Tertinggi"
+              label="Imbalan Tertinggi"
               value={formatCurrency(highestReward)}
-              helper="Per 1k tayangan"
+              helper="Per 1.000 tayangan"
               iconClass="text-amber-600 bg-amber-50 border-amber-200/50"
               icon={<BadgeDollarSign className="w-4 h-4" />}
               highlight
@@ -431,7 +431,7 @@ export function JobPoolView({ initialJobs }: JobPoolViewProps) {
               icon={<AlertTriangle className="w-4 h-4" />}
             />
             <MetricTile
-              label="Job Baru Hari Ini"
+              label="Lowongan Baru Hari Ini"
               value={newTodayCount}
               helper="Kampanye terbaru"
               iconClass="text-indigo-600 bg-indigo-50 border-indigo-200/50"
@@ -444,7 +444,7 @@ export function JobPoolView({ initialJobs }: JobPoolViewProps) {
             <SearchToolbar
               searchValue={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Cari kampanye / brand..."
+              searchPlaceholder="Cari kampanye / merek..."
               filters={toolbarFilters}
               onClearFilters={handleClearFilters}
               hasActiveFilters={hasActiveFilters}
@@ -468,7 +468,7 @@ export function JobPoolView({ initialJobs }: JobPoolViewProps) {
           {/* Grid Content */}
           {filteredJobs.length === 0 ? (
             <CreatorEmptyState
-              title={hasActiveFilters ? "Job tidak ditemukan" : "Job pool kosong"}
+              title={hasActiveFilters ? "Lowongan tidak ditemukan" : "Lowongan kosong"}
               description={
                 hasActiveFilters
                   ? "Coba ganti kata kunci pencarian atau bersihkan filter di atas."

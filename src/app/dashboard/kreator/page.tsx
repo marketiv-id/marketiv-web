@@ -1,5 +1,9 @@
 import { CreatorOverviewPageClient } from "@/components/features/creator-dashboard/CreatorOverviewPageClient";
 
+export const metadata = {
+  title: "Ringkasan | Dashboard Kreator | Marketiv",
+};
+
 /**
  * Overview Kreator.
  *

@@ -57,9 +57,9 @@ const NICHE_GRADIENTS: Record<string, [string, string]> = {
 const NICHE_LABELS: Record<string, string> = {
   kuliner:    "Kuliner",
   fashion:     "Fashion",
-  pariwisata: "Travel",
+  pariwisata: "Pariwisata",
   edukasi:    "Edukasi",
-  kecantikan: "Beauty",
+  kecantikan: "Kecantikan",
   lainnya:    "Lainnya",
 };
 
@@ -85,10 +85,10 @@ const EMPTY_CARD_VARIANTS = [
     badge: "Eksplorasi",
     icon: Search,
     iconBg: "bg-violet-50 text-violet-600 border-violet-200/60",
-    title: "Cari Job di Pool",
-    desc: "Temukan puluhan kampanye pay-per-view baru dari UMKM lokal.",
+    title: "Cari Lowongan",
+    desc: "Temukan kampanye bayar-per-tayangan baru dari UMKM lokal.",
     href: "/dashboard/kreator/job-pool",
-    btnLabel: "Buka Job Pool",
+    btnLabel: "Buka Lowongan Kampanye",
   },
   {
     badge: "Tips Cuan",
@@ -100,20 +100,20 @@ const EMPTY_CARD_VARIANTS = [
     btnLabel: "Kelola Profil",
   },
   {
-    badge: "Rate Card",
+    badge: "Paket Harga",
     icon: Tag,
     iconBg: "bg-emerald-50 text-emerald-600 border-emerald-200/60",
-    title: "Aktifkan Rate Card",
+    title: "Aktifkan Paket Harga",
     desc: "Terima tawaran negosiasi langsung dan kolaborasi harga tetap.",
     href: "/dashboard/kreator/rate-card",
-    btnLabel: "Atur Rate Card",
+    btnLabel: "Atur Paket Harga",
   },
   {
     badge: "Reputasi",
     icon: TrendingUp,
     iconBg: "bg-blue-50 text-blue-600 border-blue-200/60",
     title: "Tingkatkan Performa",
-    desc: "Posting tepat waktu untuk membuka rekomendasi job prioritas.",
+    desc: "Posting tepat waktu untuk membuka rekomendasi lowongan prioritas.",
     href: "/dashboard/kreator/pekerjaan-aktif",
     btnLabel: "Lihat Pekerjaan",
   },
@@ -227,7 +227,7 @@ function CampaignCard({ job, onClaim, isClaiming = false }: CampaignCardProps) {
             className="shrink-0 px-1.5 sm:px-2 py-0.5 rounded-full text-[7px] sm:text-[8px] font-extrabold uppercase tracking-wider text-white border border-white/20"
             style={{ background: "rgba(255,255,255,.18)", backdropFilter: "blur(4px)" }}
           >
-            PPV
+            Bayar per Tayangan
           </span>
         </div>
 
@@ -243,7 +243,7 @@ function CampaignCard({ job, onClaim, isClaiming = false }: CampaignCardProps) {
               )}
               style={{ backdropFilter: "blur(4px)" }}
             >
-              {isNearLimit ? "Hampir Penuh" : "Reward Tinggi"}
+              {isNearLimit ? "Hampir Penuh" : "Imbalan Tinggi"}
             </span>
           </div>
         )}
@@ -260,7 +260,7 @@ function CampaignCard({ job, onClaim, isClaiming = false }: CampaignCardProps) {
             <span className="font-display text-xs sm:text-base font-black text-kreator-600 tracking-tight leading-none">
               {formatCurrency(job.ratePerThousandViews)}
             </span>
-            <span className="text-[9px] sm:text-[10px] text-neutral-400 font-semibold">/ 1K views</span>
+            <span className="text-[9px] sm:text-[10px] text-neutral-400 font-semibold">/ 1.000 tayangan</span>
           </div>
 
           <div className="flex items-center justify-between gap-1">
@@ -269,13 +269,13 @@ function CampaignCard({ job, onClaim, isClaiming = false }: CampaignCardProps) {
             </span>
             <span className="flex items-center gap-0.5 sm:gap-1 text-[8px] sm:text-[10px] font-bold text-neutral-400">
               <Users className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-neutral-400" />
-              {slotsLeft} slot
+              {slotsLeft} kuota
             </span>
           </div>
 
           <div className="space-y-1">
             <div className="flex justify-between text-[8px] sm:text-[9px] font-bold text-neutral-400">
-              <span>Slot Tersisa</span>
+              <span>Kuota Tersisa</span>
               <span>{Math.max(0, 100 - slotUsedPct)}%</span>
             </div>
             <div className="w-full h-1 sm:h-1.5 bg-neutral-100 rounded-full overflow-hidden">
@@ -307,7 +307,7 @@ function CampaignCard({ job, onClaim, isClaiming = false }: CampaignCardProps) {
               boxShadow: "var(--shadow-kreator)",
             }}
           >
-            {isClaiming ? "Mengklaim…" : "Klaim Job"}
+            {isClaiming ? "Mengklaim…" : "Klaim Lowongan"}
           </button>
         </div>
       </div>
@@ -416,14 +416,14 @@ export function CreatorDashboardView({
 
   const getActivityLabel = (type: string): string => {
     switch (type) {
-      case "submission_valid":    return "VALID";
-      case "payout":              return "PAYOUT";
-      case "negotiation_new":     return "CHAT";
-      case "pending_escrow":      return "KLAIM";
-      case "campaign_published":  return "KAMPANYE";
-      case "claim":               return "KLAIM";
-      case "claim_expired":       return "KADALUARSA";
-      default:                    return "INFO";
+      case "submission_valid":    return "Valid";
+      case "payout":              return "Pencairan";
+      case "negotiation_new":     return "Obrolan";
+      case "pending_escrow":      return "Klaim";
+      case "campaign_published":  return "Kampanye";
+      case "claim":               return "Klaim";
+      case "claim_expired":       return "Kadaluarsa";
+      default:                    return "Info";
     }
   };
 
@@ -508,14 +508,14 @@ export function CreatorDashboardView({
                     href="/dashboard/kreator/rate-card"
                     className="flex-1 sm:flex-none h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-extrabold shadow-3xs transition-all flex items-center justify-center"
                   >
-                    Kelola Rate Card
+                    Kelola Paket Harga
                   </Link>
                   <Link
                     href="/dashboard/kreator/job-pool"
                     className="flex-1 sm:flex-none h-10 px-5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white text-xs font-black shadow-xs hover:shadow-md transition-all flex items-center justify-center gap-1.5"
                   >
                     <Sparkles size={13} />
-                    <span>Buka Job Pool</span>
+                    <span>Buka Lowongan Kampanye</span>
                   </Link>
                 </div>
               </div>
@@ -535,7 +535,7 @@ export function CreatorDashboardView({
                   </div>
                   <div>
                     <span className="block text-[10px] text-slate-400 font-extrabold uppercase tracking-wider mb-0.5">
-                      SALDO TERSEDIA
+                      Saldo Tersedia
                     </span>
                     <div className="font-display text-xl sm:text-2xl lg:text-[26px] font-black text-slate-900 tracking-tight leading-none">
                       {formatCompactCurrency(currentMetrics.balance)}
@@ -555,7 +555,7 @@ export function CreatorDashboardView({
                   </div>
                   <div>
                     <span className="block text-[10px] text-slate-400 font-extrabold uppercase tracking-wider mb-0.5">
-                      PEKERJAAN AKTIF
+                      Pekerjaan Aktif
                     </span>
                     <div className="font-display text-xl sm:text-2xl lg:text-[26px] font-black text-slate-900 tracking-tight leading-none">
                       {currentMetrics.activeJobsCount}
@@ -575,13 +575,13 @@ export function CreatorDashboardView({
                   </div>
                   <div>
                     <span className="block text-[10px] text-slate-400 font-extrabold uppercase tracking-wider mb-0.5">
-                      JOB TERSEDIA
+                      Lowongan Tersedia
                     </span>
                     <div className="font-display text-xl sm:text-2xl lg:text-[26px] font-black text-slate-900 tracking-tight leading-none">
                       {currentMetrics.availableJobsCount}
                     </div>
                     <span className="block text-[11px] text-slate-500 font-medium mt-1">
-                      Kampanye pool
+                      Kampanye di pool
                     </span>
                   </div>
                 </div>
@@ -595,13 +595,13 @@ export function CreatorDashboardView({
                   </div>
                   <div>
                     <span className="block text-[10px] text-slate-400 font-extrabold uppercase tracking-wider mb-0.5">
-                      PESANAN NEGOSIASI
+                      Pesanan Negosiasi
                     </span>
                     <div className="font-display text-xl sm:text-2xl lg:text-[26px] font-black text-slate-900 tracking-tight leading-none">
                       {currentMetrics.negotiationOrdersCount}
                     </div>
                     <span className="block text-[11px] text-slate-500 font-medium mt-1">
-                      Pesanan Rate Card
+                      Pesanan Paket Harga
                     </span>
                   </div>
                 </div>
@@ -620,7 +620,7 @@ export function CreatorDashboardView({
               <div>
                 <h3 className="text-base font-black leading-none text-kreator-ink">Rekomendasi Kampanye</h3>
                 <p className="text-[10px] text-neutral-400 font-semibold mt-1">
-                  Dipilih khusus berdasarkan niche &amp; kualifikasi profil kamu.
+                  Dipilih khusus berdasarkan kategori &amp; kualifikasi profil Anda.
                 </p>
               </div>
               <Link
@@ -655,7 +655,7 @@ export function CreatorDashboardView({
               <div className="flex justify-between items-center mb-5">
                 <div>
                   <h3 className="text-base font-black leading-none text-kreator-ink">Pekerjaan Aktif Saya</h3>
-                  <p className="text-[10px] text-neutral-400 font-semibold mt-1">Job yang sedang dalam pengerjaan.</p>
+                  <p className="text-[10px] text-neutral-400 font-semibold mt-1">Pekerjaan yang sedang dikerjakan.</p>
                 </div>
                 <Link href="/dashboard/kreator/pekerjaan-aktif" className="text-[10px] font-extrabold text-violet-600 hover:text-violet-700 transition-colors">
                   Selengkapnya
@@ -666,8 +666,8 @@ export function CreatorDashboardView({
                 <DashboardStateCard
                   kind="empty"
                   title="Belum Ada Pekerjaan Aktif"
-                  description="Kamu belum mengklaim campaign apa pun. Mulai hasilkan uang dengan memilih campaign yang cocok dari Job Pool!"
-                  actionLabel="Jelajahi Job Pool"
+                  description="Anda belum mengklaim kampanye apa pun. Mulai hasilkan penghasilan dengan memilih kampanye yang cocok dari Lowongan Kampanye!"
+                  actionLabel="Jelajahi Lowongan Kampanye"
                   onAction={() => { window.location.href = "/dashboard/kreator/job-pool"; }}
                   icon={<Briefcase className="h-6 w-6" />}
                 />
@@ -702,13 +702,13 @@ export function CreatorDashboardView({
                               className="px-4 py-2 rounded-[10px] text-white text-[10px] font-extrabold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
                               style={{ background: CREATOR_BRAND_GRADIENT, boxShadow: "var(--shadow-kreator-sm)" }}
                             >
-                              Submit Bukti
+                              Kirim Bukti
                             </Link>
                           )}
                           {work.contentUrl && (
                             <a href={work.contentUrl} target="_blank" rel="noreferrer"
                               className="px-3.5 py-2 border border-neutral-200 hover:bg-neutral-50 text-neutral-600 font-bold text-[10px] rounded-[10px] transition-colors">
-                              Lihat Post
+                              Lihat Postingan
                             </a>
                           )}
                         </div>
@@ -725,7 +725,7 @@ export function CreatorDashboardView({
                         <div>
                           <h5 className="text-xs font-extrabold text-neutral-800">Masih Ada Kuota Pekerjaan!</h5>
                           <p className="text-[11px] font-semibold text-neutral-500 mt-0.5">
-                            Jelajahi Job Pool untuk mengambil campaign lain dan tingkatkan penghasilanmu.
+                            Jelajahi Lowongan Kampanye untuk mengambil kampanye lain dan tingkatkan penghasilanmu.
                           </p>
                         </div>
                       </div>
@@ -733,7 +733,7 @@ export function CreatorDashboardView({
                         href="/dashboard/kreator/job-pool"
                         className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-white text-[11px] font-extrabold shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-violet-200 bg-violet-600 hover:bg-violet-700"
                       >
-                        <span>Cari Job Baru</span>
+                        <span>Cari Lowongan Baru</span>
                         <ArrowRight className="h-3.5 w-3.5" />
                       </Link>
                     </div>
@@ -790,7 +790,7 @@ export function CreatorDashboardView({
         </div>
 
       {/*
-        Modal "Tarik Dana" dan "Submit Bukti" DIHAPUS di sini, bukan disambungkan.
+        Modal "Tarik Dana" dan "Kirim Bukti" DIHAPUS di sini, bukan disambungkan.
 
         Keduanya adalah jalur uang yang implementasi lengkapnya sudah ada:
         KeuanganView memegang requestKey idempoten + validasi Zod terhadap saldo,

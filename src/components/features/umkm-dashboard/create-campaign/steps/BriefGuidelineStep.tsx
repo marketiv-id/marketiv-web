@@ -225,7 +225,7 @@ export function BriefGuidelineStep({
               onClick={() => setIsExpandedCatalog(!isExpandedCatalog)}
               className="px-3 py-1.5 rounded-xl text-xs font-bold text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 transition-colors cursor-pointer flex items-center gap-1"
             >
-              {isExpandedCatalog ? "− Sembunyikan catalog" : "+ Lihat arahan lainnya"}
+              {isExpandedCatalog ? "− Sembunyikan katalog" : "+ Lihat arahan lainnya"}
             </button>
           </div>
 
@@ -330,7 +330,7 @@ export function BriefGuidelineStep({
       {/* Video Style/Tone Cards */}
       <div id="field-video-style" className="space-y-3">
         <label className="block text-sm font-medium text-text-primary">
-          Gaya / Tone Video Konten <span className="text-primary">*</span>
+          Gaya / Nada Video Konten <span className="text-primary">*</span>
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {TONE_OPTIONS.map((tone) => (
@@ -351,7 +351,7 @@ export function BriefGuidelineStep({
       {/* Call To Action options */}
       <div id="field-call-to-action" className="space-y-3">
         <label className="block text-sm font-medium text-text-primary">
-          Call to Action (CTA) yang Diinginkan <span className="text-primary">*</span>
+          Ajakan Bertindak (CTA) yang Diinginkan <span className="text-primary">*</span>
         </label>
         <div className="grid grid-cols-2 gap-3">
           {CTA_OPTIONS.map((cta) => (

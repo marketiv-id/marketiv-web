@@ -9,7 +9,7 @@ import {
   ClipboardCheck,
 } from "lucide-react";
 import { UmkmFinanceSummary } from "@/types/umkm-dashboard.types";
-import { formatCompactCurrency, formatCurrency } from "@/lib/formatters";
+import { formatCompactCurrency, formatCompactNumber, formatCurrency } from "@/lib/formatters";
 
 interface SummaryCardProps {
   icon: React.ComponentType<{ size?: number; className?: string }>;
@@ -102,8 +102,8 @@ export function FinanceSummaryCards({ summary }: FinanceSummaryCardsProps) {
       <SummaryCard
         icon={ClipboardCheck}
         label="Transaksi Sukses"
-        value={String(summary.successfulTransactionsCount)}
-        note={`${summary.successfulTransactionsCount} transaksi`}
+        value={formatCompactNumber(summary.successfulTransactionsCount)}
+        note={`${formatCompactNumber(summary.successfulTransactionsCount)} transaksi`}
         iconBg="#f1fbf5"
         iconColor="#16a34a"
         iconBorder="rgba(22,163,74,.18)"

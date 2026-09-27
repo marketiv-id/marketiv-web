@@ -66,7 +66,7 @@ describe("JobDetailView — kontrol yang punya perilaku", { timeout: 20000 }, ()
   it("menyalin tautan campaign saat tombol share ditekan", async () => {
     const job = await renderJobDetail();
 
-    const shareButton = host.querySelector("button[aria-label='Bagikan campaign']");
+    const shareButton = host.querySelector("button[aria-label='Bagikan kampanye']");
     expect(shareButton).not.toBeNull();
 
     await act(async () => {
@@ -76,7 +76,7 @@ describe("JobDetailView — kontrol yang punya perilaku", { timeout: 20000 }, ()
     expect(mocks.clipboardWrite).toHaveBeenCalledWith(
       expect.stringContaining(`/dashboard/kreator/job-pool/${job.id}`)
     );
-    expect(mocks.toastSuccess).toHaveBeenCalledWith("Tautan campaign disalin.");
+    expect(mocks.toastSuccess).toHaveBeenCalledWith("Tautan kampanye disalin.");
   });
 
   it("tidak menampilkan tombol Urutkan dari yang tidak berfungsi", async () => {

@@ -7,6 +7,7 @@ import { CreatorNegotiation } from "@/types/creator-dashboard";
 import { CreatorPageHeader } from "./CreatorPageHeader";
 import { CreatorEmptyState } from "./CreatorEmptyState";
 import { formatCurrency } from "@/lib/formatters";
+import { getOrderStatusLabel } from "@/lib/dashboard-labels";
 import { calculatePlatformFee } from "@/types/domain";
 import { cn } from "@/lib/utils";
 import {
@@ -70,20 +71,20 @@ function MetricTile({ label, value, helper, icon, iconClass, cardClass, badge, b
 
 // ─── NegotiationCard ─────────────────────────────────────────────────────────
 
-type StageStyle = { dot: string; text: string; bg: string; border: string; label: string };
+type StageStyle = { dot: string; text: string; bg: string; border: string };
 
 const STATUS_STYLES: Record<string, StageStyle> = {
-  chatting:        { dot: "bg-slate-400",   text: "text-slate-700",   bg: "bg-slate-100",   border: "border-slate-200",   label: "Diskusi" },
-  offer_pending:   { dot: "bg-violet-500",  text: "text-violet-700",  bg: "bg-violet-50",  border: "border-violet-200",  label: "Penawaran Masuk" },
-  offer_rejected:  { dot: "bg-rose-500",    text: "text-rose-700",    bg: "bg-rose-50",    border: "border-rose-200",    label: "Penawaran Ditolak" },
-  awaiting_order:  { dot: "bg-indigo-500",  text: "text-indigo-700",  bg: "bg-indigo-50",  border: "border-indigo-200",  label: "Menyiapkan Pesanan" },
-  pending_payment: { dot: "bg-blue-500",    text: "text-blue-700",    bg: "bg-blue-50",    border: "border-blue-200",    label: "Menunggu Bayar" },
-  escrow:          { dot: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200", label: "Escrow Aktif" },
-  in_progress:     { dot: "bg-amber-500",   text: "text-amber-700",   bg: "bg-amber-50",   border: "border-amber-200",   label: "Dikerjakan" },
-  revision:        { dot: "bg-orange-500",  text: "text-orange-700",  bg: "bg-orange-50",  border: "border-orange-200",  label: "Revisi" },
-  approved:        { dot: "bg-violet-500",  text: "text-violet-700",  bg: "bg-violet-50",  border: "border-violet-200",  label: "Disetujui" },
-  completed:       { dot: "bg-emerald-600", text: "text-emerald-800", bg: "bg-emerald-50", border: "border-emerald-200", label: "Selesai" },
-  cancelled:       { dot: "bg-slate-400",   text: "text-slate-600",   bg: "bg-slate-100",  border: "border-slate-200",   label: "Dibatalkan" },
+  chatting:        { dot: "bg-slate-400",   text: "text-slate-700",   bg: "bg-slate-100",   border: "border-slate-200" },
+  offer_pending:   { dot: "bg-violet-500",  text: "text-violet-700",  bg: "bg-violet-50",  border: "border-violet-200" },
+  offer_rejected:  { dot: "bg-rose-500",    text: "text-rose-700",    bg: "bg-rose-50",    border: "border-rose-200" },
+  awaiting_order:  { dot: "bg-indigo-500",  text: "text-indigo-700",  bg: "bg-indigo-50",  border: "border-indigo-200" },
+  pending_payment: { dot: "bg-blue-500",    text: "text-blue-700",    bg: "bg-blue-50",    border: "border-blue-200" },
+  escrow:          { dot: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200" },
+  in_progress:     { dot: "bg-amber-500",   text: "text-amber-700",   bg: "bg-amber-50",   border: "border-amber-200" },
+  revision:        { dot: "bg-orange-500",  text: "text-orange-700",  bg: "bg-orange-50",  border: "border-orange-200" },
+  approved:        { dot: "bg-violet-500",  text: "text-violet-700",  bg: "bg-violet-50",  border: "border-violet-200" },
+  completed:       { dot: "bg-emerald-600", text: "text-emerald-800", bg: "bg-emerald-50", border: "border-emerald-200" },
+  cancelled:       { dot: "bg-slate-400",   text: "text-slate-600",   bg: "bg-slate-100",  border: "border-slate-200" },
 };
 
 const UNKNOWN_STAGE_STYLE: StageStyle = {
@@ -91,7 +92,6 @@ const UNKNOWN_STAGE_STYLE: StageStyle = {
   text: "text-slate-600",
   bg: "bg-slate-100",
   border: "border-slate-200",
-  label: "Negosiasi",
 };
 
 function NegotiationCard({
@@ -106,6 +106,7 @@ function NegotiationCard({
   onToggleArchive: () => void;
 }) {
   const s = STATUS_STYLES[neg.stage] ?? UNKNOWN_STAGE_STYLE;
+  const stageLabel = getOrderStatusLabel(neg.stage);
   const dateStr = new Date(neg.lastMessageAt).toLocaleDateString("id-ID", {
     day: "numeric",
     month: "short",
@@ -162,7 +163,7 @@ function NegotiationCard({
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap min-w-0">
               <span className="font-display font-black text-slate-900 text-sm sm:text-base group-hover:text-violet-700 transition-colors truncate">
-                {neg.umkmName || "Brand UMKM"}
+                {neg.umkmName || "Merek UMKM"}
               </span>
               <span
                 className={cn(
@@ -173,7 +174,7 @@ function NegotiationCard({
                 )}
               >
                 <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", s.dot)} />
-                {s.label}
+                {stageLabel}
               </span>
             </div>
 
@@ -213,7 +214,7 @@ function NegotiationCard({
         {/* Earnings info box */}
         <div className="flex flex-col md:items-end justify-center">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            Kamu Terima
+            Anda Terima
           </span>
           <span className="font-display font-black text-sm sm:text-base text-violet-700 tracking-tight leading-snug">
             {formatCurrency(earningsAmount)}
@@ -225,8 +226,8 @@ function NegotiationCard({
           <button
             onClick={onToggleArchive}
             disabled={isToggling}
-            title={isArchived ? "Kembalikan ke inbox" : "Arsipkan percakapan"}
-            aria-label={isArchived ? "Kembalikan ke inbox" : "Arsipkan percakapan"}
+            title={isArchived ? "Kembalikan ke kotak masuk" : "Arsipkan percakapan"}
+            aria-label={isArchived ? "Kembalikan ke kotak masuk" : "Arsipkan percakapan"}
             className="flex items-center justify-center h-10 w-10 rounded-xl border border-slate-200 text-slate-400 hover:text-violet-600 hover:border-violet-300 hover:bg-violet-50/30 transition-all cursor-pointer shadow-3xs disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isToggling ? (
@@ -246,7 +247,7 @@ function NegotiationCard({
             }}
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            <span>Buka Room</span>
+            <span>Buka Ruang</span>
           </Link>
         </div>
       </div>
@@ -280,7 +281,7 @@ export function NegosiasiView() {
     setNegotiations((prev) =>
       prev.map((n) => (n.conversationId === neg.conversationId ? { ...n, isArchived: next } : n))
     );
-    toast.success(next ? "Percakapan diarsipkan." : "Percakapan dikembalikan ke inbox.");
+    toast.success(next ? "Percakapan diarsipkan." : "Percakapan dikembalikan ke kotak masuk.");
   };
 
   const loadNegotiations = useCallback(async () => {
@@ -352,7 +353,7 @@ export function NegosiasiView() {
         { value: "all", label: "Semua Status" },
         { value: "negosiasi", label: "Negosiasi" },
         { value: "menunggu-pembayaran", label: "Menunggu Pembayaran" },
-        { value: "escrow", label: "Escrow Aktif" },
+        { value: "escrow", label: "Dana Aman" },
         { value: "selesai", label: "Selesai" },
       ],
     },
@@ -362,7 +363,7 @@ export function NegosiasiView() {
       onChange: setSortBy,
       options: [
         { value: "latest", label: "Terbaru" },
-        { value: "deadline", label: "Deadline Terdekat" },
+        { value: "deadline", label: "Batas Waktu Terdekat" },
         { value: "price_desc", label: "Harga Tertinggi" },
         { value: "unread", label: "Belum Dibaca" },
       ],
@@ -404,8 +405,8 @@ export function NegosiasiView() {
     <div className="flex-1 p-4 sm:p-6 lg:p-8 relative">
       <div>
         <CreatorPageHeader
-          title="Negosiasi Rate Card"
-          description="Kelola order Rate Card dari UMKM."
+          title="Negosiasi Paket Harga"
+          description="Kelola pesanan Paket Harga dari UMKM."
         />
 
         {/* Metric tiles — 4 cards max, 1 row on desktop */}
@@ -413,7 +414,7 @@ export function NegosiasiView() {
           <MetricTile
             label="Negosiasi Aktif"
             value={countNegotiation}
-            helper="Perlu respons kamu"
+            helper="Perlu respons Anda"
             iconClass="text-amber-600 bg-amber-50 border-amber-200/50"
             icon={<MessageSquare className="w-5 h-5" />}
             cardClass="border-amber-200/50 shadow-xs bg-gradient-to-br from-amber-50/30 via-white to-white"
@@ -423,23 +424,23 @@ export function NegosiasiView() {
           <MetricTile
             label="Menunggu Pembayaran"
             value={countPendingPayment}
-            helper="Tawaran kamu disetujui"
+            helper="Penawaran Anda disetujui"
             iconClass="text-blue-600 bg-blue-50 border-blue-200/50"
             icon={<Hourglass className="w-5 h-5" />}
             cardClass="border-blue-200/50 shadow-xs bg-gradient-to-br from-blue-50/30 via-white to-white"
           />
           <MetricTile
-            label="Escrow Aktif"
+            label="Dana Aman"
             value={countEscrow}
-            helper="Kamu sedang mengerjakan"
+            helper="Anda sedang mengerjakan"
             iconClass="text-emerald-600 bg-emerald-50 border-emerald-200/50"
             icon={<ShieldCheck className="w-5 h-5" />}
             cardClass="border-emerald-200/50 shadow-xs bg-gradient-to-br from-emerald-50/30 via-white to-white"
           />
           <MetricTile
-            label="Order Selesai"
+            label="Pesanan Selesai"
             value={countCompleted}
-            helper="Reward siap dicairkan"
+            helper="Imbalan siap dicairkan"
             iconClass="text-violet-600 bg-violet-50 border-violet-200/50"
             icon={<ClipboardCheck className="w-5 h-5" />}
             cardClass="border-violet-200/50 shadow-xs bg-gradient-to-br from-violet-50/30 via-white to-white"
@@ -451,7 +452,7 @@ export function NegosiasiView() {
           <SearchToolbar
             searchValue={search}
             onSearchChange={setSearch}
-            searchPlaceholder="Cari UMKM / judul order..."
+            searchPlaceholder="Cari UMKM / judul pesanan..."
             filters={toolbarFilters}
             onClearFilters={handleClearFilters}
             hasActiveFilters={hasActiveFilters}
@@ -472,7 +473,7 @@ export function NegosiasiView() {
               )}
             >
               <MessageSquare className="w-3.5 h-3.5 text-violet-600" />
-              <span>Inbox</span>
+              <span>Kotak Masuk</span>
               {negotiations.filter((n) => !n.isArchived).length > 0 && (
                 <span className={cn(
                   "px-2 py-0.5 rounded-full text-[10px] font-black",
@@ -509,13 +510,13 @@ export function NegosiasiView() {
         {/* Negotiation cards */}
         {filteredNegotiations.length === 0 ? (
           <CreatorEmptyState
-            title={showArchived ? "Tidak ada percakapan diarsipkan" : "Belum ada negosiasi Rate Card"}
+            title={showArchived ? "Tidak ada percakapan diarsipkan" : "Belum ada negosiasi Paket Harga"}
             description={
               showArchived
-                ? "Percakapan yang kamu arsipkan akan muncul di sini."
+                ? "Percakapan yang Anda arsipkan akan muncul di sini."
                 : hasActiveFilters
                 ? "Tidak ada negosiasi yang cocok dengan filter pencarian Anda."
-                : "Belum ada chat negosiasi masuk dari UMKM buat paket Rate Card kamu."
+                : "Belum ada obrolan negosiasi dari UMKM untuk Paket Harga Anda."
             }
             actionButton={
               hasActiveFilters ? (

@@ -60,7 +60,7 @@ export function ActivityTimeline({ activities = [], isLoading = false, onViewAll
               AKTIVITAS TERBARU
             </span>
             <h3 className="text-base font-black text-slate-900 tracking-tight font-display">
-              Aktivitas Campaign
+              Aktivitas Kampanye
             </h3>
           </div>
 
@@ -94,7 +94,7 @@ export function ActivityTimeline({ activities = [], isLoading = false, onViewAll
               </div>
               <div className="min-w-0 flex-1">
                 <h5 className="text-xs font-black text-slate-800 leading-snug">Buat Kampanye Pertama</h5>
-                <p className="text-[11px] font-medium text-slate-500 leading-tight">Mulai kampanye agar kreator dapat mengklaim job Anda.</p>
+                <p className="text-[11px] font-medium text-slate-500 leading-tight">Mulai kampanye agar kreator dapat mengklaim pekerjaan Anda.</p>
               </div>
             </div>
             <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 border border-dashed border-slate-200/80">
@@ -162,7 +162,7 @@ export function ActivityTimeline({ activities = [], isLoading = false, onViewAll
                 <div className="min-w-0 flex-1">
                   <h5 className="text-xs font-black text-slate-800 leading-snug">Menunggu Aktivitas Berikutnya</h5>
                   <p className="text-[11px] font-medium text-slate-500 leading-tight">
-                    Aktivitas klaim &amp; submission kreator akan muncul otomatis di sini.
+                    Aktivitas klaim &amp; pengiriman bukti kreator akan muncul otomatis di sini.
                   </p>
                 </div>
               </div>

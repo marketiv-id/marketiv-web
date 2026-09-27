@@ -24,10 +24,10 @@ export function SaveDraftModal({ isOpen, onClose, onConfirm }: SaveDraftModalPro
             <Save className="w-6 h-6" strokeWidth={2.5} />
           </div>
           <ResponsiveModalTitle className="text-base font-extrabold text-ink-950 text-center">
-            Simpan sebagai Draft?
+            Simpan sebagai Draf?
           </ResponsiveModalTitle>
           <ResponsiveModalDescription className="text-xs text-text-muted leading-relaxed text-center mt-1.5">
-            Kampanye ini akan disimpan sebagai draft. Anda dapat melanjutkannya kembali kapan saja melalui dashboard.
+            Kampanye ini akan disimpan sebagai draf. Anda dapat melanjutkannya kembali kapan saja melalui dashboard.
           </ResponsiveModalDescription>
         </ResponsiveModalHeader>
 
@@ -44,7 +44,7 @@ export function SaveDraftModal({ isOpen, onClose, onConfirm }: SaveDraftModalPro
             onClick={onConfirm}
             className="flex-1 min-h-[44px] px-4 rounded-full border border-orange-900/20 bg-gradient-to-b from-[#fb7a18] to-primary-600 text-white text-xs font-extrabold shadow-[0_10px_28px_rgba(234,88,12,.28),inset_0_1px_0_rgba(255,255,255,.22)] hover:shadow-[0_14px_36px_rgba(234,88,12,.36)] hover:-translate-y-px active:scale-[.98] transition-all cursor-pointer whitespace-nowrap"
           >
-            Simpan Draft
+            Simpan Draf
           </button>
         </div>
       </ResponsiveModalContent>

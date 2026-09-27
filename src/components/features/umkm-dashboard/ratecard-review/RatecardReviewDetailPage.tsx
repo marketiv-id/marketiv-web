@@ -16,6 +16,7 @@ import {
   ResponsiveModalTitle,
 } from "@/components/ui/responsive-modal";
 import { getRatecardReviewState } from "@/lib/ratecard-review/review-state";
+import { getDeliverableStatusLabel, getEscrowStatusLabel, getValidationStatusLabel } from "@/lib/dashboard-labels";
 import { approveDeliverable, requestRevision } from "@/services/shared/deliverable.service";
 import { getUmkmRatecardReview } from "@/services/umkm/ratecard-review.service";
 import type { RatecardReview } from "@/types/ratecard-review.types";
@@ -30,7 +31,7 @@ function formatDate(value?: string) {
 }
 
 function DetailSkeleton() {
-  return <div aria-label="Memuat detail review" className="mx-auto max-w-6xl animate-pulse space-y-4"><div className="h-24 rounded-2xl bg-white" /><div className="grid gap-4 lg:grid-cols-3"><div className="h-80 rounded-2xl bg-white lg:col-span-2" /><div className="h-80 rounded-2xl bg-white" /></div></div>;
+  return <div aria-label="Memuat detail tinjauan" className="mx-auto max-w-6xl animate-pulse space-y-4"><div className="h-24 rounded-2xl bg-white" /><div className="grid gap-4 lg:grid-cols-3"><div className="h-80 rounded-2xl bg-white lg:col-span-2" /><div className="h-80 rounded-2xl bg-white" /></div></div>;
 }
 
 export function RatecardReviewDetailPage({ orderId }: { orderId: string }) {
@@ -45,7 +46,7 @@ export function RatecardReviewDetailPage({ orderId }: { orderId: string }) {
   const load = useCallback(async () => {
     const result = await getUmkmRatecardReview(orderId);
     if (!result.success || !result.data) {
-      setError(result.error ?? "Detail review pekerjaan tidak ditemukan.");
+      setError(result.error ?? "Detail tinjauan pekerjaan tidak ditemukan.");
     } else {
       setReview(result.data);
       setError(null);
@@ -58,7 +59,7 @@ export function RatecardReviewDetailPage({ orderId }: { orderId: string }) {
     void getUmkmRatecardReview(orderId).then((result) => {
       if (!active) return;
       if (!result.success || !result.data) {
-        setError(result.error ?? "Detail review pekerjaan tidak ditemukan.");
+        setError(result.error ?? "Detail tinjauan pekerjaan tidak ditemukan.");
       } else {
         setReview(result.data);
         setError(null);
@@ -106,7 +107,7 @@ export function RatecardReviewDetailPage({ orderId }: { orderId: string }) {
       toast.error(result.error ?? "Gagal meminta revisi.");
       return;
     }
-    toast.success("Permintaan revisi terkirim ke Creator.");
+    toast.success("Permintaan revisi terkirim ke Kreator.");
     setRevisionOpen(false);
     setRevisionMessage("");
     await load();
@@ -116,8 +117,8 @@ export function RatecardReviewDetailPage({ orderId }: { orderId: string }) {
   if (loading) return <DetailSkeleton />;
   if (error || !review || !state) return (
     <div role="alert" className="mx-auto max-w-xl rounded-2xl border border-red-200 bg-red-50 p-7 text-center">
-      <h1 className="text-lg font-black text-red-900">Detail review gagal dimuat</h1>
-      <p className="mt-2 text-sm font-medium text-red-700">{error ?? "Review pekerjaan tidak ditemukan."}</p>
+      <h1 className="text-lg font-black text-red-900">Detail tinjauan gagal dimuat</h1>
+      <p className="mt-2 text-sm font-medium text-red-700">{error ?? "Tinjauan pekerjaan tidak ditemukan."}</p>
       <button type="button" onClick={retry} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-red-700 px-4 py-2 text-xs font-extrabold text-white"><RotateCcw className="h-4 w-4" /> Coba Lagi</button>
     </div>
   );
@@ -131,14 +132,14 @@ export function RatecardReviewDetailPage({ orderId }: { orderId: string }) {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-5">
-      <Link href="/dashboard/umkm/review-rate-card" className="inline-flex min-h-10 items-center gap-2 text-xs font-extrabold text-neutral-600 hover:text-orange-600"><ArrowLeft className="h-4 w-4" /> Kembali ke Review Pekerjaan</Link>
+      <Link href="/dashboard/umkm/review-rate-card" className="inline-flex min-h-10 items-center gap-2 text-xs font-extrabold text-neutral-600 hover:text-orange-600"><ArrowLeft className="h-4 w-4" /> Kembali ke Tinjauan Pekerjaan</Link>
 
       <header className="rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-[0_8px_28px_rgba(15,23,42,.05)] sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-xs font-bold text-neutral-500">{review.creatorName}</p>
             <h1 className="mt-1 min-w-0 break-words text-2xl font-black tracking-tight text-ink-900">{review.projectTitle}</h1>
-            <p className="mt-2 text-sm font-semibold text-neutral-500">{review.packageContext?.name ?? "Custom Rate Card"}</p>
+            <p className="mt-2 text-sm font-semibold text-neutral-500">{review.packageContext?.name ?? "Paket Khusus"}</p>
           </div>
           <div className={`rounded-xl border px-4 py-3 ${validationTone}`}>
             <p className="text-sm font-black">{state.title}</p>
@@ -153,10 +154,10 @@ export function RatecardReviewDetailPage({ orderId }: { orderId: string }) {
           <section className="rounded-2xl border border-neutral-200/80 bg-white p-5 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-600">Latest Deliverable</p>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-600">Hasil Kerja Terbaru</p>
                 <h2 className="mt-1 text-lg font-black text-ink-900">Versi {latest?.version ?? "—"}</h2>
               </div>
-              {latest ? <span className="rounded-lg border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-[10px] font-black uppercase text-neutral-600">{latest.status.replaceAll("_", " ")}</span> : null}
+              {latest ? <span className="rounded-lg border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-[10px] font-black uppercase text-neutral-600">{getDeliverableStatusLabel(latest.status)}</span> : null}
             </div>
 
             {latest ? (
@@ -165,12 +166,12 @@ export function RatecardReviewDetailPage({ orderId }: { orderId: string }) {
                   <span className="min-w-0 truncate">Buka file hasil kerja</span><ExternalLink className="h-4 w-4 shrink-0" />
                 </a>
                 <dl className="grid gap-4 text-sm sm:grid-cols-2">
-                  <div><dt className="text-xs font-bold text-neutral-400">Source</dt><dd className="mt-1 font-semibold text-ink-900">{latest.source === "storage" ? "Marketiv Storage" : "External URL"}</dd></div>
-                  <div><dt className="text-xs font-bold text-neutral-400">Submission time</dt><dd className="mt-1 font-semibold text-ink-900">{formatDate(latest.createdAt)}</dd></div>
-                  <div className="sm:col-span-2"><dt className="text-xs font-bold text-neutral-400">Notes</dt><dd className="mt-1 whitespace-pre-wrap font-medium leading-relaxed text-neutral-700">{latest.notes || "Tidak ada catatan."}</dd></div>
+                  <div><dt className="text-xs font-bold text-neutral-400">Sumber</dt><dd className="mt-1 font-semibold text-ink-900">{latest.source === "storage" ? "Penyimpanan Marketiv" : "Tautan Eksternal"}</dd></div>
+                  <div><dt className="text-xs font-bold text-neutral-400">Waktu Pengiriman</dt><dd className="mt-1 font-semibold text-ink-900">{formatDate(latest.createdAt)}</dd></div>
+                  <div className="sm:col-span-2"><dt className="text-xs font-bold text-neutral-400">Catatan</dt><dd className="mt-1 whitespace-pre-wrap font-medium leading-relaxed text-neutral-700">{latest.notes || "Tidak ada catatan."}</dd></div>
                 </dl>
               </div>
-            ) : <p className="mt-5 text-sm font-medium text-neutral-500">Creator belum mengirim hasil kerja.</p>}
+            ) : <p className="mt-5 text-sm font-medium text-neutral-500">Kreator belum mengirim hasil kerja.</p>}
 
             {(state.canApprove || state.canRequestRevision) ? (
               <div className="mt-6 flex flex-col gap-2 border-t border-neutral-100 pt-5 sm:flex-row">
@@ -181,7 +182,7 @@ export function RatecardReviewDetailPage({ orderId }: { orderId: string }) {
           </section>
 
           <section className="rounded-2xl border border-neutral-200/80 bg-white p-5 sm:p-6">
-            <h2 className="text-base font-black text-ink-900">Previous Versions</h2>
+            <h2 className="text-base font-black text-ink-900">Versi Sebelumnya</h2>
             <p className="mt-1 text-xs font-medium text-neutral-500">Riwayat lama baca-saja. Hanya versi terbaru dapat ditindaklanjuti.</p>
             {review.deliverableHistory.filter((item) => item.id !== latest?.id).length === 0 ? <p className="mt-5 text-sm font-medium text-neutral-400">Belum ada versi sebelumnya.</p> : (
               <div className="mt-4 divide-y divide-neutral-100">
@@ -198,19 +199,19 @@ export function RatecardReviewDetailPage({ orderId }: { orderId: string }) {
 
         <aside className="space-y-5">
           <section className={`rounded-2xl border p-5 ${validationTone}`}>
-            <div className="flex items-center gap-2"><FileCheck2 className="h-5 w-5" /><h2 className="text-sm font-black">Marketiv Validation</h2></div>
-            <p className="mt-4 text-lg font-black capitalize">{review.validation.status}</p>
+            <div className="flex items-center gap-2"><FileCheck2 className="h-5 w-5" /><h2 className="text-sm font-black">Validasi Marketiv</h2></div>
+            <p className="mt-4 text-lg font-black">{getValidationStatusLabel(review.validation.status)}</p>
             {review.validation.reviewNotes ? <p className="mt-3 whitespace-pre-wrap text-sm font-semibold leading-relaxed">{review.validation.reviewNotes}</p> : null}
             <p className="mt-3 text-xs font-medium opacity-75">{review.validation.reviewedAt ? `Ditinjau ${formatDate(review.validation.reviewedAt)}` : "Belum ditinjau Admin Marketiv"}</p>
           </section>
 
           <section className="rounded-2xl border border-neutral-200/80 bg-white p-5">
-            <h2 className="text-sm font-black text-ink-900">Ringkasan Order</h2>
+            <h2 className="text-sm font-black text-ink-900">Ringkasan Pesanan</h2>
             <dl className="mt-4 space-y-4 text-sm">
-              <div><dt className="text-xs font-bold text-neutral-400">Scope</dt><dd className="mt-1 whitespace-pre-wrap font-medium leading-relaxed text-neutral-700">{review.scope || "—"}</dd></div>
+              <div><dt className="text-xs font-bold text-neutral-400">Lingkup Pekerjaan</dt><dd className="mt-1 whitespace-pre-wrap font-medium leading-relaxed text-neutral-700">{review.scope || "—"}</dd></div>
               <div><dt className="text-xs font-bold text-neutral-400">Harga</dt><dd className="mt-1 font-black text-ink-900">{formatAmount(review.amount)}</dd></div>
-              <div><dt className="text-xs font-bold text-neutral-400">Revision used / limit</dt><dd className="mt-1 font-black text-ink-900">{review.revisionCount} / {review.revisionLimit}</dd></div>
-              <div><dt className="text-xs font-bold text-neutral-400">Escrow</dt><dd className="mt-1 font-black text-ink-900">{review.escrowStatus === "released" ? "Escrow dilepas" : review.escrowStatus || "—"}</dd></div>
+              <div><dt className="text-xs font-bold text-neutral-400">Revisi Terpakai</dt><dd className="mt-1 font-black text-ink-900">{review.revisionCount} dari {review.revisionLimit}</dd></div>
+              <div><dt className="text-xs font-bold text-neutral-400">Dana Aman</dt><dd className="mt-1 font-black text-ink-900">{review.escrowStatus ? getEscrowStatusLabel(review.escrowStatus) : "—"}</dd></div>
             </dl>
           </section>
         </aside>
@@ -221,7 +222,7 @@ export function RatecardReviewDetailPage({ orderId }: { orderId: string }) {
         onClose={() => setApproveOpen(false)}
         title="Setujui Hasil Kerja?"
         description={`Versi ${latest?.version} akan ditandai disetujui.`}
-        note="Persetujuan dapat melanjutkan settlement / pelepasan escrow sesuai state backend. Status finansial tetap ditentukan backend."
+        note="Persetujuan dapat melanjutkan penyelesaian dan pelepasan dana aman sesuai status backend. Status finansial tetap ditentukan backend."
         acknowledgement="Saya sudah memeriksa hasil terbaru dan memahami konsekuensi persetujuan."
         confirmLabel="Setujui & Lanjutkan"
         tone="warning"

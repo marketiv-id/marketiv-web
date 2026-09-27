@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getSubmissionStatusLabel } from "@/lib/dashboard-labels";
 import { CampaignSubmission, SubmissionStatus } from "@/types/umkm-dashboard.types";
 import { CampaignSubmissionCard } from "./CampaignSubmissionCard";
 
@@ -23,17 +24,17 @@ export function CampaignSubmissionSection({
   const tabs: { label: string; value: "all" | SubmissionStatus; count: number }[] = [
     { label: "Semua", value: "all", count: submissions.length },
     {
-      label: "Menunggu Validasi",
+      label: getSubmissionStatusLabel("pending"),
       value: "pending",
       count: submissions.filter((s) => s.validationStatus === "pending").length,
     },
     {
-      label: "Disetujui",
+      label: getSubmissionStatusLabel("approved"),
       value: "approved",
       count: submissions.filter((s) => s.validationStatus === "approved").length,
     },
     {
-      label: "Ditolak",
+      label: getSubmissionStatusLabel("rejected"),
       value: "rejected",
       count: submissions.filter((s) => s.validationStatus === "rejected").length,
     },
@@ -95,7 +96,7 @@ export function CampaignSubmissionSection({
             </svg>
             <h5 className="text-xs sm:text-sm font-extrabold text-text-primary mb-1">Belum Ada Bukti Konten</h5>
             <p className="text-xs text-text-muted max-w-sm mx-auto">
-              Kreator yang bergabung belum mengirimkan link postingan video.
+              Kreator yang bergabung belum mengirimkan tautan postingan video.
             </p>
           </div>
         ) : (
@@ -122,11 +123,11 @@ export function CampaignSubmissionSection({
             </div>
             <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-200/60 text-xs space-y-0.5">
               <strong className="text-text-primary block font-extrabold">2. Verifikasi Admin Marketiv</strong>
-              <span className="text-text-muted text-[11px]">Admin memeriksa keabsahan link dan mengunci total views.</span>
+              <span className="text-text-muted text-[11px]">Admin memeriksa keabsahan tautan dan mengunci total tayangan.</span>
             </div>
             <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-200/60 text-xs space-y-0.5">
-              <strong className="text-text-primary block font-extrabold">3. Pelepasan Reward</strong>
-              <span className="text-text-muted text-[11px]">Reward dihitung otomatis setelah validasi disetujui.</span>
+              <strong className="text-text-primary block font-extrabold">3. Pencairan Hadiah</strong>
+              <span className="text-text-muted text-[11px]">Hadiah dihitung otomatis setelah validasi disetujui.</span>
             </div>
           </div>
         </div>

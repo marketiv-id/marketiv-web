@@ -16,6 +16,7 @@ import { CampaignEmptyState } from "./CampaignEmptyState";
 import { CampaignErrorState } from "./CampaignErrorState";
 import { CampaignListSkeleton, CampaignSummaryCardsSkeleton } from "./CampaignListSkeleton";
 import { filterCampaigns } from "@/lib/umkm-filters";
+import { getCampaignStatusLabel } from "@/lib/dashboard-labels";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -172,7 +173,7 @@ export function CampaignsPage() {
           setSubmissionCounts(subCountsRes.data);
         }
       } else {
-        setError(campaignsRes.error || "Gagal memuat campaign.");
+        setError(campaignsRes.error || "Gagal memuat kampanye.");
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Terjadi kesalahan koneksi.";
@@ -219,9 +220,9 @@ export function CampaignsPage() {
     const res = await updateCampaignStatus(target.id, "paused");
     if (res.success && res.data) {
       setCampaigns((prev) => prev.map((c) => (c.id === target.id ? res.data! : c)));
-      showToast(`Campaign "${target.title}" berhasil dijeda.`);
+      showToast(`Kampanye "${target.title}" berhasil dijeda.`);
     } else {
-      toast.error(res.error ?? "Gagal menjeda campaign.");
+      toast.error(res.error ?? "Gagal menjeda kampanye.");
     }
   };
 
@@ -236,8 +237,8 @@ export function CampaignsPage() {
     const target = activeDeleteCampaign;
     const res = await deleteCampaignDraft(target.id);
     if (!res.success) {
-      toast.error(res.error ?? "Gagal menghapus draft.");
-      throw new Error(res.error ?? "Gagal menghapus draft.");
+      toast.error(res.error ?? "Gagal menghapus draf.");
+      throw new Error(res.error ?? "Gagal menghapus draf.");
     }
     setCampaigns((prev) => prev.filter((c) => c.id !== target.id));
     setSubmissionCounts((prev) => {
@@ -245,7 +246,7 @@ export function CampaignsPage() {
       delete next[target.id];
       return next;
     });
-    showToast(`Draft "${target.title}" berhasil dihapus.`);
+    showToast(`Draf "${target.title}" berhasil dihapus.`);
   };
 
   /**
@@ -256,11 +257,11 @@ export function CampaignsPage() {
   const handlePublish = async (target: Campaign) => {
     const res = await publishCampaign(target.id);
     if (!res.success || !res.data) {
-      toast.error(res.error ?? "Gagal menerbitkan campaign.");
+      toast.error(res.error ?? "Gagal menerbitkan kampanye.");
       return;
     }
     setCampaigns((prev) => prev.map((c) => (c.id === target.id ? res.data! : c)));
-    showToast(`Campaign "${target.title}" kini tayang di Job Pool.`);
+    showToast(`Kampanye "${target.title}" kini tayang di Lowongan Kampanye.`);
   };
 
   const handleDuplicateConfirm = async (
@@ -279,10 +280,10 @@ export function CampaignsPage() {
       if (res.data.warnings.length > 0) {
         res.data.warnings.forEach((w) => toast.warning(w));
       } else {
-        showToast(`Campaign baru "${newTitle}" berhasil dibuat sebagai Draft.`);
+        showToast(`Kampanye baru "${newTitle}" berhasil dibuat sebagai draf.`);
       }
     } else {
-      toast.error(res.error ?? "Gagal menduplikasi campaign.");
+      toast.error(res.error ?? "Gagal menduplikasi kampanye.");
     }
   };
 
@@ -329,10 +330,10 @@ export function CampaignsPage() {
         ) : processedCampaigns.length === 0 ? (
           <Card className="border border-border shadow-[var(--shadow-1)] bg-[var(--paper-2)] rounded-[var(--radius-3)]">
             <CardContent className="p-8 text-center">
-              <h4 className="text-base font-bold text-ink-900 mb-1">Campaign tidak ditemukan</h4>
+              <h4 className="text-base font-bold text-ink-900 mb-1">Kampanye tidak ditemukan</h4>
               <p className="text-xs text-ink-500 mb-4">Coba ubah kata kunci pencarian atau bersihkan filter.</p>
               <Button variant="outline" size="sm" onClick={handleClearFilters}>
-                Reset Filter
+                Atur Ulang Filter
               </Button>
             </CardContent>
           </Card>
@@ -394,19 +395,19 @@ export function CampaignsPage() {
           <ConfirmDialog
             open={!!activeDeleteCampaign}
             onClose={() => setActiveDeleteCampaign(null)}
-            title="Hapus Draft Campaign?"
+            title="Hapus Draf Kampanye?"
             description={
               <>
-                Draft{" "}
+                Draf{" "}
                 <span className="font-semibold text-text-primary">
                   &quot;{activeDeleteCampaign.title}&quot;
                 </span>{" "}
-                akan dihapus permanen beserta brief dan aset yang menempel padanya.
+                akan dihapus permanen beserta arahan dan aset yang menempel padanya.
               </>
             }
-            note="Draft belum pernah tayang, jadi tidak ada klaim kreator atau dana escrow yang terpengaruh. Campaign yang sudah tayang tidak bisa dihapus — gunakan Jeda Campaign."
-            acknowledgement="Saya mengerti draft ini tidak bisa dikembalikan."
-            confirmLabel="Hapus Draft"
+            note="Draf belum pernah tayang, jadi tidak ada klaim kreator atau Dana Aman (dana ditahan sementara) yang terpengaruh. Kampanye yang sudah tayang tidak bisa dihapus. Gunakan Jedakan Kampanye."
+            acknowledgement="Saya mengerti draf ini tidak bisa dikembalikan."
+            confirmLabel="Hapus Draf"
             onConfirm={handleDeleteConfirm}
           />
         )}
@@ -424,17 +425,17 @@ export function CampaignsPage() {
           <ExportReportModal
             isOpen={isExportModalOpen}
             onClose={() => setIsExportModalOpen(false)}
-            filename="Laporan_Campaign_Marketiv"
+            filename="Laporan_Kampanye_Marketiv"
             rows={campaigns.map((c) => ({
               "ID": c.id,
               "Judul": c.title,
-              "Niche": c.niche,
-              "Status": c.status,
+              "Kategori": c.niche,
+              "Status": getCampaignStatusLabel(c.status),
               "Kuota": c.creatorQuota,
               "Klaim Terpakai": c.usedQuota,
-              "Budget (Rp)": c.totalBudgetEscrow,
-              "Budget Tersisa (Rp)": c.remainingBudget,
-              "Total Views": c.totalViews ?? "Belum tersedia",
+              "Anggaran (Rp)": c.totalBudgetEscrow,
+              "Anggaran Tersisa (Rp)": c.remainingBudget,
+              "Total Tayangan": c.totalViews ?? "—",
               "Dibuat": c.createdAt,
             }))}
           />

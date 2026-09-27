@@ -28,8 +28,8 @@ interface ClaimCampaignModalProps {
 const CLAIM_RULES = [
   {
     key: "brief",
-    title: "Kesesuaian Brief & Larangan",
-    desc: "Saya menyetujui pengerjaan video sesuai panduan dan larangan (do's & don'ts) pada brief produk.",
+    title: "Kesesuaian Arahan & Larangan",
+    desc: "Saya menyetujui pengerjaan video sesuai panduan dan larangan pada arahan produk.",
   },
   {
     key: "privacy",
@@ -43,8 +43,8 @@ const CLAIM_RULES = [
   },
   {
     key: "views",
-    title: "Perhitungan Reward Berdasar Views",
-    desc: "Saya menyetujui bahwa pembayaran dihitung dari views tervalidasi yang dikunci oleh sistem Admin Marketiv.",
+    title: "Perhitungan Imbalan Berdasar Tayangan",
+    desc: "Saya menyetujui bahwa imbalan dihitung dari tayangan tervalidasi yang dikunci oleh sistem Admin Marketiv.",
   },
 ] as const;
 
@@ -108,7 +108,7 @@ export function ClaimCampaignModal({
           {/* Title & Brand Meta */}
           <div className="relative z-10 space-y-1.5">
             <h3 className="text-lg sm:text-2xl font-black tracking-tight text-white leading-tight">
-              Klaim Campaign
+              Klaim Kampanye
             </h3>
             <p className="text-xs font-semibold text-violet-200 truncate max-w-full">
               {job.title}
@@ -117,11 +117,11 @@ export function ClaimCampaignModal({
             <div className="flex items-center gap-2 pt-1.5 flex-wrap text-xs">
               <span className="inline-flex items-center gap-1 bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 font-bold text-white text-[11px] sm:text-xs">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>{job.brandName || "Marketiv Client"}</span>
+                <span>{job.brandName || "Klien Marketiv"}</span>
               </span>
               <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-500/20 to-orange-500/20 backdrop-blur-md px-2.5 py-1 rounded-lg border border-amber-500/30 font-extrabold text-amber-300 text-[11px] sm:text-xs">
                 <Zap className="w-3.5 h-3.5 text-amber-400" />
-                <span>{formatCurrency(job.ratePerThousandViews)} / 1k views</span>
+                <span>{formatCurrency(job.ratePerThousandViews)} / 1.000 tayangan</span>
               </span>
             </div>
           </div>

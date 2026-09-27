@@ -1,6 +1,10 @@
 import { UmkmDashboardChrome } from "@/components/features/dashboard/UmkmDashboardChrome";
 import { CreatorDetailPage } from "@/components/features/umkm-dashboard/creators";
 
+export const metadata = {
+  title: "Profil Kreator | Dashboard UMKM | Marketiv",
+};
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }

@@ -1,4 +1,5 @@
 import { TransactionStatus, TransactionType, ReferenceType } from "./finance.types";
+import { getTransactionStatusLabel, getTransactionTypeLabel } from "@/lib/dashboard-labels";
 
 export function getStatusBadgeVariant(status: TransactionStatus): "warning" | "info" | "success" | "danger" | "neutral" {
   switch (status) {
@@ -23,48 +24,11 @@ export function getStatusBadgeVariant(status: TransactionStatus): "warning" | "i
 }
 
 export function getStatusLabel(status: TransactionStatus): string {
-  switch (status) {
-    case "pending":
-      return "Menunggu Pembayaran";
-    case "held":
-      return "Dana Tersimpan Aman";
-    case "paid":
-      return "Pembayaran Berhasil";
-    case "released":
-      return "Dana Dicairkan";
-    case "completed":
-    case "matured":
-      return "Selesai";
-    case "failed":
-      return "Gagal";
-    case "expired":
-      return "Kedaluwarsa";
-    case "cancelled":
-      return "Dibatalkan";
-    case "refunded":
-      return "Dana Dikembalikan";
-    default:
-      return status;
-  }
+  return getTransactionStatusLabel(status);
 }
 
 export function getTypeLabel(type: TransactionType): string {
-  switch (type) {
-    case "deposit":
-      return "Deposit / Bayar";
-    case "withdrawal":
-      return "Penarikan";
-    case "payment":
-      return "Pembayaran";
-    case "fee":
-      return "Biaya Layanan";
-    case "refund":
-      return "Pengembalian Dana";
-    case "release":
-      return "Pencairan";
-    default:
-      return type;
-  }
+  return getTransactionTypeLabel(type);
 }
 
 export function getReferenceLabel(type: ReferenceType): string {

@@ -43,6 +43,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatCurrency, formatRupiahInput } from "@/lib/formatters";
+import { getTransactionTypeLabel, getWithdrawalStatusLabel } from "@/lib/dashboard-labels";
 import { cn } from "@/lib/utils";
 import { MINIMUM_WITHDRAW } from "@/types/domain";
 import { matchesCreatorTransactionStatusFilter } from "@/lib/creator-status";
@@ -233,8 +234,8 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
       onChange: setFilterType,
       options: [
         { value: "all", label: "Semua Sumber" },
-        { value: "campaign", label: "Campaign" },
-        { value: "rate card", label: "Rate Card" },
+        { value: "campaign", label: "Kampanye" },
+        { value: "rate card", label: "Paket Harga" },
         { value: "withdrawal", label: "Penarikan" },
       ],
     },
@@ -307,20 +308,14 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
     return result;
   })();
 
-  const getTransactionTypeLabel = (type: string) => {
-    switch (type) {
-      case "withdrawal":
-        return "Tarik Saldo";
-      case "payout":
-        return "Pendapatan Campaign";
-      case "escrow_release":
-        return "Dana Escrow";
-      case "adjustment":
-        return "Penyesuaian";
-      default:
-        return type;
-    }
+  const TRANSACTION_SOURCE_LABELS: Record<string, string> = {
+    campaign: "Kampanye",
+    "rate card": "Paket Harga",
+    withdrawal: "Penarikan",
   };
+
+  const getSourceLabel = (source?: string) =>
+    (source && TRANSACTION_SOURCE_LABELS[source.toLowerCase()]) || source || "";
 
   const getBankLabel = (code: string) =>
     PAYOUT_PROVIDERS.find((p) => p.id === code)?.label ?? code.toUpperCase();
@@ -340,7 +335,7 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
               Keuangan &amp; Dompet
             </h2>
             <p className="text-ink-500 text-[.88rem] m-0 max-w-xl">
-              Pantau seluruh saldo, riwayat pencairan, pendapatan campaign, dan transaksi escrow Rate Card Anda.
+              Pantau saldo, riwayat penarikan, pendapatan kampanye, dan transaksi Dana Aman (dana ditahan sementara) dari Paket Harga Anda.
             </p>
           </div>
 
@@ -403,7 +398,7 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
                     icon={<Clock />}
                     label="Pencairan Tertunda"
                     value={formatCurrency(walletMetrics.pendingPayouts)}
-                    helper="Menunggu audit/validasi views"
+                    helper="Menunggu audit/validasi tayangan"
                     tone="warning"
                   />
                   <MetricCard
@@ -422,14 +417,14 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
                   />
                   <MetricCard
                     icon={<Megaphone />}
-                    label="Pendapatan Campaign"
+                    label="Pendapatan Kampanye"
                     value={formatCurrency(walletMetrics.campaignEarnings || 0)}
-                    helper="Dari marketing pay-per-view"
+                    helper="Dari pemasaran bayar per tayangan"
                     tone="primary"
                   />
                   <MetricCard
                     icon={<BadgeDollarSign />}
-                    label="Pendapatan Rate Card"
+                    label="Pendapatan Paket Harga"
                     value={formatCurrency(walletMetrics.rateCardEarnings || 0)}
                     helper="Dari negosiasi premium"
                     tone="accent"
@@ -446,7 +441,7 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
                     <ReceiptText size={15} />
                   </div>
                   <h3 className="font-display font-black text-neutral-900 text-[.95rem] tracking-tight">
-                    Riwayat Transaksi Wallet
+                    Riwayat Transaksi Dompet
                   </h3>
                   <span className="inline-flex items-center justify-center min-w-[22px] h-[20px] rounded-full bg-neutral-100 text-neutral-500 text-[10px] font-extrabold px-1.5">
                     {filteredTransactions.length}
@@ -456,7 +451,7 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
                 <SearchToolbar
                   searchValue={searchQuery}
                   onSearchChange={setSearchQuery}
-                  searchPlaceholder="Cari ID, deskripsi, atau campaign..."
+                  searchPlaceholder="Cari ID, deskripsi, atau kampanye..."
                   filters={toolbarFilters}
                   onClearFilters={handleResetFilters}
                   hasActiveFilters={isFilterActive}
@@ -469,8 +464,8 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
                   title={isFilterActive ? "Transaksi tidak ditemukan" : "Belum Ada Transaksi"}
                   description={
                     isFilterActive
-                      ? "Tidak ada transaksi yang cocok dengan filter yang kamu pilih."
-                      : "Kamu belum punya riwayat transaksi di Marketiv."
+                      ? "Tidak ada transaksi yang cocok dengan filter yang Anda pilih."
+                      : "Anda belum punya riwayat transaksi di Marketiv."
                   }
                   actionButton={
                     isFilterActive ? (
@@ -521,7 +516,7 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
                               </td>
                               <td className="py-4 pr-4">
                                 <span className="font-extrabold text-neutral-800">
-                                  {tx.source || getTransactionTypeLabel(tx.type)}
+                                  {getSourceLabel(tx.source) || getTransactionTypeLabel(tx.type)}
                                 </span>
                               </td>
                               <td className="py-4 pr-4 font-medium text-neutral-500 max-w-[280px] truncate">
@@ -569,7 +564,7 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
               className="max-w-lg w-full p-0 overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[90vh]"
             >
               <ResponsiveModalHeader className="sr-only">
-                <ResponsiveModalTitle>Tarik Saldo Wallet</ResponsiveModalTitle>
+                <ResponsiveModalTitle>Tarik Dana</ResponsiveModalTitle>
                 <ResponsiveModalDescription>
                   Form penarikan saldo pendapatan kreator.
                 </ResponsiveModalDescription>
@@ -583,7 +578,7 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
                 <div className="relative z-10 flex items-center justify-between gap-3 mb-3">
                   <div className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-orange-500/25 to-amber-500/15 px-3 py-1 text-[10px] font-extrabold text-orange-300 border border-orange-400/30 backdrop-blur-md">
                     <ArrowDownToLine className="w-3.5 h-3.5 text-orange-300" />
-                    <span className="uppercase tracking-wider">Pencairan Saldo Kreator</span>
+                    <span className="uppercase tracking-wider">Penarikan Saldo Kreator</span>
                   </div>
                   <button
                     type="button"
@@ -598,12 +593,12 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
 
                 <div className="relative z-10">
                   <h3 className="font-display text-lg sm:text-xl font-black text-white leading-tight tracking-tight">
-                    {withdrawStep === "form" && "Tarik Saldo Wallet"}
+                    {withdrawStep === "form" && "Tarik Dana"}
                     {withdrawStep === "confirm" && "Konfirmasi Penarikan"}
                     {withdrawStep === "requested" && "Pengajuan Penarikan Terkirim"}
                   </h3>
                   <p className="text-xs text-white/75 font-medium mt-1">
-                    {withdrawStep === "form" && "Pindahkan saldo hasil karya kreator ke rekening bank atau e-wallet."}
+                    {withdrawStep === "form" && "Pindahkan saldo hasil karya kreator ke rekening bank atau dompet digital."}
                     {withdrawStep === "confirm" && "Periksa kembali rincian data penerima sebelum pengajuan dikirim ke admin."}
                     {withdrawStep === "requested" && "Menunggu diproses admin Marketiv."}
                   </p>
@@ -647,7 +642,7 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
                       <label className="flex items-center justify-between text-xs font-bold text-neutral-700">
                         <span>Metode / Instansi Penerima</span>
                         <span className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-wider">
-                          {isEwallet ? "E-Wallet" : "Transfer Bank"}
+                          {isEwallet ? "Dompet Digital" : "Transfer Bank"}
                         </span>
                       </label>
                       <Select value={bankName} onValueChange={(val) => setBankName(val)}>
@@ -658,7 +653,7 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
                             <div className="text-neutral-400 shrink-0">
                               {isEwallet ? <Smartphone size={16} /> : <Landmark size={16} />}
                             </div>
-                            <SelectValue placeholder="Pilih Bank / E-Wallet" />
+                            <SelectValue placeholder="Pilih Bank / Dompet Digital" />
                           </div>
                         </SelectTrigger>
                         <SelectContent className="z-[110] max-h-64 rounded-2xl border border-neutral-200/80 bg-white p-1.5 shadow-2xl">
@@ -684,7 +679,7 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
 
                           <SelectGroup>
                             <SelectLabel className="px-3 py-1.5 text-[10px] font-extrabold text-neutral-400 uppercase tracking-wider">
-                              E-Wallet
+                              Dompet Digital
                             </SelectLabel>
                             {PAYOUT_PROVIDERS.filter((p) => p.method === "ewallet").map((p) => (
                               <SelectItem
@@ -706,7 +701,7 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
                     {/* Account Number or HP */}
                     <div className="space-y-1.5">
                       <label className="flex items-center justify-between text-xs font-bold text-neutral-700">
-                        <span>{isEwallet ? "Nomor Handphone E-Wallet" : "Nomor Rekening Bank"}</span>
+                        <span>{isEwallet ? "Nomor Handphone Dompet Digital" : "Nomor Rekening Bank"}</span>
                         <span className="text-[10px] text-neutral-400 font-semibold">Wajib Terdaftar</span>
                       </label>
                       <div className="relative">
@@ -838,7 +833,7 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-xs font-medium text-neutral-500">
-                          <span>Sisa Saldo Wallet</span>
+                          <span>Sisa Saldo Dompet</span>
                           <span className="font-mono font-semibold text-neutral-600">
                             {formatCurrency(Math.max(0, walletMetrics.balance - numericAmount))}
                           </span>
@@ -890,7 +885,7 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
                       Konfirmasi Penarikan Saldo
                     </h3>
                     <p className="text-xs text-neutral-500 font-medium mt-1 max-w-xs mx-auto">
-                      Mohon verifikasi ulang data penerima sebelum melanjutkan pencairan.
+                      Mohon verifikasi ulang data penerima sebelum melanjutkan penarikan.
                     </p>
                   </div>
 
@@ -922,7 +917,7 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
                       <span className="font-bold text-neutral-800">{formatCurrency(numericAmount)}</span>
                     </div>
                     <div className="flex justify-between items-center gap-4">
-                      <span className="font-medium text-neutral-400">Biaya Admin</span>
+                      <span className="font-medium text-neutral-400">Biaya Layanan Admin</span>
                       <span className="font-bold text-emerald-600">Gratis (Rp 0)</span>
                     </div>
                     <div className="border-t border-dashed border-neutral-200 my-2"></div>
@@ -999,7 +994,7 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
                       <span className="font-mono font-bold text-neutral-900">{lastWithdrawalDetails.id}</span>
                     </div>
                     <div className="flex justify-between items-center gap-4">
-                      <span className="font-medium text-neutral-400">Tujuan Pencairan</span>
+                      <span className="font-medium text-neutral-400">Tujuan Penarikan</span>
                       <span className="font-extrabold text-neutral-900 uppercase">{getBankLabel(lastWithdrawalDetails.bank)}</span>
                     </div>
                     <div className="flex justify-between items-center gap-4">
@@ -1015,7 +1010,7 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
                       <span className="font-medium text-neutral-400">Status Penarikan</span>
                       <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/60 uppercase tracking-wider">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                        Menunggu Diproses
+                        {getWithdrawalStatusLabel("requested")}
                       </span>
                     </div>
                   </div>
@@ -1042,9 +1037,9 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
               className="max-w-md w-full rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-7 shadow-2xl max-h-[90vh] overflow-y-auto"
             >
               <ResponsiveModalHeader className="sr-only">
-                <ResponsiveModalTitle>Detail Transaksi Wallet</ResponsiveModalTitle>
+                <ResponsiveModalTitle>Detail Transaksi Dompet</ResponsiveModalTitle>
                 <ResponsiveModalDescription>
-                  Rincian transaksi wallet kreator.
+                  Rincian transaksi dompet kreator.
                 </ResponsiveModalDescription>
               </ResponsiveModalHeader>
 
@@ -1056,7 +1051,7 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
                   </div>
                   <div>
                     <h3 className="font-display text-base font-black text-slate-900 leading-tight tracking-tight">
-                      Detail Transaksi Wallet
+                      Detail Transaksi Dompet
                     </h3>
                     <p className="text-[10px] font-mono font-bold text-slate-400 mt-1 uppercase tracking-wider">
                       ID: {selectedTx.id}
@@ -1111,7 +1106,7 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
                   <div className="flex justify-between items-center gap-4 pt-2.5">
                     <span className="font-semibold text-slate-400">Sumber Transaksi</span>
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10.5px] font-extrabold bg-violet-50 text-violet-700 border border-violet-200/60 uppercase tracking-wider">
-                      {selectedTx.source || getTransactionTypeLabel(selectedTx.type)}
+                      {getSourceLabel(selectedTx.source) || getTransactionTypeLabel(selectedTx.type)}
                     </span>
                   </div>
 
@@ -1134,7 +1129,7 @@ export function KeuanganView({ metrics, initialTransactions }: KeuanganViewProps
                   {selectedTx.notes && (
                     <div className="p-3 bg-violet-50/60 rounded-xl border border-violet-200/50 mt-3 text-[11px] leading-relaxed text-slate-600 font-medium">
                       <span className="block text-[9px] font-black text-violet-700 uppercase tracking-wider mb-1">
-                        Catatan Audit Wallet
+                        Catatan Audit Dompet
                       </span>
                       {selectedTx.notes}
                     </div>

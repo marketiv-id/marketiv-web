@@ -62,7 +62,7 @@ export function StartNegotiationModal({
             <div>
               <span className="text-[10px] font-extrabold text-text-muted uppercase tracking-wide">Diskusi & Negosiasi</span>
               <h3 className="text-base font-extrabold text-ink-950 tracking-tight mt-0.5">
-                Buka Chat dengan {creatorName}
+                Buka Obrolan dengan {creatorName}
               </h3>
             </div>
           </div>
@@ -90,7 +90,7 @@ export function StartNegotiationModal({
               <ol className="space-y-2">
                 {[
                   "Diskusikan kebutuhan produk Anda bersama kreator lewat chat.",
-                  "Kirim kesepakatan harga & deadline dari dalam ruang chat.",
+                  "Kirim kesepakatan harga & batas waktu dari dalam ruang obrolan.",
                   "Kreator menyetujui rincian kesepakatan.",
                   "Lakukan pembayaran aman yang disimpan di sistem Marketiv.",
                 ].map((step, i) => (
@@ -121,7 +121,7 @@ export function StartNegotiationModal({
                 disabled={isSubmitting}
                 className="flex-1 min-h-[44px] px-4 rounded-full border border-orange-900/20 bg-gradient-to-b from-[#fb7a18] to-primary-600 text-white text-xs font-extrabold shadow-[0_10px_28px_rgba(234,88,12,.28),inset_0_1px_0_rgba(255,255,255,.22)] hover:shadow-[0_14px_36px_rgba(234,88,12,.36)] hover:-translate-y-px active:scale-[.98] transition-all cursor-pointer whitespace-nowrap disabled:opacity-50 disabled:pointer-events-none"
               >
-                {isSubmitting ? "Membuka…" : "Masuk ke Chat Negosiasi"}
+                {isSubmitting ? "Membuka…" : "Masuk ke Obrolan Negosiasi"}
               </button>
             </div>
           </div>

@@ -37,7 +37,7 @@ export function HeroOverview({
   const stats = [
     {
       icon: TrendingUp,
-      label: "CAMPAIGN AKTIF",
+      label: "KAMPANYE AKTIF",
       value: campaignAktif === undefined ? "—" : String(campaignAktif),
       cardBg: "bg-gradient-to-br from-orange-50/70 via-orange-50/30 to-white",
       borderColor: "border-orange-200/80 hover:border-orange-300",
@@ -45,7 +45,7 @@ export function HeroOverview({
     },
     {
       icon: Eye,
-      label: "TOTAL VIEWS",
+      label: "TOTAL TAYANGAN",
       value: totalViews,
       cardBg: "bg-gradient-to-br from-blue-50/70 via-blue-50/30 to-white",
       borderColor: "border-blue-200/80 hover:border-blue-300",

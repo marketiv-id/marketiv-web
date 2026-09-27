@@ -51,7 +51,7 @@ export function PaymentSimulationModal({
               Bayar dengan Midtrans
             </ResponsiveModalTitle>
             <ResponsiveModalDescription className="text-[10px] text-text-muted mt-1 block">
-              Dana ditahan di escrow setelah pembayaran dikonfirmasi server.
+              Dana ditahan sementara di sistem Dana Aman setelah pembayaran dikonfirmasi server.
             </ResponsiveModalDescription>
           </div>
         </ResponsiveModalHeader>
@@ -73,8 +73,8 @@ export function PaymentSimulationModal({
             <span className="text-sm sm:text-base font-extrabold text-primary">{formatCurrency(finalPrice)}</span>
           </div>
           <p className="text-[9px] text-text-muted font-semibold leading-relaxed pt-1">
-            Tanpa biaya tambahan. Fee platform 2% dipotong dari pendapatan kreator, bukan dari
-            pembayaran kamu.
+            Tanpa biaya tambahan. Komisi Platform 2% dipotong dari pendapatan kreator, bukan dari
+            pembayaran Anda.
           </p>
         </div>
 
@@ -85,7 +85,7 @@ export function PaymentSimulationModal({
             i
           </span>
           <span>
-            Setelah lanjut, kamu diarahkan ke halaman pembayaran Midtrans untuk memilih metode
+            Setelah lanjut, Anda diarahkan ke halaman pembayaran Midtrans untuk memilih metode
             (Virtual Account, QRIS, atau e-wallet).
           </span>
         </div>

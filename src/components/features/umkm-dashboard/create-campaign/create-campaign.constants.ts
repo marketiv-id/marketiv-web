@@ -24,15 +24,15 @@ export const TONE_OPTIONS: OptionItem[] = [
 
 export const CTA_OPTIONS: OptionItem[] = [
   { id: "kunjungi_toko", label: "Kunjungi Toko", desc: "Arahkan ke lapak offline/online" },
-  { id: "follow_akun", label: "Follow Akun", desc: "Arahkan ke akun medsos brand" },
+  { id: "follow_akun", label: "Follow Akun", desc: "Arahkan ke akun medsos merek" },
   { id: "coba_produk", label: "Coba Produk", desc: "Rekomendasikan mencoba produk" },
   { id: "pesan_sekarang", label: "Pesan Sekarang", desc: "Arahkan pembelian langsung" },
 ];
 
 export const PRICE_TIERS = [
-  { id: 3000, label: "Rp 3.000", desc: "Niche Rendah / Pemula" },
-  { id: 5000, label: "Rp 5.000", desc: "Niche Menengah / Standar" },
-  { id: 8000, label: "Rp 8.000", desc: "Niche Tinggi / Premium" },
+  { id: 3000, label: "Rp 3.000", desc: "Kategori Rendah / Pemula" },
+  { id: 5000, label: "Rp 5.000", desc: "Kategori Menengah / Standar" },
+  { id: 8000, label: "Rp 8.000", desc: "Kategori Tinggi / Premium" },
 ];
 
 export const PAYMENT_METHODS = [
@@ -42,10 +42,10 @@ export const PAYMENT_METHODS = [
 ];
 
 export const STEP_TIPS: Record<number, string> = {
-  1: "Gunakan nama campaign yang mudah dikenali kreator.",
-  2: "Brief yang jelas mempercepat kreator memahami gaya video.",
-  3: "Pastikan link Drive bisa diakses publik.",
-  4: "Rate lebih tinggi biasanya menarik lebih banyak kreator.",
+  1: "Gunakan nama kampanye yang mudah dikenali kreator.",
+  2: "Arahan yang jelas mempercepat kreator memahami gaya video.",
+  3: "Pastikan tautan Drive bisa diakses publik.",
+  4: "Tarif lebih tinggi biasanya menarik lebih banyak kreator.",
   5: "Periksa kembali semua data sebelum simulasi pembayaran.",
 };
 
@@ -86,7 +86,7 @@ export const QUICK_DIRECTIONS: QuickDirectionItem[] = [
   // Proses & Cerita (Behind the product)
   { id: "process_making", label: "Proses pembuatan", category: "behind_the_product", categoryLabel: "Proses & Cerita", niches: ["kuliner"] },
   { id: "process_serving", label: "Proses penyajian", category: "behind_the_product", categoryLabel: "Proses & Cerita", niches: ["kuliner"] },
-  { id: "brand_story", label: "Cerita brand", category: "behind_the_product", categoryLabel: "Proses & Cerita", niches: ["pariwisata", "lainnya"] },
+  { id: "brand_story", label: "Cerita merek", category: "behind_the_product", categoryLabel: "Proses & Cerita", niches: ["pariwisata", "lainnya"] },
   { id: "location_access", label: "Akses & lokasi usaha", category: "behind_the_product", categoryLabel: "Proses & Cerita", niches: ["pariwisata", "kuliner"] },
 ];
 
@@ -109,7 +109,7 @@ export const CREATOR_GUIDELINES: CreatorGuidelineItem[] = [
   // Wajib Ditampilkan (Required)
   { id: "req_product_clear", label: "Produk terlihat jelas", type: "required", niches: ["kuliner", "fashion", "kecantikan", "edukasi", "pariwisata", "lainnya"] },
   { id: "req_packaging", label: "Kemasan produk", type: "required", niches: ["kuliner", "kecantikan", "fashion"] },
-  { id: "req_brand_name", label: "Nama brand", type: "required", niches: ["kuliner", "fashion", "kecantikan", "edukasi", "pariwisata", "lainnya"] },
+  { id: "req_brand_name", label: "Nama merek", type: "required", niches: ["kuliner", "fashion", "kecantikan", "edukasi", "pariwisata", "lainnya"] },
   { id: "req_texture", label: "Tekstur / isi produk", type: "required", niches: ["kuliner", "kecantikan"] },
   { id: "req_try_process", label: "Proses mencicipi/mencoba", type: "required", niches: ["kuliner", "kecantikan"] },
   { id: "req_usage", label: "Cara penggunaan", type: "required", niches: ["kecantikan", "edukasi"] },

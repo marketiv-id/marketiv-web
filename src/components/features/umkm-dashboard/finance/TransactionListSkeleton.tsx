@@ -12,9 +12,9 @@ export function TransactionListSkeleton() {
             <tr className="border-b border-neutral-200/50 bg-neutral-50/50 text-[10px] font-extrabold text-text-muted uppercase tracking-wider">
               <th className="px-6 py-4.5">Tanggal</th>
               <th className="px-6 py-4.5">Deskripsi</th>
-              <th className="px-6 py-4.5">Tipe</th>
-              <th className="px-6 py-4.5">Fitur</th>
-              <th className="px-6 py-4.5 text-right">Nominal</th>
+              <th className="px-6 py-4.5">Jenis Transaksi</th>
+              <th className="px-6 py-4.5">Jenis Layanan</th>
+              <th className="px-6 py-4.5 text-right">Jumlah</th>
               <th className="px-6 py-4.5">Status</th>
               <th className="px-6 py-4.5 text-center">Aksi</th>
             </tr>

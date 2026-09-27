@@ -20,7 +20,7 @@ export function FinanceHeader({ onTriggerExport }: FinanceHeaderProps) {
           Keuangan Saya
         </h2>
         <p className="text-ink-500 text-[.88rem] m-0 max-w-xl">
-          Pantau pembayaran kampanye, kerja sama kreator, dana aman, pengembalian dana, dan biaya layanan Marketiv.
+          Pantau pembayaran kampanye, kerja sama kreator, dana aman (dana ditahan sementara), pengembalian dana, dan biaya layanan Marketiv.
         </p>
       </div>
 

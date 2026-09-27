@@ -98,7 +98,7 @@ export function ProductInfoStep({
       {/* Product thumbnail — gambar produk campaign (bucket campaign-assets) */}
       <div id="field-thumbnailUrl" className="space-y-2.5">
         <label className="text-[.84rem] font-[700] text-ink-800">
-          Gambar Produk Campaign <span className="text-primary ml-0.5">*</span>
+          Gambar Produk Kampanye <span className="text-primary ml-0.5">*</span>
         </label>
         <div className="flex items-start gap-3.5">
           <div className="relative w-24 aspect-video shrink-0 rounded-xl border border-neutral-200 bg-neutral-50 overflow-hidden flex items-center justify-center">
@@ -107,7 +107,7 @@ export function ProductInfoStep({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={displayThumbnailUrl}
-                alt="Pratinjau gambar produk campaign"
+                alt="Pratinjau gambar produk kampanye"
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
@@ -144,12 +144,12 @@ export function ProductInfoStep({
                 ? "Mengunggah…"
                 : displayThumbnailUrl
                   ? "Ganti Gambar"
-                  : "Upload Gambar"}
+                  : "Unggah Gambar"}
             </button>
             <p className="text-[.74rem] leading-relaxed text-ink-400 font-[550]">
-              Upload foto produk yang akan dipromosikan dalam campaign ini. Gambar
-              ini akan ditampilkan kepada creator sebagai representasi utama
-              campaign.
+              Unggah foto produk yang akan dipromosikan dalam kampanye ini. Gambar
+              ini akan ditampilkan kepada kreator sebagai representasi utama
+              kampanye.
             </p>
           </div>
         </div>

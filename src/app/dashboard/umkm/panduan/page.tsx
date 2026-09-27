@@ -33,21 +33,21 @@ import { TERMS_CHAPTERS } from "@/content/terms";
 type TabType = "rules" | "faq" | "terms";
 
 const POPULAR_KEYWORDS = [
-  "escrow",
+  "dana aman",
   "2%",
-  "withdraw",
-  "collab",
-  "auto-approve",
-  "dispute",
+  "penarikan",
+  "postingan kolaborasi",
+  "setujui otomatis",
+  "sengketa",
   "pasal 9",
-  "kyc",
+  "verifikasi identitas",
 ];
 
 const RULES_DATA = [
   {
     id: 1,
     title: "Dua Mode Kolaborasi Sesuai Kebutuhan Usaha",
-    desc: "Marketiv menyediakan Campaign Mode (bayar per 1.000 views, tanpa chat/revisi) dan Rate Card Mode (harga tetap, nego via chat, wajib Collab Post). UMKM dapat memilih mode yang paling efisien.",
+    desc: "Marketiv menyediakan Mode Kampanye (bayar per 1.000 tayangan, tanpa obrolan/revisi) dan Mode Paket Harga (harga tetap, negosiasi lewat obrolan, wajib Postingan Kolaborasi). UMKM dapat memilih mode yang paling efisien.",
     Icon: Sparkles,
     color: "#ea580c",
     bg: "#fff8ef",
@@ -55,8 +55,8 @@ const RULES_DATA = [
   },
   {
     id: 2,
-    title: "Campaign Mode Is Zero Chat",
-    desc: "Dilarang meminta atau mencantumkan sarana komunikasi langsung (WhatsApp, Email, Telepon) di dalam brief atau deskripsi Campaign Mode. Seluruh proses berjalan otomatis tanpa drama revisi.",
+    title: "Mode Kampanye Tanpa Obrolan",
+    desc: "Dilarang meminta atau mencantumkan sarana komunikasi langsung (WhatsApp, Email, Telepon) di dalam arahan atau deskripsi Mode Kampanye. Seluruh proses berjalan otomatis tanpa drama revisi.",
     Icon: Ban,
     color: "#dc2626",
     bg: "#fee2e2",
@@ -64,8 +64,8 @@ const RULES_DATA = [
   },
   {
     id: 3,
-    title: "Jaminan Transaksi Aman Lewat Sistem Escrow",
-    desc: "Seluruh dana kampanye dan pesanan Rate Card disimpan aman di sistem Escrow Marketiv. Dana baru dirilis ke Kreator setelah pekerjaan tervalidasi atau disetujui.",
+    title: "Jaminan Transaksi Aman Lewat Sistem Dana Aman",
+    desc: "Seluruh dana kampanye dan pesanan Paket Harga disimpan aman di sistem Dana Aman Marketiv (dana ditahan sementara). Dana baru dirilis ke Kreator setelah pekerjaan tervalidasi atau disetujui.",
     Icon: ShieldCheck,
     color: "#16a34a",
     bg: "#f0fdf4",
@@ -73,8 +73,8 @@ const RULES_DATA = [
   },
   {
     id: 4,
-    title: "Batas Waktu Peninjauan Rate Card (Auto-Approve 3 Hari)",
-    desc: "UMKM memiliki waktu 3 hari kalender untuk meninjau hasil kerja Rate Card dari Kreator. Jika tidak ada tanggapan setelah 3 hari kalender, dana Escrow otomatis dirilis ke Kreator.",
+    title: "Batas Waktu Peninjauan Paket Harga (Setujui Otomatis 3 Hari)",
+    desc: "UMKM memiliki waktu 3 hari kalender untuk meninjau hasil kerja Paket Harga dari Kreator. Jika tidak ada tanggapan setelah 3 hari kalender, dana di sistem Dana Aman otomatis dirilis ke Kreator.",
     Icon: Clock,
     color: "#2563eb",
     bg: "#eff6ff",
@@ -82,8 +82,8 @@ const RULES_DATA = [
   },
   {
     id: 5,
-    title: "Perlindungan Sengketa (Dispute Resolution)",
-    desc: "Jika terjadi ketidaksesuaian hasil kerja pada Rate Card Mode, UMKM dapat mengajukan Dispute via WhatsApp resmi Admin selambatnya 7 hari kalender sebelum dana Escrow cair.",
+    title: "Perlindungan Sengketa (Penyelesaian Sengketa)",
+    desc: "Jika terjadi ketidaksesuaian hasil kerja pada Mode Paket Harga, UMKM dapat mengajukan Sengketa via WhatsApp resmi Admin selambatnya 7 hari kalender sebelum dana di sistem Dana Aman cair.",
     Icon: MessageSquare,
     color: "#7c3aed",
     bg: "#faf5ff",
@@ -100,8 +100,8 @@ const RULES_DATA = [
   },
   {
     id: 7,
-    title: "Tidak Ada Manipulasi Views atau Engagement Palsu",
-    desc: "Sistem deteksi kecurangan Marketiv secara otomatis memeriksa keaslian views. Pembelian views, bot, atau boosting ilegal dilarang keras.",
+    title: "Tidak Ada Manipulasi Tayangan atau Tingkat Keterlibatan Palsu",
+    desc: "Sistem deteksi kecurangan Marketiv secara otomatis memeriksa keaslian tayangan. Pembelian tayangan, bot, atau boosting ilegal dilarang keras.",
     Icon: ShieldAlert,
     color: "#db2777",
     bg: "#fdf2f8",
@@ -115,36 +115,36 @@ const FAQ_DATA = [
     answer: "Biaya platform resmi Marketiv adalah 2% per transaksi (Pasal 9.1 S&K v3.1). Biaya 2% dibebankan ke UMKM di awal saat pembayaran. Kreator menerima pendapatan flat netto penuh (0% potongan).",
   },
   {
-    question: "Apa bedanya Campaign Mode dan Rate Card Mode?",
-    answer: "Campaign Mode adalah model pay-per-view (bayar per 1.000 views tervalidasi) tanpa fitur chat atau revisi. Rate Card Mode adalah model kolaborasi harga tetap dengan chat negosiasi, Custom Offer resmi, dan kewajiban Collab Post.",
+    question: "Apa bedanya Mode Kampanye dan Mode Paket Harga?",
+    answer: "Mode Kampanye adalah model bayar-per-tayangan (bayar per 1.000 tayangan tervalidasi) tanpa fitur obrolan atau revisi. Mode Paket Harga adalah model kolaborasi harga tetap dengan obrolan negosiasi, Penawaran Khusus resmi, dan kewajiban Postingan Kolaborasi.",
   },
   {
-    question: "Bagaimana cara kerja pembayaran dan Escrow di Marketiv?",
-    answer: "Seluruh pembayaran diproses melalui payment gateway Midtrans (Pasal 8). Dana UMKM ditahan di sistem Escrow Marketiv dan tidak pernah diteruskan langsung ke Kreator sampai hasil pekerjaan disetujui atau tervalidasi.",
+    question: "Bagaimana cara kerja pembayaran dan Dana Aman di Marketiv?",
+    answer: "Seluruh pembayaran diproses melalui payment gateway Midtrans (Pasal 8). Dana UMKM ditahan sementara di sistem Dana Aman Marketiv dan tidak pernah diteruskan langsung ke Kreator sampai hasil pekerjaan disetujui atau tervalidasi.",
   },
   {
-    question: "Berapa batas minimum budget campaign?",
-    answer: "Budget minimum untuk membuat campaign di Marketiv adalah Rp 50.000 (lima puluh ribu Rupiah). Total budget dan biaya platform dibayar di muka melalui Escrow.",
+    question: "Berapa batas minimum anggaran kampanye?",
+    answer: "Anggaran minimum untuk membuat kampanye di Marketiv adalah Rp 50.000 (lima puluh ribu Rupiah). Total anggaran dan biaya platform dibayar di muka melalui Dana Aman.",
   },
   {
-    question: "Berapa lama batas waktu peninjauan hasil kerja Rate Card?",
-    answer: "UMKM diberi waktu 3 hari kalender untuk meninjau deliverable dari Kreator (Pasal 7.2.g). Jika tidak ada aksi/tanggapan dari UMKM dalam 3 hari kalender, sistem secara otomatis merilis dana Escrow kepada Kreator (Auto-Approve).",
+    question: "Berapa lama batas waktu peninjauan hasil kerja Paket Harga?",
+    answer: "UMKM diberi waktu 3 hari kalender untuk meninjau hasil kerja dari Kreator (Pasal 7.2.g). Jika tidak ada aksi/tanggapan dari UMKM dalam 3 hari kalender, sistem secara otomatis merilis dana dari Dana Aman kepada Kreator (Setujui Otomatis).",
   },
   {
-    question: "Apa itu fitur Collab Post?",
-    answer: "Collab Post adalah fitur kolaborasi resmi Instagram & TikTok di mana satu postingan tampil secara bersamaan di akun Kreator DAN akun UMKM. Fitur ini wajib di Rate Card Mode agar UMKM mendapat direct traffic dari audiens Kreator.",
+    question: "Apa itu fitur Postingan Kolaborasi?",
+    answer: "Postingan Kolaborasi adalah fitur kolaborasi resmi Instagram & TikTok di mana satu postingan tampil secara bersamaan di akun Kreator DAN akun UMKM. Fitur ini wajib di Mode Paket Harga agar UMKM mendapat kunjungan langsung dari audiens Kreator.",
   },
   {
-    question: "Bagaimana jika hasil kerja Kreator tidak sesuai di Rate Card Mode?",
-    answer: "UMKM dapat memanfaatkan batas revisi paket atau mengajukan Sengketa (Dispute) ke Admin Marketiv melalui WhatsApp resmi sebelum dana Escrow dicairkan (Pasal 14). Admin akan meninjau bukti chat & deliverable untuk memberikan keputusan yang adil.",
+    question: "Bagaimana jika hasil kerja Kreator tidak sesuai di Mode Paket Harga?",
+    answer: "UMKM dapat memanfaatkan batas revisi paket atau mengajukan Sengketa ke Admin Marketiv melalui WhatsApp resmi sebelum dana dari Dana Aman dicairkan (Pasal 14). Admin akan meninjau bukti obrolan & hasil kerja untuk memberikan keputusan yang adil.",
   },
   {
-    question: "Bagaimana ketentuan pengembalian dana (Refund)?",
-    answer: "Jika kampanye dihentikan atau pesanan dibatalkan melalui keputusan Dispute (Pasal 15), sisa dana budget akan di-refund langsung ke Wallet UMKM. Dana di Wallet dapat digunakan kembali atau ditarik (Withdrawal) ke rekening bank.",
+    question: "Bagaimana ketentuan Pengembalian Dana?",
+    answer: "Jika kampanye dihentikan atau pesanan dibatalkan melalui keputusan Sengketa (Pasal 15), sisa anggaran akan dikembalikan langsung ke Dompet UMKM. Dana di Dompet dapat digunakan kembali atau ditarik (Penarikan) ke rekening bank.",
   },
   {
-    question: "Berapa batas minimum penarikan dana (Withdrawal)?",
-    answer: "Minimum penarikan dana dari Wallet adalah Rp 50.000 per transaksi, dengan batas maksimal 3 kali penarikan per hari (Pasal 11). Penarikan nominal Rp 5.000.000 atau lebih membutuhkan verifikasi KYC manual WhatsApp Admin.",
+    question: "Berapa batas minimum penarikan dana?",
+    answer: "Minimum penarikan dana dari Dompet adalah Rp 50.000 per transaksi, dengan batas maksimal 3 kali penarikan per hari (Pasal 11). Penarikan nominal Rp 5.000.000 atau lebih membutuhkan Verifikasi Identitas manual via WhatsApp Admin.",
   },
 ];
 
@@ -295,7 +295,7 @@ export default function FAQRulesDashboardPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari kata kunci (misal: 'escrow', '2%', 'withdraw', 'collab', 'pasal 9')..."
+              placeholder="Cari kata kunci (misal: 'dana aman', '2%', 'penarikan', 'postingan kolaborasi', 'pasal 9')..."
               className="w-full pl-11 pr-10 py-3.5 rounded-2xl bg-neutral-50 border border-neutral-200/80 text-sm font-semibold text-ink-900 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:bg-white transition-all shadow-2xs"
             />
             {searchQuery && (
@@ -356,7 +356,7 @@ export default function FAQRulesDashboardPage() {
                   Kata kunci &quot;{searchQuery}&quot; tidak ditemukan.
                 </p>
                 <p className="text-xs text-ink-500 font-medium">
-                  Coba kata kunci lain seperti <button onClick={() => setSearchQuery("escrow")} className="text-orange-600 font-bold underline cursor-pointer">escrow</button>, <button onClick={() => setSearchQuery("2%")} className="text-orange-600 font-bold underline cursor-pointer">2%</button>, atau <button onClick={() => setSearchQuery("withdraw")} className="text-orange-600 font-bold underline cursor-pointer">withdraw</button>.
+                  Coba kata kunci lain seperti <button onClick={() => setSearchQuery("dana aman")} className="text-orange-600 font-bold underline cursor-pointer">dana aman</button>, <button onClick={() => setSearchQuery("2%")} className="text-orange-600 font-bold underline cursor-pointer">2%</button>, atau <button onClick={() => setSearchQuery("penarikan")} className="text-orange-600 font-bold underline cursor-pointer">penarikan</button>.
                 </p>
               </div>
             ) : (
@@ -552,7 +552,7 @@ export default function FAQRulesDashboardPage() {
 
                 <div className="space-y-4">
                   <span className="block text-[0.66rem] font-[800] text-ink-400 uppercase tracking-widest mb-2.5">
-                    Operasional & Keuangan (Biaya 2%, Escrow, Withdrawal)
+                    Operasional & Keuangan (Biaya 2%, Dana Aman, Penarikan)
                   </span>
 
                   <div className="grid gap-3.5">
@@ -596,10 +596,10 @@ export default function FAQRulesDashboardPage() {
                 <div className="p-5 rounded-2xl border border-orange-200 bg-orange-50/60 text-[0.84rem] leading-relaxed text-orange-900 relative overflow-hidden shadow-xs">
                   <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-orange-500" />
                   <span className="block font-bold mb-1 text-orange-800 uppercase tracking-wider text-[0.72rem]">
-                    Ketentuan Resmi Biaya Platform & Escrow (Versi 3.1)
+                    Ketentuan Resmi Biaya Platform & Dana Aman (Versi 3.1)
                   </span>
-                  (a) Biaya platform resmi Marketiv adalah 2% per transaksi (Pasal 9.1). Dibebankan ke UMKM di awal (baik Campaign maupun Rate Card Mode); Kreator menerima pendapatan flat netto penuh (0%). <br />
-                  (b) Seluruh transaksi wajib melalui sistem Escrow Marketiv & Payment Gateway Midtrans. Dilarang bertransaksi atau mengalihkan pembayaran ke luar platform.
+                  (a) Biaya platform resmi Marketiv adalah 2% per transaksi (Pasal 9.1). Dibebankan ke UMKM di awal (baik Mode Kampanye maupun Mode Paket Harga); Kreator menerima pendapatan flat netto penuh (0%). <br />
+                  (b) Seluruh transaksi wajib melalui sistem Dana Aman Marketiv & Payment Gateway Midtrans. Dilarang bertransaksi atau mengalihkan pembayaran ke luar platform.
                 </div>
 
                 {/* 2-Column Reader Layout */}
@@ -697,7 +697,7 @@ export default function FAQRulesDashboardPage() {
               Punya Pertanyaan Lain Seputar Kebijakan?
             </h4>
             <p className="text-xs text-slate-300 font-medium max-w-lg">
-              Tim Support Marketiv siap membantu menjawab pertanyaan Anda melalui Email resmi di <strong className="text-white">marketiv.official@gmail.com</strong> atau WhatsApp resmi Admin.
+              Tim Bantuan Marketiv siap membantu menjawab pertanyaan Anda melalui Email resmi di <strong className="text-white">marketiv.official@gmail.com</strong> atau WhatsApp resmi Admin.
             </p>
           </div>
 
@@ -705,7 +705,7 @@ export default function FAQRulesDashboardPage() {
             href="mailto:marketiv.official@gmail.com"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-extrabold text-xs transition-colors shrink-0 no-underline shadow-md shadow-orange-500/20"
           >
-            <span>Hubungi Support</span>
+            <span>Hubungi Bantuan</span>
             <ExternalLink size={14} />
           </a>
         </div>

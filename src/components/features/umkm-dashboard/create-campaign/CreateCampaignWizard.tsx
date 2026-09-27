@@ -389,7 +389,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
    * prosa, bukan id opsi).
    */
   const handleGenerateAiBrief = async (selectedDirections?: string[]) => {
-    if (brief.trim() && !window.confirm("Brief yang sudah Anda tulis akan ditimpa. Lanjutkan?")) {
+    if (brief.trim() && !window.confirm("Arahan yang sudah Anda tulis akan ditimpa. Lanjutkan?")) {
       return;
     }
     setAiError(null);
@@ -413,7 +413,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
     if (!res.success || !res.data) {
       setAiError(
         res.code === "validation"
-          ? res.error ?? "Data belum cukup untuk menyusun brief."
+          ? res.error ?? "Data belum cukup untuk menyusun arahan."
           : "Layanan AI sedang tidak tersedia. Coba lagi nanti."
       );
       return;
@@ -451,7 +451,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
     if (!isStepCompleted(1, wizardState, stepValidationOptions)) {
       setCurrentStep(1);
       validateStep(1);
-      toast.error("Lengkapi Informasi Produk (langkah 1) sebelum menyimpan draft.");
+      toast.error("Lengkapi Informasi Produk (langkah 1) sebelum menyimpan draf.");
       return null;
     }
 
@@ -520,7 +520,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
     toast.error(
       res.code === "auth"
         ? "Sesi berakhir, silakan login kembali."
-        : res.error ?? "Gagal menyimpan draft. Coba lagi."
+        : res.error ?? "Gagal menyimpan draf. Coba lagi."
     );
     return null;
   };
@@ -532,7 +532,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
     setIsSubmitting(false);
     if (!id) return;
     clearDraft();
-    toast.success("Draft campaign berhasil disimpan.");
+    toast.success("Draf kampanye berhasil disimpan.");
     router.push("/dashboard/umkm/campaign");
   };
 
@@ -559,7 +559,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
 
       const res = await publishCampaign(campaignId);
       if (res.success) {
-        toast.success("Campaign berhasil diterbitkan dan kini tayang di Job Pool.");
+        toast.success("Kampanye berhasil diterbitkan dan kini tayang di Lowongan Kampanye.");
         return true;
       }
       // "validation" = dana belum masuk; error lain tidak akan membaik dengan
@@ -568,7 +568,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
     }
 
     toast.info(
-      "Pembayaran diterima, tapi dana belum tercatat di campaign. Campaign tersimpan sebagai draft — terbitkan dari daftar campaign setelah beberapa saat."
+      "Pembayaran diterima, tapi dana belum tercatat di kampanye. Kampanye tersimpan sebagai draf. Terbitkan dari daftar kampanye setelah beberapa saat."
     );
     return false;
   };
@@ -595,7 +595,7 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
       toast.error(
         res.code === "auth"
           ? "Sesi berakhir, silakan login kembali."
-          : res.error ?? "Gagal membuat pembayaran. Draft Anda sudah tersimpan."
+          : res.error ?? "Gagal membuat pembayaran. Draf Anda sudah tersimpan."
       );
       return;
     }
@@ -614,12 +614,12 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
             void publishAfterPayment(campaignId);
           },
           onPending: () => {
-            toast.info("Pembayaran menunggu konfirmasi. Campaign tetap tersimpan sebagai draft.");
+            toast.info("Pembayaran menunggu konfirmasi. Kampanye tetap tersimpan sebagai draf.");
             router.push("/dashboard/umkm/campaign");
           },
-          onError: () => toast.error("Pembayaran gagal. Draft Anda tetap tersimpan."),
+          onError: () => toast.error("Pembayaran gagal. Draf Anda tetap tersimpan."),
           onClose: () =>
-            toast.info("Pembayaran dibatalkan. Campaign tersimpan sebagai draft."),
+            toast.info("Pembayaran dibatalkan. Kampanye tersimpan sebagai draf."),
         });
       } catch (err) {
         setIsSubmitting(false);
@@ -891,16 +891,16 @@ export function CreateCampaignWizard({ campaignId, initialState, initialMeta }: 
           isOpen={isSimulatedSnapOpen}
           onClose={() => {
             setIsSimulatedSnapOpen(false);
-            toast.info("Pembayaran dibatalkan. Campaign tersimpan sebagai draft.");
+            toast.info("Pembayaran dibatalkan. Kampanye tersimpan sebagai draf.");
           }}
           grossAmount={calculateTotalPayment(draftBudget ?? totalBudgetEscrow)}
-          itemName={title || "Deposit Escrow Kampanye Marketiv"}
+          itemName={title || "Titipan Dana Aman Kampanye Marketiv"}
           onSuccess={async () => {
             setIsSimulatedSnapOpen(false);
             if (createdCampaignId) {
               const res = await publishCampaign(createdCampaignId);
               if (res.success) {
-                toast.success("Campaign berhasil diterbitkan dan kini tayang di Job Pool.");
+                toast.success("Kampanye berhasil diterbitkan dan kini tayang di Lowongan Kampanye.");
               }
             }
             setIsCreatedOpen(true);

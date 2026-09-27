@@ -71,7 +71,7 @@ async function waitFor(assertion: () => void, timeoutMs = 10000) {
 
 function claimButtons() {
   return [...host.querySelectorAll("button")].filter(
-    (button) => button.textContent?.includes("Klaim Job") || button.textContent?.includes("Mengklaim")
+    (button) => button.textContent?.includes("Klaim Lowongan") || button.textContent?.includes("Mengklaim")
   );
 }
 
@@ -101,7 +101,7 @@ describe("CreatorDashboardView — state proses klaim", { timeout: 20000 }, () =
 
     await waitFor(() => {
       const settled = claimButtons()[0];
-      expect(settled.textContent).toContain("Klaim Job");
+      expect(settled.textContent).toContain("Klaim Lowongan");
       expect((settled as HTMLButtonElement).disabled).toBe(false);
     });
   });

@@ -1,86 +1,34 @@
+import type { NegotiationStage } from "@/types/domain";
+import { getOrderStatusLabel } from "@/lib/dashboard-labels";
 import { StatusDetail, EscrowStepStatus } from "./negotiation.types";
 
+/** Warna badge per tahap. Teks label-nya berasal dari peta label bersama. */
+const STAGE_TONE: Record<string, Pick<StatusDetail, "textClass" | "bgClass">> = {
+  chatting: { textClass: "text-neutral-600", bgClass: "bg-neutral-100 border-neutral-200" },
+  offer_pending: { textClass: "text-warning-strong", bgClass: "bg-warning-soft/30 border-warning-soft" },
+  offer_rejected: { textClass: "text-danger-strong", bgClass: "bg-danger-soft/30 border-danger-soft" },
+  awaiting_order: { textClass: "text-info-strong", bgClass: "bg-info-soft/30 border-info-soft" },
+  pending_payment: { textClass: "text-warning-strong", bgClass: "bg-warning-soft/30 border-warning-soft" },
+  escrow: { textClass: "text-primary-800", bgClass: "bg-primary-50/50 border-primary-200/50" },
+  in_progress: { textClass: "text-info-strong", bgClass: "bg-info-soft/30 border-info-soft" },
+  revision: { textClass: "text-danger-strong", bgClass: "bg-danger-soft/30 border-danger-soft" },
+  approved: { textClass: "text-success-strong", bgClass: "bg-success-soft/30 border-success-soft" },
+  completed: { textClass: "text-success-strong", bgClass: "bg-success-soft/30 border-success-soft" },
+  cancelled: { textClass: "text-neutral-600", bgClass: "bg-neutral-100 border-neutral-200" },
+};
+
+const DEFAULT_TONE = STAGE_TONE.chatting;
+
 /**
- * Maps the negotiation status string to labels and CSS classes.
+ * Tahap sebelum order lahir (chatting sampai awaiting_order) tidak punya nilai di
+ * `OrderStatus`, jadi tipenya dilebarkan ke `NegotiationStage`. Nilai tak dikenal
+ * memakai label netral, bukan slug mentah.
  */
 export function getStatusDetails(status: string): StatusDetail {
-  switch (status) {
-    // Empat tahap sebelum order lahir. Tanpa ini keduanya jatuh ke `default`
-    // dan badge-nya menampilkan slug mentah ("chatting", "offer_pending") ke
-    // pengguna — lihat NegotiationRoomPage.STATUS_CFG untuk label yang sama.
-    case "chatting":
-      return {
-        label: "Negosiasi",
-        textClass: "text-neutral-600",
-        bgClass: "bg-neutral-100 border-neutral-200",
-      };
-    case "offer_pending":
-      return {
-        label: "Menunggu Kreator",
-        textClass: "text-warning-strong",
-        bgClass: "bg-warning-soft/30 border-warning-soft",
-      };
-    case "offer_rejected":
-      return {
-        label: "Penawaran Ditolak",
-        textClass: "text-danger-strong",
-        bgClass: "bg-danger-soft/30 border-danger-soft",
-      };
-    case "awaiting_order":
-      return {
-        label: "Menyiapkan Pesanan",
-        textClass: "text-info-strong",
-        bgClass: "bg-info-soft/30 border-info-soft",
-      };
-    case "pending_payment":
-      return {
-        label: "Menunggu Pembayaran",
-        textClass: "text-warning-strong",
-        bgClass: "bg-warning-soft/30 border-warning-soft",
-      };
-    case "escrow":
-      return {
-        label: "Dalam Escrow",
-        textClass: "text-primary-800",
-        bgClass: "bg-primary-50/50 border-primary-200/50",
-      };
-    case "in_progress":
-      return {
-        label: "Sedang Dikerjakan",
-        textClass: "text-info-strong",
-        bgClass: "bg-info-soft/30 border-info-soft",
-      };
-    case "revision":
-      return {
-        label: "Revisi",
-        textClass: "text-danger-strong",
-        bgClass: "bg-danger-soft/30 border-danger-soft",
-      };
-    case "approved":
-      return {
-        label: "Disetujui",
-        textClass: "text-success-strong",
-        bgClass: "bg-success-soft/30 border-success-soft",
-      };
-    case "completed":
-      return {
-        label: "Selesai",
-        textClass: "text-success-strong",
-        bgClass: "bg-success-soft/30 border-success-soft",
-      };
-    case "cancelled":
-      return {
-        label: "Dibatalkan",
-        textClass: "text-neutral-600",
-        bgClass: "bg-neutral-100 border-neutral-200",
-      };
-    default:
-      return {
-        label: status,
-        textClass: "text-neutral-600",
-        bgClass: "bg-neutral-100 border-neutral-200",
-      };
-  }
+  return {
+    label: getOrderStatusLabel(status as NegotiationStage),
+    ...(STAGE_TONE[status] ?? DEFAULT_TONE),
+  };
 }
 
 /**

@@ -25,14 +25,14 @@ describe("toCreatorView — anti-fabrikasi", () => {
   it("tidak mengarang harga saat kreator belum punya rate card published", () => {
     const view = toCreatorView({ ...baseProfile, startingPrice: 0 });
 
-    expect(view.estimatedSalary).toBe("Belum ada rate card");
+    expect(view.estimatedSalary).toBe("Belum ada paket harga");
     expect(view.estimatedSalary).not.toContain("100.000");
   });
 
   it("tidak menaruh engagementRate di slot followers", () => {
     const view = toCreatorView(baseProfile);
 
-    expect(view.followers).toBe("");
+    expect(view.followers).toBe("—");
     expect(view.followers).not.toContain("5.4");
     expect(view.followers).not.toBe("Aktif");
   });
@@ -88,6 +88,6 @@ describe("toFollowersLabel", () => {
 
   it("toCreatorView memakai agregat followers dari profil bila tersedia", () => {
     expect(plain(toCreatorView({ ...baseProfile, followers: 22000 }).followers)).toBe("22 rb");
-    expect(toCreatorView(baseProfile).followers).toBe("");
+    expect(toCreatorView(baseProfile).followers).toBe("—");
   });
 });

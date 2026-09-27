@@ -42,7 +42,7 @@ export function CampaignOverviewCards({
       label: "Dana Terpakai",
       value: campaign.usedBudget,
       currency: "full" as const,
-      helper: "Total reward teralokasi",
+      helper: "Total hadiah teralokasi",
       tone: "danger" as const,
       icon: (
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">

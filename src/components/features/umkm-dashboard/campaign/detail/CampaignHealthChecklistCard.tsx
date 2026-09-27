@@ -37,7 +37,7 @@ export function CampaignHealthChecklistCard({
       label: "Kuota Kreator Tersedia",
       status: isQuotaAvailable ? "success" : "info",
       desc: isQuotaAvailable
-        ? `Masih tersedia ${campaign.creatorQuota - campaign.usedQuota} slot untuk kreator baru.`
+        ? `Masih tersedia ${campaign.creatorQuota - campaign.usedQuota} kuota untuk kreator baru.`
         : "Seluruh kuota kreator sudah terisi penuh.",
     },
     {

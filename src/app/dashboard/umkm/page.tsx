@@ -1,5 +1,9 @@
 import { UmkmOverviewClient } from "@/components/features/umkm-dashboard/overview/UmkmOverviewClient";
 
+export const metadata = {
+  title: "Ringkasan | Dashboard UMKM | Marketiv",
+};
+
 /**
  * Overview UMKM.
  *

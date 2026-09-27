@@ -35,7 +35,7 @@ export function CampaignHealthChecklist({
     { step: 1, label: "Informasi Produk",     desc: "Nama & deskripsi produk",       status: getStepStatus(1, productInfoValid) },
     { step: 2, label: "Arahan Konten",        desc: "Gaya video & pesan utama",      status: getStepStatus(2, briefValid) },
     { step: 3, label: "Bahan Video",          desc: "Tautan foto & video produk",    status: getStepStatus(3, assetValid) },
-    { step: 4, label: "Biaya & Kuota",        desc: "Biaya tayang & slot kreator",   status: getStepStatus(4, budgetValid) },
+    { step: 4, label: "Biaya & Kuota",        desc: "Biaya tayang & kuota kreator",   status: getStepStatus(4, budgetValid) },
     { step: 5, label: "Ringkasan & Bayar",    desc: "Konfirmasi biaya & simpanan dana", status: getStepStatus(5, reviewValid) },
   ];
 

@@ -8,16 +8,16 @@ import { PlusCircle, Users, Sparkles } from "lucide-react";
  */
 export const UMKM_CAMPAIGN_EMPTY_VARIANTS = [
   {
-    badge: "Slot Campaign",
+    badge: "Kuota Kampanye",
     icon: PlusCircle,
     iconBg: "bg-orange-50 text-orange-600 border-orange-200/80",
-    title: "Buat Kampanye Pay-Per-View Baru",
-    desc: "Unggah brief produk dan tentukan reward CPM. Konten kreator akan mengklaim dan memposting di akun medsos mereka.",
+    title: "Buat Kampanye Bayar per Tayangan Baru",
+    desc: "Unggah arahan produk dan tentukan tarif per 1.000 tayangan. Konten kreator akan mengklaim dan memposting di akun medsos mereka.",
     btnLabel: "Buat Kampanye Baru",
     href: "/dashboard/umkm/campaign/buat",
     isPrimary: true,
     features: [
-      "Bayar hanya berdasarkan performa views nyata",
+      "Bayar hanya berdasarkan performa tayangan nyata",
       "Kreator langsung eksekusi tanpa drama revisi",
     ],
   },
@@ -26,7 +26,7 @@ export const UMKM_CAMPAIGN_EMPTY_VARIANTS = [
     icon: Users,
     iconBg: "bg-blue-50 text-blue-600 border-blue-200/80",
     title: "Jelajahi Direktori Kreator",
-    desc: "Cari mikro-kreator lokal potensial berdasarkan niche kuliner, fashion, kecantikan, dan mulai penawaran Rate Card.",
+    desc: "Cari mikro-kreator lokal potensial berdasarkan kategori kuliner, fashion, kecantikan, dan mulai penawaran Paket Harga.",
     btnLabel: "Cari Mikro-Kreator",
     href: "/dashboard/umkm/kreator",
     isPrimary: false,
@@ -36,17 +36,17 @@ export const UMKM_CAMPAIGN_EMPTY_VARIANTS = [
     ],
   },
   {
-    badge: "Rate Card",
+    badge: "Paket Harga",
     icon: Sparkles,
     iconBg: "bg-amber-50 text-amber-600 border-amber-200/80",
-    title: "Mulai Negosiasi Rate Card",
-    desc: "Pesan paket promosi fixed price dengan Collab Post resmi di Instagram / TikTok untuk promosi eksklusif.",
+    title: "Mulai Negosiasi Paket Harga",
+    desc: "Pesan paket promosi harga tetap dengan Postingan Kolaborasi resmi di Instagram / TikTok untuk promosi eksklusif.",
     btnLabel: "Buka Tab Negosiasi",
     href: "/dashboard/umkm/negosiasi",
     isPrimary: false,
     features: [
-      "Format Collab Post resmi",
-      "Dana diamankan sistem Escrow hingga deal tuntas",
+      "Format Postingan Kolaborasi resmi",
+      "Dana diamankan sistem Dana Aman hingga kesepakatan tuntas",
     ],
   },
 ];

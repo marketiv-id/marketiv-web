@@ -6,7 +6,7 @@ import type {
   RateCardPackage,
 } from "@/types/umkm-dashboard.types";
 import type { RateCardPackage as RateCardPackageView } from "./detail/RateCardPackageCard";
-import { formatCompactNumber, formatCurrency } from "@/lib/formatters";
+import { formatFollowersLabel, formatCurrency } from "@/lib/formatters";
 
 /**
  * Adapter kanon → view-model kartu kreator (s1-creators).
@@ -18,10 +18,9 @@ import { formatCompactNumber, formatCurrency } from "@/lib/formatters";
  * Tiga field tidak punya padanan langsung di kanon — semuanya gagal-tertutup,
  * tidak ada nilai karangan:
  * - `followers` → `CreatorProfile.followers` (agregat dari Function DTO) atau
- *   `creator_social_accounts` di halaman detail; tanpa keduanya "" dan UI
- *   menampilkan "—".
- * - `estimatedSalary` → "Belum ada rate card" saat startingPrice 0 (kreator
- *   belum punya paket rate card published).
+ *   `creator_social_accounts` di halaman detail; tanpa keduanya "—".
+ * - `estimatedSalary` → "Belum ada paket harga" saat startingPrice 0 (kreator
+ *   belum punya paket harga published).
  * - `totalReviews` → memakai `completedJobs` sebagai proxy (satu pekerjaan
  *   selesai ≈ satu ulasan) sampai DTO ulasan tersedia.
  */
@@ -65,8 +64,8 @@ export function toCreatorView(profile: CreatorProfile): Creator {
     category: NICHE_LABEL[profile.niche] ?? "Lainnya",
     imageUrl: profile.avatarUrl,
     bannerUrl: profile.bannerUrl,
-    estimatedSalary: profile.startingPrice > 0 ? formatCurrency(profile.startingPrice) : "Belum ada rate card",
-    followers: profile.followers && profile.followers > 0 ? formatCompactNumber(profile.followers) : "",
+    estimatedSalary: profile.startingPrice > 0 ? formatCurrency(profile.startingPrice) : "Belum ada paket harga",
+    followers: formatFollowersLabel(profile.followers ?? 0),
     rating: profile.rating,
     totalReviews: profile.completedJobs,
     isVerified: profile.isVerified,
@@ -93,6 +92,6 @@ export function toFollowersLabel(
     (sum, account) => sum + (account.followers > 0 ? account.followers : 0),
     0
   );
-  if (total > 0) return formatCompactNumber(total);
-  return fallbackFollowers > 0 ? formatCompactNumber(fallbackFollowers) : "—";
+  if (total > 0) return formatFollowersLabel(total);
+  return formatFollowersLabel(fallbackFollowers);
 }

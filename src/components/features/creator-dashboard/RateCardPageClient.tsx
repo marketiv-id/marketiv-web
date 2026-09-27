@@ -30,14 +30,14 @@ export function RateCardPageClient() {
       ]);
       if (!isActive()) return;
       if (!packagesRes.success || !packagesRes.data) {
-        setError(packagesRes.error ?? "Gagal memuat rate card.");
+        setError(packagesRes.error ?? "Gagal memuat paket harga.");
         return;
       }
       setPackages(packagesRes.data);
       setOrdersCount(metricsRes.data?.negotiationOrdersCount ?? 0);
     } catch (err) {
       if (!isActive()) return;
-      setError(err instanceof Error ? err.message : "Gagal memuat rate card.");
+      setError(err instanceof Error ? err.message : "Gagal memuat paket harga.");
     } finally {
       if (isActive()) setLoading(false);
     }

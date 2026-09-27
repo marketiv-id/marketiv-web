@@ -45,8 +45,8 @@ const INITIAL_NOTIFICATIONS: NotificationSetting[] = [
   { id: "kreator", label: "Aktivitas Kreator", desc: "Pemberitahuan saat kreator mengambil kampanye Anda", enabled: true },
   { id: "submission", label: "Pengiriman Konten", desc: "Pemberitahuan saat bukti tayang video baru dikirim", enabled: true },
   { id: "completed", label: "Penyelesaian Kampanye", desc: "Ringkasan performa saat target penayangan tercapai", enabled: true },
-  { id: "escrow", label: "Pembaruan Escrow", desc: "Status keamanan dan konfirmasi pencairan dana reward", enabled: true },
-  { id: "negosiasi", label: "Penawaran & Negosiasi", desc: "Notifikasi pesan dan tawaran kustom Rate Card baru", enabled: true },
+  { id: "escrow", label: "Pembaruan Dana Aman", desc: "Status keamanan dan konfirmasi pencairan dana", enabled: true },
+  { id: "negosiasi", label: "Penawaran & Negosiasi", desc: "Notifikasi pesan dan tawaran paket harga baru", enabled: true },
   { id: "promo", label: "Kabar & Fitur Baru", desc: "Tips promosi bisnis dan pembaruan sistem Marketiv", enabled: false },
 ];
 
@@ -65,7 +65,7 @@ function Toggle({
       onClick={onClick}
       disabled={disabled}
       aria-pressed={enabled}
-      aria-label="Toggle notifikasi"
+      aria-label="Alihkan notifikasi"
       className={cn(
         "w-11 h-6 rounded-full relative transition-all duration-200 shadow-3xs outline-none border-none shrink-0",
         disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:opacity-90",
@@ -269,7 +269,7 @@ export function PengaturanClient() {
                   </span>
                 )}
                 <span className="inline-flex items-center min-h-[24px] px-2.5 rounded-full bg-orange-50 border border-orange-200/50 text-orange-600 text-[0.7rem] font-extrabold">
-                  UMKM Plan
+                  Paket UMKM
                 </span>
               </div>
             </div>
@@ -394,7 +394,7 @@ export function PengaturanClient() {
                 </label>
                 <input type="email" value={account.email} readOnly className={readOnlyCls} />
                 <span className="text-[0.68rem] font-bold text-ink-400">
-                  Dikelola akun — hubungi support untuk mengubah.
+                  Dikelola akun. Hubungi dukungan untuk mengubah.
                 </span>
               </div>
 
@@ -431,7 +431,7 @@ export function PengaturanClient() {
               {/* TikTok — satu-satunya kanal sosial yang punya kolom di umkm_profiles */}
               <div className="flex flex-col gap-1.5 md:col-span-2">
                 <label className="text-[0.74rem] font-[800] text-ink-600 flex items-center gap-1.5">
-                  <TikTokIcon className="w-3.5 h-3.5 text-ink-400" /> TikTok Username
+                  <TikTokIcon className="w-3.5 h-3.5 text-ink-400" /> Nama Pengguna TikTok
                 </label>
                 <input
                   type="text"
@@ -507,7 +507,7 @@ export function PengaturanClient() {
                 Penonaktifan Akun
               </strong>
               <p className="text-[0.74rem] text-neutral-500 leading-relaxed">
-                Untuk melindungi keamanan saldo escrow dan kampanye yang sedang berjalan, penonaktifan akun diproses melalui verifikasi Tim Bantuan Marketiv.
+                Untuk melindungi keamanan saldo dana aman dan kampanye yang sedang berjalan, penonaktifan akun diproses melalui verifikasi Tim Bantuan Marketiv.
               </p>
             </div>
             <button

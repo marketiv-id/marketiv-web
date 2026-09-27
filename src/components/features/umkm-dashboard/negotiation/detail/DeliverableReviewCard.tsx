@@ -11,10 +11,10 @@ interface DeliverableReviewCardProps {
 }
 
 const CONTENT: Record<ContextualReviewState, { title: string; subtitle: string; cta: string; tone: string }> = {
-  pending: { title: "Hasil kerja telah dikirim", subtitle: "Menunggu Validasi Marketiv", cta: "Buka Review Pekerjaan", tone: "border-amber-200 bg-amber-50 text-amber-800" },
-  valid: { title: "Hasil kerja siap ditinjau", subtitle: "Validasi Marketiv selesai", cta: "Review Sekarang", tone: "border-emerald-200 bg-emerald-50 text-emerald-800" },
-  invalid: { title: "Bukti belum lolos validasi", subtitle: "Periksa catatan Marketiv", cta: "Buka Review Pekerjaan", tone: "border-red-200 bg-red-50 text-red-800" },
-  revision: { title: "Revisi telah diminta", subtitle: "Menunggu Creator mengirim versi baru", cta: "Lihat Review", tone: "border-orange-200 bg-orange-50 text-orange-800" },
+  pending: { title: "Hasil kerja telah dikirim", subtitle: "Menunggu Validasi Marketiv", cta: "Buka Tinjauan Pekerjaan", tone: "border-amber-200 bg-amber-50 text-amber-800" },
+  valid: { title: "Hasil kerja siap ditinjau", subtitle: "Validasi Marketiv selesai", cta: "Tinjau Sekarang", tone: "border-emerald-200 bg-emerald-50 text-emerald-800" },
+  invalid: { title: "Bukti belum lolos validasi", subtitle: "Periksa catatan Marketiv", cta: "Buka Tinjauan Pekerjaan", tone: "border-red-200 bg-red-50 text-red-800" },
+  revision: { title: "Revisi telah diminta", subtitle: "Menunggu Kreator mengirim versi baru", cta: "Lihat Tinjauan", tone: "border-orange-200 bg-orange-50 text-orange-800" },
   completed: { title: "Pekerjaan selesai", subtitle: "Hasil akhir tersedia", cta: "Lihat Hasil Akhir", tone: "border-emerald-200 bg-emerald-50 text-emerald-800" },
 };
 

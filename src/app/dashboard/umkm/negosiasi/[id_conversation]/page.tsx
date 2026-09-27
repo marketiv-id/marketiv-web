@@ -1,6 +1,10 @@
 import { UmkmDashboardChrome } from "@/components/features/dashboard/UmkmDashboardChrome";
 import { NegotiationRoomPage } from "@/components/features/umkm-dashboard/negotiation/detail/NegotiationRoomPage";
 
+export const metadata = {
+  title: "Negosiasi | Dashboard UMKM | Marketiv",
+};
+
 /**
  * Ruang negosiasi di-key oleh conversationId, bukan orderId — di Alur B
  * percakapan dan Custom Offer terjadi sebelum order ada.

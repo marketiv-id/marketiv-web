@@ -23,11 +23,11 @@ const REPORT_HEADERS = [
   "ID Transaksi",
   "Tanggal",
   "Deskripsi",
-  "Tipe Transaksi",
+  "Jenis Transaksi",
   "Kategori Fitur",
   "Nominal (IDR)",
   "Status",
-  "Midtrans Order ID",
+  "ID Pesanan Midtrans",
 ];
 
 function getDateRangeStart(dateRange: string): Date | null {

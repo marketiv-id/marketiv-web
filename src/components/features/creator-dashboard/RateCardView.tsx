@@ -28,6 +28,7 @@ import {
   ResponsiveModalTitle,
 } from "@/components/ui/responsive-modal";
 import { formatCurrency } from "@/lib/formatters";
+import { getRateCardStatusLabel } from "@/lib/dashboard-labels";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { rateCardPackageSchema } from "@/lib/validations/rate-card.schema";
@@ -154,24 +155,24 @@ const EMPTY_RATE_CARD_VARIANTS = [
     badge: "Slot Paket 1",
     icon: Sparkles,
     iconBg: "bg-violet-50 text-violet-600 border-violet-200/70",
-    title: "Buat Paket Standard",
-    desc: "Tawarkan 1 konten video TikTok/IG Reels dengan konsep review produk atau endorsement cepat.",
+    title: "Buat Paket Standar",
+    desc: "Tawarkan 1 konten video TikTok/IG Reels dengan konsep ulasan produk atau dukungan cepat.",
     btnLabel: "Buat Paket",
   },
   {
     badge: "Slot Paket 2",
     icon: Layers,
     iconBg: "bg-blue-50 text-blue-600 border-blue-200/70",
-    title: "Paket Bundling Konten",
-    desc: "Tingkatkan nilai pesanan dengan bundling 2-3 video promosi berkala untuk exposure maksimal.",
-    btnLabel: "Tambah Paket Bundle",
+    title: "Paket Gabungan Konten",
+    desc: "Tingkatkan nilai pesanan dengan menggabungkan 2-3 video promosi berkala untuk jangkauan maksimal.",
+    btnLabel: "Tambah Paket Gabungan",
   },
   {
     badge: "Slot Paket 3",
     icon: Crown,
     iconBg: "bg-indigo-50 text-indigo-600 border-indigo-200/70",
-    title: "Paket Eksklusif + Collab",
-    desc: "Paket premium mencakup Collab Post resmi, hak siar promosi, dan link bio profil.",
+    title: "Paket Eksklusif + Kolaborasi",
+    desc: "Paket premium mencakup Postingan Kolaborasi resmi, hak siar promosi, dan tautan bio profil.",
     btnLabel: "Tambah Paket Premium",
   },
 ];
@@ -211,11 +212,11 @@ function EmptyPlaceholderRateCard({ variantIndex = 0, onCreateClick }: EmptyPlac
         <div className="p-3.5 rounded-2xl bg-white/70 border border-slate-200/60 space-y-2">
           <div className="flex items-center gap-2 text-[11px] font-bold text-slate-600">
             <span className="w-1.5 h-1.5 rounded-full bg-violet-500" />
-            <span>Collab Post &amp; Fixed Price</span>
+            <span>Postingan Kolaborasi &amp; Harga Tetap</span>
           </div>
           <div className="flex items-center gap-2 text-[11px] font-bold text-slate-600">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-            <span>Dana dijamin Escrow Aman</span>
+            <span>Pembayaran dijamin Dana Aman (dana ditahan sementara)</span>
           </div>
         </div>
       </div>
@@ -248,6 +249,7 @@ function PackageCard({ pkg, onToggle, onEdit, onDelete, busy }: PackageCardProps
   const p: Platform = "tiktok";
   const cfg = PLATFORM[p];
   const isPublished = pkg.status === "published";
+  const statusLabel = getRateCardStatusLabel(pkg.status);
 
   return (
     <div
@@ -268,7 +270,7 @@ function PackageCard({ pkg, onToggle, onEdit, onDelete, busy }: PackageCardProps
           <button
             onClick={() => onToggle(pkg)}
             disabled={busy}
-            aria-label={isPublished ? "Jadikan draft" : "Tayangkan paket"}
+            aria-label={isPublished ? "Jadikan draf" : "Tayangkan paket"}
             className={cn(
               "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border cursor-pointer select-none transition-all duration-200 shrink-0 disabled:opacity-50",
               isPublished
@@ -277,7 +279,7 @@ function PackageCard({ pkg, onToggle, onEdit, onDelete, busy }: PackageCardProps
             )}
           >
             <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", isPublished ? "bg-emerald-500" : "bg-slate-400")} />
-            {isPublished ? "Tayang" : "Draft"}
+            {statusLabel}
           </button>
         </div>
 
@@ -336,7 +338,7 @@ function PackageCard({ pkg, onToggle, onEdit, onDelete, busy }: PackageCardProps
               <div className="w-5 h-5 rounded-md bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mt-0.5">
                 <Box size={12} />
               </div>
-              Output / Deliverables
+              Output / Hasil Kerja
             </span>
             <span className="font-extrabold text-slate-800 text-right line-clamp-2 max-w-[55%]">
               {pkg.deliverable}
@@ -388,7 +390,7 @@ function ModalFrame({
         <ResponsiveModalHeader className="space-y-1.5 text-left pb-3 border-b border-slate-100">
           <div className="inline-flex items-center gap-2 text-violet-600 text-[10px] font-black tracking-widest uppercase">
             <Tag size={13} />
-            <span>Rate Card Kreator</span>
+            <span>Paket Harga Kreator</span>
           </div>
           <ResponsiveModalTitle className="text-xl sm:text-2xl font-black text-slate-900 font-display tracking-tight">
             {title}
@@ -552,7 +554,7 @@ export function RateCardView({ initialPackages, ordersCount }: RateCardViewProps
     if (res.success) {
       setPackages((prev) => prev.filter((p) => p.id !== activePackage.id));
       setIsDeleteOpen(false); setActivePackage(null);
-      showToast("Paket Rate Card berhasil dihapus.");
+      showToast("Paket Harga berhasil dihapus.");
     } else {
       setDeleteError(res.error ?? "Gagal menghapus paket.");
       setDeleteBlocked(res.code === "forbidden" || res.code === "validation");
@@ -570,9 +572,9 @@ export function RateCardView({ initialPackages, ordersCount }: RateCardViewProps
     if (res.success && res.data) {
       setPackages((prev) => prev.map((p) => (p.id === activePackage.id ? res.data! : p)));
       setIsDeleteOpen(false); setActivePackage(null);
-      showToast("Paket dijadikan draft — tidak lagi tampil di marketplace.");
+      showToast("Paket dijadikan draf dan tidak lagi tampil di toko.");
     } else {
-      setDeleteError(res.error ?? "Gagal menjadikan draft.");
+      setDeleteError(res.error ?? "Gagal menjadikan draf.");
     }
   };
 
@@ -591,8 +593,8 @@ export function RateCardView({ initialPackages, ordersCount }: RateCardViewProps
           {/* ── Page header ── */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 shrink-0">
             <CreatorPageHeader
-              title="Paket Rate Card Jasa"
-              description="Kelola paket jasa kreator untuk order fixed-price."
+              title="Paket Harga Jasa"
+              description="Kelola paket jasa kreator untuk pesanan harga tetap."
             />
             <div className="flex flex-col items-stretch sm:items-end gap-1.5 shrink-0 w-full sm:w-auto">
               <button
@@ -643,9 +645,9 @@ export function RateCardView({ initialPackages, ordersCount }: RateCardViewProps
             />
             <MetricInfoCard
               icon={ShoppingBag}
-              label="Order Jasa Masuk"
+              label="Pesanan Jasa Masuk"
               value={ordersCount.toString()}
-              note="Melalui Rate Card"
+              note="Melalui Paket Harga"
               colors={{
                 bg: "#f0fdf4",
                 iconColor: "#16a34a",
@@ -682,7 +684,7 @@ export function RateCardView({ initialPackages, ordersCount }: RateCardViewProps
         <ModalFrame
           isOpen={isCreateOpen}
           title="Buat Paket Baru"
-          description="Lengkapi spesifikasi jasa Rate Card untuk penawaran UMKM"
+          description="Lengkapi spesifikasi jasa Paket Harga untuk penawaran UMKM"
           onClose={() => setIsCreateOpen(false)}
         >
             {formError && (
@@ -695,7 +697,7 @@ export function RateCardView({ initialPackages, ordersCount }: RateCardViewProps
             <form onSubmit={handleCreateSubmit} className="space-y-4 text-xs">
               <div className="space-y-1.5">
                 <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">Nama Paket</label>
-                <input type="text" required placeholder="Contoh: Standard TikTok Review" value={formName} onChange={(e) => setFormName(e.target.value)} className={inputCls} />
+                <input type="text" required placeholder="Contoh: Ulasan TikTok Standar" value={formName} onChange={(e) => setFormName(e.target.value)} className={inputCls} />
               </div>
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-1.5">
@@ -712,12 +714,12 @@ export function RateCardView({ initialPackages, ordersCount }: RateCardViewProps
                 <input type="number" required min={0} value={formRevisions} onChange={(e) => setFormRevisions(Number(e.target.value))} className={inputCls} />
               </div>
               <div className="space-y-1.5">
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">Output / Deliverables</label>
-                <input type="text" required placeholder="Contoh: 1 Video TikTok (30-60 detik) + Link Bio 3 Hari" value={formDeliverables} onChange={(e) => setFormDeliverables(e.target.value)} className={inputCls} />
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">Output / Hasil Kerja</label>
+                <input type="text" required placeholder="Contoh: 1 Video TikTok (30-60 detik) + Tautan Bio 3 Hari" value={formDeliverables} onChange={(e) => setFormDeliverables(e.target.value)} className={inputCls} />
               </div>
               <div className="space-y-1.5">
                 <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">Deskripsi Paket</label>
-                <textarea rows={3} required placeholder="Jelaskan konsep konten, visual tone, dan apa yang didapat UMKM..." value={formDesc} onChange={(e) => setFormDesc(e.target.value)} className={cn(inputCls, "resize-none")} />
+                <textarea rows={3} required placeholder="Jelaskan konsep konten, gaya visual, dan apa yang didapat UMKM..." value={formDesc} onChange={(e) => setFormDesc(e.target.value)} className={cn(inputCls, "resize-none")} />
               </div>
               <div className="flex items-center gap-3 p-3.5 bg-violet-50/50 hover:bg-violet-50/80 rounded-2xl border border-violet-200/60 transition-colors">
                 <input type="checkbox" id="create-active" checked={formIsActive} onChange={(e) => setFormIsActive(e.target.checked)} className="rounded-md border-slate-300 text-violet-600 focus:ring-violet-500 w-4 h-4 cursor-pointer" />
@@ -766,7 +768,7 @@ export function RateCardView({ initialPackages, ordersCount }: RateCardViewProps
                 <input type="number" required min={0} value={formRevisions} onChange={(e) => setFormRevisions(Number(e.target.value))} className={inputCls} />
               </div>
               <div className="space-y-1.5">
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">Output / Deliverables</label>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">Output / Hasil Kerja</label>
                 <input type="text" required value={formDeliverables} onChange={(e) => setFormDeliverables(e.target.value)} className={inputCls} />
               </div>
               <div className="space-y-1.5">
@@ -812,7 +814,7 @@ export function RateCardView({ initialPackages, ordersCount }: RateCardViewProps
             {deleteBlocked ? (
               <div className="flex flex-col gap-2.5">
                 <button type="button" disabled={isSubmitting} onClick={handleMakeDraftFromDelete} className="w-full py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white font-bold text-xs rounded-xl transition-all shadow-md cursor-pointer disabled:opacity-60">
-                  {isSubmitting ? "Memproses…" : "Jadikan Draft Saja"}
+                  {isSubmitting ? "Memproses…" : "Jadikan Draf Saja"}
                 </button>
                 <button type="button" onClick={() => { setIsDeleteOpen(false); setActivePackage(null); }} className="w-full py-3 border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs rounded-xl transition-all cursor-pointer">Tutup</button>
               </div>

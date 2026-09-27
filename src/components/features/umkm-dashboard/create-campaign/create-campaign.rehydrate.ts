@@ -68,7 +68,7 @@ export function rehydrateWizard(raw: CampaignEditRaw): RehydratedWizard {
     if (decomposed.lossy) {
       // Data ada tapi format tidak dikenal — pakai briefDetail penuh sebagai `brief`
       warnings.push(
-        "Beberapa data brief tidak dapat dipulihkan secara otomatis. Periksa langkah 2 sebelum menyimpan."
+        "Beberapa data arahan tidak dapat dipulihkan secara otomatis. Periksa langkah 2 sebelum menyimpan."
       );
     }
 
@@ -94,7 +94,7 @@ export function rehydrateWizard(raw: CampaignEditRaw): RehydratedWizard {
     state.videoStyle = matchedTone ? matchedTone.id : "";
     if (!matchedTone && brief.contentAngle.trim()) {
       warnings.push(
-        "Gaya/tone video tidak bisa dipulihkan secara otomatis. Pilih ulang pada langkah 2."
+        "Gaya/nada video tidak bisa dipulihkan secara otomatis. Pilih ulang pada langkah 2."
       );
     }
 
@@ -112,7 +112,7 @@ export function rehydrateWizard(raw: CampaignEditRaw): RehydratedWizard {
     state.callToAction = matchedCta ? matchedCta.id : "";
     if (!matchedCta && brief.cta.trim()) {
       warnings.push(
-        "Call to Action tidak bisa dipulihkan secara otomatis. Pilih ulang pada langkah 2."
+        "Ajakan Bertindak tidak bisa dipulihkan secara otomatis. Pilih ulang pada langkah 2."
       );
     }
   }

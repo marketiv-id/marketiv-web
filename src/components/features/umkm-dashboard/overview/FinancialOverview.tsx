@@ -1,6 +1,7 @@
 "use client";
 
 import { Shield, Clock, TrendingUp, ChevronRight } from "lucide-react";
+import { formatCurrency } from "@/lib/formatters";
 
 interface FinancialOverviewProps {
   isLoading?: boolean;
@@ -8,15 +9,6 @@ interface FinancialOverviewProps {
   totalSpend?: number;
   pendingValidation?: number;
   onViewFinanceClick?: () => void;
-}
-
-function fmt(num: number): string {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num);
 }
 
 export function FinancialOverview({
@@ -29,9 +21,9 @@ export function FinancialOverview({
   const items = [
     {
       icon: Shield,
-      label: "Saldo Escrow",
-      value: escrowBalance !== undefined ? fmt(escrowBalance) : "—",
-      note: "Dana aman",
+      label: "Saldo Dana Aman",
+      value: escrowBalance !== undefined ? formatCurrency(escrowBalance) : "—",
+      note: "Dana ditahan sementara",
       color: "#d97706",
       bg: "radial-gradient(circle at 100% 0%, rgba(217,119,6,.10), transparent 8rem), linear-gradient(180deg, #ffffff, #fffbeb)",
       iconBg: "#fffbeb",
@@ -40,9 +32,9 @@ export function FinancialOverview({
     },
     {
       icon: Clock,
-      label: "Pending Verifikasi",
-      value: pendingValidation !== undefined ? `${pendingValidation} Submission` : "—",
-      note: "Submission",
+      label: "Menunggu Verifikasi",
+      value: pendingValidation !== undefined ? `${pendingValidation} Bukti Konten` : "—",
+      note: "Bukti Konten",
       color: "#2563eb",
       bg: "radial-gradient(circle at 100% 0%, rgba(37,99,235,.08), transparent 8rem), linear-gradient(180deg, #ffffff, #f0f6ff)",
       iconBg: "#f0f6ff",
@@ -52,7 +44,7 @@ export function FinancialOverview({
     {
       icon: TrendingUp,
       label: "Total Pengeluaran",
-      value: totalSpend !== undefined ? fmt(totalSpend) : "—",
+      value: totalSpend !== undefined ? formatCurrency(totalSpend) : "—",
       note: "Sejak bergabung",
       color: "#ea580c",
       bg: "radial-gradient(circle at 100% 0%, rgba(234,88,12,.08), transparent 8rem), linear-gradient(180deg, #ffffff, #fff7ed)",

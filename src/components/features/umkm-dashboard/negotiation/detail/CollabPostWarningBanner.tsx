@@ -24,7 +24,7 @@ export function CollabPostWarningBanner({ compact }: CollabPostWarningBannerProp
         </div>
         <p className="text-[9px] text-[#92400e] font-semibold leading-snug flex-1">
           Kreator wajib menggunakan fitur{" "}
-          <strong className="text-[#b45309]">Postingan Bersama</strong> Instagram/TikTok agar kunjungan dan tayangan masuk langsung ke akun UMKM Anda.
+          <strong className="text-[#b45309]">Postingan Kolaborasi</strong> Instagram/TikTok agar kunjungan dan tayangan masuk langsung ke akun UMKM Anda.
         </p>
       </div>
     );
@@ -43,7 +43,7 @@ export function CollabPostWarningBanner({ compact }: CollabPostWarningBannerProp
         </h4>
         <p className="text-[10px] sm:text-xs text-text-secondary mt-1 leading-relaxed font-semibold">
           Kreator wajib menggunakan fitur{" "}
-          <strong className="text-warning-strong">Postingan Bersama</strong> Instagram/TikTok saat publikasi agar kunjungan, tayangan, dan interaksi masuk ke akun UMKM Anda secara langsung.
+          <strong className="text-warning-strong">Postingan Kolaborasi</strong> Instagram/TikTok saat publikasi agar kunjungan, tayangan, dan interaksi masuk ke akun UMKM Anda secara langsung.
         </p>
       </div>
     </div>

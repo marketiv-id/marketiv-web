@@ -91,8 +91,8 @@ describe("CampaignCard responsive layout", () => {
 
     const text = host.textContent || "";
     expect(text).toContain("Validasi");
-    expect(text).toContain("2 Pending");
-    expect(text).toContain("4 Valid");
+    expect(text).toContain("2 Menunggu");
+    expect(text).toContain("4 Disetujui");
     expect(text).toContain("1 Sengketa");
   });
 

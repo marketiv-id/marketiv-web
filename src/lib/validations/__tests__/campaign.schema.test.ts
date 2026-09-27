@@ -62,7 +62,7 @@ describe("Cloud Storage URL Validation", () => {
       if (!result.success) {
         const error = result.error.flatten().fieldErrors.externalAssetUrl;
         expect(error).toContain(
-          "Tautan harus berupa link folder Google Drive, Dropbox, atau OneDrive (awali https://)."
+          "Tautan harus berupa folder Google Drive, Dropbox, atau OneDrive (awali https://)."
         );
       }
     });
@@ -243,7 +243,7 @@ describe("campaignStepSchemas[1] thumbnailUrl", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       const error = result.error.flatten().fieldErrors.thumbnailUrl;
-      expect(error).toContain("Gambar produk campaign wajib diunggah.");
+      expect(error).toContain("Gambar produk kampanye wajib diunggah.");
     }
   });
 
@@ -253,7 +253,7 @@ describe("campaignStepSchemas[1] thumbnailUrl", () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         const error = result.error.flatten().fieldErrors.thumbnailUrl;
-        expect(error).toContain("Gambar produk campaign wajib diunggah.");
+        expect(error).toContain("Gambar produk kampanye wajib diunggah.");
       }
     }
   });
@@ -304,7 +304,7 @@ describe("legacyEditStep1Schema (campaign legacy tanpa thumbnail)", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       const error = result.error.flatten().fieldErrors.title;
-      expect(error).toContain("Judul campaign wajib diisi.");
+      expect(error).toContain("Judul kampanye wajib diisi.");
     }
   });
 });

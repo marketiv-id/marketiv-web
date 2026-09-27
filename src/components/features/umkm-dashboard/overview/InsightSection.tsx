@@ -85,7 +85,7 @@ export function InsightSection({
         <div className="flex items-center justify-between gap-3 shrink-0">
           <div>
             <span className="text-[11px] font-black uppercase tracking-wider text-orange-600 block mb-0.5">
-              INSIGHT & SARAN
+              WAWASAN & SARAN
             </span>
             <h3 className="text-base font-black text-slate-900 tracking-tight font-display">
               Saran & Petunjuk Usaha

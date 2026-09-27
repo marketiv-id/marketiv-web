@@ -34,8 +34,8 @@ export function getRatecardReviewState(review: RatecardReview): RatecardReviewSt
     return {
       filter: null,
       title: "Menunggu Hasil Kerja",
-      subtitle: "Creator belum mengirim hasil",
-      description: "Hasil kerja akan muncul setelah Creator mengirim deliverable.",
+      subtitle: "Kreator belum mengirim hasil",
+      description: "Hasil kerja akan muncul setelah Kreator mengirim hasil kerja.",
       canApprove: false,
       canRequestRevision: false,
       actionableDeliverableId: null,
@@ -45,7 +45,7 @@ export function getRatecardReviewState(review: RatecardReview): RatecardReviewSt
   if (latest.status === "revision_requested") {
     return {
       filter: "revision",
-      title: "Menunggu Creator Mengirim Versi Perbaikan",
+      title: "Menunggu Kreator Mengirim Versi Perbaikan",
       subtitle: "Revisi telah diminta",
       description: "Versi lama tetap tersedia sebagai riwayat dan tidak dapat disetujui.",
       canApprove: false,
@@ -71,7 +71,7 @@ export function getRatecardReviewState(review: RatecardReview): RatecardReviewSt
     return {
       filter: "marketiv_validation",
       title: "Menunggu Validasi Marketiv",
-      subtitle: "Creator telah mengirim hasil",
+      subtitle: "Kreator telah mengirim hasil",
       description: "Marketiv sedang memvalidasi bukti hasil kerja sebelum dapat disetujui.",
       canApprove: false,
       canRequestRevision,

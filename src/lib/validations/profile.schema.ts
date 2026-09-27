@@ -40,7 +40,7 @@ export type UmkmProfileUpdateInput = z.infer<typeof umkmProfileUpdateSchema>;
 
 export const creatorProfileUpdateSchema = z.object({
   displayName: requiredStringMax("Nama display", 255),
-  niche: enumOf(CREATOR_NICHES, "Niche"),
+  niche: enumOf(CREATOR_NICHES, "Kategori"),
   city: requiredStringMax("Kota", 100),
   bio: requiredStringMax("Bio", 2000).min(20, "Bio minimal 20 karakter."),
 });
@@ -54,7 +54,7 @@ export type CreatorProfileUpdateInput = z.infer<typeof creatorProfileUpdateSchem
  */
 export const creatorOnboardingSchema = z.object({
   displayName: requiredStringMax("Nama display", 255),
-  niche: enumOf(CREATOR_NICHES, "Niche"),
+  niche: enumOf(CREATOR_NICHES, "Kategori"),
   city: requiredStringMax("Kota", 100),
   bio: requiredStringMax("Bio", 2000).min(20, "Bio minimal 20 karakter."),
 });
@@ -79,9 +79,9 @@ export type UmkmOnboardingInput = z.infer<typeof umkmOnboardingSchema>;
 
 export const creatorPortfolioSchema = z.object({
   title: requiredStringMax("Judul portofolio", 255),
-  portfolioUrl: requiredHttpsUrl("Link portofolio"),
+  portfolioUrl: requiredHttpsUrl("Tautan portofolio"),
   description: optionalString(2000, "Deskripsi"),
-  thumbnailUrl: optionalString(2048, "Thumbnail"),
+  thumbnailUrl: optionalString(2048, "Gambar mini"),
 });
 export type CreatorPortfolioInput = z.infer<typeof creatorPortfolioSchema>;
 

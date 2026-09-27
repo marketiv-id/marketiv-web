@@ -136,9 +136,9 @@ export function AssetLinkStep({
             </span>
             <ol className="list-decimal list-inside space-y-1.5 font-medium leading-relaxed">
               <li>Buka folder penyimpanan di Google Drive, Dropbox, atau OneDrive.</li>
-              <li>Pilih menu <strong>Bagikan (Share)</strong> pada folder tersebut.</li>
-              <li>Ubah akses dari &quot;Pribadi&quot; menjadi <strong>&quot;Siapa saja yang memiliki tautan&quot;</strong> (Anyone with the link).</li>
-              <li>Klik <strong>Salin Tautan (Copy link)</strong>.</li>
+              <li>Pilih menu <strong>Bagikan</strong> pada folder tersebut.</li>
+              <li>Ubah akses dari &quot;Pribadi&quot; menjadi <strong>&quot;Siapa saja yang memiliki tautan&quot;</strong>.</li>
+              <li>Klik <strong>Salin Tautan</strong>.</li>
               <li>Tempel tautan di kolom Marketiv ini.</li>
             </ol>
           </div>

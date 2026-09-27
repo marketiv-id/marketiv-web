@@ -41,7 +41,7 @@ export function PaymentSimulationModal({
             Simpan Dana Kampanye
           </ResponsiveModalTitle>
           <ResponsiveModalDescription className="text-[11px] text-text-muted leading-relaxed text-center mt-2">
-            Kampanye disimpan sebagai konsep lalu Anda diarahkan ke pembayaran Midtrans untuk menyimpan dana kampanye.
+            Kampanye disimpan sebagai draf lalu Anda diarahkan ke pembayaran Midtrans untuk menyimpan dana kampanye (dana ditahan sementara).
           </ResponsiveModalDescription>
         </ResponsiveModalHeader>
 

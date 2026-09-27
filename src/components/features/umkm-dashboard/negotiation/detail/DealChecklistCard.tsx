@@ -29,7 +29,7 @@ export function DealChecklistCard({ stage }: DealChecklistCardProps) {
     { label: "Lingkup Pekerjaan Jelas", checked: o >= 1 },
     { label: "Harga Disepakati", checked: o >= 2 },
     { label: "Batas Waktu Disepakati", checked: o >= 2 },
-    { label: "Postingan Bersama di Instagram/TikTok", checked: true },
+    { label: "Postingan Kolaborasi di Instagram/TikTok", checked: true },
     { label: "Dana Aman Siap", checked: o >= 4 },
   ];
 

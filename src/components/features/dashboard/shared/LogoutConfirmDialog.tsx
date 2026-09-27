@@ -34,7 +34,7 @@ const DIALOG_CONFIG = {
     badgeClass: "bg-orange-500/80 text-white border-orange-300/40",
     title: "Keluar dari Dashboard UMKM?",
     description:
-      "Sesi bisnis kamu akan diakhiri. Kamu perlu masuk kembali untuk mengelola campaign, pesanan, dan escrow.",
+      "Sesi bisnis Anda akan diakhiri. Anda perlu masuk kembali untuk mengelola kampanye, pesanan, dan Dana Aman.",
     btnClass:
       "bg-orange-500 hover:bg-orange-600 focus-visible:outline-orange-500/40 shadow-orange-500/25",
     btnLabel: "Ya, Keluar Akun UMKM",
@@ -46,18 +46,18 @@ const DIALOG_CONFIG = {
     badgeClass: "bg-violet-600/80 text-white border-violet-300/40",
     title: "Keluar dari Dashboard Kreator?",
     description:
-      "Sesi kreator kamu akan diakhiri. Kamu perlu masuk kembali untuk mengambil job pool, rate card, dan pencairan saldo.",
+      "Sesi kreator Anda akan diakhiri. Anda perlu masuk kembali untuk mengambil lowongan, paket harga, dan pencairan saldo.",
     btnClass:
       "bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 focus-visible:outline-violet-500/40 shadow-violet-500/25",
     btnLabel: "Ya, Keluar Akun Kreator",
   },
   red: {
     heroImage: "/umkm_logout_hero.jpg",
-    badgeLabel: "Marketiv Account",
+    badgeLabel: "Akun Marketiv",
     badgeIcon: LogOut,
     badgeClass: "bg-red-500/80 text-white border-red-300/40",
     title: "Keluar dari Marketiv?",
-    description: "Sesi kamu akan diakhiri. Kamu perlu masuk kembali untuk mengakses akun kamu.",
+    description: "Sesi Anda akan diakhiri. Anda perlu masuk kembali untuk mengakses akun Anda.",
     btnClass:
       "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 shadow-red-500/25",
     btnLabel: "Ya, Keluar Akun",
@@ -99,7 +99,7 @@ export function LogoutConfirmDialog({
         <div className="relative aspect-[16/9] w-full overflow-hidden bg-neutral-900 select-none">
           <Image
             src={config.heroImage}
-            alt="Logout Banner"
+            alt="Ilustrasi keluar akun"
             fill
             className="object-cover transition-transform duration-500 hover:scale-105"
             priority

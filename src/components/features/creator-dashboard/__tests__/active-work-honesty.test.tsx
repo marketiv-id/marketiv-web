@@ -73,7 +73,7 @@ describe("ActiveWorkDetailView — tidak mengklaim bukti yang belum divalidasi",
     });
 
     const text = host.textContent ?? "";
-    expect(text).toContain("URL Bukti Tayang");
+    expect(text).toContain("Tautan Bukti Tayang");
     expect(text).not.toContain("URL Postingan Terverifikasi");
     expect(text).toContain("Belum diverifikasi");
   });

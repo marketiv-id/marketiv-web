@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/responsive-modal";
 import { formatCurrency } from "@/lib/formatters";
 import { PLATFORM_FEE_RATE, calculatePlatformFee } from "@/types/domain";
-import { getEscrowStatusLabel } from "@/lib/creator-status";
+import { getEscrowStatusLabel, resolveStatusLabel } from "@/lib/dashboard-labels";
 import { cn } from "@/lib/utils";
 import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
 import { realtimeClient, tableChannels } from "@/lib/appwrite/realtime";
@@ -90,18 +90,18 @@ interface ChatMessage {
 
 // Key = NegotiationStage (lihat src/types/domain.ts) — mencakup tahap sebelum
 // order ada, karena di Alur B order lahir paling akhir.
-const STATUS_CONFIG: Record<string, { dot: string; text: string; bg: string; border: string; label: string }> = {
-  chatting:        { dot: "bg-neutral-400", text: "text-neutral-600", bg: "bg-neutral-50", border: "border-neutral-200/60", label: "Negosiasi" },
-  offer_pending:   { dot: "bg-amber-400",   text: "text-amber-700",   bg: "bg-amber-50",   border: "border-amber-200/60",   label: "Penawaran Masuk" },
-  offer_rejected:  { dot: "bg-red-400",     text: "text-red-700",     bg: "bg-red-50",     border: "border-red-200/60",     label: "Penawaran Ditolak" },
-  awaiting_order:  { dot: "bg-blue-400",    text: "text-blue-700",    bg: "bg-blue-50",    border: "border-blue-200/60",    label: "Menyiapkan Pesanan" },
-  pending_payment: { dot: "bg-blue-400",    text: "text-blue-700",    bg: "bg-blue-50",    border: "border-blue-200/60",    label: "Menunggu Pembayaran" },
-  escrow:          { dot: "bg-emerald-400", text: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200/60", label: "Escrow Aktif" },
-  in_progress:     { dot: "bg-amber-400",   text: "text-amber-700",   bg: "bg-amber-50",   border: "border-amber-200/60",   label: "Sedang Dikerjakan" },
-  revision:        { dot: "bg-orange-400",  text: "text-orange-700",  bg: "bg-orange-50",  border: "border-orange-200/60",  label: "Revisi Diminta" },
-  approved:        { dot: "bg-violet-400",  text: "text-violet-700",  bg: "bg-violet-50",  border: "border-violet-200/60",  label: "Disetujui" },
-  completed:       { dot: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200/60", label: "Selesai" },
-  cancelled:       { dot: "bg-neutral-400", text: "text-neutral-600", bg: "bg-neutral-50", border: "border-neutral-200/60", label: "Dibatalkan" },
+const STATUS_CONFIG: Record<string, { dot: string; text: string; bg: string; border: string }> = {
+  chatting:        { dot: "bg-neutral-400", text: "text-neutral-600", bg: "bg-neutral-50", border: "border-neutral-200/60" },
+  offer_pending:   { dot: "bg-amber-400",   text: "text-amber-700",   bg: "bg-amber-50",   border: "border-amber-200/60" },
+  offer_rejected:  { dot: "bg-red-400",     text: "text-red-700",     bg: "bg-red-50",     border: "border-red-200/60" },
+  awaiting_order:  { dot: "bg-blue-400",    text: "text-blue-700",    bg: "bg-blue-50",    border: "border-blue-200/60" },
+  pending_payment: { dot: "bg-blue-400",    text: "text-blue-700",    bg: "bg-blue-50",    border: "border-blue-200/60" },
+  escrow:          { dot: "bg-emerald-400", text: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200/60" },
+  in_progress:     { dot: "bg-amber-400",   text: "text-amber-700",   bg: "bg-amber-50",   border: "border-amber-200/60" },
+  revision:        { dot: "bg-orange-400",  text: "text-orange-700",  bg: "bg-orange-50",  border: "border-orange-200/60" },
+  approved:        { dot: "bg-violet-400",  text: "text-violet-700",  bg: "bg-violet-50",  border: "border-violet-200/60" },
+  completed:       { dot: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200/60" },
+  cancelled:       { dot: "bg-neutral-400", text: "text-neutral-600", bg: "bg-neutral-50", border: "border-neutral-200/60" },
 };
 
 function StatusPill({ status }: { status: string }) {
@@ -109,7 +109,7 @@ function StatusPill({ status }: { status: string }) {
   return (
     <span className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-extrabold border", s.text, s.bg, s.border)}>
       <span className={cn("w-1.5 h-1.5 rounded-full", s.dot)} />
-      {s.label}
+      {resolveStatusLabel(status, "negotiation")}
     </span>
   );
 }
@@ -344,7 +344,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
     if (deliverableMode === "storage") {
       if (!deliverableFile) {
         setSubmittingDeliverable(false);
-        setDeliverableError("Pilih berkas yang mau dikirim.");
+        setDeliverableError("Pilih berkas yang ingin dikirim.");
         return;
       }
       const uploaded = await uploadUserFile({
@@ -370,7 +370,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
     setSubmittingDeliverable(false);
 
     if (!res.success) {
-      setDeliverableError(res.error ?? "Gagal mengirim deliverable.");
+      setDeliverableError(res.error ?? "Gagal mengirim hasil kerja.");
       return;
     }
 
@@ -378,7 +378,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
     setDeliverableUrl("");
     setDeliverableFile(null);
     setDeliverableNotes("");
-    toast.success("Deliverable terkirim. Menunggu review UMKM.");
+    toast.success("Hasil kerja terkirim. Menunggu peninjauan UMKM.");
     await loadRoom();
   };
 
@@ -452,10 +452,10 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
   const ms = MILESTONE_STAGE_ORDER[neg.stage] ?? 0;
 
   const milestones = [
-    { label: "Inisiasi Negosiasi & Deal", done: ms >= 2 },
-    { label: "Pembayaran Escrow UMKM", done: ms >= 4 },
-    { label: "Kirim URL Collab Post", done: !!neg.submittedCollabUrl },
-    { label: "Pelepasan Dana Escrow", done: neg.stage === "completed" },
+    { label: "Negosiasi & Kesepakatan Dimulai", done: ms >= 2 },
+    { label: "Pembayaran Dana Aman UMKM", done: ms >= 4 },
+    { label: "Kirim Tautan Postingan Kolaborasi", done: !!neg.submittedCollabUrl },
+    { label: "Pelepasan Dana Aman", done: neg.stage === "completed" },
   ];
   const doneCount = milestones.filter(m => m.done).length;
 
@@ -502,8 +502,8 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
                   <button
                     type="button"
                     onClick={() => setIsChatFullscreen((v) => !v)}
-                    aria-label={isChatFullscreen ? "Keluar dari fullscreen chat" : "Fullscreen chat"}
-                    title={isChatFullscreen ? "Keluar fullscreen" : "Fullscreen chat"}
+                    aria-label={isChatFullscreen ? "Keluar dari layar penuh" : "Layar penuh"}
+                    title={isChatFullscreen ? "Keluar dari layar penuh" : "Layar penuh"}
                     className="w-9 h-9 rounded-[12px] border border-neutral-200/70 bg-white text-neutral-500 hover:text-violet-700 hover:border-violet-200 hover:bg-violet-50/60 flex items-center justify-center transition-colors cursor-pointer"
                   >
                     {isChatFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -515,7 +515,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
               <div className="px-5 py-2.5 bg-amber-50/60 border-b border-amber-100/60 shrink-0 flex items-start gap-2.5">
                 <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
                 <p className="text-[10px] font-bold text-amber-700 leading-relaxed">
-                  Publikasi hasil konten wajib memakai fitur <span className="font-black">&quot;Collab Post&quot;</span> di Instagram / TikTok agar performa views dapat diverifikasi sistem.
+                  Publikasi hasil konten wajib memakai fitur <span className="font-black">&quot;Postingan Kolaborasi&quot;</span> di Instagram / TikTok agar performa tayangan dapat diverifikasi sistem.
                 </p>
               </div>
 
@@ -564,7 +564,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
                                 <div>
                                   <span className="flex items-center gap-1.5 text-[8px] font-black text-violet-600 uppercase tracking-widest mb-1">
                                     <Sparkles className="w-3 h-3" />
-                                    Custom Offer
+                                    Penawaran Khusus
                                   </span>
                                   <h5 className="font-extrabold text-kreator-ink text-xs leading-tight">{msg.offerData.title || (msg.text.startsWith("Penawaran Khusus: ") ? msg.text.replace("Penawaran Khusus: ", "") : null) || neg.projectTitle}</h5>
                                 </div>
@@ -581,7 +581,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
                                 {[
                                   { label: "Revisi", val: `${msg.offerData.revisions}×` },
                                   {
-                                    label: "Deadline",
+                                    label: "Batas Waktu",
                                     val: msg.offerData.deadline
                                       ? new Date(msg.offerData.deadline).toLocaleDateString("id-ID", { day: "numeric", month: "short" })
                                       : "—",
@@ -616,7 +616,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
                                 ) : (
                                   <span className="flex items-center gap-1.5 text-[10px] font-extrabold text-emerald-600">
                                     <CheckCircle2 className="w-3.5 h-3.5" />
-                                    Kesepakatan Terbuat
+                                    Kesepakatan Dibuat
                                   </span>
                                 )}
                               </div>
@@ -686,18 +686,18 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
                       style={{ background: CREATOR_INK_ACTION_GRADIENT, boxShadow: "var(--shadow-kreator-ink)" }}
                     >
                       <Send className="w-3.5 h-3.5" />
-                      {latestDeliverable ? `Kirim Ulang (v${latestDeliverable.version + 1})` : "Kirim Deliverable"}
+                      {latestDeliverable ? `Kirim Ulang (v${latestDeliverable.version + 1})` : "Kirim Hasil Kerja"}
                     </button>
                     {awaitingReview && (
                       <span className="flex items-center gap-1.5 text-[10px] font-extrabold text-amber-600">
                         <Clock className="w-3.5 h-3.5" />
-                        {neg.deliverableValidation?.status === "valid" ? `v${latestDeliverable?.version} bukti lolos validasi Marketiv dan menunggu review UMKM` : neg.deliverableValidation?.status === "invalid" ? `v${latestDeliverable?.version} belum lolos validasi Marketiv${neg.deliverableValidation.reviewNotes ? `: ${neg.deliverableValidation.reviewNotes}` : ""}` : `v${latestDeliverable?.version} dikirim — menunggu validasi Marketiv`}
+                        {neg.deliverableValidation?.status === "valid" ? `v${latestDeliverable?.version} bukti lolos validasi Marketiv dan menunggu peninjauan UMKM` : neg.deliverableValidation?.status === "invalid" ? `v${latestDeliverable?.version} belum lolos validasi Marketiv${neg.deliverableValidation.reviewNotes ? `: ${neg.deliverableValidation.reviewNotes}` : ""}` : `v${latestDeliverable?.version} dikirim, menunggu validasi Marketiv`}
                       </span>
                     )}
                     {latestDeliverable?.status === "revision_requested" && (
                       <span className="flex items-center gap-1.5 text-[10px] font-extrabold text-orange-600">
                         <AlertTriangle className="w-3.5 h-3.5" />
-                        UMKM minta revisi pada v{latestDeliverable.version}
+                        UMKM meminta revisi pada v{latestDeliverable.version}
                       </span>
                     )}
                   </div>
@@ -762,8 +762,8 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
 
                         <div className="my-1 mx-2 border-t border-neutral-100" />
                         {[
-                          { icon: "💬", label: "Sedang dikerjakan", text: "Konten sedang dalam proses pengerjaan kak, mohon ditunggu." },
-                          { icon: "⏳", label: "Minta perpanjangan", text: "Mohon maaf kak, apakah deadline bisa diundur sedikit?" },
+                          { icon: "💬", label: "Sedang Dikerjakan", text: "Konten sedang dalam proses pengerjaan kak, mohon ditunggu." },
+                          { icon: "⏳", label: "Minta Perpanjangan", text: "Mohon maaf kak, apakah batas waktu bisa diundur sedikit?" },
                         ].map((t, i) => (
                           <button
                             key={i}
@@ -821,7 +821,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
                     <div className="rounded-[12px] border border-violet-100 bg-violet-50/60 p-2.5">
                       <span className="block text-[8px] font-black text-violet-500 uppercase tracking-widest mb-1">Paket Acuan</span>
                       <p className="text-xs font-extrabold text-kreator-ink">{neg.packageContext.name}</p>
-                      <p className="text-[10px] font-semibold text-violet-700 mt-0.5">Harga paket {formatCurrency(neg.packageContext.basePrice)}. Harga final tetap dari kesepakatan.</p>
+                      <p className="text-[10px] font-semibold text-violet-700 mt-0.5">Harga paket {formatCurrency(neg.packageContext.basePrice)}. Harga akhir tetap dari kesepakatan.</p>
                     </div>
                   )}
 
@@ -832,7 +832,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
 
                   {neg.deliverables && (
                     <div>
-                      <span className="block text-[8px] font-black text-neutral-400 uppercase tracking-widest mb-1">Deliverables</span>
+                      <span className="block text-[8px] font-black text-neutral-400 uppercase tracking-widest mb-1">Hasil Kerja</span>
                       <span className="block text-xs font-extrabold text-neutral-700">{neg.deliverables}</span>
                     </div>
                   )}
@@ -840,7 +840,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-neutral-50 rounded-[12px] p-2.5 border border-neutral-100">
                       <span className="flex items-center gap-1 text-[8px] font-black text-neutral-400 uppercase tracking-widest mb-1.5">
-                        <Clock className="w-2.5 h-2.5" /> Deadline
+                        <Clock className="w-2.5 h-2.5" /> Batas Waktu
                       </span>
                       <span className="block text-xs font-extrabold text-neutral-800">{deadline}</span>
                     </div>
@@ -859,7 +859,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
                       <span>{formatCurrency(neg.finalPrice)}</span>
                     </div>
                     <div className="flex justify-between text-xs font-semibold text-neutral-500">
-                      <span>Biaya Platform ({PLATFORM_FEE_RATE * 100}%)</span>
+                      <span>Komisi Platform ({PLATFORM_FEE_RATE * 100}%)</span>
                       <span>-{formatCurrency(platFee)}</span>
                     </div>
                     <div className="flex justify-between text-sm font-black text-kreator-ink border-t border-violet-100 pt-2">
@@ -870,7 +870,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
 
                   {/* Escrow status */}
                   <div>
-                    <span className="block text-[8px] font-black text-neutral-400 uppercase tracking-widest mb-2">Status Escrow</span>
+                    <span className="block text-[8px] font-black text-neutral-400 uppercase tracking-widest mb-2">Status Dana Aman</span>
                     <div className={cn(
                       "flex items-center gap-2 px-3.5 py-2.5 rounded-[12px] border w-fit",
                       neg.escrowStatus === "held"
@@ -885,7 +885,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
                         <Lock className="w-3.5 h-3.5" />
                       )}
                       <span className="text-[10px] font-extrabold uppercase tracking-wider">
-                        {neg.escrowStatus ? getEscrowStatusLabel(neg.escrowStatus) : "Belum Ada Escrow"}
+                        {neg.escrowStatus ? getEscrowStatusLabel(neg.escrowStatus) : "Belum Ada Dana Aman"}
                       </span>
                     </div>
                   </div>
@@ -895,7 +895,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
               {/* Deliverables checklist */}
               <div className="bg-white border border-neutral-200/60 shadow-[0_4px_24px_rgba(15,23,42,.05)] rounded-[22px] p-4 space-y-3">
                 <div className="flex items-center justify-between border-b border-neutral-100 pb-2">
-                  <h4 className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Checklist Deliverables</h4>
+                  <h4 className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Checklist Hasil Kerja</h4>
                   <span className="text-[9px] font-extrabold text-violet-600 bg-violet-50 border border-violet-200/50 px-2 py-0.5 rounded-full">
                     {doneCount}/{milestones.length}
                   </span>
@@ -943,7 +943,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
         <ResponsiveModal open={isDeliverableModalOpen} onOpenChange={(open) => !open && setIsDeliverableModalOpen(false)}>
           <ResponsiveModalContent className="max-w-md w-full rounded-[24px] border border-neutral-200/50 p-6 sm:p-7">
             <ResponsiveModalHeader className="sr-only">
-              <ResponsiveModalTitle>Kirim Deliverable</ResponsiveModalTitle>
+              <ResponsiveModalTitle>Kirim Hasil Kerja</ResponsiveModalTitle>
               <ResponsiveModalDescription>
                 Kirim tautan atau berkas hasil kerja ke UMKM.
               </ResponsiveModalDescription>
@@ -953,7 +953,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
                 <div className="flex items-center gap-2 mb-1">
                   <Send className="w-4 h-4 text-neutral-700" />
                   <h3 className="text-base font-black text-kreator-ink">
-                    {latestDeliverable ? `Kirim Ulang — versi ${latestDeliverable.version + 1}` : "Kirim Deliverable"}
+                    {latestDeliverable ? `Kirim Ulang Hasil Kerja (v${latestDeliverable.version + 1})` : "Kirim Hasil Kerja"}
                   </h3>
                 </div>
                 <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">{neg.projectTitle}</p>
@@ -1001,7 +1001,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
               {deliverableMode === "external_url" ? (
                 <div>
                   <label htmlFor="deliverable-url" className="block text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-1.5">
-                    Link Hasil Kerja
+                    Tautan Hasil Kerja
                   </label>
                   <input
                     id="deliverable-url"
@@ -1034,7 +1034,7 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
                   />
                   <p className="text-[9px] text-neutral-400 font-bold mt-1.5 leading-relaxed">
                     Maksimal {Math.floor(MAX_USER_FILE_BYTES / 1024 / 1024)} MB dan memakai kuota
-                    penyimpananmu. UMKM otomatis diberi izin membuka berkas ini.
+                    penyimpanan Anda. UMKM otomatis diberi izin membuka berkas ini.
                   </p>
                 </div>
               )}
@@ -1056,8 +1056,8 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
               <div className="bg-amber-50 border border-amber-200/50 rounded-[12px] p-3.5 flex items-start gap-2.5">
                 <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
                 <p className="text-[10px] font-bold text-amber-700 leading-relaxed">
-                  Pastikan tautannya bisa dibuka UMKM. Setelah UMKM menyetujui, dana escrow
-                  dilepaskan ke saldo kamu dikurangi fee platform {PLATFORM_FEE_RATE * 100}%.
+                  Pastikan tautannya bisa dibuka UMKM. Setelah UMKM menyetujui, dana Dana Aman
+                  (dana ditahan sementara) dilepaskan ke saldo Anda dikurangi komisi platform {PLATFORM_FEE_RATE * 100}%.
                 </p>
               </div>
 

@@ -74,7 +74,7 @@ describe("getRatecardReviewState", () => {
     expect(state.canRequestRevision).toBe(true);
   });
 
-  it("waits for Creator after revision request", () => {
+  it("waits for Kreator after revision request", () => {
     const state = getRatecardReviewState(
       makeReview({
         orderStatus: "revision",
@@ -85,7 +85,7 @@ describe("getRatecardReviewState", () => {
       }),
     );
 
-    expect(state.title).toBe("Menunggu Creator Mengirim Versi Perbaikan");
+    expect(state.title).toBe("Menunggu Kreator Mengirim Versi Perbaikan");
     expect(state.filter).toBe("revision");
     expect(state.canApprove).toBe(false);
     expect(state.canRequestRevision).toBe(false);

@@ -69,10 +69,19 @@ const TABS = [
   { id: "profil", label: "Profil Kreator", icon: User, description: "Identitas publik & bio" },
   { id: "portofolio", label: "Portofolio", icon: ImageIcon, description: "Katalog konten video" },
   { id: "notifikasi", label: "Notifikasi", icon: Bell, description: "Preferensi pemberitahuan" },
-  { id: "keamanan", label: "Keamanan", icon: ShieldCheck, description: "Password & akses" },
+  { id: "keamanan", label: "Keamanan", icon: ShieldCheck, description: "Kata Sandi & akses" },
 ] as const;
 
 type SettingsTab = typeof TABS[number]["id"];
+
+const NICHE_LABELS: Record<CreatorNiche, string> = {
+  kecantikan: "Kecantikan",
+  kuliner: "Kuliner",
+  fashion: "Fashion",
+  pariwisata: "Pariwisata",
+  edukasi: "Edukasi",
+  lainnya: "Lainnya",
+};
 
 // ─── Shared card wrapper ──────────────────────────────────────────────────────
 
@@ -511,7 +520,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
     if (res.success && res.data) {
       setPortThumbnailUrl(res.data);
     } else {
-      setPortError(res.error ?? "Gagal mengunggah thumbnail.");
+      toast.error(res.error ?? "Gagal mengunggah gambar mini.");
     }
   };
 
@@ -639,7 +648,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
               {isUploadingBanner ? "Mengunggah…" : "Ganti Banner"}
             </span>
             <span className="text-[0.68rem] text-white/80 font-normal">
-              Gunakan gambar landscape. Rekomendasi 1600 × 500 px.
+              Gunakan gambar lanskap. Rekomendasi 1600 × 500 px.
             </span>
             <input
               type="file"
@@ -767,7 +776,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="block text-[0.68rem] font-[900] text-neutral-400 uppercase tracking-wider">
-                  Nama Display
+                  Nama Tampilan
                 </label>
                 <input
                   type="text"
@@ -793,7 +802,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
 
             <div className="space-y-2">
               <label className="block text-[0.68rem] font-[900] text-neutral-400 uppercase tracking-wider">
-                Kategori Niche Utama
+                Kategori Konten Utama
               </label>
               <div className="flex flex-wrap gap-2">
                 {/* Harus lengkap sesuai enum creator_profiles.niche — `edukasi`
@@ -814,7 +823,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
                       type="button"
                       onClick={() => setSelectedNiche(n)}
                       className={cn(
-                        "px-3.5 py-1.5 rounded-[12px] border text-[0.8rem] font-[700] capitalize transition-all cursor-pointer",
+                        "px-3.5 py-1.5 rounded-[12px] border text-[0.8rem] font-[700] transition-all cursor-pointer",
                         selectedNiche === n
                           ? "text-white border-transparent shadow-sm"
                           : "bg-neutral-50 text-neutral-600 border-neutral-200 hover:bg-neutral-100"
@@ -825,7 +834,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
                           : {}
                       }
                     >
-                      {n}
+                      {NICHE_LABELS[n]}
                     </button>
                   )
                 )}
@@ -850,7 +859,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-neutral-100 pt-4">
               <div className="space-y-1.5">
                 <label className="block text-[0.68rem] font-[900] text-neutral-400 uppercase tracking-wider">
-                  Link / Username TikTok
+                  Tautan / Nama Pengguna TikTok
                 </label>
                 <input
                   type="text"
@@ -863,7 +872,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
 
               <div className="space-y-1.5">
                 <label className="block text-[0.68rem] font-[900] text-neutral-400 uppercase tracking-wider">
-                  Jumlah Followers TikTok
+                  Jumlah Pengikut TikTok
                 </label>
                 <input
                   type="text"
@@ -911,10 +920,10 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
           {/* averageViews/responseTime/completionRate belum punya kolom sumber —
               render "—", jangan mengarang angka performa milik kreator sendiri. */}
           <StatRow
-            label="Rata-rata Views per Konten"
+            label="Rata-rata Tayangan per Konten"
             value={
               profile.averageViews !== undefined
-                ? `${profile.averageViews.toLocaleString("id-ID")} views`
+                ? `${profile.averageViews.toLocaleString("id-ID")} tayangan`
                 : "—"
             }
             icon={<Eye size={13} />}
@@ -930,14 +939,14 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
             icon={<Zap size={13} />}
           />
           <StatRow
-            label="Tingkat Penyelesaian Job"
+            label="Tingkat Penyelesaian Lowongan"
             value={profile.completionRate !== undefined ? `${profile.completionRate}%` : "—"}
             icon={<CheckCircle2 size={13} />}
           />
           <StatRow
-            label="Total Followers Gabungan"
+            label="Total Pengikut Gabungan"
             value={
-              profile.followers > 0 ? `${profile.followers.toLocaleString("id-ID")} followers` : "—"
+              profile.followers > 0 ? `${profile.followers.toLocaleString("id-ID")} pengikut` : "—"
             }
             icon={<Globe size={13} />}
           />
@@ -980,7 +989,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
           {portfolioItems.length === 0 ? (
             <CreatorEmptyState
               title="Belum Ada Portofolio"
-              description="Tambahkan konten video terbaik kamu biar brand bisa lihat karya kamu."
+              description="Tambahkan konten video terbaik Anda agar merek bisa melihat karya Anda."
             />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -1019,8 +1028,8 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
                     </p>
                     {item.views !== undefined && (
                       <div className="flex items-center justify-between text-[0.72rem] font-[800] text-neutral-400 pt-2 border-t border-neutral-200/40 mt-auto">
-                        <span>VIEWS PENONTON</span>
-                        <span className="text-neutral-800">{item.views.toLocaleString("id-ID")} views</span>
+                        <span>TAYANGAN PENONTON</span>
+                        <span className="text-neutral-800">{item.views.toLocaleString("id-ID")} tayangan</span>
                       </div>
                     )}
                   </div>
@@ -1060,22 +1069,22 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
         </p>
         <div className="px-6 py-1">
           <NotifToggleRow
-            label="Campaign Baru Sesuai Niche"
-            description="Terima notifikasi saat ada campaign baru yang cocok dengan kategori konten kamu."
+            label="Kampanye Baru Sesuai Kategori"
+            description="Terima notifikasi saat ada kampanye baru yang cocok dengan kategori konten Anda."
             checked={notifCampaign}
             onChange={setNotifCampaign}
             disabled
           />
           <NotifToggleRow
-            label="Pengingat Deadline Pekerjaan"
+            label="Pengingat Batas Waktu Pekerjaan"
             description="Ingatkan saya H-2 sebelum tenggat waktu pengiriman konten."
             checked={notifDeadline}
             onChange={setNotifDeadline}
             disabled
           />
           <NotifToggleRow
-            label="Update Status Order Rate Card"
-            description="Notifikasi saat UMKM melakukan order, konfirmasi, atau revisi pada paket kamu."
+            label="Pembaruan Status Pesanan Paket Harga"
+            description="Notifikasi saat UMKM melakukan pesanan, konfirmasi, atau revisi pada paket Anda."
             checked={notifOrder}
             onChange={setNotifOrder}
             disabled
@@ -1087,22 +1096,22 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
         <CardSectionHeader title="Notifikasi Pembayaran & Pesan" />
         <div className="px-6 py-1">
           <NotifToggleRow
-            label="Alert Pembayaran & Pencairan"
-            description="Notifikasi instan saat pembayaran masuk ke wallet atau pencairan berhasil diproses."
+            label="Peringatan Pembayaran & Pencairan"
+            description="Notifikasi instan saat pembayaran masuk ke dompet atau pencairan berhasil diproses."
             checked={notifPayment}
             onChange={setNotifPayment}
             disabled
           />
           <NotifToggleRow
-            label="Pesan Baru dari Brand atau Admin"
+            label="Pesan Baru dari Merek atau Admin"
             description="Notifikasi saat ada pesan baru di negosiasi atau pengumuman dari Marketiv."
             checked={notifMessage}
             onChange={setNotifMessage}
             disabled
           />
           <NotifToggleRow
-            label="Newsletter & Tips Kreator"
-            description="Email bulanan berisi tips monetisasi, update fitur, dan insight dari Marketiv."
+            label="Buletin & Tips Kreator"
+            description="Email bulanan berisi tips monetisasi, pembaruan fitur, dan wawasan dari Marketiv."
             checked={notifNewsletter}
             onChange={setNotifNewsletter}
             disabled
@@ -1124,13 +1133,13 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="block text-[0.68rem] font-[900] text-neutral-400 uppercase tracking-wider">
-                Username
+                Nama Pengguna
               </label>
               <div className="flex items-center gap-2.5 w-full px-4 py-2.5 bg-neutral-50/80 border border-neutral-200/60 rounded-[14px]">
                 <span className="text-neutral-300 font-[800] text-[0.9rem]">@</span>
                 <span className="text-[0.88rem] font-[600] text-neutral-600">{profile.username}</span>
               </div>
-              <p className="text-[0.68rem] font-[600] text-neutral-300">Username tidak dapat diubah</p>
+              <p className="text-[0.68rem] font-[600] text-neutral-300">Nama pengguna tidak dapat diubah</p>
             </div>
             <div className="space-y-1.5">
               <label className="block text-[0.68rem] font-[900] text-neutral-400 uppercase tracking-wider">
@@ -1151,7 +1160,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
               <div>
                 <p className="text-[0.82rem] font-[700] text-blue-800">Akun Terverifikasi</p>
                 <p className="text-[0.72rem] font-[500] text-blue-600 mt-0.5">
-                  Identitas kamu telah diverifikasi oleh tim Marketiv
+                  Identitas Anda telah diverifikasi oleh tim Marketiv
                 </p>
               </div>
             </div>
@@ -1161,7 +1170,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
               <div>
                 <p className="text-[0.82rem] font-[700] text-neutral-600">Verifikasi Tertunda</p>
                 <p className="text-[0.72rem] font-[500] text-neutral-400 mt-0.5">
-                  Tim Marketiv sedang memproses verifikasi identitas kamu
+                  Tim Marketiv sedang memproses verifikasi identitas Anda
                 </p>
               </div>
             </div>
@@ -1171,7 +1180,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
 
       <SettingsCard>
         <CardSectionHeader
-          title="Ubah Password"
+          title="Ubah Kata Sandi"
           action={
             <span className="px-2.5 py-1 rounded-full bg-neutral-100 border border-neutral-200 text-[0.66rem] font-[800] text-neutral-400 uppercase tracking-wider">
               Segera tersedia
@@ -1181,7 +1190,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
         <div className="p-6 space-y-4 opacity-50 pointer-events-none select-none" aria-hidden="true">
           <div className="space-y-1.5">
             <label className="block text-[0.68rem] font-[900] text-neutral-400 uppercase tracking-wider">
-              Password Saat Ini
+              Kata Sandi Saat Ini
             </label>
             <div className="relative">
               <Lock size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-300" />
@@ -1191,7 +1200,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="block text-[0.68rem] font-[900] text-neutral-400 uppercase tracking-wider">
-                Password Baru
+                Kata Sandi Baru
               </label>
               <div className="relative">
                 <Lock size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-300" />
@@ -1200,23 +1209,23 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
             </div>
             <div className="space-y-1.5">
               <label className="block text-[0.68rem] font-[900] text-neutral-400 uppercase tracking-wider">
-                Konfirmasi Password Baru
+                Konfirmasi Kata Sandi Baru
               </label>
               <div className="relative">
                 <Lock size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-300" />
-                <input type="password" placeholder="Ulangi password baru" disabled className={cn(inputCls, "pl-10")} />
+                <input type="password" placeholder="Ulangi kata sandi baru" disabled className={cn(inputCls, "pl-10")} />
               </div>
             </div>
           </div>
           <div className="flex justify-end pt-2">
-            <CreatorBtn disabled>Ubah Password</CreatorBtn>
+            <CreatorBtn disabled>Ubah Kata Sandi</CreatorBtn>
           </div>
         </div>
       </SettingsCard>
 
       <SettingsCard>
         <CardSectionHeader
-          title="Sesi & Aktivitas Login"
+          title="Sesi & Aktivitas Masuk"
           action={
             <span className="px-2.5 py-1 rounded-full bg-neutral-100 border border-neutral-200 text-[0.66rem] font-[800] text-neutral-400 uppercase tracking-wider">
               Segera tersedia
@@ -1253,7 +1262,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
     <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto relative">
       <CreatorPageHeader
         title="Pengaturan"
-        description="Kelola profil publik, portofolio, notifikasi, dan keamanan akun kamu."
+        description="Kelola profil publik, portofolio, notifikasi, dan keamanan akun Anda."
       />
 
       <div className="flex flex-col lg:flex-row gap-6 items-start">
@@ -1396,7 +1405,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
               Profil Berhasil Diperbarui
             </h3>
             <p className="text-[0.82rem] text-neutral-500 font-[500] leading-relaxed max-w-xs mx-auto mb-6">
-              Detail profil publik dan tautan sosial media kamu berhasil disinkronisasikan ke
+              Detail profil publik dan tautan media sosial Anda berhasil disinkronkan ke
               platform Marketiv.
             </p>
             <CreatorBtn onClick={() => setIsProfileSuccessOpen(false)} className="w-full">
@@ -1468,7 +1477,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
             </div>
             <div className="space-y-1.5">
               <label className="block text-[0.68rem] font-[900] text-neutral-500 uppercase tracking-wider">
-                Thumbnail (Opsional)
+                Gambar Mini (Opsional)
               </label>
               <input
                 type="file"
@@ -1478,10 +1487,10 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
                 className="block w-full text-[0.78rem] font-[600] text-neutral-600 file:mr-3 file:rounded-full file:border-0 file:bg-neutral-100 file:px-4 file:py-2 file:text-[0.75rem] file:font-[700] file:text-neutral-700 hover:file:bg-neutral-200 disabled:opacity-60"
               />
               {isUploadingThumb && (
-                <p className="text-[0.7rem] font-[700] text-neutral-400">Mengunggah thumbnail…</p>
+                <p className="text-[0.7rem] font-[700] text-neutral-400">Mengunggah gambar mini…</p>
               )}
               {portThumbnailUrl && !isUploadingThumb && (
-                <p className="text-[0.7rem] font-[700] text-emerald-600">Thumbnail siap disimpan.</p>
+                <p className="text-[0.7rem] font-[700] text-emerald-600">Gambar mini siap disimpan.</p>
               )}
             </div>
             <div className="space-y-1.5">
@@ -1491,7 +1500,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
               <textarea
                 rows={3}
                 required
-                placeholder="Review toner serum glow up..."
+                placeholder="Ulasan toner serum pilihan..."
                 value={portDesc}
                 onChange={(e) => setPortDesc(e.target.value)}
                 className={cn(inputModalCls, "resize-none")}
@@ -1581,7 +1590,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
             </div>
             <div className="space-y-1.5">
               <label className="block text-[0.68rem] font-[900] text-neutral-500 uppercase tracking-wider">
-                Thumbnail (Opsional)
+                Gambar Mini (Opsional)
               </label>
               <input
                 type="file"
@@ -1591,10 +1600,10 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
                 className="block w-full text-[0.78rem] font-[600] text-neutral-600 file:mr-3 file:rounded-full file:border-0 file:bg-neutral-100 file:px-4 file:py-2 file:text-[0.75rem] file:font-[700] file:text-neutral-700 hover:file:bg-neutral-200 disabled:opacity-60"
               />
               {isUploadingThumb && (
-                <p className="text-[0.7rem] font-[700] text-neutral-400">Mengunggah thumbnail…</p>
+                <p className="text-[0.7rem] font-[700] text-neutral-400">Mengunggah gambar mini…</p>
               )}
               {portThumbnailUrl && !isUploadingThumb && (
-                <p className="text-[0.7rem] font-[700] text-emerald-600">Thumbnail siap disimpan.</p>
+                <p className="text-[0.7rem] font-[700] text-emerald-600">Gambar mini siap disimpan.</p>
               )}
             </div>
             <div className="space-y-1.5">

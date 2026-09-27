@@ -30,7 +30,7 @@ const legacy = { thumbnailOptional: true };
 describe("step 1 — campaign BARU (default, tanpa options)", () => {
   it("thumbnail kosong → GAGAL (final submission new campaign diblokir)", () => {
     const errs = validateStepFields(1, step1State(""));
-    expect(errs.thumbnailUrl).toContain("Gambar produk campaign wajib diunggah.");
+    expect(errs.thumbnailUrl).toContain("Gambar produk kampanye wajib diunggah.");
     expect(isStepCompleted(1, step1State(""))).toBe(false);
   });
 
@@ -53,7 +53,7 @@ describe("step 1 — LEGACY EDIT (thumbnailOptional)", () => {
 
   it("field wajib lain tetap divalidasi (edit unrelated field tetap disiplin)", () => {
     const errs = validateStepFields(1, { ...step1State(""), title: "" }, legacy);
-    expect(errs.title).toContain("Judul campaign wajib diisi.");
+    expect(errs.title).toContain("Judul kampanye wajib diisi.");
     expect(isStepCompleted(1, { ...step1State(""), title: "" }, legacy)).toBe(false);
   });
 

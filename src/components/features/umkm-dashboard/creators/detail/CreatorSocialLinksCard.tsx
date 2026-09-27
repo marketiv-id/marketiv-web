@@ -124,7 +124,7 @@ export function CreatorSocialLinksCard({ accounts, error, onRetry }: CreatorSoci
                     {formatFollowersLabel(account.followers)}
                   </span>
                   <span className="block text-[8px] text-text-muted uppercase tracking-wider font-bold">
-                    Followers
+                    Pengikut
                   </span>
                 </div>
               </div>

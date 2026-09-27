@@ -1,5 +1,9 @@
 import { CampaignDetailPage } from "@/components/features/umkm-dashboard/campaign";
 
+export const metadata = {
+  title: "Detail Kampanye | Dashboard UMKM | Marketiv",
+};
+
 interface PageProps {
   params: Promise<{
     campaignId: string;

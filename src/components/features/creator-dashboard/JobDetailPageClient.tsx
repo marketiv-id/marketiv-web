@@ -20,7 +20,7 @@ export function JobDetailPageClient({ jobId }: { jobId: string }) {
       // Gagal memuat ≠ campaign tidak ada. Tanpa cabang ini, kegagalan sesi atau
       // jaringan tampil ke kreator sebagai "Kampanye tidak ditemukan".
       if (!res.success && res.code !== "not_found") {
-        setError(res.error ?? "Gagal memuat campaign.");
+        setError(res.error ?? "Gagal memuat kampanye.");
         setLoading(false);
         return;
       }

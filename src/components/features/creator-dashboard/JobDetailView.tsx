@@ -93,7 +93,7 @@ const CREATOR_PROGRESS_GRADIENT =
   "linear-gradient(90deg, var(--color-kreator-600), var(--color-kreator-action-end))";
 // "Syarat akun" dihapus: minimum followers & niche yang diperbolehkan tidak punya
 // kolom apa pun di campaigns/campaign_briefs — sebelumnya diisi konstanta.
-const BRIEF_PILLS = ["Aturan", "Narasi", "Caption", "Tentang"] as const;
+const BRIEF_PILLS = ["Aturan", "Narasi", "Keterangan", "Tentang"] as const;
 type BriefPill = (typeof BRIEF_PILLS)[number];
 
 /** Placeholder saat UMKM belum mengisi bagian brief tersebut. */
@@ -165,9 +165,9 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
 
     try {
       await navigator.clipboard.writeText(url);
-      toast.success("Tautan campaign disalin.");
+      toast.success("Tautan kampanye disalin.");
     } catch {
-      toast.error("Gagal menyalin tautan campaign.");
+      toast.error("Gagal menyalin tautan kampanye.");
     }
   };
 
@@ -197,7 +197,7 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
   if (!job) {
     return (
       <div className="flex-1 p-4 sm:p-6 lg:p-8 flex flex-col justify-center items-center min-h-[70vh]">
-        <DashboardStateCard kind="empty" title="Kampanye tidak ditemukan" description="ID kampanye tidak valid atau telah dihapus." actionLabel="Kembali ke Job Pool" onAction={() => { window.location.href = "/dashboard/kreator/job-pool"; }} />
+        <DashboardStateCard kind="empty" title="Kampanye tidak ditemukan" description="ID kampanye tidak valid atau telah dihapus." actionLabel="Kembali ke Lowongan Kampanye" onAction={() => { window.location.href = "/dashboard/kreator/job-pool"; }} />
       </div>
     );
   }
@@ -279,7 +279,7 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                   isFull ? "bg-red-500/30 text-red-200 border-red-400/30"
                   : isNearLimit ? "bg-amber-500/30 text-amber-200 border-amber-400/30"
                   : "bg-emerald-500/30 text-emerald-200 border-emerald-400/30")}>
-                  {isFull ? "PENUH" : isNearLimit ? "HAMPIR PENUH" : "ACTIVE"}
+                  {isFull ? "Penuh" : isNearLimit ? "Hampir Penuh" : "Aktif"}
                 </span>
               </div>
 
@@ -291,7 +291,7 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                 <span className="font-display text-3xl sm:text-[2.2rem] font-black text-white tracking-tight leading-none">
                   {formatCurrency(job.ratePerThousandViews)}
                 </span>
-                <span className="text-sm text-white/50 font-bold">/ 1K views</span>
+                <span className="text-sm text-white/50 font-bold">/ 1.000 tayangan</span>
               </div>
 
               <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold text-white/55">
@@ -316,17 +316,17 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                     isFull || hasClaimed ? "bg-white/10 text-white/40 cursor-not-allowed border border-white/10 shadow-none" : "text-white hover:-translate-y-0.5 active:translate-y-0 cursor-pointer shadow-lg")}
                   style={!isFull && !hasClaimed ? { background: CREATOR_ACTION_GRADIENT, boxShadow: "var(--shadow-kreator-cta)" } : undefined}
                 >
-                  {hasClaimed ? "Sudah Diklaim ✓" : isFull ? "Kuota Penuh" : "Join Campaign"}
+                  {hasClaimed ? "Sudah Diklaim ✓" : isFull ? "Kuota Penuh" : "Klaim Lowongan"}
                 </button>
                 <button onClick={() => setActiveTab("video")} className="min-h-[44px] px-5 inline-flex items-center gap-2 font-bold text-sm rounded-xl border border-white/25 bg-white/10 hover:bg-white/18 text-white transition-all duration-200 cursor-pointer backdrop-blur-sm">
                   <Play className="w-3.5 h-3.5" />
-                  Submit Video
+                  Kirim Video
                 </button>
                 <button
                   type="button"
                   onClick={handleShare}
-                  aria-label="Bagikan campaign"
-                  title="Bagikan campaign"
+                  aria-label="Bagikan kampanye"
+                  title="Bagikan kampanye"
                   className="min-h-[44px] w-11 flex items-center justify-center rounded-xl border border-white/25 bg-white/10 hover:bg-white/18 text-white transition-all duration-200 cursor-pointer backdrop-blur-sm"
                 >
                   <Share2 className="w-4 h-4" />
@@ -374,7 +374,7 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                 className={cn("py-4 text-sm font-bold border-b-2 transition-all duration-200 cursor-pointer",
                   activeTab === tab ? "border-violet-500 text-violet-600" : "border-transparent text-neutral-400 hover:text-neutral-700")}
               >
-                {tab === "detail" ? "Detail" : "Video Kamu"}
+                {tab === "detail" ? "Detail" : "Video Anda"}
               </button>
             ))}
           </div>
@@ -392,14 +392,14 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                 <div className="lg:col-span-8 space-y-4">
                   {/* Tentang Campaign */}
                   <div className="bg-white border border-neutral-200/60 rounded-[22px] p-6 shadow-sm">
-                    <h3 className="text-sm font-extrabold text-neutral-800 mb-4">Tentang Campaign</h3>
+                    <h3 className="text-sm font-extrabold text-neutral-800 mb-4">Tentang Kampanye</h3>
                     <p className="text-sm text-neutral-600 font-medium leading-relaxed">
                       {isDescExpanded || !isLongDesc ? descText : descText.slice(0, 220) + "..."}
                     </p>
                     {isLongDesc && (
                       <button onClick={() => setIsDescExpanded(!isDescExpanded)} className="inline-flex items-center gap-1 text-xs text-neutral-400 hover:text-neutral-700 mt-3 transition-colors cursor-pointer">
                         <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200", isDescExpanded && "rotate-180")} />
-                        {isDescExpanded ? "Sembunyikan" : "Show more"}
+                        {isDescExpanded ? "Sembunyikan" : "Tampilkan selengkapnya"}
                       </button>
                     )}
                   </div>
@@ -413,9 +413,9 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                       <FileText className="w-5 h-5 text-violet-500" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-extrabold text-neutral-800">Brief &amp; Materi Clipping</div>
+                      <div className="text-sm font-extrabold text-neutral-800">Arahan &amp; Materi Kliping</div>
                       <div className="text-xs text-neutral-400 mt-0.5">
-                        Penjelasan brand, narasi, aturan + logo, footage &amp; materi yang harus dipakai
+                        Penjelasan merek, narasi, aturan + logo, rekaman &amp; materi yang harus dipakai
                       </div>
                     </div>
                     <ChevronRight className="w-4 h-4 text-neutral-300 group-hover:text-violet-400 group-hover:translate-x-0.5 transition-all shrink-0" />
@@ -428,7 +428,7 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-extrabold text-neutral-700">Kuota Tersedia</span>
                       <span className="text-sm font-black text-neutral-900">
-                        {quotaRemaining} / {job.quota} slot
+                        {quotaRemaining} / {job.quota} kuota
                       </span>
                     </div>
                     <div className="w-full h-2 bg-neutral-100 rounded-full overflow-hidden">
@@ -438,12 +438,12 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                       <div className="bg-neutral-50 border border-neutral-200/40 rounded-xl p-3.5">
                         <span className="block text-[9px] font-black text-neutral-400 uppercase tracking-wide mb-2">Mulai Dibayar</span>
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="text-xs font-black text-neutral-900">1.000 Views</span>
-                          <span className="px-1.5 py-0.5 rounded-md text-[9px] font-black bg-violet-100 text-violet-700 border border-violet-200 leading-none">CPM Awal</span>
+                          <span className="text-xs font-black text-neutral-900">1.000 Tayangan</span>
+                          <span className="px-1.5 py-0.5 rounded-md text-[9px] font-black bg-violet-100 text-violet-700 border border-violet-200 leading-none">Tarif Awal per 1.000 Tayangan</span>
                         </div>
                       </div>
                       <div className="bg-neutral-50 border border-neutral-200/40 rounded-xl p-3.5">
-                        <span className="block text-[9px] font-black text-neutral-400 uppercase tracking-wide mb-2">CPM (Rate /1K Views)</span>
+                        <span className="block text-[9px] font-black text-neutral-400 uppercase tracking-wide mb-2">Tarif per 1.000 Tayangan</span>
                         <span className="text-xs font-black text-neutral-900">{formatCurrency(job.ratePerThousandViews)}</span>
                       </div>
                     </div>
@@ -458,7 +458,7 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                   <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-neutral-100">
                     <div>
                       <p className="text-[10px] font-black text-neutral-400 uppercase tracking-wide mb-0.5">
-                        Materi Clipping Campaigns:
+                        Materi Kliping Kampanye:
                       </p>
                       <h3 className="text-base font-black text-neutral-900">{job.title}</h3>
                       <p className="text-xs text-neutral-400 mt-0.5 font-medium">
@@ -479,7 +479,7 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                         className={cn("py-2.5 text-xs font-bold transition-all cursor-pointer",
                           activeBriefSection === "brief" ? "bg-violet-600 text-white" : "bg-neutral-50 text-neutral-400 hover:bg-neutral-100")}
                       >
-                        Brief
+                        Arahan
                       </button>
                       <button
                         onClick={() => setActiveBriefSection("materi")}
@@ -524,7 +524,7 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                             </FieldBox>
                           </SectionBox>
 
-                          <SectionBox title="Do's & Don'ts" badge={`${doList.length + dontList.length} aturan`}>
+                          <SectionBox title="Yang Boleh & Dilarang" badge={`${doList.length + dontList.length} aturan`}>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div className="bg-emerald-50/60 border border-emerald-200/50 rounded-2xl p-4 space-y-2.5">
                                 <div className="flex items-center gap-1.5">
@@ -576,17 +576,17 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                         </div>
                       )}
 
-                      {/* Caption — campaign_briefs.cta */}
-                      {activeBriefPill === "Caption" && (
+                      {/* Keterangan — campaign_briefs.cta */}
+                      {activeBriefPill === "Keterangan" && (
                         <div className="space-y-4">
-                          <SectionBox title="Caption & CTA" badge="Panduan">
-                            <FieldBox label="Call to action yang disarankan">
+                          <SectionBox title="Keterangan & Ajakan" badge="Panduan">
+                            <FieldBox label="Ajakan yang disarankan">
                               {job.ctaInstruction ? (
                                 <div className="bg-neutral-50 border border-neutral-200/40 rounded-xl p-4 text-sm text-neutral-700 font-medium leading-relaxed whitespace-pre-line">
                                   {job.ctaInstruction}
                                 </div>
                               ) : (
-                                <BriefEmpty>UMKM belum menuliskan CTA.</BriefEmpty>
+                                <BriefEmpty>UMKM belum menuliskan ajakan.</BriefEmpty>
                               )}
                             </FieldBox>
                           </SectionBox>
@@ -596,7 +596,7 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                       {/* Tentang */}
                       {activeBriefPill === "Tentang" && (
                         <div className="space-y-4">
-                          <SectionBox title="Tentang brand" badge="Informasi">
+                          <SectionBox title="Tentang merek" badge="Informasi">
                             <FieldBox label="Deskripsi kampanye">
                               {job.brief ? (
                                 <p className="text-sm text-neutral-700 font-medium leading-relaxed">
@@ -606,7 +606,7 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                                 <BriefEmpty>Belum diisi UMKM.</BriefEmpty>
                               )}
                             </FieldBox>
-                            <FieldBox label="Objektif campaign">
+                            <FieldBox label="Tujuan kampanye">
                               {job.targetAudience ? (
                                 <p className="text-sm text-neutral-700 font-medium leading-relaxed">
                                   {job.targetAudience}
@@ -631,7 +631,7 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
 
                       <div className="space-y-2.5">
                         <p className="text-[10px] font-black text-neutral-400 uppercase tracking-wide">
-                          Material links (logo, footage, foto produk, dll)
+                          Tautan materi (logo, rekaman, foto produk, dll)
                         </p>
                         {materials.length > 0 ? (
                           materials.map((material) => (
@@ -663,11 +663,11 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
             </div>
           )}
 
-          {/* ── Video Kamu tab ── */}
+          {/* ── Video Anda tab ── */}
           {activeTab === "video" && (
             <div className="bg-white border border-neutral-200/60 rounded-[22px] shadow-sm overflow-hidden">
               <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100">
-                <h3 className="text-sm font-extrabold text-neutral-800">Video Kamu</h3>
+                <h3 className="text-sm font-extrabold text-neutral-800">Video Anda</h3>
               </div>
               <div className="flex border-b border-neutral-100 overflow-x-auto px-5">
                 {VIDEO_SUB_TABS.map((tab) => (
@@ -680,11 +680,11 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
               </div>
               <div className="px-5 py-3 border-b border-neutral-50">
                 <p className="text-[11px] font-bold text-neutral-400">
-                  Daftar video muncul setelah kamu join campaign.
+                  Daftar video muncul setelah Anda ikut kampanye.
                 </p>
               </div>
               <div className="py-16 text-center">
-                <p className="text-sm text-neutral-400 font-medium">Join campaign dulu untuk mulai submit video.</p>
+                <p className="text-sm text-neutral-400 font-medium">Anda belum ikut kampanye ini. Klaim Lowongan dulu untuk mulai mengirim video.</p>
               </div>
             </div>
           )}

@@ -4,21 +4,24 @@ import { LayoutGrid, List } from "lucide-react";
 import { SearchToolbar, type SearchToolbarFilter } from "@/components/features/dashboard/shared";
 import { cn } from "@/lib/utils";
 import { CREATOR_NICHE_OPTIONS } from "@/constants/umkm-dashboard.constants";
+import { getCampaignStatusLabel } from "@/lib/dashboard-labels";
 
 const STATUS_TABS = [
   { value: "all", label: "Semua Status" },
-  { value: "active", label: "Aktif" },
-  { value: "draft", label: "Draft" },
+  { value: "active", label: getCampaignStatusLabel("active") },
+  { value: "draft", label: getCampaignStatusLabel("draft") },
+  // Nilai "full" dan "cancelled" belum ada di CampaignStatus, jadi labelnya
+  // ditulis manual sampai kosakata backend disatukan.
   { value: "full", label: "Penuh" },
-  { value: "completed", label: "Selesai" },
+  { value: "completed", label: getCampaignStatusLabel("completed") },
   { value: "cancelled", label: "Dibatalkan" },
 ] as const;
 
 const SORT_OPTIONS = [
   { value: "latest", label: "Terbaru" },
   { value: "oldest", label: "Terlama" },
-  { value: "budget_desc", label: "Budget Tertinggi" },
-  { value: "views_desc", label: "Views Terbanyak" },
+  { value: "budget_desc", label: "Anggaran Tertinggi" },
+  { value: "views_desc", label: "Tayangan Terbanyak" },
 ] as const;
 
 interface CampaignToolbarProps {
@@ -82,7 +85,7 @@ export function CampaignToolbar({
     <SearchToolbar
       searchValue={search}
       onSearchChange={onSearchChange}
-      searchPlaceholder="Cari nama campaign atau produk..."
+      searchPlaceholder="Cari nama kampanye atau produk..."
       filters={filters}
       onClearFilters={onClearFilters}
       hasActiveFilters={hasActiveFilters}

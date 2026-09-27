@@ -171,7 +171,7 @@ export function ReviewEscrowStep({
           {hashtags && (
             <div className="sm:col-span-2">
               <span className="block text-[10px] font-bold text-text-muted uppercase tracking-wider">
-                Hashtag / Tagar
+                Tagar
               </span>
               <span className="font-bold text-primary block mt-0.5">
                 {hashtags}
@@ -313,7 +313,7 @@ export function ReviewEscrowStep({
                 </span>
                 <div className="grid grid-cols-2 gap-2 text-text-secondary">
                   <div>
-                    <span className="text-text-muted block text-[10px]">Bayaran / 1K Tayangan:</span>
+                    <span className="text-text-muted block text-[10px]">Bayaran / 1.000 Tayangan:</span>
                     <strong className="text-text-primary">{formatCurrency(pricePerThousandViews)}</strong>
                   </div>
                   <div>
@@ -377,8 +377,8 @@ export function ReviewEscrowStep({
           </div>
 
           <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-200/60 text-[10.5px] text-text-muted space-y-0.5">
-            <strong className="text-text-primary block text-[11px]">Perlindungan Dana</strong>
-            <span>Dana kampanye diproses berdasarkan status pekerjaan dan hasil yang telah diverifikasi. Ketentuan pengembalian dana mengikuti kebijakan Marketiv.</span>
+            <strong className="text-text-primary block text-[11px]">Perlindungan Dana Aman</strong>
+            <span>Dana Aman (dana ditahan sementara) diproses berdasarkan status pekerjaan dan hasil yang telah diverifikasi. Ketentuan pengembalian dana mengikuti kebijakan Marketiv.</span>
           </div>
         </div>
       </div>

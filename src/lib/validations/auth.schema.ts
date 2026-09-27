@@ -30,7 +30,7 @@ export const PASSWORD_MAX = 256;
  * yang tidak bicara ke Appwrite Auth, ia akan drift begitu kebijakannya berubah.
  */
 const newPassword = z
-  .string({ error: "Password wajib diisi." })
+  .string({ error: "Kata Sandi wajib diisi." })
   .min(PASSWORD_MIN, `Password minimal ${PASSWORD_MIN} karakter.`)
   .max(PASSWORD_MAX, `Password maksimal ${PASSWORD_MAX} karakter.`);
 
@@ -48,7 +48,7 @@ export type RegistrableRole = z.infer<typeof registrableRoleSchema>;
  */
 export const loginSchema = z.object({
   email: emailAddress(),
-  password: requiredString("Password"),
+  password: requiredString("Kata Sandi"),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 

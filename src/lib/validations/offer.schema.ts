@@ -39,19 +39,19 @@ export const createOfferSchema = z.object({
   creatorId: requiredStringMax("Kreator", 255),
   packageId: optionalString(255, "Paket acuan"),
   title: requiredStringMax("Judul proyek", 255),
-  description: optionalString(2000, "Deskripsi scope"),
+  description: optionalString(2000, "Deskripsi lingkup"),
   price: currencyAmountIDR(MINIMUM_OFFER_PRICE),
   /**
    * Kolomnya `string(255)`, bukan datetime — jadi yang divalidasi adalah
    * bentuk ISO-nya, dan tanggalnya harus di masa depan. Deadline kemarin
    * membuat kreator menerima pekerjaan yang sudah lewat tenggat.
    */
-  deadline: requiredStringMax("Deadline", 255).refine(
+  deadline: requiredStringMax("Batas Waktu", 255).refine(
     (value) => {
       const parsed = Date.parse(value);
       return Number.isFinite(parsed) && parsed > Date.now();
     },
-    { message: "Deadline harus tanggal yang valid dan belum lewat." }
+    { message: "Batas Waktu harus tanggal yang valid dan belum lewat." }
   ),
   revisionLimit: integerCount("Jumlah revisi", 0).max(
     MAX_REVISION_LIMIT,

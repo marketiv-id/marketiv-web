@@ -1,27 +1,32 @@
+import {
+  getTransactionStatusLabel,
+  getTransactionTypeLabel,
+} from "@/lib/dashboard-labels";
+
 export const TRANSACTION_STATUS_OPTIONS = [
   { value: "all", label: "Semua Status" },
-  { value: "pending", label: "Menunggu Pembayaran" },
-  { value: "held", label: "Dalam Escrow" },
-  { value: "paid", label: "Sukses" },
-  { value: "released", label: "Dana Dicairkan" },
-  { value: "failed", label: "Gagal" },
-  { value: "refunded", label: "Refunded" },
+  { value: "pending", label: getTransactionStatusLabel("pending") },
+  { value: "held", label: getTransactionStatusLabel("held") },
+  { value: "paid", label: getTransactionStatusLabel("paid") },
+  { value: "released", label: getTransactionStatusLabel("released") },
+  { value: "failed", label: getTransactionStatusLabel("failed") },
+  { value: "refunded", label: getTransactionStatusLabel("refunded") },
 ] as const;
 
 export const TRANSACTION_TYPE_OPTIONS = [
-  { value: "all", label: "Semua Tipe" },
-  { value: "deposit", label: "Deposit / Top-up" },
-  { value: "payment", label: "Pembayaran" },
-  { value: "refund", label: "Refund / Pengembalian" },
-  { value: "release", label: "Pencairan Escrow" },
-  { value: "withdrawal", label: "Penarikan Dana" },
-  { value: "fee", label: "Platform Fee" },
+  { value: "all", label: "Semua Jenis" },
+  { value: "deposit", label: getTransactionTypeLabel("deposit") },
+  { value: "payment", label: getTransactionTypeLabel("payment") },
+  { value: "refund", label: getTransactionTypeLabel("refund") },
+  { value: "release", label: getTransactionTypeLabel("release") },
+  { value: "withdrawal", label: getTransactionTypeLabel("withdrawal") },
+  { value: "fee", label: getTransactionTypeLabel("fee") },
 ] as const;
 
 export const REFERENCE_TYPE_OPTIONS = [
   { value: "all", label: "Semua Fitur" },
-  { value: "campaign", label: "Campaign Mode" },
-  { value: "rate_card", label: "Rate Card Mode" },
+  { value: "campaign", label: "Mode Kampanye" },
+  { value: "rate_card", label: "Mode Paket Harga" },
 ] as const;
 
 export const SORT_OPTIONS = [
@@ -32,13 +37,13 @@ export const SORT_OPTIONS = [
 ] as const;
 
 export const EXPORT_FORMAT_OPTIONS = [
-  { value: "csv", label: "CSV File (.csv)" },
-  { value: "xlsx", label: "Excel Spreadsheet (.xlsx)" },
+  { value: "csv", label: "File CSV (.csv)" },
+  { value: "xlsx", label: "Berkas Excel (.xlsx)" },
 ] as const;
 
 export const EXPORT_TYPE_OPTIONS = [
   { value: "all", label: "Laporan Keuangan Lengkap" },
-  { value: "campaign", label: "Laporan Campaign Mode" },
-  { value: "rate_card", label: "Laporan Rate Card Mode" },
-  { value: "refund", label: "Laporan Refund & Batalkan" },
+  { value: "campaign", label: "Laporan Mode Kampanye" },
+  { value: "rate_card", label: "Laporan Mode Paket Harga" },
+  { value: "refund", label: "Laporan Pengembalian Dana & Pembatalan" },
 ] as const;

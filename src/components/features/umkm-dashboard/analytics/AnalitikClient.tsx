@@ -23,19 +23,21 @@ import {
   getCampaigns,
   getUmkmProfile,
 } from "@/services/umkm/umkm-dashboard.service";
-import type { UmkmDashboardSummary, Campaign } from "@/types/umkm-dashboard.types";
+import type { UmkmDashboardSummary, Campaign, CampaignStatus } from "@/types/umkm-dashboard.types";
 import { cn } from "@/lib/utils";
+import { formatCompactViews } from "@/lib/formatters";
+import { getCampaignStatusLabel } from "@/lib/dashboard-labels";
 
-const STATUS_MAP: Record<string, { label: string; cls: string }> = {
-  active:          { label: "Aktif",          cls: "bg-emerald-50 text-emerald-700 border-emerald-200/60" },
-  completed:       { label: "Selesai",         cls: "bg-blue-50   text-blue-700   border-blue-200/60"    },
-  draft:           { label: "Draft",           cls: "bg-neutral-100 text-neutral-500 border-neutral-200"   },
-  paused:          { label: "Dijeda",          cls: "bg-amber-50  text-amber-700  border-amber-200/60"   },
-  pending_payment: { label: "Menunggu Bayar",  cls: "bg-orange-50 text-orange-700 border-orange-200/60"  },
+const STATUS_MAP: Record<CampaignStatus, { cls: string }> = {
+  active:    { cls: "bg-emerald-50 text-emerald-700 border-emerald-200/60" },
+  completed: { cls: "bg-blue-50   text-blue-700   border-blue-200/60"    },
+  draft:     { cls: "bg-neutral-100 text-neutral-500 border-neutral-200"   },
+  paused:    { cls: "bg-amber-50  text-amber-700  border-amber-200/60"   },
 };
 
 function CampaignRow({ c }: { c: Campaign }) {
   const s = STATUS_MAP[c.status] ?? STATUS_MAP.draft;
+  const statusLabel = getCampaignStatusLabel(c.status);
   const pct = c.creatorQuota > 0 ? Math.min((c.usedQuota / c.creatorQuota) * 100, 100) : 0;
 
   return (
@@ -50,7 +52,7 @@ function CampaignRow({ c }: { c: Campaign }) {
               s.cls
             )}
           >
-            {s.label}
+            {statusLabel}
           </span>
         </div>
       </div>
@@ -120,7 +122,7 @@ export function AnalitikClient() {
     setSummary(summaryRes.data ?? null);
 
     if (!campaignsRes.success) {
-      setCampaignsError(campaignsRes.error ?? "Gagal memuat data campaign.");
+      setCampaignsError(campaignsRes.error ?? "Gagal memuat data kampanye.");
       setCampaigns([]);
     } else {
       setCampaignsError(null);
@@ -190,10 +192,10 @@ export function AnalitikClient() {
             Performa Bisnis
           </div>
           <h1 className="text-[1.8rem] font-[850] text-ink-900 leading-tight tracking-[-0.03em] font-display">
-            Analitik & Insight
+            Analitik & Wawasan
           </h1>
           <p className="text-[0.88rem] text-ink-500 font-[500] mb-4">
-            Ringkasan performa campaign dan aktivitas bisnis Anda di Marketiv.
+            Ringkasan performa kampanye dan aktivitas bisnis Anda di Marketiv.
           </p>
 
           {summary.isTruncated && (
@@ -205,10 +207,10 @@ export function AnalitikClient() {
           )}
         </div>
 
-        {/* ── KPI Baris 1 — Campaign & Views ── */}
+        {/* ── KPI Baris 1 — Kampanye & Tayangan ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <MetricCard
-            label="Campaign Aktif"
+            label="Kampanye Aktif"
             value={summary.activeCampaigns}
             icon={<Megaphone />}
             tone="success"
@@ -219,11 +221,11 @@ export function AnalitikClient() {
             }
           />
           <MetricCard
-            label="Total Views"
-            value={summary.totalViews}
+            label="Total Tayangan"
+            value={formatCompactViews(summary.totalViews)}
             icon={<Eye />}
             tone="info"
-            helper="views terverifikasi"
+            helper="tayangan terverifikasi"
           />
           <MetricCard
             label="Total Pengeluaran"
@@ -231,26 +233,26 @@ export function AnalitikClient() {
             icon={<Wallet />}
             currency="compact"
             tone="primary"
-            helper="campaign & kolaborasi Rate Card"
+            helper="kampanye & kolaborasi paket harga"
           />
           <MetricCard
-            label="Saldo Escrow"
+            label="Saldo Dana Aman"
             value={summary.escrowBalance}
             icon={<TrendingUp />}
             currency="compact"
             tone="warning"
-            helper="tertahan di campaign & order aktif"
+            helper="tertahan di kampanye & pesanan aktif"
           />
         </div>
 
         {/* ── KPI Baris 2 — Operasional ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <MetricCard
-            label="Submission Masuk"
+            label="Bukti Konten Masuk"
             value={summary.pendingSubmissions}
             icon={<Clock />}
             tone={summary.pendingSubmissions > 0 ? "danger" : "default"}
-            helper={summary.pendingSubmissions > 0 ? "menunggu review" : "semua sudah diulas"}
+            helper={summary.pendingSubmissions > 0 ? "menunggu tinjauan" : "semua sudah diulas"}
           />
           <MetricCard
             label="Negosiasi Aktif"
@@ -260,7 +262,7 @@ export function AnalitikClient() {
             helper="dengan kreator"
           />
           <MetricCard
-            label="Campaign Selesai"
+            label="Kampanye Selesai"
             value={summary.completedCampaigns}
             icon={<CheckCircle2 />}
             tone="success"
@@ -283,11 +285,11 @@ export function AnalitikClient() {
                 <Megaphone size={15} />
               </div>
               <h4 className="text-[0.92rem] font-[800] text-ink-900 font-display">
-                Semua Campaign
+                Semua Kampanye
               </h4>
             </div>
             <span className="text-[0.74rem] font-[700] text-ink-400 shrink-0">
-              {campaigns.length} campaign
+              {campaigns.length} kampanye
             </span>
           </div>
 
@@ -304,9 +306,9 @@ export function AnalitikClient() {
           ) : campaigns.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-10 text-center">
               <Megaphone size={32} className="text-neutral-200" />
-              <p className="text-[0.84rem] font-[600] text-ink-400">Belum ada campaign</p>
+              <p className="text-[0.84rem] font-[600] text-ink-400">Belum ada kampanye</p>
               <p className="text-[0.76rem] text-ink-300">
-                Buat campaign pertama Anda untuk mulai melihat data di sini.
+                Buat kampanye pertama Anda untuk mulai melihat data di sini.
               </p>
             </div>
           ) : (
@@ -318,7 +320,7 @@ export function AnalitikClient() {
           )}
         </div>
 
-        {/* ── Grafik Performa Views ── */}
+        {/* ── Grafik Performa Tayangan ── */}
         <PerformanceChart campaigns={campaigns} summary={summary} />
 
       </UmkmPageWrapper>

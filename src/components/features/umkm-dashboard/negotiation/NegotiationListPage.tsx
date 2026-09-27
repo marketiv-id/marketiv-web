@@ -55,7 +55,7 @@ export function NegotiationListPage() {
     setNegotiations((prev) =>
       prev.map((n) => (n.conversationId === order.conversationId ? { ...n, isArchived: next } : n))
     );
-    toast.success(next ? "Percakapan diarsipkan." : "Percakapan dikembalikan ke inbox.");
+    toast.success(next ? "Percakapan diarsipkan." : "Percakapan dikembalikan ke Kotak Masuk.");
   };
 
   useEffect(() => {
@@ -148,7 +148,7 @@ export function NegotiationListPage() {
           statusCounts={statusCounts}
         />
 
-      {/* Tab Inbox / Arsip */}
+      {/* Tab Kotak Masuk / Arsip */}
       <div className="flex items-center gap-2">
         <button
           onClick={() => setShowArchived(false)}
@@ -158,7 +158,7 @@ export function NegotiationListPage() {
               : "border-transparent bg-primary text-white"
           }`}
         >
-          Inbox
+          Kotak Masuk
         </button>
         <button
           onClick={() => setShowArchived(true)}

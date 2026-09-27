@@ -142,7 +142,7 @@ export function CreatorCard({ creator }: CreatorCardProps) {
           <div className="p-2 sm:p-2.5 rounded-xl bg-orange-50/60 border border-orange-200/50 flex flex-col gap-0.5 shadow-3xs min-w-0 overflow-hidden">
             <div className="flex items-center gap-1.5 text-orange-700 min-w-0">
               <TrendingUp size={12} className="shrink-0" />
-              <span className="text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider truncate">Engagement</span>
+              <span className="text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider truncate">Tingkat Keterlibatan</span>
             </div>
             <span className="font-display text-xs sm:text-sm font-black text-slate-900 leading-tight truncate">
               {engagementText}
@@ -153,7 +153,7 @@ export function CreatorCard({ creator }: CreatorCardProps) {
           <div className="p-2 sm:p-2.5 rounded-xl bg-blue-50/60 border border-blue-200/50 flex flex-col gap-0.5 shadow-3xs min-w-0 overflow-hidden">
             <div className="flex items-center gap-1.5 text-blue-700 min-w-0">
               <Briefcase size={12} className="shrink-0" />
-              <span className="text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider truncate">Order Selesai</span>
+              <span className="text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider truncate">Pesanan Selesai</span>
             </div>
             <span className="font-display text-xs sm:text-sm font-black text-slate-900 leading-tight truncate">
               {completedJobsText}

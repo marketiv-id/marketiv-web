@@ -62,13 +62,13 @@ export function CampaignTable({
       ...(isEditVisible
         ? [
             {
-              label: "Ubah Konsep",
+              label: "Ubah Draf",
               onClick: () => onEdit(campaign),
             },
           ]
         : []),
       {
-        label: "Salin Kampanye",
+        label: "Duplikasi Kampanye",
         onClick: () => onDuplicate(campaign),
       },
       {
@@ -87,7 +87,7 @@ export function CampaignTable({
       ...(isDeleteVisible
         ? [
             {
-              label: "Hapus Konsep",
+              label: "Hapus Draf",
               onClick: () => onDelete(campaign),
               tone: "danger" as const,
             },

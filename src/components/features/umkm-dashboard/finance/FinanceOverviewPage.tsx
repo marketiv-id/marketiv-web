@@ -167,8 +167,8 @@ export function FinanceOverviewPage() {
     setSuccessDialog({
       isOpen: true,
       title: "Laporan Berhasil Diunduh",
-      message: "Laporan Keuangan kemajuan P2MW Anda berhasil diekspor. File spreadsheet CSV telah terunduh ke direktori komputer Anda.",
-      details: `Filename: ${filename}`,
+      message: "Laporan keuangan kemajuan P2MW Anda berhasil diekspor. File CSV telah terunduh ke komputer Anda.",
+      details: `Nama file: ${filename}`,
     });
   };
 

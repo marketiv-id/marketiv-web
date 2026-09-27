@@ -23,7 +23,7 @@ export function JobPoolPageClient() {
     const res = await getCreatorJobs();
     if (!isActive()) return;
     if (!res.success || !res.data) {
-      setError(res.error ?? "Gagal memuat Job Pool.");
+      setError(res.error ?? "Gagal memuat Lowongan Kampanye.");
       setLoading(false);
       return;
     }

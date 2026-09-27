@@ -56,7 +56,7 @@ export function ClaimSuccessModal({
               <span>Berhasil Diklaim</span>
             </div>
             <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white leading-tight">
-              Job Berhasil Diklaim!
+              Lowongan Berhasil Diklaim!
             </h3>
             {campaignTitle && (
               <p className="text-xs font-semibold text-slate-300 truncate max-w-xs mx-auto">
@@ -78,7 +78,7 @@ export function ClaimSuccessModal({
               Langkah Selanjutnya
             </span>
             <p className="text-xs font-semibold text-violet-950 leading-relaxed">
-              Silakan baca brief produk, siapkan materi konten video TikTok Anda, dan ajukan link bukti tayang sebelum batas waktu.
+              Silakan baca arahan produk, siapkan materi konten video TikTok Anda, dan ajukan tautan bukti tayang sebelum batas waktu.
             </p>
           </div>
         </div>
@@ -90,7 +90,7 @@ export function ClaimSuccessModal({
             onClick={onClose}
             className="flex-1 min-h-[44px] px-4 rounded-full border border-neutral-200/80 bg-neutral-100/80 text-neutral-700 font-extrabold text-xs hover:bg-neutral-200 hover:text-neutral-900 transition-all cursor-pointer"
           >
-            Cari Job Lain
+            Cari Lowongan Lain
           </button>
 
           <Link

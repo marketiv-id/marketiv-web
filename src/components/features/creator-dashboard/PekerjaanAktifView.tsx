@@ -53,42 +53,42 @@ const CREATOR_ACTION_GRADIENT =
 
 const EMPTY_WORK_VARIANTS = [
   {
-    badge: "Slot Tersedia",
+    badge: "Kuota Tersedia",
     icon: Sparkles,
     iconBg: "bg-violet-50 text-violet-600 border-violet-200/70",
-    title: "Klaim Campaign Baru",
-    desc: "Jelajahi Job Pool dan ambil campaign Pay-Per-View yang sesuai dengan niche kontenmu.",
+    title: "Klaim Kampanye Baru",
+    desc: "Jelajahi Lowongan Kampanye dan ambil kampanye Bayar-per-Tayangan yang sesuai dengan kategori kontenmu.",
     href: "/dashboard/kreator/job-pool",
-    btnLabel: "Cari di Job Pool",
+    btnLabel: "Cari Lowongan",
     features: [
-      "Reward dihitung berbasis views",
+      "Imbalan dihitung berbasis tayangan",
       "Pengerjaan santai tanpa revisi ribet",
     ],
   },
   {
-    badge: "Tingkatkan Payout",
+    badge: "Tingkatkan Pencairan",
     icon: Zap,
     iconBg: "bg-blue-50 text-blue-600 border-blue-200/70",
     title: "Tambah Pekerjaan Aktif",
-    desc: "Klaim beberapa campaign sekaligus untuk melipatgandakan potensi reward penayangan videomu.",
+    desc: "Klaim beberapa kampanye sekaligus untuk melipatgandakan potensi imbalan penayangan videomu.",
     href: "/dashboard/kreator/job-pool",
-    btnLabel: "Jelajahi Campaign",
+    btnLabel: "Jelajahi Kampanye",
     features: [
-      "Audit views transparan oleh admin",
-      "Pencairan langsung ke dompet saldo",
+      "Audit tayangan transparan oleh admin",
+      "Pencairan langsung ke saldo dompet",
     ],
   },
   {
     badge: "Kolaborasi UMKM",
     icon: Briefcase,
     iconBg: "bg-indigo-50 text-indigo-600 border-indigo-200/70",
-    title: "Buka Jasa Rate Card",
-    desc: "Tawarkan paket konten fixed price langsung ke brand UMKM dengan kolaborasi endorsement.",
+    title: "Buka Paket Harga",
+    desc: "Tawarkan paket konten harga tetap langsung ke merek UMKM dengan kolaborasi dukungan.",
     href: "/dashboard/kreator/rate-card",
-    btnLabel: "Kelola Rate Card",
+    btnLabel: "Kelola Paket Harga",
     features: [
-      "Format Collab Post resmi IG/TikTok",
-      "Dana diamankan sistem Escrow",
+      "Format Postingan Kolaborasi resmi IG/TikTok",
+      "Dana ditahan sementara di sistem Dana Aman",
     ],
   },
 ];
@@ -171,19 +171,19 @@ function ActiveJobCard({
   const earningVal   = isValid
     ? (work.earnings ?? 0)
     : (work.ratePerThousandViews * auditedViews) / 1000;
-  const earningLabel = isValid ? "Pendapatan Dirilis" : "Estimasi Reward";
+  const earningLabel = isValid ? "Pendapatan Dirilis" : "Estimasi Imbalan";
 
   const platform = work.platform;
 
   // Key = label hasil getSubStatusLabel (lihat src/lib/creator-status.ts)
   const STATUS_CHIP: Record<string, string> = {
     "Belum Kirim":       "bg-blue-600/90 text-white border-blue-400/30",
-    "Menunggu Review":   "bg-amber-500/90 text-white border-amber-300/30",
+    "Menunggu Tinjauan":   "bg-amber-500/90 text-white border-amber-300/30",
     "Perlu Ditinjau":    "bg-amber-500/90 text-white border-amber-300/30",
     "Disetujui":         "bg-emerald-600/90 text-white border-emerald-400/30",
     "Selesai":           "bg-emerald-600/90 text-white border-emerald-400/30",
     "Ditolak":           "bg-red-600/90 text-white border-red-400/30",
-    "Terindikasi Fraud": "bg-red-600/90 text-white border-red-400/30",
+    "Terindikasi Kecurangan": "bg-red-600/90 text-white border-red-400/30",
   };
 
   return (
@@ -240,7 +240,7 @@ function ActiveJobCard({
             className="shrink-0 ml-2 px-2 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wider text-white border border-white/20"
             style={{ background: "rgba(255,255,255,.15)", backdropFilter: "blur(4px)" }}
           >
-            PPV
+            Bayar per Tayangan
           </span>
         </div>
 
@@ -268,7 +268,7 @@ function ActiveJobCard({
             <span className="font-display text-[1.1rem] font-black text-kreator-600 tracking-tight leading-none">
               {formatCurrency(work.ratePerThousandViews)}
             </span>
-            <span className="text-[10px] text-neutral-400 font-semibold">/ 1K views</span>
+            <span className="text-[10px] text-neutral-400 font-semibold">/ 1.000 tayangan</span>
           </div>
           <span className={cn(
             "flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold border shrink-0",
@@ -296,7 +296,7 @@ function ActiveJobCard({
             ⏱ {deadlineText}
           </span>
           <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-violet-50 text-violet-600 border border-violet-200/50">
-            {(isValid || isPending ? "Audit" : "Target")} {auditedViews.toLocaleString("id-ID")} views
+            {(isValid || isPending ? "Audit" : "Target")} {auditedViews.toLocaleString("id-ID")} tayangan
           </span>
         </div>
 
@@ -361,7 +361,7 @@ function ActiveJobCard({
         {/*
           Batalkan hanya selama belum ada bukti terkirim. Sengaja beremphasis
           rendah (teks, bukan tombol penuh) — aksi merusak yang jarang dipakai
-          tidak boleh menyaingi "Submit Bukti" secara visual.
+          tidak boleh menyaingi "Kirim Bukti" secara visual.
         */}
         {canUnclaim && (
           <button
@@ -408,7 +408,7 @@ export function PekerjaanAktifView({ initialWorks }: PekerjaanAktifViewProps) {
       throw new Error(res.error ?? "Gagal membatalkan pekerjaan.");
     }
     setWorks((prev) => prev.filter((w) => w.id !== target.id));
-    toast.success(`Pekerjaan "${target.title}" dibatalkan. Slot campaign kembali terbuka.`);
+    toast.success(`Pekerjaan "${target.title}" dibatalkan. Kuota kampanye kembali terbuka.`);
   };
 
   const getSubStatusLabel = (work: CreatorActiveWork): string => {
@@ -478,7 +478,7 @@ export function PekerjaanAktifView({ initialWorks }: PekerjaanAktifViewProps) {
         { value: "belum-submit", label: "Belum Kirim" },
         { value: "pending", label: "Menunggu Validasi" },
         { value: "valid", label: "Valid / Selesai" },
-        { value: "review-fraud", label: "Review / Fraud" },
+        { value: "review-fraud", label: "Tinjauan / Kecurangan" },
       ],
     },
     {
@@ -496,7 +496,7 @@ export function PekerjaanAktifView({ initialWorks }: PekerjaanAktifViewProps) {
       value: sortBy,
       onChange: setSortBy,
       options: [
-        { value: "nearest-deadline", label: "Deadline Terdekat" },
+        { value: "nearest-deadline", label: "Batas Waktu Terdekat" },
         { value: "latest-claimed", label: "Baru Diklaim" },
       ],
       prefix: "Urut",
@@ -511,7 +511,7 @@ export function PekerjaanAktifView({ initialWorks }: PekerjaanAktifViewProps) {
       <div>
         <CreatorPageHeader
           title="Pekerjaan Aktif"
-          description="Pantau campaign yang sudah kamu klaim."
+          description="Pantau kampanye yang sudah Anda klaim."
         />
 
         {/* Summary tiles */}
@@ -533,12 +533,12 @@ export function PekerjaanAktifView({ initialWorks }: PekerjaanAktifViewProps) {
           <MetricCard
             label="Valid"
             value={countValid}
-            helper="Reward siap cair"
+            helper="Imbalan siap cair"
             tone="success"
             icon={<CheckCircle2 />}
           />
           <MetricCard
-            label="Perlu Review / Fraud"
+            label="Perlu Tinjauan / Kecurangan"
             value={countReviewFraud}
             helper="Ada kendala konten"
             tone="danger"
@@ -551,7 +551,7 @@ export function PekerjaanAktifView({ initialWorks }: PekerjaanAktifViewProps) {
           <SearchToolbar
             searchValue={search}
             onSearchChange={setSearch}
-            searchPlaceholder="Cari pekerjaan / brand..."
+            searchPlaceholder="Cari pekerjaan / merek..."
             filters={toolbarFilters}
             onClearFilters={handleClearFilters}
             hasActiveFilters={hasActiveFilters}
@@ -598,14 +598,14 @@ export function PekerjaanAktifView({ initialWorks }: PekerjaanAktifViewProps) {
           title="Batalkan Pekerjaan Ini?"
           description={
             <>
-              Klaim kamu atas{" "}
+              Klaim Anda atas{" "}
               <span className="font-semibold text-text-primary">
                 &quot;{unclaimTarget.title}&quot;
               </span>{" "}
-              akan dilepas dan slotnya kembali terbuka untuk kreator lain.
+              akan dilepas dan kuotanya kembali terbuka untuk kreator lain.
             </>
           }
-          note="Kamu masih bisa mengambil campaign ini lagi selama slotnya belum penuh. Progres dan catatan pada pekerjaan ini tidak disimpan."
+          note="Anda masih bisa mengambil kampanye ini lagi selama kuotanya belum penuh. Progres dan catatan pada pekerjaan ini tidak disimpan."
           confirmLabel="Batalkan Pekerjaan"
           tone="warning"
           onConfirm={handleUnclaimConfirm}

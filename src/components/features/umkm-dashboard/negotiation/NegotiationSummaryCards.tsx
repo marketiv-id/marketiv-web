@@ -76,7 +76,7 @@ export function NegotiationSummaryCards({ negotiations }: NegotiationSummaryCard
       />
       <SummaryCard
         icon={Lock}
-        label="Dalam Escrow"
+        label="Dalam Dana Aman"
         value={String(escrowCount)}
         note="Proyek berjalan aman"
         iconBg="#f1fbf5"

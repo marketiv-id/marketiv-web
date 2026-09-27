@@ -73,11 +73,11 @@ export function PendingPaymentModal({
           {(transaction.feeAmount ?? 0) > 0 && (
             <div className="mt-3 pt-3 border-t border-orange-200/50 space-y-1.5">
               <div className="flex justify-between text-[11px] font-medium text-orange-800/80">
-                <span>Budget Target</span>
+                <span>Target Anggaran</span>
                 <span>{formatCurrency(transaction.baseAmount ?? transaction.amount)}</span>
               </div>
               <div className="flex justify-between text-[11px] font-medium text-orange-800/80">
-                <span>Platform Fee (2%)</span>
+                <span>Biaya Platform (2%)</span>
                 <span>{formatCurrency(transaction.feeAmount ?? 0)}</span>
               </div>
             </div>

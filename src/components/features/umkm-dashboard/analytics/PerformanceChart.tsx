@@ -119,7 +119,7 @@ export function PerformanceChart({ campaigns, summary }: PerformanceChartProps) 
           </div>
           <div>
             <h3 className="text-[0.92rem] sm:text-[1rem] font-[850] text-neutral-900 font-display leading-tight">
-              Grafik Performa Views
+              Grafik Performa Tayangan
             </h3>
             <p className="text-[0.72rem] sm:text-[0.78rem] text-neutral-500 font-medium">
               Pertumbuhan tayangan konten & efisiensi kampanye
@@ -204,7 +204,7 @@ export function PerformanceChart({ campaigns, summary }: PerformanceChartProps) 
           </span>
           <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800">
             <Sparkles size={13} className="text-orange-600 shrink-0" />
-            <span>{campaigns.length} Campaign Aktif</span>
+            <span>{campaigns.length} Kampanye Aktif</span>
           </div>
         </div>
       </div>
@@ -215,7 +215,7 @@ export function PerformanceChart({ campaigns, summary }: PerformanceChartProps) 
           <BarChart2 size={32} className="text-neutral-300" />
           <p className="text-[0.84rem] font-bold text-neutral-600">Belum ada tayangan kampanye</p>
           <p className="text-[0.74rem] text-neutral-400 max-w-xs">
-            Setelah kampanye aktif dan kreator mengunggah konten, grafik akan merekam performa secara real-time.
+            Setelah kampanye aktif dan kreator mengunggah konten, grafik akan merekam performa secara waktu nyata.
           </p>
         </div>
       ) : (
@@ -256,10 +256,10 @@ export function PerformanceChart({ campaigns, summary }: PerformanceChartProps) 
         </div>
       )}
 
-      {/* ── Footer Insight ── */}
+      {/* ── Footer Wawasan ── */}
       <div className="flex items-center gap-2 pt-2 border-t border-neutral-100 text-[0.72rem] text-neutral-400 font-medium">
         <Calendar size={12} className="shrink-0 text-neutral-400" />
-        <span>Data diperbarui secara otomatis setiap kali validasi submission selesai.</span>
+        <span>Data diperbarui secara otomatis setiap kali validasi bukti konten selesai.</span>
       </div>
     </div>
   );

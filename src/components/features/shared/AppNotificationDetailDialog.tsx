@@ -59,7 +59,7 @@ const CATEGORY_CONFIG: Record<
     iconColor: "text-blue-500",
   },
   rate_card: {
-    label: "Rate Card",
+    label: "Paket Harga",
     badgeClass: "bg-purple-50 text-purple-700 border-purple-200/80",
     icon: Tag,
     iconColor: "text-purple-500",

@@ -51,10 +51,10 @@ interface CreatorSidebarItem {
 }
 
 const SIDEBAR_ITEMS: CreatorSidebarItem[] = [
-  { label: "Overview", href: "/dashboard/kreator", icon: LayoutDashboard },
-  { label: "Job Pool", href: "/dashboard/kreator/job-pool", icon: Briefcase },
+  { label: "Ringkasan", href: "/dashboard/kreator", icon: LayoutDashboard },
+  { label: "Lowongan", href: "/dashboard/kreator/job-pool", icon: Briefcase },
   { label: "Pekerjaan Aktif", href: "/dashboard/kreator/pekerjaan-aktif", icon: PlayCircle },
-  { label: "Rate Card", href: "/dashboard/kreator/rate-card", icon: Tag },
+  { label: "Paket Harga", href: "/dashboard/kreator/rate-card", icon: Tag },
   { label: "Negosiasi", href: "/dashboard/kreator/negosiasi", icon: MessageCircle },
   { label: "Keuangan", href: "/dashboard/kreator/keuangan", icon: Wallet },
   { label: "Notifikasi", href: "/dashboard/kreator/notifikasi", icon: Bell },
@@ -375,7 +375,7 @@ export function CreatorDashboardSidebar({
             <span className="flex items-center gap-1 mt-[2px]">
               {isVerified && <BadgeCheck size={10.5} className="text-violet-400 shrink-0" />}
               <span className="text-[.66rem] font-[650] text-violet-300/80 capitalize">
-                Kreator {isVerified ? "Terverifikasi" : "Akun"}
+                Kreator {isVerified ? "Terverifikasi" : "Belum Terverifikasi"}
               </span>
             </span>
           </div>

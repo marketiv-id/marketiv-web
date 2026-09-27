@@ -214,7 +214,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
     }
 
     setUnclaimSucceeded(true);
-    toast.success(`Pekerjaan "${work.title}" dibatalkan. Slot campaign kembali terbuka.`);
+    toast.success(`Pekerjaan "${work.title}" dibatalkan. Kuota kampanye kembali terbuka.`);
     try {
       router.replace("/dashboard/kreator/pekerjaan-aktif");
     } catch {
@@ -272,12 +272,12 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
   const STATUS_BADGE: Record<string, string> = {
     "Belum Kirim": "bg-blue-500/25 text-blue-200 border-blue-400/30",
     "Menunggu Validasi": "bg-amber-500/25 text-amber-200 border-amber-400/30",
-    "Menunggu Review": "bg-amber-500/25 text-amber-200 border-amber-400/30",
+    "Menunggu Tinjauan": "bg-amber-500/25 text-amber-200 border-amber-400/30",
     "Perlu Ditinjau": "bg-amber-500/25 text-amber-200 border-amber-400/30",
     "Disetujui": "bg-emerald-500/25 text-emerald-200 border-emerald-400/30",
     "Selesai": "bg-emerald-500/25 text-emerald-200 border-emerald-400/30",
     "Ditolak": "bg-red-500/25 text-red-200 border-red-400/30",
-    "Terindikasi Fraud": "bg-red-500/25 text-red-200 border-red-400/30",
+    "Terindikasi Kecurangan": "bg-red-500/25 text-red-200 border-red-400/30",
   };
 
   return (
@@ -331,7 +331,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                   <span className="text-xs font-bold text-white/80">{work.brandName}</span>
                 </div>
                 <span className="px-2.5 py-1 rounded-full bg-white/15 border border-white/20 text-[10px] font-black uppercase tracking-wide text-white/80">
-                  CAMPAIGN
+                  KAMPANYE
                 </span>
                 <span
                   className={cn(
@@ -351,7 +351,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                 <span className="font-display text-[2.2rem] font-black text-white tracking-tight leading-none">
                   {formatCurrency(work.ratePerThousandViews)}
                 </span>
-                <span className="text-sm text-white/50 font-bold">/ 1K views</span>
+                <span className="text-sm text-white/50 font-bold">/ 1.000 tayangan</span>
               </div>
 
               <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -370,11 +370,11 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                   label={campaignPlatform.toUpperCase()}
                 />
                 <span className="w-1 h-1 rounded-full bg-white/25 shrink-0" />
-                <StatPill icon={<Eye className="w-3.5 h-3.5" />} label="CPM MODE" />
+                <StatPill icon={<Eye className="w-3.5 h-3.5" />} label="MODE TARIF PER 1.000 TAYANGAN" />
                 <span className="w-1 h-1 rounded-full bg-white/25 shrink-0" />
                 <StatPill
                   icon={<Users className="w-3.5 h-3.5" />}
-                  label={isValid ? `${auditedViews.toLocaleString("id-ID")} VIEW AUDIT` : "BELUM DIVERIFIKASI"}
+                  label={isValid ? `${auditedViews.toLocaleString("id-ID")} TAYANGAN TERAUDIT` : "BELUM DIVERIFIKASI"}
                 />
               </div>
 
@@ -450,7 +450,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                   : "border-transparent text-neutral-400 hover:text-neutral-600"
               )}
             >
-              {tab === "detail" ? "Detail" : "Video Kamu"}
+              {tab === "detail" ? "Detail" : "Video Anda"}
             </button>
           ))}
         </div>
@@ -461,7 +461,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
               {/* Brief card */}
               <div className="bg-white border border-neutral-200/60 rounded-[22px] p-6 space-y-5 shadow-[0_2px_12px_rgba(15,23,42,.04)]">
                 <h3 className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest border-b border-neutral-100 pb-3">
-                  Brief Kampanye &amp; Detail Aset
+                  Arahan Kampanye &amp; Detail Aset
                 </h3>
 
                 <div className="space-y-1.5">
@@ -471,7 +471,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {[
-                    { label: "Rate 1k Views", value: formatCurrency(work.ratePerThousandViews) },
+                    { label: "Tarif per 1.000 Tayangan", value: formatCurrency(work.ratePerThousandViews) },
                     {
                       label: "Tanggal Klaim",
                       value: new Date(work.claimedAt).toLocaleDateString("id-ID", { day: "numeric", month: "short" }),
@@ -481,7 +481,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                       value: new Date(work.deadline).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }),
                       danger: days < 0,
                     },
-                    { label: "Bukti Tayang", value: "URL Link" },
+                    { label: "Bukti Tayang", value: "Tautan URL" },
                   ].map((item) => (
                     <div key={item.label} className="p-3.5 bg-neutral-50 border border-neutral-200/30 rounded-[14px] text-center">
                       <span className="block text-[8px] font-bold text-neutral-400 uppercase tracking-wider">{item.label}</span>
@@ -495,8 +495,8 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                 {work.assetUrl && (
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-neutral-50 p-4 rounded-[16px] border border-neutral-200/30">
                     <div>
-                      <h5 className="text-[10px] font-extrabold text-neutral-500 uppercase tracking-wider">Materi Pendukung &amp; Logo Brand</h5>
-                      <p className="text-[11px] text-neutral-400 font-semibold mt-0.5">Aset yang dilampirkan UMKM untuk campaign ini.</p>
+                      <h5 className="text-[10px] font-extrabold text-neutral-500 uppercase tracking-wider">Materi Pendukung &amp; Logo Merek</h5>
+                      <p className="text-[11px] text-neutral-400 font-semibold mt-0.5">Aset yang dilampirkan UMKM untuk kampanye ini.</p>
                     </div>
                     <a
                       href={work.assetUrl}
@@ -517,10 +517,10 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                 <div id="submit-form-section" className="bg-white border border-neutral-200/60 rounded-[22px] p-6 shadow-[0_2px_12px_rgba(15,23,42,.04)] space-y-6">
                   <div>
                     <h3 className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest border-b border-neutral-100 pb-3">
-                      Kirim Bukti Tayang (Link URL)
+                      Kirim Bukti Tayang (Tautan URL)
                     </h3>
                     <p className="text-[11px] text-amber-700 font-bold mt-2 bg-amber-50 border border-amber-200/60 rounded-xl px-3 py-2 leading-relaxed">
-                      PASTIKAN video sudah kamu posting di platform {campaignPlatform === "tiktok" ? "TikTok" : "Instagram Reels"} terlebih dahulu.
+                      Pastikan video sudah Anda posting di platform {campaignPlatform === "tiktok" ? "TikTok" : "Instagram Reels"} terlebih dahulu.
                     </p>
                   </div>
 
@@ -530,8 +530,8 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                       <Info size={15} />
                     </div>
                     <div>
-                      <span className="block font-black text-violet-800 text-xs mb-0.5">Cara Hitung Reward</span>
-                      <span className="font-medium text-violet-700/90 text-[11.5px]">Reward = (jumlah views ÷ 1.000) × tarif per 1K views, dibulatkan ke bawah. Di bawah 1.000 views, reward = Rp0.</span>
+                      <span className="block font-black text-violet-800 text-xs mb-0.5">Cara Hitung Imbalan</span>
+                      <span className="font-medium text-violet-700/90 text-[11.5px]">Imbalan = (jumlah tayangan ÷ 1.000) × tarif per 1.000 tayangan, dibulatkan ke bawah. Di bawah 1.000 tayangan, imbalan = Rp0.</span>
                     </div>
                   </div>
 
@@ -546,7 +546,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                     {/* Read-only Platform context (Derived from Campaign) */}
                     <div className="space-y-1.5">
                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
-                        Platform Campaign
+                        Platform Kampanye
                       </label>
                       <div className="px-4 py-3 bg-slate-50 border border-slate-200/90 rounded-2xl font-bold text-xs text-slate-800 flex items-center justify-between">
                         <span className="flex items-center gap-2">
@@ -554,7 +554,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                           <span>{campaignPlatform === "tiktok" ? "TikTok Video" : "Instagram Reels"}</span>
                         </span>
                         <span className="text-[9px] font-black text-slate-500 uppercase bg-white px-2 py-0.5 rounded-lg border border-slate-200 shadow-3xs">
-                          Read-Only
+                          Hanya Baca
                         </span>
                       </div>
                     </div>
@@ -581,7 +581,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                       />
                       <p className="text-[10px] text-amber-700 font-bold leading-relaxed flex items-center gap-1.5 pt-0.5">
                         <span>⚠️</span>
-                        <span>Campaign Mode: Dilarang mengunggah file video. Cukup masukkan tautan URL video publik di atas.</span>
+                        <span>Mode Kampanye: Dilarang mengunggah berkas video. Cukup masukkan tautan URL video publik di atas.</span>
                       </p>
                     </div>
 
@@ -592,7 +592,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                       </label>
                       <textarea
                         rows={3}
-                        placeholder="Contoh: Video sudah ditayangkan menggunakan hashtag brand..."
+                        placeholder="Contoh: Video sudah ditayangkan menggunakan tagar merek..."
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         className="w-full px-4 py-3 bg-slate-50/70 border border-slate-200/90 rounded-2xl text-xs sm:text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all font-semibold text-slate-900 placeholder:text-slate-400 resize-none"
@@ -623,7 +623,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                         </span>
                       </div>
                       <div className="p-4 bg-neutral-50 border border-neutral-200/30 rounded-[14px] md:col-span-2">
-                        <span className="block text-[8px] font-bold text-neutral-400 uppercase tracking-wider">Postingan Video URL</span>
+                        <span className="block text-[8px] font-bold text-neutral-400 uppercase tracking-wider">Tautan Video Postingan</span>
                         <a
                           href={work.contentUrl}
                           target="_blank"
@@ -657,20 +657,20 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                   {/* Earnings / views card */}
                   <div className="bg-white border border-neutral-200/60 rounded-[22px] p-6 shadow-[0_2px_12px_rgba(15,23,42,.04)] space-y-5">
                     <h3 className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest border-b border-neutral-100 pb-3">
-                      Estimasi &amp; Data Views Tayangan
+                      Estimasi &amp; Data Tayangan Video
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="p-4 bg-neutral-50 border border-neutral-200/30 rounded-[14px] text-center">
                         <Eye className="w-4 h-4 text-neutral-400 mx-auto mb-2" />
-                        <span className="block text-[8px] font-bold text-neutral-400 uppercase tracking-wider">Jumlah Views</span>
+                        <span className="block text-[8px] font-bold text-neutral-400 uppercase tracking-wider">Jumlah Tayangan</span>
                         <span className="block text-base font-black text-neutral-900 mt-1">
                           {isValid ? auditedViews.toLocaleString("id-ID") : "Belum diverifikasi"}
                         </span>
                       </div>
                       <div className="p-4 bg-neutral-50 border border-neutral-200/30 rounded-[14px] text-center">
                         <Banknote className="w-4 h-4 text-neutral-400 mx-auto mb-2" />
-                        <span className="block text-[8px] font-bold text-neutral-400 uppercase tracking-wider">Rate per 1k Views</span>
+                        <span className="block text-[8px] font-bold text-neutral-400 uppercase tracking-wider">Tarif per 1.000 Tayangan</span>
                         <span className="block text-base font-black text-neutral-900 mt-1">
                           {formatCurrency(work.ratePerThousandViews)}
                         </span>
@@ -684,7 +684,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                       >
                         <CheckCircle className="w-4 h-4 text-violet-500 mx-auto mb-2" />
                         <span className="block text-[8px] font-bold text-violet-500 uppercase tracking-wider">
-                          {isValid ? "Reward Terhitung" : "Estimasi Reward"}
+                          {isValid ? "Imbalan Terhitung" : "Estimasi Imbalan"}
                         </span>
                         <span className="block text-base font-black text-kreator-600 mt-1">
                           {isValid ? formatCurrency(earningsEstimate) : "Belum dihitung"}
@@ -697,7 +697,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                       style={{ background: "color-mix(in srgb, var(--color-kreator-600) 4%, transparent)", borderColor: "color-mix(in srgb, var(--color-kreator-600) 15%, transparent)" }}
                     >
                       <Info className="w-4 h-4 shrink-0 text-violet-500 mt-0.5" />
-                      <span>Reward dihitung oleh sistem setelah bukti tayang diverifikasi oleh Admin Marketiv: floor(views ÷ 1.000) × tarif per 1K views. Views di bawah 1.000 = Rp0.</span>
+                      <span>Imbalan dihitung oleh sistem setelah bukti tayang diverifikasi oleh Admin Marketiv: tayangan dibagi 1.000, dibulatkan ke bawah, lalu dikali tarif per 1.000 tayangan. Tayangan di bawah 1.000 = Rp0.</span>
                     </div>
                   </div>
                 </div>
@@ -709,7 +709,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
               {/* Timeline */}
               <div className="bg-white border border-neutral-200/60 rounded-[22px] p-6 shadow-[0_2px_12px_rgba(15,23,42,.04)] space-y-5">
                 <h4 className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest border-b border-neutral-100 pb-3">
-                  Timeline Progres Bukti
+                  Riwayat Progres Bukti
                 </h4>
 
                 <div className="relative pl-7 space-y-6 text-xs">
@@ -720,7 +720,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                     <div className="absolute -left-7 top-0.5 w-5 h-5 rounded-full bg-emerald-500 border-[3px] border-white shadow-sm flex items-center justify-center">
                       <div className="w-1.5 h-1.5 rounded-full bg-white" />
                     </div>
-                    <h5 className="font-extrabold text-neutral-900 leading-tight">Campaign Diklaim</h5>
+                    <h5 className="font-extrabold text-neutral-900 leading-tight">Kampanye Diklaim</h5>
                     <p className="text-[10px] text-neutral-400 font-bold mt-0.5">
                       {new Date(work.claimedAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
                     </p>
@@ -847,13 +847,13 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
               >
                 <h4 className="text-[10px] font-extrabold text-violet-700 uppercase tracking-widest flex items-center gap-1.5">
                   <Info className="w-3.5 h-3.5" />
-                  Standar Campaign Mode
+                  Standar Mode Kampanye
                 </h4>
                 <ul className="space-y-2 text-[10px] text-violet-900 font-semibold leading-relaxed">
                   {[
                     "Modul chat ditiadakan demi efisiensi pengerjaan.",
                     "Verifikasi jumlah tayangan dilakukan oleh Admin Marketiv saat memvalidasi bukti tayang.",
-                    "Pertanyaan teknis dapat diajukan ke Admin via menu support.",
+                    "Pertanyaan teknis dapat diajukan ke Admin via menu Bantuan.",
                   ].map((rule) => (
                     <li key={rule} className="flex items-start gap-1.5">
                       <span className="text-violet-400 shrink-0 mt-0.5">•</span>
@@ -877,7 +877,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                   <div className="space-y-4">
                     <div className="p-5 bg-neutral-50 rounded-[16px] border border-neutral-200/30 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
                       <div className="space-y-1">
-                        <h4 className="text-xs font-black text-neutral-900">URL Bukti Tayang</h4>
+                        <h4 className="text-xs font-black text-neutral-900">Tautan Bukti Tayang</h4>
                         <a
                           href={work.contentUrl}
                           target="_blank"
@@ -890,13 +890,13 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                       </div>
                       <div className="flex gap-5 shrink-0">
                         <div className="text-center">
-                          <span className="block text-[8px] font-bold text-neutral-400 uppercase tracking-wider">Views</span>
+                          <span className="block text-[8px] font-bold text-neutral-400 uppercase tracking-wider">Tayangan</span>
                           <span className="block text-sm font-black text-neutral-900 mt-0.5">
                             {isValid ? auditedViews.toLocaleString("id-ID") : "Belum diverifikasi"}
                           </span>
                         </div>
                         <div className="text-center">
-                          <span className="block text-[8px] font-bold text-neutral-400 uppercase tracking-wider">Reward</span>
+                          <span className="block text-[8px] font-bold text-neutral-400 uppercase tracking-wider">Imbalan</span>
                           <span className="block text-sm font-black text-kreator-600 mt-0.5">
                             {isValid ? formatCurrency(earningsEstimate) : "Belum dihitung"}
                           </span>
@@ -909,7 +909,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                       style={{ background: "color-mix(in srgb, var(--color-kreator-600) 4%, transparent)", borderColor: "color-mix(in srgb, var(--color-kreator-600) 15%, transparent)" }}
                     >
                       <Info className="w-4 h-4 shrink-0 text-violet-500 mt-0.5" />
-                      <span>Admin Marketiv akan memvalidasi jumlah views video ini saat menyetujui bukti tayang. Pastikan video tetap publik minimal 30 hari pasca persetujuan agar reward tidak dibatalkan.</span>
+                      <span>Admin Marketiv akan memvalidasi jumlah tayangan video ini saat menyetujui bukti tayang. Pastikan video tetap publik minimal 30 hari pasca persetujuan agar imbalan tidak dibatalkan.</span>
                     </div>
                   </div>
                 ) : (
@@ -919,7 +919,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                     </div>
                     <div>
                       <h4 className="text-xs font-black text-neutral-900">Belum ada video terkirim</h4>
-                      <p className="text-[11px] text-neutral-400 font-semibold mt-1">Kirim URL video Anda terlebih dahulu di tab Detail.</p>
+                      <p className="text-[11px] text-neutral-400 font-semibold mt-1">Kirim tautan video Anda terlebih dahulu di tab Detail.</p>
                     </div>
                   </div>
                 )}
@@ -928,9 +928,9 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
 
             <div className="lg:col-span-4">
               <div className="bg-neutral-50 border border-neutral-200/50 rounded-[22px] p-6 space-y-3">
-                <h4 className="text-[10px] font-extrabold text-neutral-500 uppercase tracking-widest">Cara Kerja Verifikasi Views</h4>
+                <h4 className="text-[10px] font-extrabold text-neutral-500 uppercase tracking-widest">Cara Kerja Verifikasi Tayangan</h4>
                 <p className="text-[11px] text-neutral-500 font-semibold leading-relaxed">
-                  Admin Marketiv mengunci jumlah views video ini saat menyetujui bukti tayang. Angka tersebut dikunci dan menjadi dasar perhitungan reward.
+                  Admin Marketiv mengunci jumlah tayangan video ini saat menyetujui bukti tayang. Angka tersebut dikunci dan menjadi dasar perhitungan imbalan.
                 </p>
               </div>
             </div>
@@ -942,10 +942,10 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
       <ModalFrame
         isOpen={isConfirmOpen}
         title="Konfirmasi Pengiriman Bukti"
-        description={`Yakin ingin mengirim URL ${campaignPlatform === "tiktok" ? "TikTok Video" : "Instagram Reels"} berikut sebagai bukti tayang?`}
+        description={`Yakin ingin mengirim tautan ${campaignPlatform === "tiktok" ? "TikTok Video" : "Instagram Reels"} berikut sebagai bukti tayang?`}
         onClose={() => setIsConfirmOpen(false)}
         confirmLabel="Ya, Kirim Bukti"
-        cancelLabel="Cek Ulang URL"
+        cancelLabel="Cek Ulang Tautan"
         onConfirm={executeSubmit}
       >
         <div className="mt-3 bg-neutral-50 border border-neutral-200 rounded-[14px] p-4 break-all text-xs font-semibold text-kreator-600">
@@ -959,11 +959,11 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
         title="Batalkan pekerjaan ini?"
         description={
           <>
-            Klaim kamu atas <span className="font-semibold text-text-primary">&quot;{work.title}&quot;</span> akan
-            dilepas dan slotnya kembali terbuka untuk kreator lain.
+            Klaim Anda atas <span className="font-semibold text-text-primary">&quot;{work.title}&quot;</span> akan
+            dilepas dan kuotanya kembali terbuka untuk kreator lain.
           </>
         }
-        note="Kamu masih bisa mengambil campaign ini lagi selama slotnya belum penuh."
+        note="Anda masih bisa mengambil kampanye ini lagi selama kuotanya belum penuh."
         confirmLabel="Batalkan Pekerjaan"
         tone="warning"
         onConfirm={handleUnclaimConfirm}
@@ -1019,7 +1019,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-black text-slate-900 leading-snug">Mengirim Bukti Posting</p>
-                <p className="text-[11px] font-medium text-slate-500 leading-tight">Menyimpan URL tayang ke sistem...</p>
+                <p className="text-[11px] font-medium text-slate-500 leading-tight">Menyimpan tautan tayang ke sistem...</p>
               </div>
             </div>
           </ResponsiveModalContent>

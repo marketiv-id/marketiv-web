@@ -22,7 +22,7 @@ export function CampaignDetailHeader({
   const getPrimaryAction = () => {
     switch (campaign.status) {
       case "draft":
-        return { label: "Lanjutkan Draft", onClick: onEditClick };
+        return { label: "Lanjutkan Draf", onClick: onEditClick };
       case "active":
         return { label: "Unduh Laporan Kampanye", onClick: onExportClick };
       case "paused":
@@ -77,7 +77,7 @@ export function CampaignDetailHeader({
                 onClick={onCancelClick}
                 className="text-xs"
               >
-                Hentikan Kampanye
+                Hentikan Sementara Kampanye
               </DashboardButton>
             )}
             <DashboardButton

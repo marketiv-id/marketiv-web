@@ -71,9 +71,9 @@ describe("PerformanceChart", () => {
     });
 
     const text = host.textContent || "";
-    expect(text).toContain("Grafik Performa Views");
+    expect(text).toContain("Grafik Performa Tayangan");
     expect(text).toContain("Pertumbuhan tayangan konten & efisiensi kampanye");
-    expect(text).toContain("1 Campaign Aktif");
+    expect(text).toContain("1 Kampanye Aktif");
     expect(host.querySelector("[data-testid='mock-responsive-container']")).not.toBeNull();
   });
 

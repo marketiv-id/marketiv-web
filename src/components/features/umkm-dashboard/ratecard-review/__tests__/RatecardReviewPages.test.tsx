@@ -121,10 +121,10 @@ describe("RatecardReviewListPage", () => {
     const { RatecardReviewListPage } = await import("../RatecardReviewListPage");
     await render(<RatecardReviewListPage />);
 
-    expect(document.querySelector('[aria-label="Memuat review pekerjaan"]')).not.toBeNull();
+    expect(document.querySelector('[aria-label="Memuat tinjauan pekerjaan"]')).not.toBeNull();
     await act(async () => resolveList({ success: true, data: [] }));
-    expect(document.body.textContent).toContain("Belum ada pekerjaan Rate Card untuk ditinjau.");
-    expect(document.body.textContent).toContain("Hasil kerja Creator akan muncul di sini setelah dikirim.");
+    expect(document.body.textContent).toContain("Belum ada pekerjaan Paket Harga untuk ditinjau.");
+    expect(document.body.textContent).toContain("Hasil kerja Kreator akan muncul di sini setelah dikirim.");
 
     await act(async () => root?.unmount());
     host.remove();
@@ -192,7 +192,7 @@ describe("RatecardReviewDetailPage", () => {
       }),
     });
     await render(<RatecardReviewDetailPage orderId="order-1" />);
-    expect(document.body.textContent).toContain("Menunggu Creator Mengirim Versi Perbaikan");
+    expect(document.body.textContent).toContain("Menunggu Kreator Mengirim Versi Perbaikan");
     expect(button("Setujui Hasil Kerja")).toBeUndefined();
 
     await act(async () => root?.unmount());
@@ -202,7 +202,7 @@ describe("RatecardReviewDetailPage", () => {
       data: makeReview({ orderStatus: "completed", escrowStatus: "released" }),
     });
     await render(<RatecardReviewDetailPage orderId="order-1" />);
-    expect(document.body.textContent).toContain("Escrow dilepas");
+    expect(document.body.textContent).toContain("Dana Dicairkan");
     expect(button("Minta Revisi")).toBeUndefined();
   });
 
@@ -216,7 +216,7 @@ describe("RatecardReviewDetailPage", () => {
     expect(button("Minta Revisi")).not.toBeUndefined();
     expect(document.querySelector('a[href="https://example.com/v1"]')?.closest("section")?.querySelector("button")).toBeNull();
     await act(async () => button("Setujui Hasil Kerja")?.click());
-    expect(document.body.textContent).toContain("melanjutkan settlement");
+    expect(document.body.textContent).toContain("melanjutkan penyelesaian");
     await act(async () => (document.querySelector('input[type="checkbox"]') as HTMLInputElement).click());
     await act(async () => button("Setujui & Lanjutkan")?.click());
 

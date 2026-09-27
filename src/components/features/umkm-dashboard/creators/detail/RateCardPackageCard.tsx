@@ -103,7 +103,7 @@ export function RateCardPackageCard({ pkg, onSelectPackage }: RateCardPackageCar
               <span className="text-xs font-black text-slate-900 truncate block">
                 {pkg.revisionLimit != null && pkg.revisionLimit > 0
                   ? `${pkg.revisionLimit}x Revisi`
-                  : "Revisi Brief"}
+                  : "Revisi Arahan"}
               </span>
             </div>
           </div>

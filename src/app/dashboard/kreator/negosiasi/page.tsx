@@ -1,5 +1,9 @@
 import { NegosiasiView } from "@/components/features/creator-dashboard/NegosiasiView";
 
+export const metadata = {
+  title: "Negosiasi Paket Harga | Dashboard Kreator | Marketiv",
+};
+
 /**
  * Data diambil di dalam NegosiasiView (klien), bukan di sini. DTO
  * `get-creator-negotiations` menegakkan kepemilikan lewat header

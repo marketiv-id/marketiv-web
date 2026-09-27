@@ -15,15 +15,15 @@ export function CampaignWizardHeader({ onSaveDraft, onCancel }: CampaignWizardHe
         {/* Section label */}
         <div className="inline-flex items-center gap-2 text-orange-600 text-[.72rem] font-[900] tracking-[.12em] uppercase mb-1.5">
           <span className="block w-[16px] h-0.5 rounded-full bg-orange-500 shrink-0" />
-          Wizard Campaign
+          Kampanye
         </div>
 
         {/* Title */}
         <h2 data-onboarding="campaign-create-heading" className="font-display text-[clamp(1.4rem,2.4vw,1.9rem)] font-bold tracking-[-0.065em] text-ink-950 m-0 mb-1.5 leading-none">
-          Buat Campaign Baru
+          Buat Kampanye Baru
         </h2>
         <p className="text-ink-500 text-[.85rem] m-0 max-w-xl leading-relaxed">
-          Buat campaign berbasis views, atur brief, aset, budget, dan kuota kreator dalam satu alur.
+          Buat kampanye berbasis tayangan, atur arahan, aset, anggaran, dan kuota kreator dalam satu alur.
         </p>
       </div>
 
@@ -42,7 +42,7 @@ export function CampaignWizardHeader({ onSaveDraft, onCancel }: CampaignWizardHe
           className="inline-flex items-center gap-2 min-h-[42px] px-5 rounded-full border border-orange-200 bg-gradient-to-b from-orange-50 to-orange-100/70 text-orange-700 text-[.84rem] font-extrabold tracking-[.01em] shadow-[0_2px_8px_rgba(234,88,12,0.08)] hover:bg-orange-100 hover:border-orange-300 hover:-translate-y-px active:scale-[.98] transition-all cursor-pointer"
         >
           <Save size={14} className="text-orange-600 shrink-0" />
-          <span>Simpan Draft</span>
+          <span>Simpan Draf</span>
         </button>
       </div>
     </div>

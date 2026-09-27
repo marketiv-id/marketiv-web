@@ -18,9 +18,9 @@ afterEach(async () => {
 describe("DeliverableReviewCard", () => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   it.each([
-    ["pending", "Hasil kerja telah dikirim", "Menunggu Validasi Marketiv", "Buka Review Pekerjaan"],
-    ["valid", "Hasil kerja siap ditinjau", "Validasi Marketiv selesai", "Review Sekarang"],
-    ["revision", "Revisi telah diminta", "Menunggu Creator mengirim versi baru", "Lihat Review"],
+    ["pending", "Hasil kerja telah dikirim", "Menunggu Validasi Marketiv", "Buka Tinjauan Pekerjaan"],
+    ["valid", "Hasil kerja siap ditinjau", "Validasi Marketiv selesai", "Tinjau Sekarang"],
+    ["revision", "Revisi telah diminta", "Menunggu Kreator mengirim versi baru", "Lihat Tinjauan"],
     ["completed", "Pekerjaan selesai", "Hasil akhir tersedia", "Lihat Hasil Akhir"],
   ] as const)("links %s state to dedicated order review", async (state, title, subtitle, cta) => {
     const { DeliverableReviewCard } = await import("../DeliverableReviewCard");

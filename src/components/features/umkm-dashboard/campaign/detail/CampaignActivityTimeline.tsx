@@ -16,7 +16,7 @@ export function CampaignActivityTimeline({ campaign }: CampaignActivityTimelineP
     const baseEvents = [
       {
         title: "Kampanye Dibuat",
-        desc: "Kampanye disimpan sebagai konsep.",
+        desc: "Kampanye disimpan sebagai draf.",
         date: campaign.createdAt,
         type: "create",
       },

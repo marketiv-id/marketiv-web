@@ -26,21 +26,21 @@ import { TERMS_CHAPTERS } from "@/content/terms";
 type TabType = "rules" | "faq" | "terms";
 
 const POPULAR_KEYWORDS = [
-  "withdrawal",
-  "escrow",
+  "penarikan",
+  "dana aman",
   "5%",
-  "collab",
-  "auto-approve",
-  "dispute",
+  "kolaborasi",
+  "setujui otomatis",
+  "sengketa",
   "pasal 11",
-  "kyc",
+  "verifikasi identitas",
 ];
 
 const RULES_DATA = [
   {
     id: 1,
-    title: "Konten Wajib Orisinal & Mengikuti Brief",
-    desc: "Setiap video harus karya orisinal milikmu dan sesuai dengan panduan (Brief) kampanye. Dilarang menjiplak atau mengklaim karya Kreator lain.",
+    title: "Konten Wajib Orisinal & Mengikuti Arahan",
+    desc: "Setiap video harus karya orisinal milik Anda dan sesuai dengan Arahan kampanye. Dilarang menjiplak atau mengklaim karya Kreator lain.",
     Icon: FileText,
     color: "#2563eb",
     bg: "#eff6ff",
@@ -48,8 +48,8 @@ const RULES_DATA = [
   },
   {
     id: 2,
-    title: "Submit URL Video Maksimum 24 Jam Setelah Posting",
-    desc: "Di Campaign Mode, kirimkan URL tayang sosial media (TikTok/Instagram) dalam 24 jam sejak diposting. Dilarang mengunggah file video mentah ke sistem.",
+    title: "Kirim Tautan Video Maksimum 24 Jam Setelah Posting",
+    desc: "Di Mode Kampanye, kirimkan tautan tayang media sosial (TikTok/Instagram) dalam 24 jam sejak diposting. Dilarang mengunggah berkas video mentah ke sistem.",
     Icon: Clock,
     color: "#16a34a",
     bg: "#f0fdf4",
@@ -57,8 +57,8 @@ const RULES_DATA = [
   },
   {
     id: 3,
-    title: "Wajib Pakai Seluruh Hashtag Kampanye",
-    desc: "Caption video harus mengandung seluruh hashtag wajib pada saat pengajuan. Tanpa hashtag wajib, video tidak akan terdeteksi oleh sistem.",
+    title: "Wajib Pakai Seluruh Tagar Kampanye",
+    desc: "Caption video harus mengandung seluruh tagar wajib pada saat pengajuan. Tanpa tagar wajib, video tidak akan terdeteksi oleh sistem.",
     Icon: Hash,
     color: "#d97706",
     bg: "#fef3c7",
@@ -66,8 +66,8 @@ const RULES_DATA = [
   },
   {
     id: 4,
-    title: "Campaign Mode Is Zero Chat (Tanpa Revisi)",
-    desc: "Di Campaign Mode, tidak ada fitur chat, revisi, atau approval. Kamu klaim job, edit video, dan posting di akun sosmed milikmu sendiri.",
+    title: "Mode Kampanye Tanpa Obrolan (Tanpa Revisi)",
+    desc: "Di Mode Kampanye, tidak ada fitur obrolan, revisi, atau persetujuan. Anda mengambil lowongan, mengedit video, dan memposting di akun media sosial milik Anda sendiri.",
     Icon: Ban,
     color: "#dc2626",
     bg: "#fee2e2",
@@ -75,8 +75,8 @@ const RULES_DATA = [
   },
   {
     id: 5,
-    title: "Rate Card Mode Wajib Collab Post",
-    desc: "Untuk pesanan Rate Card Mode, konten WAJIB dipublikasikan menggunakan fitur Collab Post (Instagram/TikTok) agar UMKM mendapat direct traffic.",
+    title: "Mode Paket Harga Wajib Postingan Kolaborasi",
+    desc: "Untuk pesanan Mode Paket Harga, konten WAJIB dipublikasikan menggunakan fitur Postingan Kolaborasi (Instagram/TikTok) agar UMKM mendapat trafik langsung.",
     Icon: Share2,
     color: "#0891b2",
     bg: "#ecfeff",
@@ -84,8 +84,8 @@ const RULES_DATA = [
   },
   {
     id: 6,
-    title: "Tidak Ada Manipulasi Views, Bot, atau Boosting Ilegal",
-    desc: "Dilarang menggunakan bot, view farm, beli views, atau ads boosting tidak sah. Video dengan views palsu akan dibatalkan reward-nya dan akun berisiko banned.",
+    title: "Tidak Ada Manipulasi Tayangan, Bot, atau Penggalakan Iklan Ilegal",
+    desc: "Dilarang menggunakan bot, ladang tayangan, membeli tayangan, atau penggalakan iklan tidak sah. Video dengan tayangan palsu akan dibatalkan imbalannya dan akun berisiko ditangguhkan.",
     Icon: ShieldAlert,
     color: "#7c3aed",
     bg: "#faf5ff",
@@ -93,8 +93,8 @@ const RULES_DATA = [
   },
   {
     id: 7,
-    title: "Perlindungan Dana via Sistem Escrow",
-    desc: "Seluruh pembayaran pesanan ditahan aman di Escrow Marketiv sampai hasil kerja tervalidasi atau disetujui, melindungi Kreator dari risiko tidak dibayar.",
+    title: "Perlindungan Dana lewat Sistem Dana Aman",
+    desc: "Seluruh pembayaran pesanan ditahan aman di Dana Aman Marketiv (dana ditahan sementara) sampai hasil kerja tervalidasi atau disetujui, melindungi Kreator dari risiko tidak dibayar.",
     Icon: ShieldCheck,
     color: "#16a34a",
     bg: "#f0fdf4",
@@ -105,27 +105,27 @@ const RULES_DATA = [
 const FAQ_DATA = [
   {
     question: "Berapa potongan biaya platform untuk Kreator?",
-    answer: "Biaya platform resmi Marketiv adalah 5% per transaksi (Pasal 9.1 S&K v3.1). Di Campaign Mode, Kreator menerima reward 100% penuh tanpa potongan (5% dibayar UMKM di awal). Di Rate Card Mode, biaya platform 5% dipotong dari penghasilan Kreator saat pelepasan dana Escrow.",
+    answer: "Biaya platform resmi Marketiv adalah 5% per transaksi (Pasal 9.1 S&K v3.1). Di Mode Kampanye, Kreator menerima imbalan 100% penuh tanpa potongan (5% dibayar UMKM di awal). Di Mode Paket Harga, biaya platform 5% dipotong dari penghasilan Kreator saat pencairan dana dari sistem Dana Aman.",
   },
   {
-    question: "Berapa minimum penarikan dana (Withdrawal)?",
-    answer: "Minimum penarikan saldo adalah Rp 50.000 per transaksi, dengan batas maksimal 3 kali penarikan per hari (Pasal 11). Penarikan nominal Rp 5.000.000 atau lebih membutuhkan verifikasi KYC manual via WhatsApp Admin.",
+    question: "Berapa minimum penarikan dana?",
+    answer: "Minimum penarikan saldo adalah Rp 50.000 per transaksi, dengan batas maksimal 3 kali penarikan per hari (Pasal 11). Penarikan nominal Rp 5.000.000 atau lebih membutuhkan Verifikasi Identitas manual via WhatsApp Admin.",
   },
   {
-    question: "Kapan saldo Escrow Rate Card cair?",
-    answer: "Saldo Escrow cair setelah UMKM menyetujui hasil kerja secara manual, ATAU secara otomatis oleh sistem (Auto-Approve) dalam 3 hari kalender jika UMKM tidak memberikan tanggapan (Pasal 7.2.g).",
+    question: "Kapan saldo Dana Aman Paket Harga cair?",
+    answer: "Saldo Dana Aman cair setelah UMKM menyetujui hasil kerja secara manual, ATAU secara otomatis oleh sistem (Setujui Otomatis) dalam 3 hari kalender jika UMKM tidak memberikan tanggapan (Pasal 7.2.g).",
   },
   {
     question: "Bagaimana jika ada masalah pembayaran atau sengketa?",
-    answer: "Kamu dilindungi oleh sistem Dispute (Sengketa). Jika UMKM menolak submission tanpa alasan yang sah atau membatalkan pesanan sepihak, kamu bisa mengajukan sengketa via WhatsApp Admin Marketiv dalam 7 hari (Pasal 14).",
+    answer: "Anda dilindungi oleh sistem Sengketa. Jika UMKM menolak pengiriman tanpa alasan yang sah atau membatalkan pesanan sepihak, Anda dapat mengajukan sengketa via WhatsApp Admin Marketiv dalam 7 hari (Pasal 14).",
   },
   {
-    question: "Apa bedanya tipe campaign UGC dan Clipping?",
-    answer: "Di Campaign Mode UGC, kamu memikirkan konsep dan membuat video dari awal. Di tipe Clipping, UMKM menyediakan raw video/aset mentah, dan kamu bertugas mengedit/remix menjadi konten menarik.",
+    question: "Apa bedanya tipe Kampanye UGC dan Kliping?",
+    answer: "Di Mode Kampanye UGC, Anda memikirkan konsep dan membuat video dari awal. Di tipe Kliping, UMKM menyediakan video mentah/aset mentah, dan Anda bertugas mengedit/menggubahnya menjadi konten menarik.",
   },
   {
     question: "Apakah Kreator boleh bertransaksi di luar Marketiv?",
-    answer: "DILARANG KERAS. Bertransaksi di luar platform menghilangkan perlindungan Escrow dan dapat menyebabkan akun ditangguhkan (suspended) secara permanen.",
+    answer: "DILARANG KERAS. Bertransaksi di luar platform menghilangkan perlindungan Dana Aman dan dapat menyebabkan akun ditangguhkan secara permanen.",
   },
 ];
 
@@ -237,7 +237,7 @@ export default function KreatorPanduanPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari kata kunci (misal: 'withdrawal', 'escrow', '5%')..."
+              placeholder="Cari kata kunci (misal: 'penarikan', 'dana aman', '5%')..."
               className="w-full pl-10 sm:pl-11 pr-10 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl bg-neutral-50 border border-neutral-200/80 text-xs sm:text-sm font-semibold text-ink-900 placeholder:text-slate-400 focus:outline-none focus:border-violet-500 focus:bg-white transition-all shadow-2xs min-w-0"
             />
             {searchQuery && (
@@ -283,7 +283,7 @@ export default function KreatorPanduanPage() {
                 onClick={() => setSearchQuery("")}
                 className="text-slate-500 hover:text-violet-600 font-bold underline cursor-pointer self-start sm:self-auto"
               >
-                Reset Pencarian
+                Setel Ulang Pencarian
               </button>
             </div>
           )}
@@ -298,7 +298,7 @@ export default function KreatorPanduanPage() {
                   Kata kunci &quot;{searchQuery}&quot; tidak ditemukan.
                 </p>
                 <p className="text-xs text-ink-500 font-medium">
-                  Coba kata kunci lain seperti <button onClick={() => setSearchQuery("withdrawal")} className="text-violet-600 font-bold underline cursor-pointer">withdrawal</button>, <button onClick={() => setSearchQuery("5%")} className="text-violet-600 font-bold underline cursor-pointer">5%</button>, atau <button onClick={() => setSearchQuery("escrow")} className="text-violet-600 font-bold underline cursor-pointer">escrow</button>.
+                  Coba kata kunci lain seperti <button onClick={() => setSearchQuery("penarikan")} className="text-violet-600 font-bold underline cursor-pointer">penarikan</button>, <button onClick={() => setSearchQuery("5%")} className="text-violet-600 font-bold underline cursor-pointer">5%</button>, atau <button onClick={() => setSearchQuery("dana aman")} className="text-violet-600 font-bold underline cursor-pointer">dana aman</button>.
                 </p>
               </div>
             ) : (
@@ -499,7 +499,7 @@ export default function KreatorPanduanPage() {
 
                 <div className="space-y-3 sm:space-y-4">
                   <span className="block text-[0.66rem] font-[800] text-ink-400 uppercase tracking-widest mb-1.5 sm:mb-2.5">
-                    Penghasilan &amp; Escrow (Biaya Platform 5%, Withdrawal)
+                    Penghasilan &amp; Dana Aman (Biaya Platform 5%, Penarikan)
                   </span>
 
                   <div className="grid gap-2.5 sm:gap-3.5">
@@ -545,8 +545,8 @@ export default function KreatorPanduanPage() {
                   <span className="block font-bold mb-1 text-violet-800 uppercase tracking-wider text-[0.68rem] sm:text-[0.72rem]">
                     Ketentuan Pendapatan Kreator &amp; Biaya Platform 5% (S&amp;K Versi 3.1)
                   </span>
-                  (a) Di Campaign Mode, Kreator menerima 100% penuh reward tanpa potongan (5% dibayar UMKM di awal). <br />
-                  (b) Di Rate Card Mode, biaya platform 5% dipotong dari pendapatan Kreator saat escrow dirilis ke Wallet. Penarikan min Rp 50.000 (Pasal 11).
+                  (a) Di Mode Kampanye, Kreator menerima 100% penuh imbalan tanpa potongan (5% dibayar UMKM di awal). <br />
+                  (b) Di Mode Paket Harga, biaya platform 5% dipotong dari pendapatan Kreator saat Dana Aman dirilis ke Dompet. Penarikan min Rp 50.000 (Pasal 11).
                 </div>
 
                 {/* 2-Column Reader Layout */}
@@ -644,7 +644,7 @@ export default function KreatorPanduanPage() {
               <span>Punya Pertanyaan Seputar Pekerjaan atau Pencairan?</span>
             </h4>
             <p className="text-xs text-slate-300 font-medium max-w-lg leading-relaxed break-words">
-              Tim Support Kreator Marketiv siap membantu menjawab kendala teknis atau sengketa pekerjaan via Email di <strong className="text-white">marketiv.official@gmail.com</strong> atau WhatsApp resmi Admin.
+              Tim Dukungan Kreator Marketiv siap membantu menjawab kendala teknis atau sengketa pekerjaan lewat surel di <strong className="text-white">marketiv.official@gmail.com</strong> atau WhatsApp resmi Admin.
             </p>
           </div>
 
@@ -652,7 +652,7 @@ export default function KreatorPanduanPage() {
             href="mailto:marketiv.official@gmail.com"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-extrabold text-xs transition-colors shrink-0 no-underline shadow-md shadow-violet-500/20"
           >
-            <span>Hubungi Support Kreator</span>
+            <span>Hubungi Dukungan Kreator</span>
             <ExternalLink size={14} />
           </a>
         </div>

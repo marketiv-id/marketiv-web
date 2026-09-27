@@ -20,13 +20,13 @@ interface BreadcrumbItem {
 
 function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
   const parts = pathname.split("/").filter(Boolean);
-  const items: BreadcrumbItem[] = [{ label: "Dashboard", href: "/dashboard/kreator" }];
+  const items: BreadcrumbItem[] = [{ label: "Ringkasan", href: "/dashboard/kreator" }];
 
   if (parts.length > 2) {
     const sub = parts[2];
-    if (sub === "job-pool") items.push({ label: "Job Pool" });
+    if (sub === "job-pool") items.push({ label: "Lowongan" });
     else if (sub === "pekerjaan-aktif") items.push({ label: "Pekerjaan Aktif" });
-    else if (sub === "rate-card") items.push({ label: "Rate Card" });
+    else if (sub === "rate-card") items.push({ label: "Paket Harga" });
     else if (sub === "negosiasi") items.push({ label: "Negosiasi" });
     else if (sub === "keuangan") items.push({ label: "Keuangan" });
     else if (sub === "settings" || sub === "pengaturan") items.push({ label: "Pengaturan" });
@@ -48,7 +48,7 @@ export function CreatorDashboardTopbar({ creatorAvatar: propAvatar }: CreatorDas
   const breadcrumbs = getBreadcrumbs(pathname);
 
   const activeTitle =
-    breadcrumbs.length > 1 ? breadcrumbs[breadcrumbs.length - 1].label : "Overview";
+    breadcrumbs.length > 1 ? breadcrumbs[breadcrumbs.length - 1].label : "Ringkasan";
 
   const avatarUrl = identity?.avatarUrl ?? propAvatar;
   const creatorName = identity?.name;
@@ -80,7 +80,7 @@ export function CreatorDashboardTopbar({ creatorAvatar: propAvatar }: CreatorDas
           <div className="flex h-8.5 w-8.5 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white p-1 shadow-3xs border border-neutral-200/80">
             <Image
               src={logoMarketivPng}
-              alt="Marketiv Logo"
+              alt="Logo Marketiv"
               width={28}
               height={28}
               className="h-full w-full object-contain"
