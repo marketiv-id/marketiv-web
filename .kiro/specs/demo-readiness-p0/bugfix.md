@@ -218,12 +218,12 @@ dan tes apa pun yang mengasumsikan tombol "Urutkan dari"/"Simpan Preferensi" ada
 
 ---
 
-## 5. Keputusan yang perlu disetujui sebelum eksekusi
+## 5. Keputusan yang sudah diambil (disetujui: ikut rekomendasi)
 
-| # | Keputusan | Rekomendasi | Alternatif |
+| # | Keputusan | Dipilih | Alasan yang berpihak ke pengguna |
 |---|---|---|---|
-| D-1 | Perlakuan tombol "Urutkan dari" (1.4) | **Hapus** (tidak ada daftar untuk diurutkan) | Implementasikan pengurutan (menambah fitur baru, di luar scope P0) |
-| D-2 | Perlakuan panel Notifikasi (1.5) | **Hapus tombol simpan**, biarkan toggle `disabled` + keterangan "segera hadir" | Sembunyikan seluruh panel (mengurangi informasi yang sudah jujur) |
-| D-3 | Perilaku mock saat kreator tanpa ruang (1.13) | **Gagal-tertutup** dengan pesan jelas | Buat ruang baru di demo store (butuh state negotiasi baru, lebih besar) |
-| D-4 | Implementasi share (1.3) | `navigator.share` → fallback salin tautan + toast | Hapus tombol share |
-| D-5 | Mode data demo (dari dokumen demo readiness) | **Mock**, dan P0 klaster D wajib beres | Real mode (banyak layar kosong, perlu spec backend dulu) |
+| D-1 | Tombol "Urutkan dari" (1.4) | **Hapus** | Tidak ada daftar untuk diurutkan; kontrol mati membuat user mengira aplikasinya rusak. Mengimplementasikan pengurutan berarti menambah fitur, bukan memperbaiki defek |
+| D-2 | Panel Notifikasi (1.5) | **Hapus tombol simpan**, toggle tetap `disabled` + keterangan "Fitur notifikasi akan segera hadir." | Tombol yang tidak bisa menyimpan apa pun adalah janji palsu. Keterangan jujur lebih baik daripada kontrol yang diam |
+| D-3 | Kreator tanpa ruang di mock (1.13) | **Gagal-tertutup** dengan pesan jelas | Mengirim user ke percakapan milik kreator lain (perilaku lama) jauh lebih buruk daripada pesan "percakapan demo belum tersedia" |
+| D-4 | Tombol share (1.3) | **`navigator.share` + fallback salin tautan + toast**, dengan `aria-label` | Memberi perilaku nyata di semua perangkat, tanpa bergantung fitur yang tidak ada di desktop |
+| D-5 | Mode data demo | **Mock** (dikonfirmasi lewat bilah demo di `/dashboard/umkm`) | Data live masih kosong (portofolio 0, follower 0, order 0), jadi mock adalah satu-satunya cara demo terlihat utuh; konsekuensinya klaster D wajib beres |

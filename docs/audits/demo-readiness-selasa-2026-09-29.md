@@ -62,6 +62,12 @@ spec `creator-followers-directory-dto` + `creator-reviews-and-orders-aggregation
 
 ## 2. P0 — BLOKER DEMO (fungsionalitas & UI yang user akan klik/lihat)
 
+> **STATUS: SELESAI** (branch `demo-readiness`, commit `d6a7173`, `1a4eb66`, `fe0be93`, `36793f5`).
+> Semua 16 defek diperbaiki dengan tes yang gagal lebih dulu, lalu hijau. Verifikasi: `npx tsc --noEmit`
+> bersih, eslint bersih, dan `npx vitest run --no-file-parallelism` **428 tes lolos (80 berkas)**.
+> Sisa yang belum: klik manual di browser (butuh manusia) — daftar langkahnya ada di
+> `.kiro/specs/demo-readiness-p0/tasks.md` §5.4.
+
 Semua item di bawah **frontend-only, tanpa deploy backend**, risiko rendah, total estimasi **±2–3 jam**.
 
 | ID | Lokasi | Yang user lihat | Fix | Usaha |
