@@ -1,0 +1,39 @@
+{
+  "name": "dashboard-language-consistency-id",
+  "project": "Marketiv Web",
+  "format": "Kiro spec",
+  "language": "id-ID",
+  "scope": [
+    "Creator dashboard UI copy",
+    "UMKM dashboard UI copy",
+    "Status label maps unification",
+    "Metadata title convention",
+    "Dead component cleanup"
+  ],
+  "out_of_scope": [
+    "i18n runtime or message catalog",
+    "Backend enum and state value changes",
+    "Route slug and folder renames",
+    "admin app",
+    "Public and auth routes",
+    "00_BACKEND cloud functions",
+    "docs/marketiv-md documentation rewording"
+  ],
+  "evidence": {
+    "creator_audit": "docs/audits/language-audit-creator-dashboard.md",
+    "umkm_audit": "docs/audits/language-audit-umkm-dashboard.md",
+    "baseline_glossary": "docs/audits/language-baseline-glossary.md",
+    "manual_qa": "docs/audits/dashboard-language-manual-qa.md"
+  },
+  "blocking_decisions": [
+    "D1 rate card label",
+    "D2 job pool label",
+    "D3 escrow label",
+    "D4 brief label",
+    "D5 collab post label",
+    "D6 PPV and CPM labels",
+    "D7 dashboard label",
+    "D8 draft status word",
+    "D9 review nav label"
+  ]
+}
