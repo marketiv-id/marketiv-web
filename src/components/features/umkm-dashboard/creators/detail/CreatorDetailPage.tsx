@@ -2,8 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { getCreatorById, getCreatorRateCards } from "@/services/umkm/umkm-dashboard.service";
-import type { CreatorProfile } from "@/types/umkm-dashboard.types";
+import { getCreatorById, getCreatorRateCards, getCreatorPortfolio, getCreatorSocialAccounts } from "@/services/umkm/umkm-dashboard.service";
+import type {
+  CreatorProfile,
+  CreatorPortfolioItem,
+  CreatorSocialAccount,
+} from "@/types/umkm-dashboard.types";
 import { toCreatorView, toRateCardPackageView } from "../creator.adapter";
 import { CreatorProfileHero } from "./CreatorProfileHero";
 import { CreatorStatsCards } from "./CreatorStatsCards";
@@ -23,11 +27,15 @@ interface CreatorDetailPageProps {
 export function CreatorDetailPage({ creatorId }: CreatorDetailPageProps) {
   const [creator, setCreator] = useState<CreatorProfile | null>(null);
   const [packages, setPackages] = useState<RateCardPackage[]>([]);
+  const [portfolio, setPortfolio] = useState<CreatorPortfolioItem[]>([]);
+  const [socialAccounts, setSocialAccounts] = useState<CreatorSocialAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<RateCardPackage | null>(null);
   const [packagesError, setPackagesError] = useState<string | null>(null);
+  const [portfolioError, setPortfolioError] = useState<string | null>(null);
+  const [socialError, setSocialError] = useState<string | null>(null);
 
   // Fetch nyata lewat facade service (s1-creators).
   const loadData = useCallback(async () => {
@@ -35,9 +43,11 @@ export function CreatorDetailPage({ creatorId }: CreatorDetailPageProps) {
     setError(null);
     setNotFound(false);
     try {
-      const [creatorRes, packagesRes] = await Promise.all([
+      const [creatorRes, packagesRes, portfolioRes, socialRes] = await Promise.all([
         getCreatorById(creatorId),
         getCreatorRateCards(creatorId),
+        getCreatorPortfolio(creatorId),
+        getCreatorSocialAccounts(creatorId),
       ]);
 
       if (!creatorRes.success || !creatorRes.data) {
@@ -57,6 +67,22 @@ export function CreatorDetailPage({ creatorId }: CreatorDetailPageProps) {
       } else {
         setPackagesError(null);
         setPackages((packagesRes.data ?? []).map(toRateCardPackageView));
+      }
+
+      if (!portfolioRes.success) {
+        setPortfolioError(portfolioRes.error || "Gagal memuat portofolio.");
+        setPortfolio([]);
+      } else {
+        setPortfolioError(null);
+        setPortfolio(portfolioRes.data ?? []);
+      }
+
+      if (!socialRes.success) {
+        setSocialError(socialRes.error || "Gagal memuat akun sosial.");
+        setSocialAccounts([]);
+      } else {
+        setSocialError(null);
+        setSocialAccounts(socialRes.data ?? []);
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan sistem.");
@@ -126,12 +152,20 @@ export function CreatorDetailPage({ creatorId }: CreatorDetailPageProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left main area: Portfolio */}
         <div className="lg:col-span-2 space-y-6">
-          <CreatorPortfolioSection creatorId={creator.id} />
+          <CreatorPortfolioSection
+            items={portfolio}
+            error={portfolioError}
+            onRetry={loadData}
+          />
         </div>
 
         {/* Right side: Social links card */}
         <div className="h-full">
-          <CreatorSocialLinksCard creatorName={creator.name} />
+          <CreatorSocialLinksCard
+            accounts={socialAccounts}
+            error={socialError}
+            onRetry={loadData}
+          />
         </div>
       </div>
 

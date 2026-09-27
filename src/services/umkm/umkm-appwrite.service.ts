@@ -53,6 +53,8 @@ import {
   RateCardStatus,
   TransactionType,
   TransactionStatus,
+  CreatorPortfolioItem,
+  CreatorSocialAccount,
 } from "@/types/umkm-dashboard.types";
 
 /**
@@ -88,6 +90,8 @@ const COLLECTIONS = {
   submissions: "campaign_submissions",
   rateCards: "rate_cards",
   rateCardPackages: "rate_card_packages",
+  creatorPortfolios: "creator_portfolios",
+  creatorSocialAccounts: "creator_social_accounts",
   claims: "campaign_claims",
   orders: "orders",
   offers: "offers",
@@ -605,6 +609,76 @@ export async function getCreatorRateCardsFromAppwrite(
     return { success: true, data };
   } catch (err) {
     return failFromError<RateCardPackage[]>(err, []);
+  }
+}
+
+/**
+ * Portofolio konten kreator dari collection `creator_portfolios`.
+ *
+ * Read langsung dari browser UMKM sah: row permission saat create memasang
+ * `read("any")` (creator-appwrite.service.ts createCreatorPortfolioInAppwrite),
+ * dan koleksinya `read("any")` di level collection — diverifikasi live
+ * 2026-09-27 untuk `creator_social_accounts` (11/11 baris terbaca tanpa sesi).
+ */
+export async function getCreatorPortfolioFromAppwrite(
+  creatorId: string
+): Promise<ServiceResult<CreatorPortfolioItem[]>> {
+  const auth = await requireUserId<CreatorPortfolioItem[]>([]);
+  if (!auth.ok) return auth.result;
+  try {
+    const res = await databases.listDocuments(DB, COLLECTIONS.creatorPortfolios, [
+      Query.equal("creatorId", creatorId),
+      Query.orderDesc("$createdAt"),
+      Query.limit(100),
+    ]);
+    const data: CreatorPortfolioItem[] = res.documents.map((d) => {
+      const doc = d as unknown as Doc;
+      return {
+        id: str(doc.$id),
+        title: str(doc.title),
+        url: str(doc.portfolioUrl),
+        description: str(doc.description),
+        thumbnailUrl: str(doc.thumbnailUrl) || undefined,
+      };
+    });
+    return { success: true, data };
+  } catch (err) {
+    return failFromError<CreatorPortfolioItem[]>(err, []);
+  }
+}
+
+/**
+ * Akun sosial kreator dari collection `creator_social_accounts`.
+ *
+ * Function `get-creator-directory` hanya mengembalikan satu akun primer
+ * (username + engagementRate), jadi daftar akun lengkap dibaca di sini.
+ * `followers`/`engagementRate` bisa 0 walau baris ada — 0 berarti kreator
+ * belum mengisi angkanya, bukan angka nyata.
+ */
+export async function getCreatorSocialAccountsFromAppwrite(
+  creatorId: string
+): Promise<ServiceResult<CreatorSocialAccount[]>> {
+  const auth = await requireUserId<CreatorSocialAccount[]>([]);
+  if (!auth.ok) return auth.result;
+  try {
+    const res = await databases.listDocuments(DB, COLLECTIONS.creatorSocialAccounts, [
+      Query.equal("creatorId", creatorId),
+      Query.orderDesc("$createdAt"),
+      Query.limit(100),
+    ]);
+    const data: CreatorSocialAccount[] = res.documents.map((d) => {
+      const doc = d as unknown as Doc;
+      return {
+        id: str(doc.$id),
+        platform: str(doc.platform),
+        username: str(doc.username),
+        followers: num(doc.followers),
+        engagementRate: num(doc.engagementRate),
+      };
+    });
+    return { success: true, data };
+  } catch (err) {
+    return failFromError<CreatorSocialAccount[]>(err, []);
   }
 }
 

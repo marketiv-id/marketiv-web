@@ -153,6 +153,37 @@ export interface PaginatedCreators {
   nextCursor: string | null;
 }
 
+/**
+ * Satu item portofolio kreator dari sisi UMKM — `creator_portfolios`.
+ *
+ * Hanya empat kolom yang ada di skema (creatorId, title, description,
+ * thumbnailUrl, portfolioUrl). `views`, `likes`, dan `platform` tidak punya
+ * kolom sumber, jadi tidak ada di view-model ini.
+ */
+export interface CreatorPortfolioItem {
+  id: string;
+  title: string;
+  /** Kolom `portfolioUrl` — tautan konten di platform kreator. */
+  url: string;
+  description: string;
+  thumbnailUrl?: string;
+}
+
+/**
+ * Satu akun sosial kreator dari sisi UMKM — `creator_social_accounts`.
+ *
+ * `platform` adalah string bebas di skema (bukan enum), jadi dibiarkan string
+ * dan dipetakan ke label tampilan di komponen.
+ */
+export interface CreatorSocialAccount {
+  id: string;
+  platform: string;
+  username: string;
+  /** 0 = belum pernah diisi kreator — jangan ditampilkan sebagai angka nyata. */
+  followers: number;
+  engagementRate: number;
+}
+
 export interface RateCardPackage {
   id: string;
   creatorId: string;

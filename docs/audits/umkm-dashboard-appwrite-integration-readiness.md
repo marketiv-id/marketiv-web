@@ -101,7 +101,17 @@ Catatan route-level:
 | Analytics | `AnalitikClient.tsx` | baris 10–17, 19–24, 26–31, 135, 138, 186 | `VIEWS_DATA` (6 bulan), `TOP_CAMPAIGNS` (4), `KPI_CARDS` ("2.4jt", "+169%"), label periode/persentase hardcoded |
 | Settings | `PengaturanClient.tsx` | baris 40–46, 73–85 | `INITIAL_NOTIFICATIONS` + seluruh state profil awal hardcoded (alamat, telepon, email, sosial); komentar baris 72 mengklaim "1:1 to Appwrite database schema" tanpa ada DB call |
 | Finance (route) | `keuangan/page.tsx` | baris 26 | fallback `businessName` hardcoded `"Dapur Sehat Sukabumi"` |
-| Analytics/Settings (route) | `analitik/page.tsx:4`, `pengaturan/page.tsx:4` | — | `businessName="Dapur Sehat Sukabumi"` hardcoded, tanpa `getUmkmProfile()` |
+| Analytics/Settings (route) | `analitik/page.tsx:4`, `pengaturan/page.tsx:4` | — | `businessName` "Dapur Sehat Sukabumi" hardcoded, tanpa `getUmkmProfile()` |
+
+> **Update 2026-09-27** — dua baris Creators di atas sudah selesai:
+> `CreatorPortfolioSection.tsx` & `CreatorSocialLinksCard.tsx` kini props-driven
+> dari `getCreatorPortfolio()` / `getCreatorSocialAccounts()` (facade
+> `umkm-dashboard.service.ts`, read langsung `creator_portfolios` &
+> `creator_social_accounts` — keduanya `read("any")` per baris).
+> `views`/`likes`/`avgViews` dihapus dari UI karena tidak ada kolom sumbernya.
+> Verifikasi live 2026-09-27: `creator_portfolios` = **0 dokumen**,
+> `creator_social_accounts` = 11 baris (semua TikTok, `followers`/`engagementRate`
+> masih 0), jadi kedua section menampilkan empty state — bukan data karangan.
 
 ### 3d. Perilaku tersimulasi (bukan data, tapi menandai titik integrasi)
 

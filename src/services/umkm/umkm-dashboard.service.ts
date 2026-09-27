@@ -23,12 +23,16 @@ import {
   EscrowOverview,
   UmkmSettingsProfile,
   UmkmOverviewData,
+  CreatorPortfolioItem,
+  CreatorSocialAccount,
 } from "@/types/umkm-dashboard.types";
 import {
   mockUmkmProfile,
   mockUmkmSettingsProfile,
   mockSubmissions,
   mockCreators,
+  mockCreatorPortfolios,
+  mockCreatorSocialAccounts,
   mockRateCardPackages,
   mockNegotiations,
   mockChatMessages,
@@ -54,6 +58,8 @@ import {
   getCreatorsFromAppwrite,
   getCreatorByIdFromAppwrite,
   getCreatorRateCardsFromAppwrite,
+  getCreatorPortfolioFromAppwrite,
+  getCreatorSocialAccountsFromAppwrite,
   getNegotiationsFromAppwrite,
   getNegotiationByIdFromAppwrite,
   createOfferInAppwrite,
@@ -214,6 +220,28 @@ export async function getCreatorRateCards(creatorId: string): Promise<ServiceRes
     return { success: true, data: packages };
   }
   return getCreatorRateCardsFromAppwrite(creatorId);
+}
+
+/** Portofolio konten kreator (`creator_portfolios`) — kosong berarti belum ada. */
+export async function getCreatorPortfolio(
+  creatorId: string
+): Promise<ServiceResult<CreatorPortfolioItem[]>> {
+  if (DATA_SOURCE_CONFIG.useMockData) {
+    await mockDelay(300);
+    return { success: true, data: mockCreatorPortfolios[creatorId] ?? [] };
+  }
+  return getCreatorPortfolioFromAppwrite(creatorId);
+}
+
+/** Akun sosial kreator (`creator_social_accounts`) — kosong berarti belum ada. */
+export async function getCreatorSocialAccounts(
+  creatorId: string
+): Promise<ServiceResult<CreatorSocialAccount[]>> {
+  if (DATA_SOURCE_CONFIG.useMockData) {
+    await mockDelay(300);
+    return { success: true, data: mockCreatorSocialAccounts[creatorId] ?? [] };
+  }
+  return getCreatorSocialAccountsFromAppwrite(creatorId);
 }
 
 export async function getNegotiations(): Promise<ServiceResult<NegotiationOrder[]>> {

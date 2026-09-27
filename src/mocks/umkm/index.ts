@@ -2,6 +2,7 @@ export * from "./profile.mock";
 export * from "./campaigns.mock";
 export * from "./submissions.mock";
 export * from "./creators.mock";
+export * from "./creator-content.mock";
 export * from "./rate-cards.mock";
 export * from "./negotiations.mock";
 export * from "./messages.mock";
