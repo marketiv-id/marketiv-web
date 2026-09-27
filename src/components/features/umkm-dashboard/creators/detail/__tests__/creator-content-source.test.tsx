@@ -207,5 +207,30 @@ describe("CreatorDetailPage", () => {
     for (const dummy of LEGACY_DUMMY_TITLES) expect(text()).not.toContain(dummy);
     expect(text()).not.toContain("@ahmadfauzi");
     expect(text()).not.toContain("15.4K");
+    // Hero tidak boleh menaruh engagementRate di slot followers.
+    const followersLabel = [...host.querySelectorAll("span")].find(
+      (el) => el.textContent === "Followers"
+    );
+    expect(followersLabel?.previousElementSibling?.textContent).toBe("—");
+  });
+
+  it("hero memakai total followers nyata dari akun sosial kreator", async () => {
+    mocks.getCreatorSocialAccounts.mockResolvedValue({
+      success: true,
+      data: [
+        { id: "s1", platform: "tiktok", username: "ahmadfauzi", followers: 15400, engagementRate: 5.4 },
+        { id: "s2", platform: "instagram", username: "ahmadfauzi", followers: 9800, engagementRate: 4.1 },
+      ],
+    });
+
+    const { CreatorDetailPage } = await import("../CreatorDetailPage");
+    await render(<CreatorDetailPage creatorId="creator_001" />);
+
+    const followersLabel = [...host.querySelectorAll("span")].find(
+      (el) => el.textContent === "Followers"
+    );
+    expect((followersLabel?.previousElementSibling?.textContent ?? "").replace(/\u00a0/g, " ")).toBe(
+      "25,2 rb"
+    );
   });
 });

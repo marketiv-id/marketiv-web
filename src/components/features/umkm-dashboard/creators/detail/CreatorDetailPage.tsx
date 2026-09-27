@@ -8,7 +8,7 @@ import type {
   CreatorPortfolioItem,
   CreatorSocialAccount,
 } from "@/types/umkm-dashboard.types";
-import { toCreatorView, toRateCardPackageView } from "../creator.adapter";
+import { toCreatorView, toRateCardPackageView, toFollowersLabel } from "../creator.adapter";
 import { CreatorProfileHero } from "./CreatorProfileHero";
 import { CreatorStatsCards } from "./CreatorStatsCards";
 import { RateCardPackagesSection } from "./RateCardPackagesSection";
@@ -111,7 +111,10 @@ export function CreatorDetailPage({ creatorId }: CreatorDetailPageProps) {
     return <CreatorNotFoundState />;
   }
 
-  const creatorView = toCreatorView(creator);
+  const creatorView = {
+    ...toCreatorView(creator),
+    followers: toFollowersLabel(socialAccounts),
+  };
 
   const handleSelectPackage = (pkg: RateCardPackage) => {
     setSelectedPackage(pkg);
