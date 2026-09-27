@@ -877,7 +877,7 @@ export function ActiveWorkDetailView({ work: initialWork }: ActiveWorkDetailView
                   <div className="space-y-4">
                     <div className="p-5 bg-neutral-50 rounded-[16px] border border-neutral-200/30 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
                       <div className="space-y-1">
-                        <h4 className="text-xs font-black text-neutral-900">URL Postingan Terverifikasi</h4>
+                        <h4 className="text-xs font-black text-neutral-900">URL Bukti Tayang</h4>
                         <a
                           href={work.contentUrl}
                           target="_blank"

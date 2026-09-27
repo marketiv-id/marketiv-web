@@ -11,7 +11,7 @@ const ROLES = [
     cta: "Daftar Jadi Pemilik UMKM",
     bullets: [
       "Buat campaign PPV dengan anggaran fleksibel",
-      "Akses direktori ratusan kreator terverifikasi",
+      "Akses direktori kreator terverifikasi",
       "Pembayaran aman via sistem escrow",
       "Pantau performa konten secara real-time",
     ],
@@ -30,7 +30,7 @@ const ROLES = [
     tagline: "Ubah kontenmu jadi penghasilan",
     cta: "Daftar Jadi Kreator",
     bullets: [
-      "Ambil campaign dari ribuan UMKM aktif",
+      "Ambil campaign dari UMKM yang sedang aktif",
       "Buat & jual rate card paket kontenmu",
       "Terima pembayaran langsung ke saldo",
       "Cairkan penghasilan kapan saja tanpa ribet",

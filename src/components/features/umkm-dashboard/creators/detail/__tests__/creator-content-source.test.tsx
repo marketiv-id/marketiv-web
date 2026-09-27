@@ -184,6 +184,26 @@ describe("CreatorSocialLinksCard", () => {
 });
 
 describe("CreatorDetailPage", { timeout: 15000 }, () => {
+  it("badge Kreator Terverifikasi hanya muncul untuk kreator terverifikasi", async () => {
+    mocks.getCreatorById.mockResolvedValue({
+      success: true,
+      data: { ...creatorProfile, isVerified: false },
+    });
+
+    const { CreatorDetailPage } = await import("../CreatorDetailPage");
+    await render(<CreatorDetailPage creatorId="creator_001" />);
+
+    await waitFor(() => expect(text()).toContain("Order Selesai"));
+    expect(text()).not.toContain("Kreator Terverifikasi");
+  });
+
+  it("badge Kreator Terverifikasi muncul saat profil sudah terverifikasi", async () => {
+    const { CreatorDetailPage } = await import("../CreatorDetailPage");
+    await render(<CreatorDetailPage creatorId="creator_001" />);
+
+    await waitFor(() => expect(text()).toContain("Kreator Terverifikasi"));
+  });
+
   it("hero tidak menampilkan bintang/rating saat rating masih 0", async () => {
     const { CreatorDetailPage } = await import("../CreatorDetailPage");
     await render(<CreatorDetailPage creatorId="creator_001" />);

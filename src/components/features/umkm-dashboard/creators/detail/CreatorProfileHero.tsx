@@ -30,11 +30,14 @@ export function CreatorProfileHero({ creator }: CreatorProfileHeroProps) {
             <div className="absolute -top-10 -right-10 h-36 w-36 rounded-full bg-white/20 blur-xl" />
           </>
         )}
-        <div className="absolute bottom-3 right-4 z-10">
-          <span className="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-xs text-[9px] font-extrabold uppercase tracking-widest text-white border border-white/10">
-            Kreator Terverifikasi
-          </span>
-        </div>
+        {/* Badge verifikasi hanya muncul kalau profilnya memang terverifikasi. */}
+        {creator.isVerified && (
+          <div className="absolute bottom-3 right-4 z-10">
+            <span className="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-xs text-[9px] font-extrabold uppercase tracking-widest text-white border border-white/10">
+              Kreator Terverifikasi
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Main Profile Info Row — Posisikan items-start untuk mencegah teks menabrak banner */}
