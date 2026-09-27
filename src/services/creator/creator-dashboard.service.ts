@@ -7,6 +7,7 @@ import {
   unclaimDemoJob,
 } from "@/lib/demo/demo-store";
 import type { ChatMessage } from "@/types/umkm-dashboard.types";
+import { mockCreatorMessages } from "@/mocks/creator-messages.mock";
 import {
   sendMessageInAppwrite,
   getMessagesByConversationIdInAppwrite,
@@ -203,7 +204,7 @@ export async function getMessagesByConversationId(
 ): Promise<ServiceResult<ChatMessage[]>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(300);
-    return { success: true, data: [] };
+    return { success: true, data: mockCreatorMessages[conversationId] ?? [] };
   }
   return getMessagesByConversationIdInAppwrite(conversationId);
 }

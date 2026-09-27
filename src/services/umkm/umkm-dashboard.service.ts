@@ -38,6 +38,7 @@ import {
   mockChatMessages,
   mockTransactions,
   mockUmkmOverview,
+  deriveOverviewKpis,
   getCalculatedDashboardSummary,
 } from "@/mocks/umkm";
 
@@ -122,7 +123,14 @@ export async function getOverview(): Promise<ServiceResult<UmkmOverviewData>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(300);
     const store = getDemoStore();
-    return { success: true, data: { ...mockUmkmOverview, campaigns: store.campaigns } };
+    return {
+      success: true,
+      data: {
+        ...mockUmkmOverview,
+        kpis: deriveOverviewKpis(store.campaigns),
+        campaigns: store.campaigns,
+      },
+    };
   }
   return getOverviewFromAppwrite();
 }
@@ -284,7 +292,17 @@ export async function createConversation(creatorId: string): Promise<ServiceResu
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(400);
     const existing = mockNegotiations.find((n) => n.creatorId === creatorId);
-    return { success: true, data: existing?.conversationId ?? "conv_000" };
+    // Gagal-tertutup: jangan mengarahkan user ke ruang milik kreator lain
+    // (versi lama mengembalikan "conv_000" milik kreator lain di data mock).
+    if (!existing) {
+      return {
+        success: false,
+        data: null,
+        code: "not_found",
+        error: "Percakapan demo untuk kreator ini belum tersedia.",
+      };
+    }
+    return { success: true, data: existing.conversationId };
   }
   return createConversationInAppwrite(creatorId);
 }

@@ -59,8 +59,8 @@ export function CampaignSummaryCards({ summary }: CampaignSummaryCardsProps) {
       <SummaryCard
         icon={Megaphone}
         label="Total Kampanye"
-        value={String(summary.activeCampaigns + summary.completedCampaigns + (summary.pendingPayments ?? 0))}
-        note="Semua status"
+        value={String(summary.activeCampaigns + summary.completedCampaigns)}
+        note="Aktif & selesai"
         iconBg="#fff7ed" iconColor="#ea580c" iconBorder="rgba(234,88,12,.18)"
       />
       <SummaryCard

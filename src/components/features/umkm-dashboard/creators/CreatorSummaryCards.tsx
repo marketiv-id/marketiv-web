@@ -81,8 +81,8 @@ export function CreatorSummaryCards({
     {
       id: "price",
       label: "Tarif Mulai Dari",
-      value: lowestStartingPrice > 0 ? formatCompactCurrency(lowestStartingPrice) : "Rp 0",
-      unit: "/ proyek",
+      value: lowestStartingPrice > 0 ? formatCompactCurrency(lowestStartingPrice) : "—",
+      unit: lowestStartingPrice > 0 ? "/ proyek" : "",
       subtext: "Fleksibel untuk UMKM",
       icon: Sparkles,
       iconColor: "#d97706",

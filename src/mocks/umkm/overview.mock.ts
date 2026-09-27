@@ -15,7 +15,33 @@
  * kanon. Nilai status kanon ada di src/types/domain.ts.
  */
 
-import type { UmkmOverviewData } from "@/types/umkm-dashboard.types";
+import type { Campaign, UmkmOverviewData } from "@/types/umkm-dashboard.types";
+
+/**
+ * Nilai demo untuk KPI yang tidak bisa diturunkan dari daftar campaign
+ * (belanja, saldo escrow, tayangan valid, submission menunggu). Angka-angka ini
+ * memang seed pameran, bukan hasil hitungan — jangan dianggap sinkron dengan
+ * daftar mana pun.
+ */
+const MOCK_SEED_KPIS = {
+  totalSpend: 4800000,
+  escrowBalance: 3250000,
+  viewsValid: 184200,
+  pendingSubmissions: 2,
+};
+
+/**
+ * KPI yang BISA diturunkan diturunkan dari daftar campaign yang sedang dipakai
+ * layar, supaya kartu KPI dan daftar campaign tidak saling bertentangan.
+ */
+export function deriveOverviewKpis(campaigns: Campaign[]): UmkmOverviewData["kpis"] {
+  return {
+    ...MOCK_SEED_KPIS,
+    campaignActive: campaigns.filter((c) => c.status === "active").length,
+    campaignCompleted: campaigns.filter((c) => c.status === "completed").length,
+    creatorJoined: campaigns.reduce((sum, c) => sum + (c.usedQuota ?? 0), 0),
+  };
+}
 
 /** `campaigns` disuntikkan facade, jadi tidak ada di objek mock ini. */
 export const mockUmkmOverview: Omit<UmkmOverviewData, "campaigns"> = {
@@ -23,11 +49,11 @@ export const mockUmkmOverview: Omit<UmkmOverviewData, "campaigns"> = {
   kpis: {
     campaignActive: 1,
     campaignCompleted: 3,
-    totalSpend: 4800000,
-    escrowBalance: 3250000,
+    totalSpend: MOCK_SEED_KPIS.totalSpend,
+    escrowBalance: MOCK_SEED_KPIS.escrowBalance,
     creatorJoined: 8,
-    viewsValid: 184200,
-    pendingSubmissions: 2,
+    viewsValid: MOCK_SEED_KPIS.viewsValid,
+    pendingSubmissions: MOCK_SEED_KPIS.pendingSubmissions,
   },
   insights: [
     {

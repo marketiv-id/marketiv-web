@@ -79,6 +79,8 @@ describe("CreatorSummaryCards", () => {
 
     const text = host.textContent || "";
     expect(text).toContain("0%");
-    expect(text).toContain("Rp 0");
+    // 0 berarti belum ada harga kreator: tampil "—", bukan "Rp 0".
+    expect(text).toContain("—");
+    expect(text).not.toContain("Rp 0");
   });
 });
