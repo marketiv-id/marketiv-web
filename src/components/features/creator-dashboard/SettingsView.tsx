@@ -1109,12 +1109,6 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
           />
         </div>
       </SettingsCard>
-
-      <div className="flex justify-end">
-        <CreatorBtn disabled onClick={() => {}}>
-          Simpan Preferensi
-        </CreatorBtn>
-      </div>
     </div>
   );
 

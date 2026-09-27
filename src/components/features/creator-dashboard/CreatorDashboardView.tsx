@@ -37,6 +37,7 @@ import {
 } from "@/components/features/dashboard/shared";
 import { MetricCard } from "@/components/ui/metric-card";
 import { claimCampaign } from "@/services/creator/creator-dashboard.service";
+import { routes } from "@/lib/constants/routes";
 import { formatCurrency, formatCompactCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -291,7 +292,7 @@ function CampaignCard({ job, onClaim }: CampaignCardProps) {
 
         <div className="grid grid-cols-3 gap-1 sm:gap-2 pt-1.5 sm:pt-2 mt-auto border-t border-neutral-100">
           <Link
-            href="/dashboard/kreator/job-pool"
+            href={routes.kreatorJobDetail(job.id)}
             className="col-span-1 text-center py-1.5 sm:py-2.5 rounded-lg sm:rounded-[12px] text-[9px] sm:text-[10px] font-extrabold text-neutral-600 border border-neutral-200 hover:bg-neutral-50 transition-all duration-200"
           >
             Detail

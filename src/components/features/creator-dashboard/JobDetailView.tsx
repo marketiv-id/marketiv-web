@@ -9,7 +9,6 @@ import {
   Play,
   ChevronDown,
   ChevronRight,
-  AlignLeft,
   Info,
   Globe,
   ExternalLink,
@@ -21,6 +20,7 @@ import {
 } from "lucide-react";
 import { CreatorJob } from "@/types/creator-dashboard";
 import { cn } from "@/lib/utils";
+import { routes } from "@/lib/constants/routes";
 import { formatCurrency } from "@/lib/formatters";
 import { claimCampaign, getCreatorActiveWorks } from "@/services/creator/creator-dashboard.service";
 import { toast } from "sonner";
@@ -143,6 +143,32 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
     setTimeout(() => {
       briefRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
+  };
+
+  /**
+   * Bagikan tautan campaign lewat dialog sistem bila tersedia; di desktop yang
+   * tidak punya navigator.share, tautannya disalin ke clipboard.
+   */
+  const handleShare = async () => {
+    if (!job) return;
+    const url = `${window.location.origin}${routes.kreatorJobDetail(job.id)}`;
+
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: job.title, url });
+        return;
+      } catch {
+        // User menutup dialog share: bukan kegagalan yang perlu dilaporkan.
+        return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Tautan campaign disalin.");
+    } catch {
+      toast.error("Gagal menyalin tautan campaign.");
+    }
   };
 
   /**
@@ -296,7 +322,13 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                   <Play className="w-3.5 h-3.5" />
                   Submit Video
                 </button>
-                <button className="min-h-[44px] w-11 flex items-center justify-center rounded-xl border border-white/25 bg-white/10 hover:bg-white/18 text-white transition-all duration-200 cursor-pointer backdrop-blur-sm">
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  aria-label="Bagikan campaign"
+                  title="Bagikan campaign"
+                  className="min-h-[44px] w-11 flex items-center justify-center rounded-xl border border-white/25 bg-white/10 hover:bg-white/18 text-white transition-all duration-200 cursor-pointer backdrop-blur-sm"
+                >
                   <Share2 className="w-4 h-4" />
                 </button>
               </div>
@@ -647,9 +679,9 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                 ))}
               </div>
               <div className="px-5 py-3 border-b border-neutral-50">
-                <button className="inline-flex items-center gap-2 text-xs font-bold text-neutral-500 border border-neutral-200 hover:border-neutral-300 hover:text-neutral-700 rounded-xl px-3.5 py-2 transition-all duration-200 cursor-pointer">
-                  Urutkan dari <AlignLeft className="w-3.5 h-3.5" />
-                </button>
+                <p className="text-[11px] font-bold text-neutral-400">
+                  Daftar video muncul setelah kamu join campaign.
+                </p>
               </div>
               <div className="py-16 text-center">
                 <p className="text-sm text-neutral-400 font-medium">Join campaign dulu untuk mulai submit video.</p>

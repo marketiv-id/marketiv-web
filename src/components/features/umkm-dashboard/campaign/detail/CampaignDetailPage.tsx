@@ -14,6 +14,7 @@ import { CampaignSubmissionSection } from "./CampaignSubmissionSection";
 import { CampaignActivityTimeline } from "./CampaignActivityTimeline";
 import { CampaignDetailSkeleton } from "./CampaignDetailSkeleton";
 import { CampaignNotFoundState } from "./CampaignNotFoundState";
+import { routes } from "@/lib/constants/routes";
 import {
   getCampaignById,
   getCampaignSubmissions,
@@ -185,7 +186,7 @@ export function CampaignDetailPage({ campaignId }: CampaignDetailPageProps) {
                   showToast("Tautan folder aset berhasil disalin.");
                 }}
                 onExportReport={() => setIsExportModalOpen(true)}
-                onViewEscrow={() => showToast("Membuka rekam transaksi escrow...")}
+                onViewEscrow={() => router.push(routes.umkmFinance)}
                 onViewSubmissions={() => {
                   const element = document.getElementById("review-submissions-section");
                   if (element) {
