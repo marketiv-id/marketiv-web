@@ -167,9 +167,10 @@ function EmptyPlaceholderCampaignCard({ variantIndex = 0 }: EmptyPlaceholderCamp
 interface CampaignCardProps {
   job: CreatorJob;
   onClaim: (id: string, title: string) => void;
+  isClaiming?: boolean;
 }
 
-function CampaignCard({ job, onClaim }: CampaignCardProps) {
+function CampaignCard({ job, onClaim, isClaiming = false }: CampaignCardProps) {
   const isNearLimit  = job.quota - job.usedQuota <= 1;
   const isHighReward = job.ratePerThousandViews >= 6000;
   const slotUsedPct  = Math.min(100, Math.round((job.usedQuota / job.quota) * 100));
@@ -299,13 +300,14 @@ function CampaignCard({ job, onClaim }: CampaignCardProps) {
           </Link>
           <button
             onClick={() => onClaim(job.id, job.title)}
-            className="col-span-2 py-1.5 sm:py-2.5 rounded-lg sm:rounded-[12px] text-white text-[9px] sm:text-[10px] font-extrabold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer text-center"
+            disabled={isClaiming}
+            className="col-span-2 py-1.5 sm:py-2.5 rounded-lg sm:rounded-[12px] text-white text-[9px] sm:text-[10px] font-extrabold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer text-center disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             style={{
               background: CREATOR_BRAND_GRADIENT,
               boxShadow: "var(--shadow-kreator)",
             }}
           >
-            Klaim Job
+            {isClaiming ? "Mengklaim…" : "Klaim Job"}
           </button>
         </div>
       </div>
@@ -632,7 +634,12 @@ export function CreatorDashboardView({
 
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-5">
               {recJobs.slice(0, 4).map((job) => (
-                <CampaignCard key={job.id} job={job} onClaim={handleKlaimJob} />
+                <CampaignCard
+                  key={job.id}
+                  job={job}
+                  onClaim={handleKlaimJob}
+                  isClaiming={claimingJobId === job.id}
+                />
               ))}
               {Array.from({ length: Math.max(0, 4 - Math.min(4, recJobs.length)) }).map((_, idx) => (
                 <EmptyPlaceholderCampaignCard key={`empty-card-${idx}`} variantIndex={idx} />

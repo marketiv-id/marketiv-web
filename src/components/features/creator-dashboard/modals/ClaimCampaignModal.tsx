@@ -140,9 +140,8 @@ export function ClaimCampaignModal({
             {CLAIM_RULES.map((rule) => {
               const isChecked = checkedRules[rule.key];
               return (
-                <div
+                <label
                   key={rule.key}
-                  onClick={() => toggleRule(rule.key)}
                   className={cn(
                     "group flex items-start gap-3 p-3 sm:p-3.5 rounded-2xl border transition-all cursor-pointer select-none",
                     isChecked
@@ -150,10 +149,21 @@ export function ClaimCampaignModal({
                       : "bg-neutral-50/60 border-neutral-200/80 hover:bg-neutral-100/70 hover:border-neutral-300"
                   )}
                 >
+                  {/* Checkbox asli: satu-satunya cara supaya alur ini bisa
+                      diselesaikan dengan keyboard (Tab + Space). */}
+                  <input
+                    type="checkbox"
+                    className="peer sr-only"
+                    checked={isChecked}
+                    onChange={() => toggleRule(rule.key)}
+                    aria-label={rule.title}
+                  />
+
                   {/* Custom Checkbox Box */}
                   <div
                     className={cn(
                       "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border transition-all duration-200",
+                      "peer-focus-visible:ring-2 peer-focus-visible:ring-violet-500/70 peer-focus-visible:ring-offset-2",
                       isChecked
                         ? "bg-gradient-to-r from-violet-600 to-indigo-600 border-violet-600 text-white shadow-xs scale-105"
                         : "border-neutral-300 bg-white group-hover:border-violet-400"
@@ -175,7 +185,7 @@ export function ClaimCampaignModal({
                       {rule.desc}
                     </span>
                   </div>
-                </div>
+                </label>
               );
             })}
           </div>
