@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { Briefcase } from "lucide-react";
 import type { Creator } from "@/types/campaign";
 
 interface CreatorProfileHeroProps {
@@ -78,15 +79,31 @@ export function CreatorProfileHero({ creator }: CreatorProfileHeroProps) {
               <span className="text-text-primary font-extrabold">{creator.followers || "—"}</span>
               <span className="text-[10px] text-text-muted">Followers</span>
             </div>
-            
+
+            {/* Rating hanya tampil kalau ada datanya — `rating` 0 berarti belum
+                pernah dihitung (tidak ada sistem ulasan), bukan nilai jelek. */}
+            {creator.rating > 0 && (
+              <>
+                <span className="text-neutral-300">|</span>
+
+                <div className="flex items-center gap-1">
+                  <svg className="w-4 h-4 text-warning" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <span className="text-text-primary font-extrabold">{creator.rating}</span>
+                </div>
+              </>
+            )}
+
             <span className="text-neutral-300">|</span>
 
+            {/* `totalOrders` belum pernah di-increment backend → 0 = belum ada data. */}
             <div className="flex items-center gap-1">
-              <svg className="w-4 h-4 text-warning" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-              <span className="text-text-primary font-extrabold">{creator.rating}</span>
-              <span className="text-[10px] text-text-muted">({creator.totalReviews} Ulasan)</span>
+              <Briefcase size={14} className="text-text-muted" />
+              <span className="text-text-primary font-extrabold">
+                {creator.completedJobs && creator.completedJobs > 0 ? creator.completedJobs : "—"}
+              </span>
+              <span className="text-[10px] text-text-muted">Order Selesai</span>
             </div>
           </div>
         </div>

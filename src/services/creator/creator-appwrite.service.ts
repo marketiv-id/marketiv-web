@@ -1012,14 +1012,25 @@ export async function uploadCreatorBannerInAppwrite(file: File): Promise<Service
  * user.service.ts:306 menulis $id profil sehingga barisnya tak pernah terbaca.
  * Kami standardisasi ke userId — backend harus pilih satu & backfill (handoff).
  * Tak ada unique index, jadi list dulu supaya tidak duplikat.
+ *
+ * `followers` adalah input manual kreator (tidak ada API platform yang dipakai).
+ * Opsional: kalau tidak dikirim, nilai lama di dokumen dibiarkan apa adanya.
  */
 export async function upsertCreatorSocialAccountInAppwrite(input: {
   platform: "tiktok";
   username: string;
+  followers?: number;
 }): Promise<ServiceResult<null>> {
   const auth = await requireUserId<null>(null);
   if (!auth.ok) return auth.result;
   const uid = auth.userId;
+
+  if (input.followers !== undefined && (!Number.isInteger(input.followers) || input.followers < 0)) {
+    return failValidation("Jumlah followers harus angka bulat 0 atau lebih.", null);
+  }
+
+  const followersPatch = input.followers !== undefined ? { followers: input.followers } : {};
+
   try {
     const existing = await databases.listDocuments(DB, COLLECTIONS.creatorSocialAccounts, [
       Query.equal("creatorId", uid),
@@ -1030,13 +1041,14 @@ export async function upsertCreatorSocialAccountInAppwrite(input: {
     if (doc) {
       await databases.updateDocument(DB, COLLECTIONS.creatorSocialAccounts, str(doc.$id), {
         username: input.username,
+        ...followersPatch,
       });
     } else {
       await databases.createDocument(
         DB,
         COLLECTIONS.creatorSocialAccounts,
         ID.unique(),
-        { creatorId: uid, platform: input.platform, username: input.username },
+        { creatorId: uid, platform: input.platform, username: input.username, ...followersPatch },
         [
           Permission.read(Role.any()),
           Permission.update(Role.user(uid)),

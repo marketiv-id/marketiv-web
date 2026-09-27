@@ -113,7 +113,7 @@ export function CreatorDetailPage({ creatorId }: CreatorDetailPageProps) {
 
   const creatorView = {
     ...toCreatorView(creator),
-    followers: toFollowersLabel(socialAccounts),
+    followers: toFollowersLabel(socialAccounts, creator.followers),
   };
 
   const handleSelectPackage = (pkg: RateCardPackage) => {

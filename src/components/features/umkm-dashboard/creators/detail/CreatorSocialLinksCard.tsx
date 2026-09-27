@@ -1,6 +1,6 @@
 "use client";
 
-import { formatCompactNumber } from "@/lib/formatters";
+import { formatFollowersLabel } from "@/lib/formatters";
 import type { CreatorSocialAccount } from "@/types/umkm-dashboard.types";
 
 interface CreatorSocialLinksCardProps {
@@ -121,7 +121,7 @@ export function CreatorSocialLinksCard({ accounts, error, onRetry }: CreatorSoci
 
                 <div className="text-right space-y-0.5 shrink-0">
                   <span className="block text-xs font-extrabold text-text-primary">
-                    {account.followers > 0 ? formatCompactNumber(account.followers) : "—"}
+                    {formatFollowersLabel(account.followers)}
                   </span>
                   <span className="block text-[8px] text-text-muted uppercase tracking-wider font-bold">
                     Followers

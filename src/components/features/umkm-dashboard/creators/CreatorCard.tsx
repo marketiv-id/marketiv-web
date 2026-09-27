@@ -39,9 +39,10 @@ export function CreatorCard({ creator }: CreatorCardProps) {
   const key = (creator.category || "lainnya").toLowerCase();
   const cover = CATEGORY_COVER[key] ?? CATEGORY_COVER.lainnya;
   const avatarGradient = AVATAR_GRADIENTS[key] ?? AVATAR_GRADIENTS.lainnya;
-  const handle = creator.username ? `@${creator.username}` : `@${creator.name.toLowerCase().replace(/\s+/g, "")}`;
-  const engagementText = creator.engagementRate && creator.engagementRate > 0 ? `${creator.engagementRate}%` : "Aktif";
-  const completedJobsText = `${creator.completedJobs ?? 0} Proyek`;
+  const handle = creator.username ? `@${creator.username}` : "";
+  // 0 = belum diisi/belum dihitung (backend tidak pernah menaikkan angka ini).
+  const engagementText = creator.engagementRate && creator.engagementRate > 0 ? `${creator.engagementRate}%` : "—";
+  const completedJobsText = creator.completedJobs && creator.completedJobs > 0 ? `${creator.completedJobs} Proyek` : "—";
 
   return (
     <article className="group relative flex flex-col justify-between overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white shadow-3xs hover:shadow-md hover:-translate-y-1 hover:border-orange-300/60 transition-all duration-300 select-none">
@@ -125,7 +126,7 @@ export function CreatorCard({ creator }: CreatorCardProps) {
             {creator.name}
           </h3>
           <div className="flex items-center gap-2 flex-wrap text-xs font-semibold text-slate-500">
-            <span className="truncate">{handle}</span>
+            {handle && <span className="truncate">{handle}</span>}
             {creator.location && (
               <span className="inline-flex items-center gap-1 shrink-0 text-slate-400">
                 <MapPin size={11} />

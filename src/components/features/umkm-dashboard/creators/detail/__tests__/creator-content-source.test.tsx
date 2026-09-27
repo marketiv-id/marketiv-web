@@ -52,6 +52,25 @@ async function render(node: React.ReactNode) {
   await act(async () => root?.render(node));
 }
 
+/**
+ * Tunggu sampai assertion lolos. Satu kali flush `act` tidak cukup untuk rantai
+ * useEffect async (fetch → setState); di bawah beban paralel halaman masih di
+ * state skeleton sehingga assertion membaca DOM kosong.
+ */
+async function waitFor(assertion: () => void, timeoutMs = 5000) {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    await act(async () => {});
+    try {
+      assertion();
+      return;
+    } catch (err) {
+      if (Date.now() > deadline) throw err;
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+  }
+}
+
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.clearAllMocks();
@@ -164,7 +183,34 @@ describe("CreatorSocialLinksCard", () => {
   });
 });
 
-describe("CreatorDetailPage", () => {
+describe("CreatorDetailPage", { timeout: 15000 }, () => {
+  it("hero tidak menampilkan bintang/rating saat rating masih 0", async () => {
+    const { CreatorDetailPage } = await import("../CreatorDetailPage");
+    await render(<CreatorDetailPage creatorId="creator_001" />);
+
+    // creatorProfile fixture: rating 0, completedJobs 0 → keduanya "—",
+    // dan tidak ada label ulasan palsu.
+    await waitFor(() => expect(text()).toContain("Order Selesai"));
+    expect(text()).not.toContain("Ulasan");
+  });
+
+  it("hero menampilkan rating dan jumlah order nyata tanpa label Ulasan", async () => {
+    mocks.getCreatorById.mockResolvedValue({
+      success: true,
+      data: { ...creatorProfile, rating: 4.8, completedJobs: 12 },
+    });
+
+    const { CreatorDetailPage } = await import("../CreatorDetailPage");
+    await render(<CreatorDetailPage creatorId="creator_001" />);
+
+    await waitFor(() => {
+      expect(text()).toContain("4.8");
+      expect(text()).toContain("Order Selesai");
+      expect(text()).toContain("12");
+    });
+    expect(text()).not.toContain("Ulasan");
+  });
+
   it("mengambil portfolio & akun sosial lewat service, bukan literal komponen", async () => {
     mocks.getCreatorPortfolio.mockResolvedValue({
       success: true,
@@ -193,10 +239,12 @@ describe("CreatorDetailPage", () => {
     const { CreatorDetailPage } = await import("../CreatorDetailPage");
     await render(<CreatorDetailPage creatorId="creator_001" />);
 
-    expect(mocks.getCreatorPortfolio).toHaveBeenCalledWith("creator_001");
-    expect(mocks.getCreatorSocialAccounts).toHaveBeenCalledWith("creator_001");
-    expect(text()).toContain("Review Sambal Roa Juara");
-    expect(text()).toContain("@ahmadfauzi");
+    await waitFor(() => {
+      expect(mocks.getCreatorPortfolio).toHaveBeenCalledWith("creator_001");
+      expect(mocks.getCreatorSocialAccounts).toHaveBeenCalledWith("creator_001");
+      expect(text()).toContain("Review Sambal Roa Juara");
+      expect(text()).toContain("@ahmadfauzi");
+    });
     for (const dummy of LEGACY_DUMMY_TITLES) expect(text()).not.toContain(dummy);
   });
 
@@ -204,6 +252,7 @@ describe("CreatorDetailPage", () => {
     const { CreatorDetailPage } = await import("../CreatorDetailPage");
     await render(<CreatorDetailPage creatorId="creator_002" />);
 
+    await waitFor(() => expect(text()).toContain("Order Selesai"));
     for (const dummy of LEGACY_DUMMY_TITLES) expect(text()).not.toContain(dummy);
     expect(text()).not.toContain("@ahmadfauzi");
     expect(text()).not.toContain("15.4K");
@@ -226,11 +275,13 @@ describe("CreatorDetailPage", () => {
     const { CreatorDetailPage } = await import("../CreatorDetailPage");
     await render(<CreatorDetailPage creatorId="creator_001" />);
 
-    const followersLabel = [...host.querySelectorAll("span")].find(
-      (el) => el.textContent === "Followers"
-    );
-    expect((followersLabel?.previousElementSibling?.textContent ?? "").replace(/\u00a0/g, " ")).toBe(
-      "25,2 rb"
-    );
+    await waitFor(() => {
+      const followersLabel = [...host.querySelectorAll("span")].find(
+        (el) => el.textContent === "Followers"
+      );
+      expect((followersLabel?.previousElementSibling?.textContent ?? "").replace(/\u00a0/g, " ")).toBe(
+        "25,2 rb"
+      );
+    });
   });
 });

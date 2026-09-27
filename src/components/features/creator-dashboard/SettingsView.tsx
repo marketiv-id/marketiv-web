@@ -329,6 +329,11 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
   const [bio, setBio] = useState(profile.bio);
   const [location, setLocation] = useState(profile.location);
   const [tiktokUrl, setTiktokUrl] = useState(profile.tiktokUrl || "");
+  /** Input manual — MVP tidak memakai API platform (biaya). `profile.followers`
+   *  hanya terisi setelah backend mengagregasi creator_social_accounts. */
+  const [tiktokFollowers, setTiktokFollowers] = useState(
+    profile.followers > 0 ? String(profile.followers) : ""
+  );
   const [selectedNiche, setSelectedNiche] = useState<CreatorNiche>(profile.niche);
   const [formError, setFormError] = useState<string | null>(null);
   const [isProfileSuccessOpen, setIsProfileSuccessOpen] = useState(false);
@@ -396,11 +401,14 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
     setFormError(null);
     setIsSavingProfile(true);
 
+    const followersDigits = tiktokFollowers.replace(/[^0-9]/g, "");
+
     // Social dulu — Function update-profile evaluasi completion dengan
     // membaca creator_social_accounts; urutan terbalik = flag tidak naik.
     const socialRes = await upsertCreatorSocialAccount({
       platform: "tiktok",
       username: tiktokUsername,
+      followers: followersDigits ? Number(followersDigits) : undefined,
     });
     if (!socialRes.success) {
       setIsSavingProfile(false);
@@ -685,6 +693,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
                 setBio(profile.bio);
                 setLocation(profile.location);
                 setTiktokUrl(profile.tiktokUrl || "");
+                setTiktokFollowers(profile.followers > 0 ? String(profile.followers) : "");
                 setSelectedNiche(profile.niche);
                 setIsEditing(true);
               }}
@@ -838,7 +847,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
 
             {/* Akun sosial disimpan di collection `creator_social_accounts`
                 (bukan kolom URL di profil) — handle diekstrak dari tautan. */}
-            <div className="grid grid-cols-1 gap-4 border-t border-neutral-100 pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-neutral-100 pt-4">
               <div className="space-y-1.5">
                 <label className="block text-[0.68rem] font-[900] text-neutral-400 uppercase tracking-wider">
                   Link / Username TikTok
@@ -850,6 +859,23 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
                   onChange={(e) => setTiktokUrl(e.target.value)}
                   className={inputCls}
                 />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-[0.68rem] font-[900] text-neutral-400 uppercase tracking-wider">
+                  Jumlah Followers TikTok
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Contoh: 15400"
+                  value={tiktokFollowers}
+                  onChange={(e) => setTiktokFollowers(e.target.value)}
+                  className={inputCls}
+                />
+                <p className="text-[0.68rem] font-[600] text-neutral-400 leading-relaxed">
+                  Diisi manual dan opsional. Angka ini yang ditampilkan ke UMKM.
+                </p>
               </div>
             </div>
 
@@ -879,7 +905,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
         <div className="px-6 py-1">
           <StatRow
             label="Total Kontrak Selesai"
-            value={`${profile.completedJobs} Kontrak`}
+            value={profile.completedJobs > 0 ? `${profile.completedJobs} Kontrak` : "—"}
             icon={<Briefcase size={13} />}
           />
           {/* averageViews/responseTime/completionRate belum punya kolom sumber —
@@ -895,7 +921,7 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
           />
           <StatRow
             label="Rating dari Klien"
-            value={`⭐ ${profile.rating} / 5.0`}
+            value={profile.rating > 0 ? `⭐ ${profile.rating} / 5.0` : "—"}
             icon={<Star size={13} />}
           />
           <StatRow
@@ -910,13 +936,15 @@ export function SettingsView({ initialProfile, initialPortfolio }: SettingsViewP
           />
           <StatRow
             label="Total Followers Gabungan"
-            value={`${profile.followers.toLocaleString("id-ID")} followers`}
+            value={
+              profile.followers > 0 ? `${profile.followers.toLocaleString("id-ID")} followers` : "—"
+            }
             icon={<Globe size={13} />}
           />
         </div>
         <div className="px-6 py-4 bg-neutral-50/60 border-t border-neutral-100">
           <p className="text-[0.72rem] font-[600] text-neutral-400 leading-relaxed">
-            Statistik dihitung otomatis dari aktivitas di Marketiv dan diperbarui setiap hari.
+            Angka bertanda — belum tersedia datanya, jadi tidak ditampilkan asal-asalan.
           </p>
         </div>
       </SettingsCard>

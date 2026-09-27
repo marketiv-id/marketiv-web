@@ -77,4 +77,17 @@ describe("toFollowersLabel", () => {
       ])
     ).toBe("—");
   });
+
+  it("memakai agregat Function sebagai cadangan saat akun sosial belum terbaca", () => {
+    expect(plain(toFollowersLabel([], 22000))).toBe("22 rb");
+    expect(toFollowersLabel([], 0)).toBe("—");
+    expect(plain(toFollowersLabel([{ id: "s1", platform: "tiktok", username: "a", followers: 15400, engagementRate: 0 }], 99999))).toBe(
+      "15,4 rb"
+    );
+  });
+
+  it("toCreatorView memakai agregat followers dari profil bila tersedia", () => {
+    expect(plain(toCreatorView({ ...baseProfile, followers: 22000 }).followers)).toBe("22 rb");
+    expect(toCreatorView(baseProfile).followers).toBe("");
+  });
 });

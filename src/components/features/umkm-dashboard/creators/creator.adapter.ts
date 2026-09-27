@@ -17,9 +17,9 @@ import { formatCompactNumber, formatCurrency } from "@/lib/formatters";
  *
  * Tiga field tidak punya padanan langsung di kanon — semuanya gagal-tertutup,
  * tidak ada nilai karangan:
- * - `followers` → tidak ada di CreatorProfile. Halaman detail mengisinya dari
- *   `creator_social_accounts` lewat toFollowersLabel(); tanpa itu nilainya ""
- *   dan UI menampilkan "—".
+ * - `followers` → `CreatorProfile.followers` (agregat dari Function DTO) atau
+ *   `creator_social_accounts` di halaman detail; tanpa keduanya "" dan UI
+ *   menampilkan "—".
  * - `estimatedSalary` → "Belum ada rate card" saat startingPrice 0 (kreator
  *   belum punya paket rate card published).
  * - `totalReviews` → memakai `completedJobs` sebagai proxy (satu pekerjaan
@@ -66,7 +66,7 @@ export function toCreatorView(profile: CreatorProfile): Creator {
     imageUrl: profile.avatarUrl,
     bannerUrl: profile.bannerUrl,
     estimatedSalary: profile.startingPrice > 0 ? formatCurrency(profile.startingPrice) : "Belum ada rate card",
-    followers: "",
+    followers: profile.followers && profile.followers > 0 ? formatCompactNumber(profile.followers) : "",
     rating: profile.rating,
     totalReviews: profile.completedJobs,
     isVerified: profile.isVerified,
@@ -79,14 +79,20 @@ export function toCreatorView(profile: CreatorProfile): Creator {
 }
 
 /**
- * Label followers untuk hero, dijumlahkan dari akun sosial nyata kreator
- * (`creator_social_accounts`). Angka 0 berarti kreator belum mengisi datanya,
- * jadi hasilnya "—" — bukan 0 dan bukan angka karangan.
+ * Label followers untuk hero. Sumber pertama: jumlah akun sosial nyata
+ * (`creator_social_accounts`) — paling segar dan bisa dibaca klien.
+ * `fallbackFollowers` dipakai kalau akun sosial belum terbaca/tidak ada:
+ * agregat dari Function DTO (`CreatorProfile.followers`).
+ * Angka 0 berarti belum pernah diisi → "—", bukan 0 dan bukan angka karangan.
  */
-export function toFollowersLabel(accounts: CreatorSocialAccount[]): string {
+export function toFollowersLabel(
+  accounts: CreatorSocialAccount[],
+  fallbackFollowers = 0
+): string {
   const total = accounts.reduce(
     (sum, account) => sum + (account.followers > 0 ? account.followers : 0),
     0
   );
-  return total > 0 ? formatCompactNumber(total) : "—";
+  if (total > 0) return formatCompactNumber(total);
+  return fallbackFollowers > 0 ? formatCompactNumber(fallbackFollowers) : "—";
 }

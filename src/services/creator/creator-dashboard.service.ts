@@ -364,6 +364,8 @@ export async function uploadCreatorBanner(file: File): Promise<ServiceResult<str
 export async function upsertCreatorSocialAccount(input: {
   platform: "tiktok";
   username: string;
+  /** Input manual kreator; lihat upsertCreatorSocialAccountInAppwrite. */
+  followers?: number;
 }): Promise<ServiceResult<null>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(400);

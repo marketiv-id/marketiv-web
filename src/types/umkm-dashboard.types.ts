@@ -142,6 +142,12 @@ export interface CreatorProfile {
   rating: number;
   completedJobs: number;
   engagementRate: number;
+  /**
+   * Agregat follower dari Function DTO (`creator_profiles.totalFollowers`).
+   * Belum dikirim `get-creator-directory`; halaman detail memakai
+   * `creator_social_accounts` sebagai sumber utama.
+   */
+  followers?: number;
   instagramUrl?: string;
   tiktokUrl?: string;
   isVerified: boolean;

@@ -47,6 +47,14 @@ export function formatCompactNumber(value: number) {
   }).format(value);
 }
 
+/**
+ * Label jumlah follower yang gagal-tertutup: 0 berarti kreator belum pernah
+ * mengisi angkanya, jadi tampilannya "—" — bukan 0 dan bukan angka karangan.
+ */
+export function formatFollowersLabel(followers: number) {
+  return followers > 0 ? formatCompactNumber(followers) : "—";
+}
+
 export function formatDate(value: string) {
   return new Intl.DateTimeFormat("id-ID", {
     day: "2-digit",
