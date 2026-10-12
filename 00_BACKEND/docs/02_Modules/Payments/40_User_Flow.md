@@ -1,56 +1,69 @@
 # Payments — User Flow
 
-## Alur Pembayaran Order
+## Alur Pembayaran Rate Card Order
 
 ```text
-UMKM checkout order (pending_payment)
+Order dibuat (pending_payment)
 ↓
-Buat payment Midtrans → redirect/Snap token
+UMKM klik bayar di ruang negosiasi → create-payment (purpose: order, finishUrl)
 ↓
-UMKM bayar di Midtrans
+Redirect ke redirectUrl Snap Midtrans
 ↓
-Webhook Midtrans tervalidasi → payment success
+UMKM bayar di Midtrans → kembali ke finishUrl
 ↓
-Escrow hold → dana ditahan
+midtrans-webhook tervalidasi → payment paid
 ↓
-Creator selesaikan pekerjaan → UMKM approve
+create-escrow → escrow held, order in_progress
 ↓
-Escrow release → saldo masuk wallet Creator
+Creator kirim deliverable → Admin validasi (valid) + UMKM approve (atau auto-approve)
+↓
+release-escrow → saldo bersih (setelah fee) masuk wallet Creator, order completed
 ```
 
-## Alur Withdrawal
+UI hanya menyatakan pembayaran berhasil setelah DTO server menunjukkan order `in_progress`.
+
+## Alur Pendanaan Campaign (Top-up Campaign)
 
 ```text
-Creator buka Wallet
+UMKM isi wizard campaign (budget ≥ Rp50.000, status draft)
 ↓
-Klik "Tarik Dana"
+create-payment (purpose: campaign, amount = budget)
 ↓
-Pilih metode: bank atau e-wallet
+Snap popup (snap.js, snapToken) — total = budget + fee
 ↓
-Input: amount, provider name, account number/phone, account name
+midtrans-webhook tervalidasi → payment paid
 ↓
-Submit → balance reserved + status requested
+create-escrow → campaigns.remainingBudget += budget
 ↓
-Admin mulai proses → status processing
-↓
-Admin transfer manual → isi transfer reference → status succeeded
-   atau Admin fail/reject → reversal balance tepat sekali → status reversed
+UMKM terbitkan campaign (modul Campaigns)
 ```
 
-## Alur Top Up (UMKM)
+Tidak ada top-up saldo wallet UMKM. Payment campaign `pending` dapat dibatalkan dari halaman Keuangan UMKM (`cancel-payment`).
+
+## Alur Withdrawal (Creator)
 
 ```text
-UMKM buka Wallet
+Creator buka Keuangan → "Tarik Dana"
 ↓
-Klik "Top Up"
+Pilih provider (bank / e-wallet) → payoutMethod diturunkan dari provider
 ↓
-Input amount
+Input: amount, nomor rekening/HP, nama pemilik
 ↓
-Buat payment Midtrans → redirect/Snap token
+Konfirmasi (T&C terbaru wajib) → request-withdrawal (+ requestKey)
 ↓
-UMKM bayar di Midtrans
+Saldo di-reserve, status requested ("umumnya diproses dalam 1–2 hari kerja")
 ↓
-Webhook Midtrans tervalidasi
+Admin (admin app /withdrawals) mulai proses → processing
 ↓
-Saldo bertambah (deposit transaction)
+Admin transfer manual → isi transfer reference → succeeded
+   atau Admin fail → saldo dikembalikan tepat sekali → reversed
+```
+
+UMKM dapat menarik saldo refund lewat Function yang sama (`sourceOrigin` wajib), tetapi UI withdrawal UMKM **belum diimplementasikan**.
+
+## Alur Refund (UMKM)
+
+```text
+Order cancelled/expired → refund-order otomatis → escrow refunded → wallets.balance UMKM bertambah
+Campaign cancelled/completed dengan sisa budget → Admin jalankan refund-order { campaignId } → wallets.balance UMKM bertambah
 ```

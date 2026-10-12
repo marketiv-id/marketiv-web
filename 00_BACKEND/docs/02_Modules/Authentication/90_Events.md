@@ -14,7 +14,7 @@ account.create()                         → event users.*.create
 account.createEmailPasswordSession()
 account.updatePrefs({ role, ... })       → prefs baru terisi di sini
     ↓
-functions.createExecution("create-user-profile", { $id, role, email, name, prefs })
+functions.createExecution("create-user-profile", { $id, role, email, name, phone, prefs })
     ↓
 baris `users` + `umkm_profiles`/`creator_profiles` + `user_storage_usage`
 ```
@@ -24,7 +24,7 @@ baris `users` + `umkm_profiles`/`creator_profiles` + `user_storage_usage`
 | Trigger | `users.*.create` (event) **dan** eksekusi sinkron dari klien |
 | Function | `create-user-wallet` (event) · `create-user-profile` (event + sinkron) |
 | Efek 1 | `create-user-wallet` membuat record di `wallets` (saldo 0) — milik [Payments](../Payments/70_Backend.md) |
-| Efek 2 | `create-user-profile` membuat baris `users`, profil sesuai role, dan `user_storage_usage` — milik [Users](../Users/70_Backend.md) |
+| Efek 2 | `create-user-profile` membuat baris `users` (`status: active`, `tos_version`/`tos_accepted_at` = `null` karena register tidak mengirim versi T&C), profil sesuai role, dan `user_storage_usage` — milik [Users](../Users/70_Backend.md) |
 
 **Kenapa `create-user-profile` harus dipanggil sinkron.** Function mengambil role
 dari `user.role || user.prefs?.role || user.labels`, dan menolak 400 kalau tidak
@@ -61,9 +61,16 @@ user-email-verified
 | Guard | Hanya payload dengan `emailVerification === true` |
 | Efek | Isi `users.email_verified_at` secara idempoten |
 
-Event ini dipakai oleh alur OTP register: `account.createSession(userId, otp)`
-menandai email Auth terverifikasi, lalu Function menyinkronkan timestamp ke
-mirror `users`.
+Event ini dipakai oleh alur OTP register (`confirmEmailOtp` →
+`account.createSession(userId, otp)`), lalu Function menyinkronkan timestamp ke
+mirror `users`. Event `users.*.update` menyala untuk perubahan Auth apa pun;
+payload tanpa `emailVerification === true` langsung `res.empty()`.
+
+## Event yang Tidak Ada
+
+- Modul ini tidak menerbitkan event custom. `accept-tos`,
+  `request-password-otp`, dan `reset-password-with-otp` tidak memanggil
+  Function lain secara langsung.
 
 > **Welcome Notification — tidak ada.** Dokumen ini sebelumnya menyebut
 > `create-user-wallet` mengirim notifikasi `type: system` bertajuk "Selamat

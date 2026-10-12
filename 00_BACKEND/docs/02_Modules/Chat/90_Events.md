@@ -2,19 +2,22 @@
 
 ## Event yang Diterbitkan
 
-| Event | Trigger | Efek |
+| Event Appwrite | Sumber tulis | Efek |
 | --- | --- | --- |
-| `messages.create` | Pesan baru dikirim | Update conversation, realtime broadcast, buat notifikasi chat |
+| `databases.<db>.tables.messages.rows.*.create` | `send-message` (text), `create-offer` (offer) | Function `send-chat-notification`; realtime ke participant (row `read`) |
+
+- Update `messages.read_at` dan update `conversations` (last_message, archive, offer_id) tidak memicu Function apa pun.
 
 ## Event yang Dikonsumsi
 
-Chat tidak mengonsumsi event dari modul lain secara langsung.
+- Tidak ada. Chat tidak mengonsumsi event modul lain. Perubahan offer/order terlihat lewat polling DTO negosiasi.
 
 ## Integrasi Notifications
 
-`messages.create` memicu function `send-chat-notification` untuk membuat record `notifications` penerima dan mengirim push notification lewat Appwrite Messaging jika target push tersedia.
+- `send-chat-notification` membuat `notifications` tipe `chat_message` (judul "Pesan chat baru") untuk participant penerima dan mengirim push Appwrite Messaging jika target push ada. Detail: `70_Backend.md`.
+- Offer baru tidak punya notifikasi khusus: kreator menerima notifikasi `chat_message` dari pesan `offer` (isi `Penawaran Khusus: {title}`).
 
 ## Lihat Juga
 
-- Pesan tipe `offer` terhubung ke modul Offers → `../Offers/90_Events.md`.
-- Notifikasi chat (opsional) → `../Notifications/90_Events.md`.
+- Pesan tipe `offer` & `create-order` → `../Offers/90_Events.md`.
+- Katalog notifikasi → `../Notifications/90_Events.md`.

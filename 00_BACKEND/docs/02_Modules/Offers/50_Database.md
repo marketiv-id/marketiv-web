@@ -1,29 +1,37 @@
 # Offers — Database
 
-Sumber kebenaran skema koleksi milik modul Offers. Satu fakta = satu lokasi.
+Sumber kebenaran skema tabel milik modul Offers. Satu fakta = satu lokasi. Skema canonical: `00_BACKEND/appwrite.config.json` (generator: `appwrite/generate_appwrite_json.cjs`).
 
 ---
 
 ## offers
 
-`packageId`, `packageNameSnapshot`, dan `packagePriceSnapshot` opsional. Dipakai sebagai provenance paket acuan; final contract tetap `title`, `description`, `price`, `deadline`, dan `revisionLimit` pada offer.
+Custom offer dalam sebuah percakapan. Relasi: Conversation (1) → Offers (N); Offer (1) → Order (0..1, `orders.offerId` unique); Message tipe `offer` (N) → Offer via `messages.offer_id`.
 
-Custom offer dalam sebuah percakapan. Relasi: Conversation (1) → Offers (N); merujuk UMKM pembuat offer dan creator penerima offer (FK → users).
+| Attribute            | Type         | Required | Catatan |
+| -------------------- | ------------ | -------- | ------- |
+| conversationId       | string(255)  | yes      | FK → `conversations.$id` (modul Chat) |
+| umkmId               | string(255)  | yes      | user ID UMKM pembuat (dari `conversations.umkm_id`) |
+| creatorId            | string(255)  | yes      | user ID creator penerima (dari `conversations.creator_id`) |
+| title                | string(255)  | yes      | |
+| description          | string(2000) | no       | lingkup pekerjaan; `""` jika kosong |
+| price                | integer      | yes      | min 0, max 999.999.999 di skema; `create-offer` mensyaratkan ≥1 |
+| deadline             | string(255)  | yes      | string tanggal ISO (bukan kolom datetime) |
+| revisionLimit        | integer      | yes      | min 0, max 999.999.999 di skema |
+| packageId            | string(255)  | no       | provenance paket rate card (opsional) |
+| packageNameSnapshot  | string(100)  | no       | snapshot `rate_card_packages.name` saat offer dibuat |
+| packagePriceSnapshot | integer      | no       | snapshot `rate_card_packages.price` (min 0, max 999.999.999) |
+| status               | string(50)   | yes      | `pending` \| `accepted` \| `rejected` (tanpa enum di skema) |
+| createdAt            | datetime     | no       | diisi `create-offer`; DTO & guard memakai `$createdAt` |
 
-| Attribute      | Type    | Required | Catatan                          |
-| -------------- | ------- | -------- | -------------------------------- |
-| conversationId | string  | yes      | FK → conversations (modul Chat)  |
-| umkmId         | string  | yes      | FK → users (pembuat offer)       |
-| creatorId      | string  | yes      | FK → users (penerima offer)      |
-| title          | string  | yes      |                                  |
-| description    | string  | no       | detail pekerjaan                 |
-| price          | integer | yes      | harga yang disepakati            |
-| deadline       | string  | yes      | tenggat pengerjaan               |
-| revisionLimit  | integer | yes      | batas jumlah revisi              |
-| status         | enum    | yes      | `pending\|accepted\|rejected`    |
+- Provenance paket hanya acuan; kontrak final tetap `title`, `description`, `price`, `deadline`, `revisionLimit`.
 
-**Index**: `conversationId`, `status`, `createdAt DESC`.
+**Index**: `idx_conversationId` (`conversationId`), `idx_packageId` (`packageId`), `idx_status` (`status`), `idx_createdAt` (`createdAt` DESC).
 
-**Permission**: Conversation participant.
+**Permission**:
 
-> `conversationId` merujuk koleksi milik modul Chat (`../Chat/50_Database.md`). Order yang terbentuk dari accept ada di `../Orders/50_Database.md`. Status & field dijelaskan di `30_Business_Rules.md`.
+- Tabel: `create("users")`, `rowSecurity: true`, tanpa `read`/`update`/`delete` tabel.
+- Row (ditulis `create-offer`): `read` UMKM + creator, `update` creator (accept/reject), `delete` UMKM (tarik offer). UMKM sengaja tanpa `update`.
+- Row permission tidak membatasi kolom: creator secara teknis dapat mengubah kolom lain selain `status` dari browser.
+
+> `conversationId` → `../Chat/50_Database.md`. Order dari accept → `../Orders/50_Database.md`. Status & validasi → `30_Business_Rules.md`.

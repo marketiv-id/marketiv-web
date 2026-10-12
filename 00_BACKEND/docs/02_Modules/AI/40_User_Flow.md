@@ -3,33 +3,54 @@
 ## Brief Generator
 
 ```text
-UMKM buka halaman Create Campaign
+UMKM buka wizard Create/Edit Campaign
 ↓
-Klik "Generate Brief dengan AI"
+Langkah 1: isi judul, tipe, deskripsi produk (≥ 30 karakter agar tombol AI aktif)
 ↓
-Input: Nama Produk, Deskripsi, Target Market, Goal
+Langkah Brief & Guideline: (opsional) pilih "Arahan Cepat"
 ↓
-AI Function menghasilkan brief terstruktur
+Klik "⚡ Susun Arahan dengan AI"
+  (bila "Arahan Anda" sudah terisi → konfirmasi timpa)
 ↓
-UMKM edit brief (opsional)
+Frontend executeFunction("ai-brief") — sinkron
+  body: description (+ arahan cepat), type, productName=judul,
+        targetMarket=lokasi, goal=label CTA, materials=[URL aset eksternal]
 ↓
-Simpan ke campaign_briefs
+ai-brief → Vertex AI (Gemini) — gagal → OpenRouter
+↓
+Brief dikembalikan; log ai_requests (feature "brief")
+↓
+Wizard isi "Arahan Anda" (= briefDetail) & "Poin Wajib"
+  (do → "- …", dont → "- Dilarang: …"); objective disimpan tersembunyi;
+  badge "✨ Dibantu AI"
+↓
+UMKM edit (opsional)
+↓
+Simpan Draft → createCampaignDraft/updateCampaignDraft tulis campaign_briefs
+  (generatedByAi = true bila AI dipakai) — modul Campaigns
 ```
 
-## Fraud Detection
+- `contentAngle` & `cta` hasil AI **tidak** dipakai wizard (gaya video & CTA adalah pilihan enumerated user).
+- Gagal: error `validation` → pesan dari server; lainnya → "Layanan AI sedang tidak tersedia. Coba lagi nanti."
+
+## Fraud Precheck
 
 ```text
-Creator submit konten campaign
+Creator kirim bukti (submit-campaign-proof)
 ↓
-Trigger otomatis: campaign_submissions.create
+Baris campaign_submissions dibuat (status "pending")
 ↓
-AI Fraud Detection menganalisis submission
+Event databases.<db>.tables.campaign_submissions.rows.*.create
 ↓
-Hasil: fraudScore + status (safe/review/rejected)
+ai-fraud-precheck (async): cek URL, platform, aksesibilitas, duplikat,
+  content analysis caption via Gemini
 ↓
-Tulis fraud_checks + update submission
+Hasil: fraudScore + fraudStatus (safe/review/rejected)
 ↓
-safe → auto-approve
-review → manual review oleh UMKM
-rejected → auto-reject
+Update campaign_submissions.fraudScore/fraudStatus + tulis fraud_checks
+↓
+Submission TETAP "pending" — fraudStatus hanya label risiko;
+keputusan approve/reject oleh reviewer (lihat ../../03_Workflows/40_Submission_Fraud.md)
 ```
+
+- Hasil muncul beberapa detik setelah submit (asinkron); frontend tidak boleh mengasumsikan hasil langsung tersedia.

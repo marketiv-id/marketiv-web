@@ -1,107 +1,95 @@
 # AI — Business Rules
 
-## Brief Generator
+## Brief Generator (`ai-brief`)
 
-**Input** (dari UMKM & Sistem):
+**Input** (body JSON, lihat `60_API.md`):
 
-- `type`: Tipe campaign (`ugc` atau `clipping`)
-- `materials`: Daftar atau link aset referensi produk (`campaign_assets`)
-- Nama produk
-- Deskripsi produk
-- Target market
-- Goal / tujuan campaign
+- `description` (wajib) — deskripsi produk.
+- `type` (wajib) — `ugc` atau `clipping`.
+- `productName`, `targetMarket`, `goal` (opsional) — default di prompt: `Not specified`, `General`, `Brand awareness`.
+- `materials` (opsional, `string[]`) — daftar/link aset referensi; kosong → `No specific materials provided.`.
+- `campaignId` (opsional) — bila ada, Function ikut menulis baris brief (lihat Aturan 6).
 
-**Output terstruktur** (disimpan ke `campaign_briefs` di modul Campaigns):
+**Output terstruktur**:
 
 - `objective`: string
-- `contentAngle`: string (disesuaikan tipe: *Green Screen/Voiceover/Slideshow* untuk `ugc`, atau *Highlight/Repurposing/Editing* untuk `clipping`)
+- `contentAngle`: string
 - `cta`: string
-- `briefDetail`: string (arah kreatif, visual, pesan kunci, arahan penggunaan aset produk/link)
-- `doAndDont`: { do: string[], dont: string[] }
+- `briefDetail`: string (arah kreatif, visual, pesan kunci, arahan penggunaan aset)
+- `doAndDont`: `{ do: string[], dont: string[] }`
 
 **Aturan**:
 
-- **Kustomisasi Tipe & Aset Digital**: AI wajib membedakan instruksi berdasarkan tipe campaign dan aset digital yang dilampirkan (tanpa pengiriman sampel produk fisik):
-  - Jika `ugc`: arahkan creator untuk membuat video TikTok dari 0 menggunakan aset foto/video produk (mis. efek Green Screen, Voiceover, atau Slideshow Montage).
-  - Jika `clipping`: arahkan creator untuk memotong/mengedit ulang video panjang dari link sumber yang dilampirkan dengan *dynamic subtitle* dan *hook*.
-- AI hanya menghasilkan *draft* brief. UMKM dapat mengedit sebelum menyimpan.
-- Brief disimpan di database Campaigns (`../Campaigns/50_Database.md`).
+1. Request selain `POST` → 405. `description`/`type` kosong atau `type` ∉ {`ugc`,`clipping`} → 400.
+2. **Instruksi per tipe** (disisipkan ke prompt, aset digital, tanpa sampel fisik):
+   - `ugc`: buat video TikTok orisinal dari nol memakai aset foto/video produk; saran pendekatan Green Screen, Voiceover, atau Slideshow Montage.
+   - `clipping`: potong/edit ulang video panjang dari link sumber; wajib *dynamic subtitle* dan *hook* kuat di 3 detik pertama.
+3. Prompt (bahasa Inggris) mewajibkan **semua nilai output dalam Bahasa Indonesia** dan JSON mentah tanpa markdown.
+4. Respons model dibersihkan (blok `<think>`, prefiks "Thinking Process/Reasoning/Analysis", code fence ```` ```json ````) lalu di-`JSON.parse`. Bila parse gagal → seluruh teks masuk `briefDetail`, field lain string kosong, `doAndDont` `{do:[],dont:[]}`.
+5. Field yang hilang dari output model dinormalisasi ke `""` / `{do:[],dont:[]}` di respons.
+6. Bila `campaignId` dikirim **dan** belum ada baris brief untuk campaign itu, Function membuat baris di koleksi brief (`CAMPAIGN_BRIEFS_COLLECTION_ID`, default `6ab530d00018edb50097`) dengan `generatedByAi: true` dan `doAndDont` di-`JSON.stringify`. Baris yang sudah ada **tidak** ditimpa. Tidak ada clamp panjang kolom; kegagalan tulis hanya di-log dan respons tetap `success: true`.
+7. Frontend produksi **tidak** mengirim `campaignId` (campaign belum ada saat langkah brief), jadi Aturan 6 praktis tidak terpakai; brief disimpan wizard lewat `createCampaignDraft`/`updateCampaignDraft` (modul Campaigns) dengan `generatedByAi` sesuai pemakaian AI.
+8. AI hanya menghasilkan *draft*. UMKM dapat mengedit sebelum menyimpan.
+9. Setiap generate sukses dicatat ke `ai_requests` (`feature: "brief"`) — best effort, lihat `50_Database.md`.
+10. **Belum diimplementasikan**: guard role (semua user login dengan `execute: users` dapat memanggil, termasuk creator), rate limit/kuota per user, verifikasi kepemilikan `campaignId`.
 
 ---
 
-## Fraud Detection
+## Fraud Precheck (`ai-fraud-precheck`)
 
-**Validasi yang dijalankan** terhadap submission:
+**Validasi yang dijalankan** terhadap submission (diambil via `getDocument` dari `campaign_submissions`):
 
-- URL valid (format benar).
-- URL tersedia / dapat diakses (tidak 404).
-- Tidak private.
-- Tidak duplikat.
-- Cocok dengan platform yang diklaim.
-- **Content analysis (text-based)** — Caption & hashtag diperiksa via Gemini API apakah sesuai dengan brief campaign.
+| # | Validasi | Kondisi gagal | Bobot |
+|---|---|---|---|
+| 1 | URL valid | `new URL(postUrl)` gagal atau protokol bukan `http:`/`https:` | +30 |
+| 2 | Platform match | hostname tidak cocok pola platform (`tiktok` → `tiktok.com`, `instagram` → `instagram.com`, `youtube` → `youtube.com`/`youtu.be`; platform lain selalu tidak cocok). Hanya bila URL valid | +20 |
+| 3 | URL accessibility | `fetch` GET (follow redirect) mengembalikan status non-2xx atau error jaringan. Hanya bila URL valid | +25 |
+| 4 | Deduplikasi | ada submission lain (lintas campaign) dengan `postUrl` persis sama | +25 |
+| 5 | Content analysis (teks) | `floor(overallScore × 20 / 100)` dari Gemini | 0–20 |
+| — | Content analysis visual | **belum diimplementasikan** (future scope) | — |
+| — | Cek "tidak private" | **belum diimplementasikan** (tidak ada pemeriksaan eksplisit; hanya tercakup bila URL mengembalikan non-2xx) | — |
 
-> **Scope MVP:** Content analysis hanya memproses teks (caption + hashtag). Analisis visual video (logo detection, product matching, engagement anomaly) adalah **future scope** karena biaya token dan latency yang tinggi.
+`fraudScore = min(100, Σ bobot)`.
 
-### Content Analysis — Input & Output Gemini API
+> Catatan: `submit-campaign-proof` sudah menolak URL tidak valid dan domain yang tidak cocok (hanya `tiktok`/`instagram`) **sebelum** baris dibuat, sehingga untuk submission lewat jalur resmi cek #1–#2 hampir selalu lolos.
 
-**Input ke Gemini API** (diambil dari database submission & brief):
+### Content Analysis — Input & Output Gemini
 
-```json
-{
-  "caption": "string — caption dari campaign_submissions",
-  "hashtags": "string[] — hashtag yang diekstrak dari caption",
-  "brief": {
-    "objective": "string — campaign_briefs.objective",
-    "contentAngle": "string — campaign_briefs.contentAngle",
-    "cta": "string — campaign_briefs.cta",
-    "briefDetail": "string — campaign_briefs.briefDetail",
-    "doAndDont": {
-      "do": ["string"],
-      "dont": ["string"]
-    }
-  }
-}
-```
+- Dijalankan hanya bila `GEMINI_API_KEY` terkonfigurasi **dan** `caption` tidak kosong. Bila dilewati, alasan dicatat: `Content analysis dilewati (caption kosong)` atau `... (GEMINI_API_KEY tidak dikonfigurasi)`.
+- Model: `gemini-2.5-flash` (hard-coded, SDK `@google/generative-ai`, tanpa `generationConfig`).
+- Brief dibaca dari koleksi brief (`CAMPAIGN_BRIEFS_COLLECTION_ID`, default `6ab530d00018edb50097`) berdasarkan `campaignId`; tidak ada brief → teks `Tidak ada brief kampanye.`.
+- Hashtag diekstrak dari caption dengan regex `#[\w]+`.
 
-**Output dari Gemini API** (structured JSON):
+**Isi prompt** (bahasa Indonesia): caption, `hashtags` (array), dan brief `{ objective, contentAngle, cta, briefDetail, doAndDont }`.
+
+**Output yang diminta dari Gemini** (JSON):
 
 ```json
 {
-  "captionRelevance": "number 0–100 — seberapa relevan caption dengan brief",
-  "hashtagRelevance": "number 0–100 — seberapa relevan hashtag dengan brief",
-  "fraudSignal": "string | null — indikasi fraud jika terdeteksi (mis. link mencurigakan, klaim palsu), null jika aman",
-  "overallScore": "number 0–100 — skor keseluruhan content analysis (semakin tinggi = semakin tidak sesuai)",
-  "reason": "string — penjelasan singkat hasil analisis"
+  "captionRelevance": "number 0–100",
+  "hashtagRelevance": "number 0–100",
+  "fraudSignal": "string | null — indikasi fraud tekstual, null jika aman",
+  "overallScore": "number 0–100 — semakin tinggi = semakin TIDAK sesuai brief",
+  "reason": "string — penjelasan singkat"
 }
 ```
 
 **Aturan**:
 
-- `captionRelevance` dan `hashtagRelevance` dihitung berdasarkan kesesuaian dengan `brief.objective`, `brief.contentAngle`, `brief.cta`, dan `brief.briefDetail`.
-- `fraudSignal` diisi jika ada indikasi kecurangan tekstual (promosi link eksternal tidak relevan, klaim palsu, spam).
-- `overallScore` adalah agregasi (bobot caption 60% + hashtag 20% + fraud signal 20%). Semakin tinggi = semakin tidak sesuai brief.
-- Output dari Gemini dicatat ke `ai_requests` dengan `feature: "fraud"`.
-- `overallScore` dari Gemini (0–100) dimapping ke bobot content analysis (0–20) dengan formula: `floor(overallScore * 20 / 100)`.
-
-### Bobot Skor Validasi
-
-| Validasi | Bobot |
-|---|---|
-| URL valid | +30 |
-| URL accessibility | +25 |
-| Platform match | +20 |
-| Deduplikasi | +25 |
-| Content analysis text | +20 |
-| Content analysis visual (future) | +TBD |
-
-**Output**: `fraudScore` (0–100) + level risiko.
+- Hanya `overallScore`, `fraudSignal`, dan `reason` yang dipakai kode. `captionRelevance`/`hashtagRelevance` hanya tersimpan di log `ai_requests.response`.
+- Bobot internal `overallScore` (mis. caption 60% / hashtag 20% / fraud signal 20%) **tidak** ditegakkan kode — sepenuhnya ditentukan model.
+- Output Gemini gagal di-parse → fallback `overallScore: 50` (kontribusi risiko +10), `reason: "Gagal mem-parsing analisis"`.
+- Panggilan Gemini error → kontribusi risiko 0, error hanya di-log.
+- Hasil dicatat ke `ai_requests` dengan `feature: "fraud"` (`prompt` = caption, `response` = JSON analisis).
+- `reason` fraud check: alasan digabung `; `; tanpa temuan → `Lolos semua validasi`. Contoh: `URL duplikat dengan submission lain`, `Indikasi fraud: <fraudSignal>`, `Content analysis: <reason> (<n>/20)`.
 
 ### Threshold
 
-| Skor   | Risiko | Status     | Aksi          |
-| ------ | ------ | ---------- | ------------- |
-| 0–30   | Low    | `safe`     | Auto-approve  |
-| 31–70  | Medium | `review`   | Manual review |
-| 71–100 | High   | `rejected` | Auto-reject   |
+| Skor   | Risiko | `fraudStatus` | Efek di kode saat ini |
+| ------ | ------ | ------------- | --------------------- |
+| 0–30   | Low    | `safe`        | Hanya label; submission tetap `pending` |
+| 31–70  | Medium | `review`      | Hanya label; submission tetap `pending` |
+| 71–100 | High   | `rejected`    | Hanya label; submission tetap `pending` |
 
-> Field hasil fraud (`score`, `result`, `reason`) disimpan di `../Campaigns/50_Database.md` (`fraud_checks`); ringkasan (`fraudScore`, `fraudStatus`) ada di `campaign_submissions`. Modul AI menautkan, tidak mendefinisikan ulang.
+- Auto-approve / auto-reject berdasarkan `fraudStatus` **tidak diimplementasikan**. `ai-fraud-precheck` hanya menulis `fraudScore` & `fraudStatus`; keputusan `approved`/`rejected` tetap melalui reviewer (`review-submission`, ADR-010). `review-submission` juga tidak membaca `fraudStatus`.
+- Field hasil (`score`, `result`, `reason`) disimpan di `fraud_checks`; ringkasan (`fraudScore`, `fraudStatus`) di `campaign_submissions` — skema di `../Campaigns/50_Database.md`.

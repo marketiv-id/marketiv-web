@@ -1,34 +1,34 @@
 # Rate Cards — User Flow
 
-## Alur Creator
+## Alur Creator (`/dashboard/kreator/rate-card`)
 
 ```text
-Buat Rate Card (draft)
+Buka "Paket Harga"
 ↓
-Tambah Paket: Basic, Standard, Premium
+Tambah Paket (maks 3): name, output, description, deliveryDays, price, revisionLimit, toggle aktif
 ↓
-Atur detail tiap paket: description, output, deliveryDays, price, revisionLimit
+Simpan → rate_cards (draft|published) + rate_card_packages
 ↓
-Publish → muncul di profil & discovery
+Kelola: Edit (update in place) · Toggle Tayangkan/Jadikan draf · Hapus
+  └─ Hapus ditolak bila paket dipakai order aktif → opsi "Jadikan Draft"
 ```
 
 ## Alur UMKM
 
 ```text
-Browse Creator (discovery)
+Direktori Kreator (/dashboard/umkm/kreator)
+  cari nama/bio, filter niche, urut: Peringkat · Harga Terendah · Pesanan Terbanyak · Keterlibatan
 ↓
-Filter & Urutkan: kota, range harga, sort by harga/rating/totalOrders
+Profil Kreator (/dashboard/umkm/kreator/{id}) → daftar paket published
 ↓
-Lihat profil Creator → Rate Card
+"Pilih Paket Ini" → modal mulai negosiasi → create-conversation
 ↓
-┌─ Pilih Paket ──────────────────────────────┐
-│ Klik "Pesan"                               │
-│ ↓                                          │
-│ masuk ke alur Order (Jalur A: Direct Order)│
-└────────────────────────────────────────────┘
-┌─ Atau Klik "Chat" ─────────────────────────┐
-│ Negosiasi → Buat Offer                     │
-│ ↓                                          │
-│ masuk ke alur Order (Jalur B: Custom Offer)│
-└────────────────────────────────────────────┘
+Ruang negosiasi (/dashboard/umkm/negosiasi/{conversationId}?packageId=…)
+↓
+Modal offer diprefill dari paket (harga, ruang lingkup = deskripsi, revisi, deadline = hari ini + deliveryDays)
+↓
+Kirim offer (create-offer, packageId tervalidasi) → Creator accept → Order (modul Orders)
 ```
+
+- Paket yang tidak lagi `published` saat ruang dibuka → peringatan "Paket acuan tidak tersedia…", offer tetap bisa dikirim tanpa paket.
+- Direct Order (pesan paket tanpa negosiasi) **belum diimplementasikan**.

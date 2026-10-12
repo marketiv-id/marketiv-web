@@ -2,88 +2,141 @@
 
 ## Service Layer (Client SDK)
 
-Fungsi-fungsi berikut dipanggil langsung dari frontend Next.js via **Appwrite Client SDK (Database, Storage)**. Berjalan di browser user.
+Dipanggil dari frontend Next.js (`src/services/umkm/*`, `src/services/creator/*`, `src/services/shared/*`) via **Appwrite Client SDK** di browser. Semua mengembalikan `ServiceResult<T>`. Function dipanggil lewat `executeFunction(FUNCTION_IDS.*)` (`src/lib/appwrite/functions.ts`); status 400/409/422 dipetakan ke `code: "validation"`.
+
+> `00_BACKEND/src/services/user.service.ts` (`getProfile`, `updateProfile`, `addSocialAccount`, `removeSocialAccount`, `searchCreators`, `uploadFile`, `deleteFile`, `getMyFiles`, `getStorageUsage`) adalah service referensi lama: tidak dipakai frontend, dan `updateProfile`-nya masih menulis `updateDocument` langsung (bukan lewat `update-profile`). Kontrak di bawah adalah yang berjalan.
 
 ---
 
-### `getProfile(userId)` — [Client SDK]
+### Profil UMKM
 
-Mengembalikan profil sesuai role (umkm/creator).
+#### `getUmkmProfileFromAppwrite()` — [Appwrite Function `get-umkm-profile`]
 
-### `updateProfile()` — via Function `update-profile`
-
-Memperbarui field profil (deskripsi, kota, logo/avatar, phone UMKM, dll.) lewat Function `update-profile`, bukan `updateDocument` langsung. Flag `isProfileCompleted` dihitung server-side (lihat [30_Business_Rules.md](30_Business_Rules.md)). Onboarding dan Settings memanggil path yang sama.
-
----
-
-### `addSocialAccount()` — [Client SDK]
-
-### `removeSocialAccount()` — [Client SDK]
-
-Mengelola entri `creator_social_accounts`. Pada MVP hanya `platform = "tiktok"` yang boleh dibuat; platform lain ditolak sampai fase ekspansi multi-platform.
-
----
-
-### `searchCreators(filter)` — [Client SDK]
-
-```typescript
-type SearchFilter = {
-  city?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  sortBy?: 'price_asc' | 'price_desc' | 'rating_desc' | 'orders_desc';
-};
-```
-
-Contoh:
+Tanpa input. Return `UmkmProfile`:
 
 ```json
 {
-  "city": "sukabumi",
-  "sortBy": "rating_desc"
+  "id": "userId",
+  "businessName": "",
+  "ownerName": "nama akun Auth || businessName",
+  "email": "",
+  "whatsappNumber": "users.phone || auth.phone",
+  "location": "umkm_profiles.city",
+  "avatarUrl": "umkm_profiles.logoUrl",
+  "isVerified": "isProfileCompleted"
 }
 ```
 
-Memakai index pada `creator_profiles` (city, rating, totalFollowers) dan `rate_card_packages` (price). Filter platform tidak diperlukan karena MVP hanya TikTok.
+#### `getUmkmSettingsProfileFromAppwrite()` — [Client SDK]
 
-⚠️ Untuk daftar/detail kreator yang butuh `username`, `engagementRate`, dan `startingPrice`, gunakan Function `get-creator-directory` — bukan query Client SDK. Ketiga field itu berada di `creator_social_accounts` dan `rate_cards` → `rate_card_packages`, sehingga tidak bisa dipetakan setia dari satu collection. Lihat [70_Backend.md](70_Backend.md).
+Query langsung `umkm_profiles` + `users` (by `userId`) → `{ docId, userId, businessName, category, description, city, address, tiktok, logoUrl, isProfileCompleted }`.
+
+#### `updateUmkmProfileInAppwrite(input)` — [Appwrite Function `update-profile`]
+
+Field yang dikirim: `businessName`, `category`, `description`, `city`, `address`, `tiktok`, `logoUrl`, `phone`. Lalu membaca ulang profil Settings.
+
+#### `uploadUmkmLogoInAppwrite(file)` — [Client SDK Storage]
+
+Upload ke bucket `logos` (5 MB) → URL publik.
 
 ---
 
-### `uploadFile()` — [Client SDK] ⚠️ DORMANT
+### Profil Creator
 
-- **Infrastruktur dormant — tidak aktif di MVP.** Semua aset pakai external URL. Diaktifkan jika feedback demo minggu pertama meminta file manager internal.
-- **Input**: `{ file }`
-- **Proses**: validasi kuota → upload ke Appwrite Storage → catat metadata ke `user_files` → update `user_storage_usage`.
-- **Validasi**:
-  - `usedBytes + file.size ≤ quotaBytes`.
-  - Maks ukuran satu file: 20 MB.
-  - Maks jumlah file: 100.
-  - File type allowed: `image/*`, `video/*`, `application/pdf`, `application/msword`, `application/vnd.openxmlformats-officedocument.*`.
-- **Akses**: Authenticated user (owner).
+#### `getCreatorProfileFromAppwrite()` — [Appwrite Function `get-creator-profile`]
 
-### `deleteFile()` — [Client SDK] ⚠️ DORMANT
+Tanpa input (retry sekali setelah 350 ms bila 404/5xx). Return `CreatorProfile`:
 
-- **Input**: `{ fileId }`
-- **Proses**: validasi kepemilikan → hapus dari Appwrite Storage → soft delete metadata `user_files` (`status = deleted`, set `deletedAt`) → update `user_storage_usage`.
-- **Akses**: Authenticated user (owner).
+```json
+{
+  "id": "userId",
+  "name": "nama akun Auth || displayName",
+  "username": "akun sosial utama",
+  "avatarUrl": "", "bannerUrl": "",
+  "niche": "kuliner|fashion|pariwisata|edukasi|kecantikan|lainnya",
+  "bio": "", "location": "city",
+  "followers": "totalFollowers",
+  "startingPrice": 0,
+  "rating": 0, "completedJobs": "totalOrders",
+  "engagementRate": 0,
+  "instagramUrl": "https://www.instagram.com/<u> | undefined",
+  "tiktokUrl": "https://www.tiktok.com/@<u> | undefined",
+  "isVerified": "isProfileCompleted",
+  "isOnboarded": "isProfileCompleted"
+}
+```
 
-### `getMyFiles(filter)` — [Client SDK] ⚠️ DORMANT
+#### `updateCreatorProfileInAppwrite(input)` — [Appwrite Function `update-profile`]
 
-- **Input**: `{ status? }`
-- **Proses**: list file milik user.
-- **Akses**: Authenticated user (owner).
+Field: `displayName`, `bio`, `city`, `avatarUrl`, `bannerUrl`, `niche`. Payload kosong → validation "Tidak ada perubahan untuk disimpan.". Lalu membaca ulang `get-creator-profile`.
 
-### `getStorageUsage()` — [Client SDK] ⚠️ DORMANT
+#### `uploadCreatorAvatarInAppwrite(file)` / `uploadCreatorBannerInAppwrite(file)` — [Client SDK Storage]
 
-- **Proses**: return `{ usedBytes, quotaBytes, fileCount }` untuk user.
-- **Akses**: Authenticated user (owner).
+Bucket `avatars` / `creator-banners` (5 MB) → URL publik.
+
+#### `upsertCreatorSocialAccountInAppwrite({ platform: "tiktok", username, followers? })` — [Client SDK]
+
+List `creator_social_accounts` by `creatorId = userId` + `platform`; update bila ada, create bila belum (row perm read any, update/delete owner). `followers` harus bilangan bulat ≥ 0. Tidak ada fungsi hapus akun sosial di frontend.
+
+#### Portfolio — [Client SDK]
+
+- `getCreatorPortfolioFromAppwrite()` — list `creator_portfolios` by `creatorId`.
+- `createCreatorPortfolioInAppwrite({ title, portfolioUrl, description?, thumbnailUrl? })`.
+- `updateCreatorPortfolioInAppwrite(id, input)`.
+- `deleteCreatorPortfolioInAppwrite(id)` — 401/403 → pesan "dibuat sebelum fitur ini aktif".
+- `uploadCreatorPortfolioThumbnailInAppwrite(file)` — bucket `portfolios` (50 MB).
+
+---
+
+### Direktori Creator
+
+#### `getCreatorsFromAppwrite(limit = 100, cursor?)` — [Appwrite Function `get-creator-directory`]
+
+Body `{ limit, cursor }`. Return:
+
+```json
+{
+  "items": [
+    {
+      "id": "userId", "name": "", "username": "", "avatarUrl": "", "bannerUrl": "",
+      "niche": "", "bio": "", "location": "", "startingPrice": 0, "rating": 0,
+      "completedJobs": 0, "engagementRate": 0, "isVerified": true
+    }
+  ],
+  "total": 0,
+  "nextCursor": "creator_profiles.$id | null"
+}
+```
+
+#### `getCreatorByIdFromAppwrite(id)` — [Appwrite Function `get-creator-directory`]
+
+Body `{ creatorId }` → satu objek item; 404 → `code: "not_found"`.
+
+> Filter kota / range harga / sort server-side (`searchCreators` di dokumen lama) **belum diimplementasikan** di Function; filter & sort dilakukan di klien (`CreatorDirectoryPage`).
+
+---
+
+### File Manager
+
+#### `uploadUserFileInAppwrite({ file, shareWithOrderId? })` — [Appwrite Function `validate-and-upload`]
+
+Validasi klien: file tidak kosong, ≤ 20 MB. Body: `{ fileName, mimeType, sizeBytes, contentBase64, shareWithOrderId? }`. Return `{ fileId (=$id user_files), fileUrl, fileName }`.
+
+#### `deleteFile` / `getMyFiles` / `getStorageUsage` — belum ada di frontend
+
+Hanya ada di service referensi lama `00_BACKEND/src/services/user.service.ts`. Function `delete-file` tersedia (lihat [70_Backend.md](70_Backend.md)).
+
+---
+
+### Status Akun, Banding, KYC
+
+Belum ada service frontend. `create-appeal` bisa dieksekusi user login; `suspend-user`, `unsuspend-user`, `review-appeal`, `verify-kyc` hanya dengan API key (execute `[]`). Kontrak di [70_Backend.md](70_Backend.md).
 
 ---
 
 ## Appwrite Functions (Server-side)
 
-Module ini tidak memiliki REST API publik sendiri. Operasi server-side yang diperlukan module Users dijalankan lewat Appwrite Functions dan didokumentasikan di [70_Backend.md](70_Backend.md).
+Module ini tidak memiliki REST API publik sendiri. Detail Function di [70_Backend.md](70_Backend.md).
 
 ---
 

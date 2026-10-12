@@ -4,12 +4,12 @@ Standar global lintas-modul untuk Marketiv (platform UMKM ↔ Content Creator un
 
 ## Daftar Dokumen
 
-- [`10_Glossary.md`](10_Glossary.md) — Definisi istilah inti domain (UMKM, Creator, Campaign, Escrow, dll), satu baris per istilah.
-- [`20_Coding_Standards.md`](20_Coding_Standards.md) — Standar coding: feature-based module, wajib service layer, Zustand store, Zod schema, penamaan.
-- [`30_Naming_Convention.md`](30_Naming_Convention.md) — Konvensi penamaan collection, attribute, file/komponen, route, dan Appwrite Function.
-- [`40_Folder_Structure.md`](40_Folder_Structure.md) — Pemilik struktur folder frontend: arsitektur `src/`, `functions/`, `storage/`, `tests/`, env vars.
-- [`50_Security_Guidelines.md`](50_Security_Guidelines.md) — Pemilik permission: matrix CRUD per collection per role, document-level permission, scope API key function.
-- [`60_Error_Handling.md`](60_Error_Handling.md) — Konvensi error handling service layer dan bentuk error/return standar.
-- [`70_Testing_Strategy.md`](70_Testing_Strategy.md) — Strategi testing: Vitest, Playwright, struktur `tests/`, fokus per layer.
-- [`80_Deployment.md`](80_Deployment.md) — Deployment: Frontend → Vercel, Backend → Appwrite Cloud, env vars, function deploy.
-- [`90_Design_System.md`](90_Design_System.md) — Pemilik design token: warna, tipografi, spacing, radius, shadow, inventaris komponen, layout dashboard.
+- [`10_Glossary.md`](10_Glossary.md) — Definisi istilah inti domain (UMKM, Creator, Admin, Campaign, Escrow, Validasi Deliverable, Appeal, KYC, dll), satu baris per istilah.
+- [`20_Coding_Standards.md`](20_Coding_Standards.md) — Standar coding: service layer (facade + `*-appwrite.service.ts`, `ServiceResult`), `executeFunction`, Zod, standar kode Appwrite Function (guard, idempotensi, atomik).
+- [`30_Naming_Convention.md`](30_Naming_Convention.md) — Konvensi penamaan tabel, kolom (termasuk pengecualian snake_case), file/komponen, route Next.js, Appwrite Function, env var.
+- [`40_Folder_Structure.md`](40_Folder_Structure.md) — Pemilik struktur folder: repo, frontend `src/`, admin `admin/`, backend `00_BACKEND/` (`functions/`, `appwrite/`, `tests/`), 8 storage bucket, env vars.
+- [`50_Security_Guidelines.md`](50_Security_Guidelines.md) — Pemilik permission: role guard & status akun, permission level tabel (config), pola permission baris, storage, scope API key dinamis per Function, risiko terbuka.
+- [`60_Error_Handling.md`](60_Error_Handling.md) — Konvensi respons error Function (`{ error }` + HTTP status), `executeFunction`, `ServiceResult`/`ServiceErrorCode`, penyajian di UI.
+- [`70_Testing_Strategy.md`](70_Testing_Strategy.md) — Strategi testing: Vitest (backend & frontend), Playwright, `node:test` per Function, perintah, CI, fokus per layer.
+- [`80_Deployment.md`](80_Deployment.md) — Deployment: Frontend & Admin → Appwrite Sites, Backend → Appwrite Cloud, config kanonis, deploy/sync Function (`appwrite/ops`), env vars Function.
+- [`90_Design_System.md`](90_Design_System.md) — Pemilik design token (Tailwind 4 `@theme` di `src/app/globals.css`): warna, tipografi, radius, shadow, inventaris komponen, layout dashboard.

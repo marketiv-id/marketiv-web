@@ -1,70 +1,106 @@
 # Orders — Database
 
-Sumber kebenaran skema koleksi milik modul Orders. Satu fakta = satu lokasi.
+Sumber kebenaran skema koleksi milik modul Orders. Satu fakta = satu lokasi. Sumber config: `appwrite.config.json` (digenerate `appwrite/generate_appwrite_json.cjs`). Semua kolom `status` bertipe **string(50/20)**, bukan enum Appwrite — nilai dijaga kode.
 
 ---
 
 ## orders
 
-Aggregate utama alur Rate Card. Relasi: Offer (1) → Order (1) **atau** Package (1) → Order (1); merujuk umkm & creator (FK → users). Order (1) → Deliverables (N); Order (1) → Revisions (N); Order (1) → Escrow (1, modul Payments).
+**Purpose:** aggregate utama alur Rate Card. Relasi: Offer (1) → Order (0..1) via unique `offerId`; Package (1) → Orders (N) sebagai provenance; Order (1) → Deliverables (N), Revisions (N), Validations (N), Escrow (1, modul Payments).
 
-| Attribute | Type    | Required | Catatan                                                              |
-| --------- | ------- | -------- | ------------------------------------------------------------------- |
-| umkmId    | string  | yes      | FK → users (buyer)                                                   |
-| creatorId | string  | yes      | FK → users (seller)                                                  |
-| offerId   | string  | no       | FK → offers (jika dari custom offer)                                 |
-| packageId | string  | no       | FK → rate_card_packages (jika direct order)                         |
-| amount    | integer | yes      | nilai order                                                          |
-| status    | enum    | yes      | `pending_payment\|escrow\|in_progress\|revision\|approved\|completed\|cancelled` |
+| Attribute | Type | Required | Catatan |
+| --- | --- | --- | --- |
+| offerId | string(255) | no | FK → offers. Selalu diisi `create-order`; unique |
+| packageId | string(255) | no | FK → rate_card_packages; provenance dari offer |
+| packageNameSnapshot | string(100) | no | Snapshot nama paket saat offer dibuat |
+| packagePriceSnapshot | integer (0–999999999) | no | Snapshot harga paket; bukan dasar tagihan |
+| creatorId | string(255) | yes | FK → users (seller, Auth user ID) |
+| umkmId | string(255) | yes | FK → users (buyer, Auth user ID) |
+| amount | integer (0–999999999) | yes | Harga final = `offer.price` |
+| status | string(50) | yes | Ditulis: `pending_payment\|in_progress\|revision\|completed\|cancelled`. `escrow\|approved\|expired\|dispute` belum diimplementasikan |
+| createdAt | datetime | no | Tidak diisi `create-order` (pakai `$createdAt`) |
+| review_deadline_at | datetime | no | `deliverable.$createdAt + 3 hari`; null saat revisi diminta |
+| auto_approved | boolean | no | default `false`; `true` bila diset cron auto-approve |
+| revision_count | integer | no | default 0; `max(existing, version − 1)` oleh `track-order-review` (informatif) |
+| revision_limit | integer | no | default 0; snapshot limit dari offer/paket oleh `track-order-review` |
+| reminder_sent_at | datetime | no | Reminder H-1 terkirim; reset null saat deliverable baru/revisi |
 
-**Index**: `umkmId`, `creatorId`, `status`, `createdAt DESC`.
+**Index**: `idx_offerId` (unique), `idx_packageId`, `idx_creatorId`, `idx_umkmId`, `idx_status`, `idx_createdAt` (DESC).
 
-**Permission**: Buyer · Seller · Admin.
+**Permission**: collection `$permissions: []`, row security on. Baris dibuat `create-order` dengan `read` UMKM + Creator saja. Tidak ada `update` browser — semua mutasi status lewat Function (API key).
 
 ---
 
 ## deliverables
 
-Draft/hasil kerja creator, berversi. Relasi: Order (1) → Deliverables (N). File dikelola via File Manager (`user_files`, modul Users). ⚠️ `user_files` dormant — tidak dipakai MVP, deliverable source selalu `external_url`.
+**Purpose:** hasil kerja Creator per order, berversi. Relasi: Order (1) → Deliverables (N); `fileId` → `user_files` (modul Users) untuk sumber `storage`.
 
-| Attribute | Type    | Required | Catatan                                      |
-| --------- | ------- | -------- | -------------------------------------------- |
-| orderId   | string  | yes      | FK → orders                                  |
-| source    | enum    | yes      | `storage` \| `external_url`                  |
-| fileUrl   | string  | yes      | URL Appwrite Storage atau URL eksternal      |
-| fileId    | string  | no       | FK → user_files.$id; wajib jika `source = storage` |
-| notes     | string  | no       | catatan creator                              |
-| version   | integer | yes      | nomor versi unggahan                         |
-| status    | enum    | yes      | `submitted\|revision_requested\|approved`    |
-| creatorCredit | string | no      | maks 255 — username TikTok kreator (format kreditasi Pasal 16.3 T&C) |
-| aiGenerated | boolean | no      | null/true/false — penanda buatan AI (opsional, tanpa sanksi) |
+| Attribute | Type | Required | Catatan |
+| --- | --- | --- | --- |
+| orderId | string(255) | yes | FK → orders |
+| source | string(50) | yes | `storage\|external_url` |
+| fileUrl | string(2048) | yes | URL HTTPS (storage atau eksternal) |
+| fileId | string(255) | no | FK → user_files.$id; wajib bila `source = storage`, null untuk external |
+| notes | string(2000) | no | Catatan Creator |
+| version | integer (0–999999999) | yes | `latest + 1` |
+| status | string(50) | yes | `submitted\|revision_requested\|approved` (`delivered` hanya dibaca cron, legacy) |
+| createdAt | datetime | no | Diisi Function saat submit |
+| creatorCredit | string(255) | no | Username TikTok kreditasi (T&C 16.3) — kolom ada, **belum ditulis** kode |
+| aiGenerated | boolean | no | Penanda konten AI — kolom ada, **belum ditulis** kode |
 
-**Index**: `orderId`, `createdAt DESC`.
+**Index**: `idx_orderId`, `idx_createdAt` (DESC). Query "latest" memakai `orderDesc("version")` tanpa index `version`.
 
-**Permission dokumen**: Creator `read`; UMKM order `read` + `update`; server/Admin via API key. Collection tidak memberi `create/read/update` kepada browser.
+**Permission**: collection `$permissions: []`. Baris dibuat `submit-ratecard-deliverable` dengan `read` Creator + UMKM, `update` UMKM saja. Browser tidak bisa create; Creator tidak bisa update (mencegah self-approve).
 
-> **Catatan Hukum (T&C)**: Titik peralihan kepemilikan konten (transfer lisensi) dari Kreator ke UMKM secara sah terjadi pada saat escrow dirilis (`release-escrow`), **bukan** saat deliverable dikirim/disubmit.
+> **Catatan Hukum (T&C)**: peralihan kepemilikan konten ke UMKM terjadi saat escrow dirilis (`release-escrow`), bukan saat deliverable dikirim.
 
 ---
 
 ## revisions
 
-Permintaan revisi atas sebuah order. Relasi: Order (1) → Revisions (N).
+**Purpose:** permintaan revisi UMKM. Relasi: Order (1) → Revisions (N); satu baris per latest deliverable yang diminta revisi.
 
-| Attribute   | Type   | Required | Catatan                    |
-| ----------- | ------ | -------- | -------------------------- |
-| orderId     | string | yes      | FK → orders                |
-| requestedBy | string | yes      | FK → users (UMKM)          |
-| message     | string | yes      | catatan revisi             |
-| status      | enum   | yes      | `open\|resolved`           |
+| Attribute | Type | Required | Catatan |
+| --- | --- | --- | --- |
+| orderId | string(255) | yes | FK → orders |
+| requestedBy | string(255) | yes | FK → users (UMKM) |
+| message | string(2000) | yes | Alasan revisi |
+| status | string(50) | yes | Ditulis `open`; `resolved` belum diimplementasikan |
 
-**Index**: `orderId`, `status`.
+ID dokumen deterministik `rev` + sha256(`orderId:latestDeliverableId`)[0..29].
 
-**Permission**: Buyer · Seller · Admin.
+**Index**: `idx_orderId`, `idx_status`.
 
-> Escrow milik order ada di modul Payments (`../Payments/50_Database.md`) — escrow & transaksi sengaja dipisah dari order. `offerId` → `../Offers/50_Database.md`; `packageId` → `../RateCards/50_Database.md`. Aturan status & versi: `30_Business_Rules.md`.
->
-> **Refund (T-02)**: Order berstatus `cancelled`/`expired` memicu refund escrow via event `orders.*.update` → `refund-order`. Escrow status `held` → `refunded` (lihat `../Payments/50_Database.md` status `refunded`). Hanya order `pending_payment` yang bisa dibatalkan manual via `cancelOrder` (order.service.ts) — status `cancelled` tapi tidak punya escrow.
+**Permission**: collection `$permissions: []`. Baris dibuat `request-ratecard-revision` dengan `read` UMKM + Creator; tanpa update/delete browser.
 
-## Updates
-- Added `review_deadline_at`, `auto_approved`, `revision_count`, `revision_limit`, `reminder_sent_at` to `orders` collection.
+---
+
+## ratecard_deliverable_validations
+
+**Purpose:** keputusan final Admin atas satu deliverable; kunci kedua untuk release escrow.
+
+| Attribute | Type | Required | Catatan |
+| --- | --- | --- | --- |
+| deliverableId | string(255) | yes | FK → deliverables; unique |
+| orderId | string(255) | yes | FK → orders |
+| deliverableVersion | integer | yes | Snapshot `deliverable.version` |
+| sourceSnapshot | string(50) | yes | Snapshot `deliverable.source` |
+| evidenceUrlSnapshot | string(2048) | yes | Snapshot `deliverable.fileUrl` |
+| status | string(20) | yes | `valid\|invalid` (UI memakai `pending` bila baris belum ada) |
+| reviewedBy | string(255) | yes | Auth user ID Admin |
+| reviewNotes | string(2000) | no | Wajib untuk `invalid` (dijaga Function) |
+| reviewedAt | datetime | yes | Waktu keputusan |
+
+**Index**: `idx_deliverableId` (unique), `idx_orderId`, `idx_status`, `idx_reviewedAt` (DESC).
+
+**Permission**: collection `$permissions: []`, baris dibuat tanpa row permission → hanya terbaca server (Function DTO admin/UMKM).
+
+---
+
+## Bucket `deliverables`
+
+Ada di config (`read/create/update("users")`, `fileSecurity: true`, maks 500 MB, antivirus) tetapi **tidak dipakai kode**. Berkas deliverable `storage` diunggah lewat `validate-and-upload` ke bucket default File Manager (env `DEFAULT_STORAGE_BUCKET_ID`; config bucket `user-files` maks 20 MB/berkas, plus kuota user) — lihat `../Users/50_Database.md`.
+
+---
+
+> Escrow & transaksi ada di `../Payments/50_Database.md`. `offerId` → `../Offers/50_Database.md`; `packageId` → `../RateCards/50_Database.md`. Aturan status & versi: `30_Business_Rules.md`.

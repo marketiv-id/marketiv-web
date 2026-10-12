@@ -1,84 +1,73 @@
 # Authentication — Testing
 
-## Service Layer (`auth.service.ts`)
+Lokasi test: `00_BACKEND/tests/` (Vitest + Playwright). Test komponen frontend ada di `src/**/__tests__/`.
 
-### Register UMKM (`registerUMKM`)
+## Service Referensi Lama (`00_BACKEND/src/services/auth.service.ts`) — `tests/unit/auth.service.test.ts`
 
-- Input valid (businessName, category, email, phone, password) → akun terbuat, `account.create()` + `account.createEmailPasswordSession()` dipanggil, `provisionUserProfile()` jalan, return `{ user, profile, wallet }`.
-- Input tanpa `businessName` → throw `AuthServiceError('validation', 'Nama bisnis wajib diisi.')`.
-- Input tanpa `category` → throw `AuthServiceError('validation', 'Kategori bisnis wajib diisi.')`.
-- Input tanpa `phone` → throw `AuthServiceError('validation', 'Nomor HP wajib diisi.')`.
-- Input email duplikat → Appwrite throw code 409 → `AuthServiceError('conflict', 'Email sudah terdaftar.')`.
-- Input tanpa email → throw `AuthServiceError('validation', 'Email wajib diisi.')`.
-- Input tanpa password → throw `AuthServiceError('validation', 'Password wajib diisi.')`.
+Service ini tidak dipakai frontend, tetapi masih diuji:
 
-### Register Creator (`registerCreator`)
+- `registerUMKM` menerima data akun tanpa field profil bisnis (email, phone, password).
+- `registerUMKM` tanpa `phone` → `AuthServiceError('validation', 'Nomor HP wajib diisi.')`.
+- `registerUMKM` tanpa email → `'Email wajib diisi.'`; tanpa password → `'Password wajib diisi.'`.
+- `registerCreator` tanpa `name` → `'Nama creator wajib diisi.'`.
+- `loginUser` tanpa email / password → validation.
+- `forgotPassword` (legacy `account.createRecovery`) tanpa email → `'Email wajib diisi.'`.
+- `resetPassword` tanpa `userId` → `'User ID wajib diisi.'`; tanpa `secret` → `'Secret reset password wajib diisi.'`; tanpa password → `'Password baru wajib diisi.'`.
+- `mapError`: 409 → `conflict` ("Email sudah terdaftar."), 401 → `auth`.
+- `registerUser` dengan role tidak valid → throw `AuthServiceError`.
+- `tests/integration/services.test.ts`: `registerUMKM` membuat akun + sesi + profil; `loginUser` mengembalikan `{ profile, wallet }`; `getCurrentUser` → `null` saat 401.
 
-- Input valid (name, email, password) → akun terbuat, `account.updatePrefs({ role: 'creator', displayName })` dipanggil, profil terisi.
-- Input tanpa `name` → throw `AuthServiceError('validation', 'Nama creator wajib diisi.')`.
+## OAuth Callback (`resolveOAuthCallbackDecision`) — `tests/unit/oauth-callback.service.test.ts`
 
-### Register by Role (`registerUser`)
+- User dengan mirror & role cocok → `redirect` ke `next` yang aman.
+- UMKM `not_found` → `provision`; setelah provisioning sukses → `redirect /onboarding`.
+- Creator `not_found` → `provision`; provisioning gagal → `show_recovery`.
+- Error selain `not_found` → `redirect /login?error=oauth`.
+- Skenario tambahan (belum ada test): user dengan role berbeda → `role_mismatch`; `not_found` tanpa role → `/register?error=profile_missing`.
 
-- `data.role === 'umkm'` → delegasi ke `registerUMKM()`.
-- `data.role === 'creator'` → delegasi ke `registerCreator()`.
-- `data.role` tidak valid → throw `AuthServiceError`.
+## Functions — `tests/integration/functions.test.ts`
 
-### Login (`loginUser`)
+### `user-email-verified`
 
-- Email & password valid → session terbuat, `{ user, profile, wallet }` dikembalikan.
-- Email & password valid + role cocok → sukses.
-- Role tidak cocok dengan stored role → throw `AuthServiceError('forbidden', 'Role akun tidak sesuai.')`.
-- Akun tidak aktif → throw `AuthServiceError('forbidden', 'Akun tidak aktif.')`.
-- Email/password salah → Appwrite error 401 → `AuthServiceError('auth', 'Email atau password tidak sesuai.')`.
-- Input tanpa email → throw `AuthServiceError('validation', 'Email wajib diisi.')`.
+- Payload Auth `emailVerification: true` → `users.email_verified_at` terisi, body `success: true`.
+- Payload tanpa verifikasi → `res.empty()`, kolom tetap `null`.
+- (Kode) baris sudah punya `email_verified_at` → no-op idempoten.
 
-### Google OAuth (`loginWithGoogle`)
+### `request-password-otp`
 
-Catatan: Login Google OAuth via `account.createOAuth2Session()` dipanggil langsung dari komponen frontend, bukan dari service layer.
+- Email terdaftar → `account.createEmailToken(userId, email)` dipanggil dan state `otp_rate_limits` tercatat.
+- Permintaan ke-4 per email+IP dalam 10 menit → 429, OTP tidak dikirim.
+- ⚠️ Test saat ini mengharapkan body `{ success: true, userId: 'auth-1' }`, sedangkan kode mengembalikan `{ success: true }` saja (tanpa `userId`). Kode adalah acuan; test perlu disesuaikan.
+- Email tidak terdaftar → `{ success: true }` tanpa OTP (belum ada test).
+- Email kosong/invalid → 400 (belum ada test).
 
-- UMKM login via Google → redirect ke OAuth → setelah redirect, form data tambahan tampil.
-- Creator login via Google → redirect ke OAuth → langsung jadi tanpa data tambahan.
-- Role diteruskan via query string.
+### `reset-password-with-otp`
 
-### Logout (`logoutUser`)
+- Input valid (`email`, OTP 6 digit, password baru) → `account.createSession(userId, otp)` lalu `users.updatePassword()`; body `{ success: true }`.
+- Memakai header `x-appwrite-key` di atas `APPWRITE_API_KEY` untuk SDK admin.
+- OTP gagal → 401, password tidak berubah.
+- OTP bukan 6 digit / password < 8 → 400 (belum ada test).
+- `tests/integration/function-inventory.test.ts`: scopes `reset-password-with-otp` selaras antara `function-scopes.json` dan config.
 
-- Logout → `account.deleteSession('current')` dipanggil.
-- Gagal logout → throw `AuthServiceError` dengan pesan sesuai.
+## `accept-tos` — `tests/integration/accept-tos.test.ts`
 
-### Get Current User (`getCurrentUser`)
+- `action: "status"` untuk user belum setuju / versi aktif / versi lama → status benar tanpa mutasi.
+- Versi cocok tanpa `tos_accepted_at` → `needsConsent: true`.
+- Payload legacy (`tos_version` tanpa `action`) dan `action: "accept"` → diterima.
+- Versi sama sudah diterima → tidak ada update; timestamp kosong → di-backfill.
+- Versi basi → 400 tanpa update; action tidak dikenal → 400.
 
-- User login → return `{ user }` dari `account.get()`.
-- User tidak login → return `null` (code 401 ditangani).
+## E2E — `tests/e2e/auth-otp.spec.ts` (hanya bila `AUTH_E2E_RUN_LIVE=true`)
 
-### Forgot Password (`forgotPassword`)
+- Register UMKM → OTP email → `/onboarding`.
+  - ⚠️ Spec masih mengisi label "Nama Usaha" & "Kategori Usaha", padahal `RegisterUmkmForm` kini hanya punya Email, Nomor WhatsApp, Password. Spec perlu diperbarui.
+- Reset password: `/forgot-password` → OTP → `/reset-password` (Email Akun, OTP, password baru) → `/login` → login dengan password baru.
 
-- Email terdaftar → Function `request-password-otp` mengirim Appwrite Email OTP dan mengembalikan `userId`.
-- Email kosong → throw `AuthServiceError('validation', 'Email wajib diisi.')`.
-- Request ke-4 dalam 10 menit dari email+IP sama → Function mengembalikan 429 dan tidak mengirim OTP.
+## Skenario Acceptance (frontend `src/services/auth/auth.service.ts`)
 
-### Reset Password (`resetPassword`)
-
-- Input valid (userId, secret, password) → `account.updateRecovery()` sukses.
-- UserId kosong → throw `AuthServiceError('validation', 'User ID wajib diisi.')`.
-- Secret kosong → throw `AuthServiceError('validation', 'Secret reset password wajib diisi.')`.
-- Password kosong → throw `AuthServiceError('validation', 'Password baru wajib diisi.')`.
-
-### Reset Password OTP (`resetPasswordWithOtp`)
-
-- Input valid (`userId`, OTP 6 digit, password baru) → Function `reset-password-with-otp` memverifikasi OTP via `account.createSession()`, lalu `users.updatePassword()` sukses.
-- OTP salah/kedaluwarsa → Function mengembalikan 401 dan password tidak berubah.
-- `userId` kosong → Function mengembalikan 400.
-- OTP bukan 6 digit angka → Function mengembalikan 400.
-
-### Email Verification Sync (`user-email-verified`)
-
-- Payload Auth `emailVerification: true` → baris `users` berdasarkan `userId` diisi `email_verified_at`.
-- Payload tanpa `emailVerification: true` → Function no-op.
-- Baris `users.email_verified_at` sudah terisi → Function no-op idempoten.
-
-### Error Mapping (`mapError`)
-
-- Error dengan `code 401` → `AuthServiceError('auth', ...)`.
-- Error dengan `code 409` → `AuthServiceError('conflict', ...)`.
-- Error unknown → `AuthServiceError('unknown', ...)`.
-- Instance of `AuthServiceError` langsung dikembalikan tanpa remapping.
+- Register sukses tapi `create-user-profile` gagal → `profileProvisioned: false`, bukan error.
+- Login dengan sesi tanpa baris `users` → self-heal `provisionUserProfile()` sekali.
+- Login akun `suspended` → sesi dihapus, `code: "forbidden"`.
+- Login dengan role akun ≠ tab portal → logout + banner mismatch.
+- OTP verifikasi email salah → sesi password dipulihkan, error ditampilkan.
+- Dashboard dengan `needsConsent: true` → interstitial T&C; konten tidak dirender sebelum `accept-tos` sukses.

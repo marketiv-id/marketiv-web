@@ -2,166 +2,184 @@
 
 ## Service Layer (Client SDK)
 
-Fungsi-fungsi berikut dipanggil langsung dari frontend Next.js via **Appwrite Client SDK (Auth)**. Berjalan di browser user.
+Fungsi berikut dipanggil dari frontend Next.js lewat **Appwrite Client SDK** (berjalan di browser) di `src/services/auth/`. Semua mengembalikan `ServiceResult<T>` (`{ success, data, error?, code? }`) dan punya cabang mock (`DATA_SOURCE_CONFIG.useMockData`). Komponen tidak boleh memanggil `account` langsung.
+
+> `00_BACKEND/src/services/auth.service.ts` (`registerUMKM`, `registerCreator`, `registerUser`, `loginUser`, `forgotPassword` via `account.createRecovery`, `resetPassword`) adalah service referensi lama yang hanya dipakai unit test `tests/unit/auth.service.test.ts`; **tidak** dipakai frontend. Kontrak di bawah adalah yang berjalan.
 
 ---
 
-### `registerUMKM()` — [Client SDK]
+### `registerUmkm(input)` — [Client SDK] `auth.service.ts`
 
-Input:
+Input (`registerUmkmSchema`):
 
 ```json
 {
-  "businessName": "",
-  "category": "",
   "email": "",
-  "phone": "",
-  "password": ""
+  "phone": "08xxxxxxxxxx",
+  "password": "min 8, maks 256"
 }
 ```
 
-### `registerCreator()` — [Client SDK]
-
-Input:
-
-```json
-{
-  "name": "",
-  "email": "",
-  "password": ""
-}
-```
-
-Catatan: input `name` disimpan sebagai `displayName` di `creator_profiles` — lihat alur data di bawah.
-
-### `registerUser(data)` — [Client SDK]
-
-Gabungan `registerUMKM` dan `registerCreator` dengan parameter `role`.
-
-Input:
-
-```json
-{
-  "role": "umkm | creator",
-  "businessName": "",    // jika role = umkm
-  "category": "",        // jika role = umkm
-  "phone": "",           // jika role = umkm
-  "name": "",            // jika role = creator
-  "email": "",
-  "password": ""
-}
-```
-
-### Register Process (kedua role)
-
-```text
-Create Appwrite Auth User   (kedua role boleh via Google OAuth)
-↓ account.create()
-↓ account.updatePrefs()      # simpan data registrasi ke prefs
-↓
-Create Profile              (umkm_profiles / creator_profiles)
-↓ create-user-profile        # baca data dari Appwrite user + prefs
-↓
-Create Storage Usage        (user_storage_usage)
-↓
-┌─ Event: users.create ─────────────────────────┐
-│ → create-user-wallet      # async, oleh Payments │
-│ → Send Welcome Notification # async              │
-└─────────────────────────────────────────────────┘
-```
-
-Profil dan storage usage dibuat **sinkron** oleh function `create-user-profile`. Wallet dibuat **async** via event `users.create` — lihat [90_Events.md](90_Events.md).
-
-Data registrasi (`businessName`, `category`, `phone`, `displayName`) dialirkan melalui `account.updatePrefs()` dan dibaca oleh `create-user-profile` function.
-
----
-
-### `loginUser(email, password, role?)` — [Client SDK]
-
-Login dengan email + password. Parameter `role` bersifat opsional — jika diberikan, sistem memvalidasi bahwa role user cocok dan status akun aktif.
-
-Return data login:
-
-```json
-{
-  "user": {},
-  "profile": {},
-  "wallet": {}
-}
-```
-
-### `loginWithGoogle(role?)` — [Client SDK via Appwrite SDK]
-
-Login via Google OAuth menggunakan `account.createOAuth2Session()` dari Appwrite SDK. Tidak ada service function khusus — panggil langsung dari komponen frontend.
-
-- UMKM & Creator: sama-sama langsung ke `/onboarding` setelah provisioning — tidak ada form data tambahan terpisah.
-- Callback OAuth selalu memanggil `getSession()`. Sukses Auth tanpa baris `users` menghasilkan `code: "not_found"` dan diperlakukan sebagai `profile_missing`, bukan login gagal.
-- `profile_missing` (umkm/creator) memanggil `account.updatePrefs({ role })`, menjalankan `create-user-profile`, refresh session, lalu masuk `/onboarding`.
-- Nomor WhatsApp UMKM diisi di step Kontak `/onboarding` dan mendarat di `users.phone` lewat `prefs.phone` → `create-user-profile` (backfill bila kolom masih kosong).
-- Jika provisioning gagal karena 401/403/500, UI menampilkan pesan recovery dan tombol retry/logout.
-
-### `logoutUser()` — [Client SDK]
-
-Hapus session aktif via `account.deleteSession('current')`.
-
-### `getCurrentUser()` — [Client SDK]
-
-Mengembalikan data user dari Appwrite Auth (`account.get()`) atau `null` jika tidak login.
-
-Catatan: UI Marketiv tidak memakai `account.get()` saja sebagai bukti login siap. Sumber role/status tetap collection `users` lewat `getSession()`.
-
----
-
-### `forgotPassword(email)` — [Function]
-
-Kirim OTP email 6 digit untuk reset password via Function `request-password-otp`.
-
-Input:
-
-```json
-{
-  "email": "user@example.com"
-}
-```
+Proses: `account.create` → `createEmailPasswordSession` → `updatePrefs({ prefs: { role: "umkm", phone } })` → `provisionUserProfile()`.
 
 Return:
 
 ```json
 {
-  "success": true,
-  "userId": "auth-user-id"
+  "user": "SessionUser",
+  "profileProvisioned": true,
+  "provisionErrorCode": "auth | forbidden | ... (bila profileProvisioned false)"
 }
 ```
 
-Function melakukan server-side rate limit 3 request per 10 menit per email+IP. Response tidak pernah berisi OTP mentah.
+### `registerCreator(input)` — [Client SDK] `auth.service.ts`
 
-### `resetPasswordWithOtp(userId, otpCode, newPassword)` — [Function]
-
-Setel password baru via Function `reset-password-with-otp`. Function memverifikasi OTP dengan Appwrite `account.createSession(userId, otpCode)` sebelum memanggil `users.updatePassword(userId, newPassword)`.
-
-Input:
+Input (`registerCreatorSchema`):
 
 ```json
 {
-  "userId": "auth-user-id",
+  "displayName": "",
+  "email": "",
+  "password": ""
+}
+```
+
+`displayName` dikirim sebagai `name` akun Auth dan sebagai `prefs.displayName`; Function `create-user-profile` menuliskannya ke `creator_profiles.displayName`. Return sama dengan `registerUmkm`.
+
+### `provisionUserProfile()` — [Client SDK → Appwrite Function]
+
+Membaca `account.get()` lalu mengeksekusi `create-user-profile` dengan body `{ $id, role: prefs.role, email, name, phone, prefs }`. Dipakai di akhir register, tombol "coba lagi", self-heal login, dan callback OAuth. 401/403 dipetakan ke pesan "izin Function create-user-profile belum aktif".
+
+### `login(input)` — [Client SDK]
+
+Input: `{ email, password }`. Proses: `createEmailPasswordSession` → `getSession()` → self-heal `provisionUserProfile()` bila `not_found` → tolak `suspended` (hapus sesi, `code: "forbidden"`). Return: `SessionUser`.
+
+### `getSession()` — [Client SDK] `session.service.ts`
+
+`account.get()` + baris `users` (query kolom `userId`) + `isProfileCompleted` dari profil role. Return:
+
+```json
+{
+  "userId": "",
+  "email": "",
+  "role": "umkm | creator | admin",
+  "status": "active | suspended | terminated",
+  "name": "nama akun Auth",
+  "phone": "users.phone",
+  "emailVerified": true,
+  "tosVersion": "v3.1",
+  "tosAcceptedAt": "",
+  "isProfileCompleted": false
+}
+```
+
+Baris `users` tidak ada → `{ success: false, code: "not_found" }`. Sesi tidak ada → `code: "auth"`.
+
+### `logout()` — [Client SDK] `session.service.ts`
+
+`account.deleteSession({ sessionId: "current" })`.
+
+---
+
+### `requestEmailOtp({ userId, email })` — [Client SDK]
+
+`account.createEmailToken` — kirim OTP verifikasi email setelah register (dan tombol "kirim ulang").
+
+### `confirmEmailOtp({ userId, email, password, code })` — [Client SDK]
+
+Hapus sesi aktif → `account.createSession({ userId, secret: code })`. Gagal → pulihkan sesi via `createEmailPasswordSession(email, password)` dan kembalikan error.
+
+---
+
+### `requestPasswordRecovery({ email })` — [Appwrite Function `request-password-otp`]
+
+Input: `{ "email": "user@example.com" }`.
+
+Return Function (selalu tanpa `userId`, tanpa OTP mentah):
+
+```json
+{ "success": true }
+```
+
+| Status | Body |
+| --- | --- |
+| 400 | `{ success: false, error: "Email wajib diisi." }` (juga untuk format email invalid) |
+| 429 | `{ success: false, error: "Terlalu banyak permintaan OTP. Tunggu beberapa menit lalu coba lagi.", retryAfterSeconds }` |
+| 500 | `{ success: false, error: "Gagal mengirim kode OTP. Coba lagi." }` |
+
+### `completePasswordRecoveryWithOtp({ email, otpCode, password, passwordConfirm })` — [Appwrite Function `reset-password-with-otp`]
+
+Body yang dikirim ke Function:
+
+```json
+{
+  "email": "user@example.com",
   "otpCode": "123456",
   "password": "new-password"
 }
 ```
 
-### `resetPassword(userId, secret, newPassword)` — [Client SDK]
+Return `{ "success": true }`.
 
-Setel password baru menggunakan token dari email reset password. Parameter `userId` dan `secret` diperoleh dari URL redirect.
+| Status | Pesan |
+| --- | --- |
+| 400 | `Email wajib diisi.` · `Masukkan kode OTP 6 digit.` · `Password baru wajib diisi.` · `Password minimal 8 karakter.` · `Password maksimal 256 karakter.` |
+| 401 | `Kode OTP salah atau kedaluwarsa. Minta kode baru.` (email tak dikenal atau OTP gagal) |
+| 500 | `Gagal mengatur ulang password. Coba lagi.` |
+
+### `completePasswordRecovery({ userId, secret, password, passwordConfirm })` — [Client SDK, legacy]
+
+`account.updateRecovery` untuk tautan recovery lama (`/reset-password?userId=&secret=`). Tidak ada lagi jalur frontend yang mengirim tautan ini.
+
+---
+
+### `startGoogleOAuth(role?, next?)` — [Client SDK]
+
+`account.createOAuth2Session({ provider: Google, success: <origin>/auth/callback?next&role, failure: <origin>/login?error=oauth })`. No-op bila `isGoogleOAuthEnabled()` false.
+
+### `setOAuthAccountPrefs(role, extra?)` — [Client SDK]
+
+`account.updatePrefs({ prefs: { role, ...extra } })` untuk akun OAuth baru sebelum provisioning.
+
+### `resolveOAuthCallbackDecision(input)` — [pure] `oauth-callback.service.ts`
+
+Return salah satu: `{ action: "redirect", href }`, `{ action: "provision" }`, `{ action: "show_recovery" }`, `{ action: "role_mismatch", actualRole }`. Lihat [40_User_Flow.md](40_User_Flow.md).
+
+---
+
+### `getTosStatus()` — [Appwrite Function `accept-tos`] `tos.service.ts`
+
+Body `{ "action": "status" }`. Return:
+
+```json
+{
+  "currentVersion": "v3.1",
+  "acceptedVersion": "v3.1 | null",
+  "acceptedAt": "ISO | null",
+  "needsConsent": false
+}
+```
+
+### `acceptCurrentTos(version)` — [Appwrite Function `accept-tos`]
+
+Body `{ "action": "accept", "tos_version": "v3.1" }`. Return `{ success: true, alreadyAccepted: boolean, tos_version }`.
+
+| Status | Pesan |
+| --- | --- |
+| 400 | `Action tidak didukung.` · `tos_version wajib diisi.` · `Versi T&C tidak sesuai dengan versi aktif.` |
+| 401 | `Unauthorized` (tanpa header `x-appwrite-user-id`) |
+| 404 | `Profil pengguna tidak ditemukan.` |
+| 405 | `Method not allowed` (selain POST) |
 
 ---
 
 ## Appwrite Functions (Server-side)
 
-Module ini tidak memiliki REST API publik sendiri. Operasi server-side yang diperlukan module Authentication dijalankan lewat Appwrite Functions dan didokumentasikan di [70_Backend.md](70_Backend.md).
+Module ini tidak memiliki REST API publik sendiri. Detail Function (`request-password-otp`, `reset-password-with-otp`, `accept-tos`, `user-email-verified`) ada di [70_Backend.md](70_Backend.md). `create-user-profile` didokumentasikan di [Users/70_Backend.md](../Users/70_Backend.md).
 
 ---
 
 ## Lihat Juga
 
 - [30_Business_Rules.md](30_Business_Rules.md) — aturan validasi input.
-- Skema profil: [Users/50_Database.md](../Users/50_Database.md).
+- Skema `users` & profil: [Users/50_Database.md](../Users/50_Database.md).

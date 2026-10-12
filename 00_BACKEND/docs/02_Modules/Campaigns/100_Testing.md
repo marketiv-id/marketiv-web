@@ -1,97 +1,79 @@
 # Campaigns — Testing
 
-## Service Layer (`campaign.service.ts`)
+Test yang ada di repo, dikelompokkan per lapis. Jalankan dari `00_BACKEND/` (`npm test`, `npm run test:unit`, `npm run test:integration`) kecuali disebut lain.
 
-### Create Campaign (`createCampaign`)
+## Service Legacy Backend (`00_BACKEND/src/services`) — `tests/unit/campaign.service.test.ts`, `tests/unit/submission.service.test.ts`
 
-- UMKM membuat campaign dengan input valid → dokumen `campaigns` status `draft` terbuat.
-- `title` kosong → throw `CampaignServiceError('validation', 'Judul wajib diisi.')`.
-- `category` kosong → throw `CampaignServiceError('validation', 'Kategori wajib diisi.')`.
-- `type` bukan `ugc`/`clipping` → throw `CampaignServiceError('validation', 'Tipe campaign tidak valid.')`.
-- `platforms` kosong atau berisi bukan `tiktok` → throw `CampaignServiceError('validation', 'MVP hanya mendukung platform TikTok.')`.
-- `budget` < `MINIMUM_CAMPAIGN_BUDGET` (Rp50.000) → throw `CampaignServiceError('validation', 'Minimum budget ...')`.
-- `rewardPer1000Views` ≤ 0 → throw `CampaignServiceError('validation', 'CPM ... wajib diisi dan > 0.')`.
-- `claimLimit` ≤ 0 → throw `CampaignServiceError('validation', 'Claim limit wajib diisi dan > 0.')`.
-- `submissionDays` < 1 → throw `CampaignServiceError('validation', 'Batas waktu submit minimal 1 hari.')`.
-- `submissionDays` undefined → default `7`.
+> Service ini bukan jalur runtime (lihat [60_API.md](60_API.md) §3). Test hanya mencakup validasi input.
 
-### Generate Brief (`generateBrief`)
+### `createCampaign`
 
-- Input valid (campaignId, description, type) → panggil function `ai-brief` → return `CampaignBrief` (objective, contentAngle, cta, briefDetail, doAndDont).
-- `campaignId` kosong → throw `CampaignServiceError('validation', 'Campaign ID wajib diisi.')`.
-- `description` kosong → throw `CampaignServiceError('validation', 'Deskripsi wajib diisi.')`.
-- `type` invalid → throw `CampaignServiceError('validation', 'Tipe campaign tidak valid.')`.
-- Function gagal (`execution.status === 'failed'`) → throw `CampaignServiceError('server', 'Gagal menghasilkan brief via AI.')`.
-- Response kosong → throw `CampaignServiceError('server', 'Response AI kosong.')`.
-- Result `success: false` → throw `CampaignServiceError('server', ...)`.
+- `title` kosong → `CampaignServiceError('validation', 'Judul wajib diisi.')`.
+- `category` kosong → `'Kategori wajib diisi.'`.
+- `type` bukan `ugc`/`clipping` → `'Tipe campaign tidak valid.'`.
+- `platforms` kosong atau berisi selain `tiktok` → `'MVP hanya mendukung platform TikTok.'`.
+- `budget` < `MINIMUM_CAMPAIGN_BUDGET` (50.000) → `'Minimum budget Rp50.000.'`.
+- `rewardPer1000Views` ≤ 0 → `'CPM (rewardPer1000Views) wajib diisi dan > 0.'`.
+- `claimLimit` ≤ 0 → `'Claim limit wajib diisi dan > 0.'`.
+- `submissionDays` < 1 → `'Batas waktu submit minimal 1 hari.'`.
 
-### Publish Campaign (`publishCampaign`)
+### `generateBrief` / `publishCampaign` / `getCampaignById`
 
-- Owner publish campaign dengan `status === 'draft'` & `remainingBudget > 0` → status `active` + `publishedAt` di-set.
-- Bukan owner → throw `CampaignServiceError('forbidden', 'Kamu bukan pemilik campaign ini.')`.
-- Status bukan `draft` → throw `CampaignServiceError('validation', 'Hanya campaign draft yang bisa dipublish.')`.
-- `remainingBudget <= 0` → throw `CampaignServiceError('validation', 'Campaign harus di-top-up terlebih dahulu.')`.
+- `campaignId` kosong → `'Campaign ID wajib diisi.'`; `description` kosong → `'Deskripsi wajib diisi.'`; `type` invalid → `'Tipe campaign tidak valid.'`.
 
-### Get Campaigns (`getCampaigns`)
+### `createSubmission` / `approveSubmission` / `rejectSubmission`
 
-- Filter `status` → query `Query.equal('status', ...)`.
-- Filter `category` → query `Query.equal('category', ...)`.
-- Default urut `Query.orderDesc('$createdAt')`, limit 50.
+- `claimId` / `campaignId` kosong, `platform !== 'tiktok'`, `postUrl` bukan `https://*.tiktok.com`, `views` negatif / bukan integer → `SubmissionServiceError('validation', …)`.
+- `submissionId` kosong → validation.
 
-### Get Campaign By ID (`getCampaignById`)
+### Success path legacy — `tests/integration/services.test.ts`
 
-- Campaign ID valid → return `Campaign`.
-- Campaign ID kosong → throw `CampaignServiceError('validation', 'Campaign ID wajib diisi.')`.
+- `createCampaign` menyimpan draft dengan default (`totalClaims 0`, `submissionDays 7`).
+- `publishCampaign` → `active` + `publishedAt` bila `remainingBudget > 0`; `remainingBudget = 0` → `'Campaign harus di-top-up terlebih dahulu.'` (guard runtime sebenarnya `remainingBudget >= budget` di `patch-campaign-status`, belum dites).
+- `generateBrief` mengembalikan brief dari Function `ai-brief`.
+- `claimCampaign` membuat claim + increment `totalClaims`; claim duplikat ditolak.
+- `createSubmission` menyimpan submission `pending`.
 
-## Claim Service Layer (`claim.service.ts`)
+## Appwrite Functions — `tests/integration/functions.test.ts`
 
-### Claim Campaign (`claimCampaign`)
+### `calculate-campaign-reward`
 
-- Creator claim campaign valid (`status === 'active'`, profil lengkap, belum pernah claim, `totalClaims < claimLimit`) → dokumen `campaign_claims` status `claimed` terbuat, `totalClaims` + 1.
-- Campaign tidak aktif (`status !== 'active'`) → throw `ClaimServiceError('validation', 'Campaign tidak aktif.')`.
-- `isProfileCompleted` false → throw `ClaimServiceError('validation', 'Lengkapi profil dulu sebelum claim.')`.
-- Claim limit penuh (`totalClaims >= claimLimit`) → throw `ClaimServiceError('validation', 'Claim limit campaign sudah penuh.')`.
-- Sudah pernah claim → throw `ClaimServiceError('validation', 'Kamu sudah claim campaign ini.')`.
-- Claim expired (lebih lama dari `submissionDays`) → status diubah `expired`, `totalClaims` berkurang sebelum cek limit.
-- Claim baru setelah slot kembali dari claim expired → berhasil.
+- Approved → `wallet.balance` naik, `pendingBalance` tetap; `spentAmount` naik & `remainingBudget` turun sebesar reward; ledger `release` `referenceType: campaign_submission`.
+- Rejected → wallet, ledger, budget tidak berubah.
+- Locked views: `views_final = true` → reward dari `views_count` (4.850 views × Rp1.000 → Rp4.850).
+- `views_count = 999`, rate Rp1.000 → reward **Rp999** (pembulatan proporsional; nama test "calculates Rp0…" tidak sesuai ekspektasi).
+- Event ulang untuk submission sama → tidak ada kredit kedua.
 
-## Submission Service Layer (`submission.service.ts`)
+### `review-submission`
 
-### Create Submission (`createSubmission`)
+- `views` > `Number.MAX_SAFE_INTEGER` → ditolak, submission tetap `pending`.
+- Admin approve → `views_count`, `views_source = manual_admin`, `views_final = true`, `views_captured_at` terisi; reject → `views_*` tidak ditulis, notifikasi kreator berisi "ditolak oleh Marketiv".
+- Periode observasi: `functions/review-submission/src/observation-window.test.js` (unit, `getViewValidationEligibility`).
 
-- Creator submit konten valid → dokumen `campaign_submissions` status `pending` terbuat.
-- `claimId` kosong → throw `SubmissionServiceError('validation', 'Claim ID wajib diisi.')`.
-- `campaignId` kosong → throw `SubmissionServiceError('validation', 'Campaign ID wajib diisi.')`.
-- `platform !== 'tiktok'` → throw `SubmissionServiceError('validation', 'MVP hanya mendukung platform TikTok.')`.
-- `postUrl` bukan URL TikTok valid → throw `SubmissionServiceError('validation', 'postUrl harus URL TikTok yang valid (https://*.tiktok.com).')`.
-- `views` bukan integer ≥ 0 → throw `SubmissionServiceError('validation', 'Views harus angka >= 0.')`.
-- Bukan pemilik claim → throw `SubmissionServiceError('forbidden', 'Kamu bukan pemilik claim ini.')`.
-- `claim.campaignId !== input.campaignId` → throw `SubmissionServiceError('validation', 'Campaign tidak cocok dengan claim.')`.
+### `create-payment` + `create-escrow` (campaign top-up)
 
-### Get My Submissions (`getMySubmissions`)
+- `purpose: campaign` diterima; status `paid` mengkredit `campaigns.remainingBudget`.
 
-- Creator login → list submission `creatorId === user.$id`, urut `Query.orderDesc('$createdAt')`.
+## Function Unit — `tests/unit/`
 
-### Approve Submission (`approveSubmission`)
+- `unclaim-campaign.test.ts`: 401 tanpa caller; kreator non-aktif 403; claim bukan milik / tidak ada ditolak; hard delete + decrement tepat sekali; decrement gagal → 500 dan claim dipulihkan.
+- `admin-read-functions.test.ts`: `get-admin-submission-queue` 401 tanpa identitas; 403 untuk `umkm`, `creator`, admin `suspended`; admin aktif → `{ items: [], total }`.
+- `perf-01-submission-counts.test.ts`: `getSubmissionCountsFromAppwrite` — tanpa id tidak query; agregasi `pending/valid/dispute` dalam satu batch query; campaign tanpa submission tidak muncul di map.
 
-- UMKM owner campaign → status `pending → approved`.
-- Submission status bukan `pending` → throw `SubmissionServiceError('validation', 'Hanya submission pending yang bisa diproses.')`.
-- Bukan owner campaign → throw `SubmissionServiceError('forbidden', ...)`.
+## Frontend — `src/**/__tests__` (dijalankan dari root repo)
 
-### Reject Submission (`rejectSubmission`)
+- `services/umkm/__tests__/umkm-appwrite.service.update-status.test.ts` — pause/resume via `patch-campaign-status`.
+- `services/creator/__tests__/creator-appwrite.service.claim.test.ts` — claim campaign.
+- `services/creator/__tests__/creator-appwrite.service.submit-proof.test.ts` — submit bukti via `submit-campaign-proof`.
+- `lib/appwrite/__tests__/campaign-thumbnail.test.ts` — parsing/validasi URL thumbnail.
+- `lib/validations/__tests__/campaign.schema.test.ts` — skema wizard per langkah.
 
-- UMKM owner campaign → status `pending → rejected`.
-- Submission status bukan `pending` → throw `SubmissionServiceError('validation', 'Hanya submission pending yang bisa diproses.')`.
+## Gap Cakupan (belum ada test)
 
-## Denormalisasi
-
-- `totalClaims`, `spentAmount`, `remainingBudget` akurat setelah setiap aksi (dihandle Appwrite Function `calculate-campaign-reward` & `expire-stale-claims`).
-
-## Campaign Reward (`calculate-campaign-reward`)
-
-- Approved submission → reward menambah `wallet.balance`; `pendingBalance` tetap.
-- Reward ledger tetap tunggal per submission dan berstatus `matured` agar cron legacy tidak memindahkan reward lagi.
-- Duplicate approved event → tidak ada kredit, ledger, atau perubahan budget kedua.
-- Rejected submission → wallet, ledger, dan budget tidak berubah.
-- Locked admin views tetap menjadi basis reward; eligibility approval tetap 72 jam.
-- `release-escrow` Rate Card tetap memakai jalur dan accounting terpisah.
+- `campaign-claimed`: increment dengan `max`, claim → `expired` saat kuota penuh.
+- `expire-stale-claims`: expire + decrement + notifikasi.
+- `submit-campaign-proof`: validasi host URL, duplikat (409), claim → `submitted`.
+- `patch-campaign-draft` / `patch-campaign-status`: allowlist, lock setelah funded, guard publish `remainingBudget >= budget`.
+- `campaign-published`: guard status + dedup notifikasi.
+- `calculate-campaign-reward`: kegagalan setelah kredit wallet sebelum ledger dibuat (risiko kredit ganda saat retry); transisi `completed`.
+- Konsistensi rumus estimasi reward UI vs backend.
