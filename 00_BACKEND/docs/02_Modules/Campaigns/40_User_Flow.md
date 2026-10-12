@@ -3,78 +3,82 @@
 ## UMKM
 
 ```text
-Create Campaign (draft)
+Wizard Buat Campaign (5 langkah):
+  1. Info produk + thumbnail (wajib) + tipe ugc/clipping + kategori
+  2. Brief / arahan (opsional generate AI via ai-brief)
+  3. Tautan folder aset (Drive / Dropbox / OneDrive)
+  4. Budget (min Rp50.000) + tarif per 1.000 views + kuota kreator
+  5. Review & setuju
 ↓
-Set brief/assets/budget/quota/CPM
+Simpan draft (campaigns + brief + asset, client SDK)
 ↓
-Pay Campaign funding via Midtrans
+Bayar: create-payment (budget + fee) → Midtrans Snap
 ↓
-Backend verifies payment
+Midtrans → midtrans-webhook → create-escrow → remainingBudget += budget
 ↓
-Publish → active
+Frontend poll publish (5× tiap 2 detik) via patch-campaign-status
+  ├─ dana sudah masuk → active (tampil di Job Pool)
+  └─ belum → tetap draft; "Terbitkan" manual dari daftar campaign
 ↓
-Creator claims and works
+Kelola: pause / resume (patch-campaign-status), duplikasi, edit draft
+(patch-campaign-draft), hapus draft
 ↓
-UMKM monitors:
-  - Creator participation
-  - Submitted post URLs
-  - Menunggu Validasi Marketiv
-  - Approved/rejected result
-  - Validated views/reward information when available
-
-UMKM DOES NOT approve/reject or input final views.
+Pantau (read-only):
+  - jumlah kreator / claim
+  - post URL submission
+  - Menunggu Validasi Marketiv / approved / rejected
+  - views terverifikasi & reward bila sudah divalidasi
 ```
+
+UMKM **tidak** approve/reject dan **tidak** menginput views.
 
 ## Creator
 
 ```text
-Browse active Job Pool
+Buka Job Pool (campaign active)
 ↓
-Claim Campaign
+Claim (client createDocument) → campaign-claimed (kuota atomik)
+  └─ kuota ternyata penuh → claim menjadi expired
 ↓
-Produce content on Campaign platform
+Produksi konten di platform campaign (TikTok), publish publik
 ↓
-Publish content publicly
+Kirim Bukti: URL publik + catatan opsional (submit-campaign-proof)
+  └─ atau Batalkan claim selama masih "claimed" (unclaim-campaign)
 ↓
-Submit public post URL + optional note
+Submission = pending; fraud precheck berjalan otomatis
 ↓
-Submission = pending
-↓
-Wait for Marketiv validation
-├─ approved → backend calculates reward
-└─ rejected → Creator sees Marketiv note/reason
+Menunggu Validasi Marketiv (≥ 72 jam observasi)
+├─ approved → reward otomatis masuk saldo tersedia + notifikasi
+└─ rejected → notifikasi + alasan (reviewNotes); slot kuota kembali
 ```
+
+Claim yang tidak disubmit dalam `submissionDays` (default 7 hari) menjadi `expired` oleh cron (tiap 6 jam) dengan notifikasi.
 
 ## Admin Marketiv
 
 ```text
-Open submission review queue
+get-admin-submission-queue (default status pending)
 ↓
-Inspect Creator + Campaign + UMKM + post URL
+Periksa kreator + campaign + UMKM + post URL
 ↓
-Review fraud/risk signal as supporting evidence
+(Data fraud belum disertakan di queue — belum diimplementasikan)
 ↓
-Capture current/final views
+Tunggu periode observasi 72 jam sejak submit
 ↓
-Decision
-├─ Approve → status approved + locked views
-└─ Reject → status rejected + reason + quota restoration rule
-↓
-Audit log + notification
+review-submission
+├─ approved + views → views terkunci → calculate-campaign-reward
+└─ rejected + notes → kuota kembali + notifikasi kreator
 ```
 
 ## Backend
 
 ```text
-Creator submit
-→ trusted submit Function
-→ pending submission
-→ fraud precheck metadata
-→ Admin review Function
-→ approved/rejected
-→ if approved: calculate reward idempotently
+submit-campaign-proof → submission pending + claim submitted
+→ ai-fraud-precheck (metadata fraud)
+→ review-submission (Admin)
+→ approved: calculate-campaign-reward (idempoten per submission)
 ```
 
-## Migration Note
+## Catatan
 
-Admin review UI exists conceptually in the separate Admin repository. Production `review-submission` authorization must still be migrated from UMKM ownership to Admin role before wiring is complete.
+UI Admin berada di aplikasi terpisah `admin/` (monorepo ini), fitur `admin/src/features/admin/submissions/`: antrean (limit 50, filter status + pencarian klien), dialog approve (input views, estimasi reward, tombol terkunci sampai periode observasi lewat — env `NEXT_PUBLIC_VIEW_VALIDATION_DELAY_HOURS`) dan dialog reject (alasan wajib di UI). Otorisasi Admin ditegakkan di backend (`review-submission`, `get-admin-submission-queue`).

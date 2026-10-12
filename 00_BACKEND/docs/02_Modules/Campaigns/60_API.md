@@ -1,168 +1,132 @@
 # Campaigns — API
 
-## Service Layer (Client SDK)
+Kontrak pemanggilan modul Campaigns. Ada tiga lapis:
 
-Fungsi-fungsi berikut dipanggil langsung dari frontend Next.js via **Appwrite Client SDK (Database, Storage)**. Berjalan di browser user.
+1. **Service runtime frontend** (`src/services/umkm/umkm-appwrite.service.ts`, `src/services/creator/creator-appwrite.service.ts`, diekspos lewat `umkm-dashboard.service.ts` / `creator-dashboard.service.ts`). Ini yang dipakai aplikasi Next.js.
+2. **Appwrite Function HTTP** (dipanggil lewat `executeFunction()` di `src/lib/appwrite/functions.ts`, POST sinkron, identitas dari header `x-appwrite-user-id`).
+3. **Service legacy backend** `00_BACKEND/src/services/*.service.ts` — tidak diimpor frontend (`00_BACKEND` dikecualikan dari tsconfig); hanya dipakai unit test. Lihat bagian akhir.
 
----
-
-### Campaign Service
-
-Dimiliki UMKM. Inti alur PPV.
-
-#### `createCampaign()` — [Client SDK]
-
-- **Input**: `{ title, category, type, platforms[], budget, rewardPer1000Views, claimLimit, submissionDays? }`
-- **Validasi MVP**:
-  - `type` wajib `ugc` atau `clipping`.
-  - `platforms[]` hanya boleh berisi `"tiktok"`. Instagram, Facebook, YouTube, dan platform lain ditolak sampai fase ekspansi multi-platform.
-  - **`budget` minimal Rp50.000** — nilai < 50000 ditolak.
-  - **`claimLimit`** wajib diisi dan > 0.
-- **Proses**: buat dokumen `campaigns` dengan `status = draft`.
-- **Akses**: UMKM (owner).
-- **Catatan UI** — form input disederhanakan untuk UMKM:
-  - `rewardPer1000Views` ditampilkan sebagai **radio button**: Rp1.000 / Rp2.000 / Rp3.000 / Rp5.000 dengan label "Penghasilan kreator per 1.000 tayangan".
-  - `claimLimit` ditampilkan sebagai **"Jumlah kreator"**.
-  - `minViews` dan `maxViews` tidak ditampilkan di form utama (tersedia sebagai pengaturan lanjutan jika diperlukan).
-  - Ringkasan otomatis: budget, fee, total bayar, dan contoh penghasilan kreator.
-
-#### `generateBrief()` — [Client SDK] *(memanggil Appwrite Function `ai-brief` di belakang)*
-
-- **Input**: `{ campaignId, description, type, materials[] }`
-- **Proses**: panggil AI Function → tulis ke `campaign_briefs`. Brief dapat diedit & disimpan ulang.
-- **Akses**: UMKM (owner). Kontrak fungsi AI di `../AI/60_API.md`.
-
-#### `publishCampaign()` — [Client SDK]
-
-- **Input**: `{ campaignId }`
-- **Proses**: `status: draft → active`, set `publishedAt`. Memicu event Campaign Published (lihat `90_Events.md`).
-- **Akses**: UMKM (owner).
-
-#### `topUpCampaign()` — [Client SDK]
-
-- **Input**: `{ campaignId, snapToken? }`
-- **Proses**: Buat payment dengan `purpose = campaign`, amount = `budget`, total = `budget + floor(budget × 2%)`. Redirect ke Midtrans Snap.
-- **Validasi**:
-  - Campaign harus milik UMKM yang sama.
-  - Campaign harus `draft` — hanya bisa top-up sebelum publish (atau saat masih draft).
-  - `remainingBudget` harus 0 (belum pernah di-top-up sebelumnya).
-- **Akses**: UMKM (owner campaign).
-- **Catatan**: Function `midtrans-webhook` akan memproses konfirmasi pembayaran dan meng-update status campaign menjadi siap publish.
-
-#### `getCampaigns(filter)` — [Client SDK]
-
-- **Input**: `{ platform?, category?, sort? }` (mis. `sort=latest`). Pada MVP, `platform` hanya `tiktok`.
-- **Proses**: query job board, default `status = active ORDER BY publishedAt DESC`.
-- **Akses**: Public.
-
-#### `getCampaignById()` — [Client SDK]
-
-- **Input**: `{ campaignId }`
-- **Proses**: detail satu campaign + asset + brief.
-- **Akses**: Public.
-
-#### `addCampaignAsset()` — [Client SDK]
-
-- **Input**: `{ campaignId, type, fileUrl, fileName? }`
-- **Validasi**:
-  - `fileUrl` wajib URL `https://`.
-  - Hanya owner campaign yang boleh menambah asset.
-- **Proses**: buat dokumen `campaign_assets` dengan `source: 'external_url'`.
-- **Akses**: UMKM (owner campaign).
-
-#### `removeCampaignAsset()` — [Client SDK]
-
-- **Input**: `{ assetId }`
-- **Proses**: hapus dokumen `campaign_assets`.
-- **Akses**: UMKM (owner campaign).
-
-#### `deleteCampaign()` — [Client SDK]
-
-- **Input**: `{ campaignId }`
-- **Validasi**: Campaign harus milik UMKM yang login, status harus `draft` (belum publish).
-- **Proses**: hapus dokumen `campaigns` dan semua asset terkait.
-- **Akses**: UMKM (owner campaign).
+Function event-driven (tanpa HTTP) dijelaskan di [70_Backend.md](70_Backend.md) dan [90_Events.md](90_Events.md).
 
 ---
 
-### Claim Service
+## 1. Service Runtime Frontend
 
-Dimiliki Creator.
+Semua fungsi mengembalikan `ServiceResult<T>` (`{ success, data, error?, code? }`); error Function dipetakan dari HTTP status (`400/409/422 → validation`, `401 → auth`, `403 → forbidden`, `404 → not_found`, `5xx → server`).
 
-#### `unclaimCampaign()` — [Client SDK]
+### UMKM (`umkm-appwrite.service.ts`)
 
-- **Input**: `{ claimId }`
-- **Validasi**: Claim harus milik kreator yang login, status harus `claimed` (belum `submitted`).
-- **Proses**: update `status: claimed → unclaimed`, decrement `totalClaims` campaign induk.
-- **Akses**: Creator (owner claim).
+| Fungsi | Jalur | Ringkasan |
+| ------ | ----- | --------- |
+| `createCampaignDraftInAppwrite(input)` | Client SDK `createDocument` | Buat `campaigns` (`status: "draft"`, `platforms: ["tiktok"]`, `remainingBudget/spentAmount/totalClaims: 0`, `submissionDays ?? 7`) + opsional 1 baris brief (`6ab530d00018edb50097`) + opsional 1 baris `campaign_assets` (`source: "external"`, `type: "link"`). Brief/asset gagal → hanya `warnings`, campaign tidak di-rollback. |
+| `updateCampaignDraftInAppwrite(campaignId, input)` | Function `patch-campaign-draft` + Client SDK | Update kolom campaign via Function, lalu upsert brief & asset dari klien. Thumbnail yang tidak tersimpan → gagal `validation`. |
+| `getCampaignDraftForEditFromAppwrite(campaignId)` | Client SDK | Baca draft milik UMKM (`status = draft`) + brief + asset pertama. |
+| `getCampaignsFromAppwrite()` | Client SDK | Campaign milik UMKM, `orderDesc($updatedAt)`, limit 100. |
+| `getCampaignByIdFromAppwrite(id)` | Client SDK | Campaign milik UMKM (filter `umkmId`). |
+| `getCampaignSubmissionsFromAppwrite(campaignId)` | Client SDK | Submission satu campaign milik UMKM (read-only), limit 100, join profil kreator. |
+| `getSubmissionCountsFromAppwrite(campaignIds)` | Client SDK | Hitung `pending` / `valid` (approved) / `dispute` (fraudStatus ≠ `safe` & tidak kosong) per campaign; batch `Query.equal(campaignId, ≤100 id)` (UMKM-PERF-01). |
+| `getPendingSubmissionsFromAppwrite()` | Client SDK | Submission `pending` lintas campaign milik UMKM. |
+| `generateCampaignBriefFromAppwrite(input)` | Function `ai-brief` | Body `{ description, type, productName, targetMarket, goal, materials }` — sengaja **tanpa** `campaignId` & `userId`. Hasil brief disimpan klien saat create/update draft. |
+| `uploadCampaignThumbnailInAppwrite(file)` / `deleteCampaignThumbnailInAppwrite(url)` | Storage `campaign-assets` | Upload gambar (MIME `image/*`) / hapus best-effort. |
+| `createCampaignPaymentInAppwrite({ campaignId, budget })` | Function `create-payment` | Body `{ purpose: "campaign", amount: budget, campaignId }`. Function menambah fee. Kontrak lengkap: modul Payments. |
+| `publishCampaignInAppwrite(campaignId)` | Function `patch-campaign-status` (`action: "publish"`) | Lalu baca ulang campaign. |
+| `updateCampaignStatusInAppwrite(campaignId, "paused" \| "active")` | Function `patch-campaign-status` (`pause` / `resume`) | Dipakai juga oleh modal "Batalkan Campaign" (efeknya pause). |
+| `duplicateCampaignInAppwrite(sourceId, newTitle, { copyBrief, copyBudget, copyAssets })` | Client SDK + Storage | Salin via `createCampaignDraftInAppwrite`. Thumbnail disalin sebagai file baru; gagal salin → duplikasi dibatalkan. `copyBudget: false` → budget `MINIMUM_CAMPAIGN_BUDGET`. |
+| `deleteCampaignDraftInAppwrite(campaignId)` | Client SDK | Hanya `draft` milik UMKM. Hapus brief & asset (best-effort), campaign, lalu thumbnail. |
+| `removeCampaignAssetInAppwrite(assetId)` | Client SDK | Hanya bila campaign induk masih `draft`. |
+| `reviewSubmissionInAppwrite(input)` | Function `review-submission` | Masih diekspor (`reviewSubmission` di `umkm-dashboard.service.ts`) tetapi **tidak dipanggil UI UMKM**; Function sekarang menolak non-Admin (403). |
 
-#### `claimCampaign()` — [Client SDK]
+### Creator (`creator-appwrite.service.ts`)
 
-- **Input**: `{ campaignId }` (creatorId dari sesi).
-- **Validasi** (lihat `30_Business_Rules.md`):
-  - Already claimed? — kombinasi `campaignId + creatorId` belum ada.
-  - Campaign active? — `status = active`.
-  - Profile complete? — `isProfileCompleted = true`.
-  - Claim limit belum terlampaui (`totalClaims < claimLimit`).
-- **Proses**: buat dokumen `campaign_claims` (`status = claimed`). Memicu event Campaign Claimed.
-- **Akses**: Creator.
+| Fungsi | Jalur | Ringkasan |
+| ------ | ----- | --------- |
+| `getCreatorJobsFromAppwrite()` | Client SDK | Job Pool: semua campaign `status = active`, `orderDesc($createdAt)`, limit 100, join `umkm_profiles`. |
+| `getCreatorJobByIdFromAppwrite(id)` | Client SDK | Detail job `active` + brief + assets + profil UMKM. |
+| `claimCampaignInAppwrite(campaignId)` | Client SDK `createDocument` | Lihat kontrak di bawah. |
+| `getCreatorActiveWorksFromAppwrite()` / `getCreatorActiveWorkByIdFromAppwrite(id)` | Client SDK | Claim milik kreator + campaign + submission + asset pertama. Views ditampilkan dari `views_count` bila `views_final`, selain itu `views`. |
+| `getCreatorSubmissionsFromAppwrite()` | Client SDK | Submission milik kreator, limit 100. |
+| `submitProofInAppwrite(input)` | Function `submit-campaign-proof` | Pre-check klien (claim milik sendiri, status `claimed`, campaign cocok), lalu Function. |
+| `unclaimCampaignInAppwrite(claimId)` | Function `unclaim-campaign` | Respons harus `{ success: true, claimId: string }`. |
 
----
+#### `claimCampaignInAppwrite(campaignId)` — [Client SDK]
 
-### Submission Service
-
-#### `createSubmission()` — [Client SDK]
-
-- **Input**: `{ claimId, campaignId, platform, postUrl, caption?, views, engagement? }`
-- **Validasi MVP**: `platform` wajib `tiktok` dan `postUrl` harus URL TikTok yang valid.
-- **Proses**: buat `campaign_submissions` (`status = pending`). Memicu event Submission Created → AI Fraud (lihat `90_Events.md`).
-- **Akses**: Creator (owner claim).
-
-#### `getMySubmissions()` — [Client SDK]
-
-- **Input**: (creatorId dari sesi).
-- **Proses**: list submission milik creator.
-- **Akses**: Creator (read own).
-
-#### `approveSubmission()` — [Client SDK]
-
-- **Input**: `{ submissionId }`
-- **Proses**: `status: pending → approved`. Memicu event Submission Approved → reward calculation (lihat `90_Events.md`).
-- **Akses**: UMKM (owner campaign).
-
-#### `rejectSubmission()` — [Client SDK]
-
-- **Input**: `{ submissionId, reason? }`
-- **Proses**: `status: pending → rejected`.
-- **Akses**: UMKM (owner campaign).
+- **Validasi klien** (bukan otoritatif):
+  - campaign `status === "active"`;
+  - `creator_profiles.isProfileCompleted === true` (dicari via `userId`);
+  - `totalClaims < claimLimit` (bacaan mungkin basi);
+  - belum ada claim non-`expired` untuk `campaignId + creatorId`.
+- **Proses**: `createDocument(campaign_claims, { campaignId, creatorId, status: "claimed", claimedAt: now })` dengan permission `read/update/delete(user:creator)`.
+- **Setelahnya**: event `campaign-claimed` menaikkan `totalClaims` atomik; bila kuota sudah penuh, claim diubah `expired` (async ~0,5–3 detik). Klien tidak memutasi counter.
+- **Return**: `claimId`.
 
 ---
 
-## Appwrite Functions (Server-side)
+## 2. Appwrite Function HTTP
 
-Fungsi-fungsi berikut di-deploy ke **Appwrite Cloud** dan dipicu oleh **event database**. Tidak dipanggil langsung dari frontend. Detail lebih lanjut di `70_Backend.md` dan `90_Events.md`.
+Semua: `execute: ["users"]`, method `POST` (405 untuk method lain), `401` bila header `x-appwrite-user-id` kosong, `500 { error: "Internal server error" }` untuk error tak terduga.
+
+### `patch-campaign-draft`
+
+- **Input**: `{ campaignId, title?, category?, type?, platforms?, description?, budget?, rewardPer1000Views?, claimLimit?, submissionDays?, thumbnailUrl? }`.
+- **Guard**: campaign `$id = campaignId`, `umkmId = caller`, `status = draft` → selain itu `404`.
+- **Allowlist**: hanya field di atas. `remainingBudget`, `spentAmount`, `status`, `totalClaims`, `publishedAt` tidak bisa disentuh.
+- **Validasi**: `title` ≤ 255; `description` ≤ 5000; `budget` integer 50.000–999.999.999; `rewardPer1000Views` integer ≥ 0; `claimLimit` integer ≥ 1; `submissionDays` integer ≥ 1; `thumbnailUrl` ≤ 2048 dan harus `https://…/storage/buckets/<campaign-assets>/files/<id>/view` (host tidak dicek).
+- **Aturan funded**: bila `remainingBudget > 0`, perubahan `budget`, `rewardPer1000Views`, `claimLimit`, `thumbnailUrl` ditolak `400`.
+- **Return**: `{ campaignId, status }`. Tidak ada field → `400 "Tidak ada field yang diperbarui."`.
+
+### `patch-campaign-status`
+
+- **Input**: `{ campaignId, action: "pause" | "resume" | "publish" }`.
+- **Guard**: campaign milik caller, selain itu `404`.
+- **Transisi**:
+  - `pause`: `active → paused`, selain itu `409`.
+  - `resume`: `paused → active`, selain itu `409`.
+  - `publish`: `draft → active`, wajib `remainingBudget >= budget` (selain itu `409 "Dana campaign belum mencukupi target budget…"`). Set `publishedAt`, ganti permission campaign menjadi `read(any)` + `delete(user:umkm)`, dan ganti permission baris brief & asset **pertama** dengan nilai yang sama (best-effort).
+- **Return**: `{ campaignId, status }`.
+
+### `submit-campaign-proof`
+
+- **Input**: `{ claimId, campaignId, platform, postUrl, caption? }`.
+- **Validasi**: `platform ∈ {tiktok, instagram}`; `postUrl` http/https dengan host `*.tiktok.com` / `*.instagram.com` sesuai platform; `caption` dipangkas 1000.
+- **Guard**: `users.status` bila ada harus `active` (403); claim `$id + creatorId = caller + campaignId` harus ada (404) dan `status = claimed` (409); belum ada submission untuk `claimId` (409); campaign ada dan punya `umkmId`.
+- **Proses**: buat `campaign_submissions` (`views: 0`, `status: "pending"`, permission `read(creator)` + `read(umkm)`), claim → `submitted`, notifikasi UMKM (`type: "campaign"`, id deterministik).
+- **Return**: `{ success: true, submissionId, claimId, campaignId, status: "pending" }`.
+- Tidak memeriksa status campaign (paused/completed tetap bisa submit) maupun deadline `submissionDays`.
+
+### `unclaim-campaign`
+
+- **Input**: `{ claimId }`.
+- **Guard**: `users.role = creator` dan `status = active` (403); claim ada (404); milik caller (403); `status = claimed` (409).
+- **Proses**: hard delete claim, lalu `totalClaims` di-decrement atomik (`min 0`). Bila decrement gagal, claim dibuat ulang dengan id yang sama dan Function membalas `500`.
+- **Return**: `{ success: true, claimId }`.
+
+### `review-submission`
+
+- **Input**: `{ submissionId, status: "approved" | "rejected", views?, notes? }`. `views` wajib safe integer ≥ 0 saat approve.
+- **Guard**: submission ada (404) dan `pending` (409). Caller harus **Admin aktif**: `users.role = admin` (+ `status` aktif), atau fallback Appwrite Auth `labels`/`prefs.role` berisi `admin` → selain itu `403`.
+- **Approve**: wajib lewat periode observasi `VIEW_VALIDATION_DELAY_HOURS` (default 72 jam) sejak `$createdAt` submission → selain itu `409 { error, eligibleAt }`.
+- **Proses**: update submission `{ status, views, reviewNotes? }`; approve juga menulis `views_count`, `views_captured_at`, `views_source: "manual_admin"`, `views_final: true`. Claim diselaraskan ke status yang sama (best-effort). Reject: `totalClaims` di-decrement atomik (slot kembali) + notifikasi kreator `submission_rejected`.
+- **Return**: `{ success: true, campaignId, status }`.
+
+### `get-admin-submission-queue`
+
+- **Input**: `{ status?: "pending" | "approved" | "rejected" | "all" (default "pending"), limit?: 1–100 (default 50) }`. Method `GET` juga diterima.
+- **Guard**: Admin aktif (aturan sama dengan `review-submission`) → selain itu `403`.
+- **Return**: `{ items: AdminSubmissionDto[], total }`, urut `$createdAt DESC`. DTO: `id, campaignId, creator{id,name,username,avatarUrl?,tiktokHandle?}, campaign{id,title,rewardPer1000Views,platform}, umkm{id,name,ownerName?}, platform, postUrl, note?, status, submittedAt, verifiedViews, verifiedAt?, verifiedBy?, estimatedReward, finalReward, rejectionReason?`.
+- Tidak menyertakan `fraudScore`/`fraudStatus`/`fraud_checks`. Tidak ada pagination cursor/offset.
+- Dipakai admin app `admin/` (`admin/src/features/admin/submissions/services/submission.service.ts`, body `{ status, limit: 50 }`); tidak dipanggil frontend web `src/`.
 
 ---
 
-### `campaign-published` — [Appwrite Function]
+## 3. Service Legacy Backend (`00_BACKEND/src/services`)
 
-- **Trigger**: `campaigns.status` `draft → active`.
-- **Aksi**: set `publishedAt`, kirim notifikasi ke creator eligible.
+Masih ada untuk unit test (`tests/unit/campaign.service.test.ts`, `submission.service.test.ts`), tetapi **bukan jalur runtime** dan sebagian bertentangan dengan aturan saat ini:
 
-### `campaign-claimed` — [Appwrite Function]
-
-- **Trigger**: `campaign_claims.create`.
-- **Aksi**: validasi claim limit & duplikasi, update `totalClaims`, notifikasi UMKM.
-
-### `ai-fraud-precheck` — [Appwrite Function]
-
-- **Trigger**: `campaign_submissions.create`.
-- **Aksi**: jalankan validasi & AI fraud detection (Gemini via modul AI), tulis hasil ke `fraud_checks` & update submission.
-
-### `calculate-campaign-reward` — [Appwrite Function]
-
-- **Trigger**: `campaign_submissions.status` `pending → approved`.
-- **Aksi**: hitung reward (`views/1000 × rewardPer1000Views`), update `spentAmount` & `remainingBudget`, buat transaksi ke pending balance wallet creator.
+- `campaign.service.ts`: `createCampaign` (validasi TikTok-only, budget ≥ `MINIMUM_CAMPAIGN_BUDGET`, CPM > 0, claimLimit > 0, submissionDays ≥ 1, memasang `update(user)` — sudah tidak berlaku sejak SEC-H1), `generateBrief`, `publishCampaign` (update langsung, guard `remainingBudget > 0`), `getCampaigns`, `getCampaignById`, `deleteCampaign`.
+- `campaign-asset.service.ts`: `addCampaignAsset` (`source: "external_url"`, type `image|video|document|link`, URL `https://`), `listCampaignAssets`, `removeCampaignAsset`.
+- `claim.service.ts`: `getMyClaims`, `claimCampaign` (sweep expired + increment non-atomik dari klien), `unclaimCampaign` (hard delete + decrement non-atomik).
+- `submission.service.ts`: `createSubmission` (input `views` dari kreator, memasang `update(user:umkm)`), `getMySubmissions`, `getSubmissionsByCampaign`, `approveSubmission` / `rejectSubmission` oleh UMKM owner — **bertentangan dengan ADR-010**; runtime memakai `submit-campaign-proof` dan `review-submission`.
+- `topUpCampaign()` dan `unclaimed` sebagai status claim **tidak ada** di kode mana pun.
 
 ---
 

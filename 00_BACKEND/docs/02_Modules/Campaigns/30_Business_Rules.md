@@ -1,114 +1,133 @@
 # Campaigns — Business Rules
 
+Kolom "Penegakan" menunjukkan di mana aturan benar-benar dijaga. "Klien" = hanya UX/validasi frontend, bukan otoritatif.
+
 ## 1. Campaign Status
 
 `draft | active | paused | completed`
 
-- Campaign dibuat `draft`.
-- Publish hanya boleh setelah funding business rule terpenuhi.
-- `paused` menghentikan claim baru tetapi tidak membatalkan submission existing.
-- `completed` berarti Campaign ditutup/remaining budget tidak lagi tersedia sesuai backend rule.
+| Transisi | Pemicu | Penegakan |
+| -------- | ------ | --------- |
+| (baru) → `draft` | `createCampaignDraftInAppwrite` | Klien (tabel `create("users")`) |
+| `draft → active` | `patch-campaign-status` `publish` | Server: owner + `remainingBudget >= budget` |
+| `active → paused` | `patch-campaign-status` `pause` | Server: owner |
+| `paused → active` | `patch-campaign-status` `resume` | Server: owner |
+| `active/paused → completed` | `calculate-campaign-reward` saat `remainingBudget <= 0` setelah reward | Server |
+
+- Draft boleh dihapus (`deleteCampaignDraftInAppwrite`); campaign yang sudah tayang tidak dihapus, cukup dijeda. Modal "Batalkan Campaign" di UI = pause.
+- `paused` menyembunyikan campaign dari Job Pool (query `status = active`) dan claim baru ditolak **di klien**. `campaign-claimed` dan `submit-campaign-proof` tidak memeriksa status campaign, sehingga submission claim yang sudah ada tetap bisa dikirim.
+- `completed` = sisa budget habis; claim baru ditolak di klien (status ≠ `active`).
+- Tidak ada status `cancelled` yang ditulis kode campaign (walau `refund-order` mengenalinya).
 
 ## 2. Campaign Type & Assets
 
-- Type: `ugc | clipping`.
-- MVP menggunakan aset digital; tidak ada physical sample shipping.
-- External asset URL harus aman/valid sesuai validation layer.
+- Type: `ugc | clipping` (wizard & service; skema menyimpan string bebas).
+- MVP berbasis aset digital; tidak ada physical sample shipping.
+- Aset produksi = satu URL folder cloud publik `https://` dari Google Drive, Dropbox, atau OneDrive/SharePoint (validasi wizard langkah 3).
+- Thumbnail produk (gambar) wajib untuk campaign baru, diunggah ke bucket `campaign-assets`; campaign legacy tanpa thumbnail tetap bisa diedit.
 
 ## 3. Platform
 
-- Current Campaign MVP product contract: **TikTok**.
-- Platform adalah property Campaign/job dan Creator submission harus mengikuti platform Campaign.
-- UI Creator tidak boleh menawarkan platform yang tidak dimiliki/supported Campaign.
-- Future multi-platform support harus diperkenalkan melalui Campaign contract, bukan selector bebas saat submit.
+- Current Campaign MVP product contract: **TikTok**. Wizard selalu menulis `platforms: ["tiktok"]`.
+- Platform adalah property Campaign; UI kreator mengirim platform pertama campaign saat submit, bukan selector bebas.
+- `submit-campaign-proof` secara teknis menerima `tiktok | instagram` (host URL harus cocok). Multi-platform resmi harus diperkenalkan lewat Campaign contract.
 
 ## 4. Budget & Fee
 
-- Minimum Campaign budget mengikuti konstanta/current approved product rule.
-- Campaign platform fee = buyer-side UMKM sesuai ADR-008.
-- Creator receives full calculated Campaign reward; frontend tidak boleh memotong Campaign reward dengan platform fee.
+- Minimum budget **Rp50.000** (`MINIMUM_CAMPAIGN_BUDGET`, wizard + `patch-campaign-draft`). Maksimum 999.999.999.
+- Tarif per 1.000 views: wizard menawarkan Rp3.000 / Rp5.000 / Rp8.000 atau nominal kustom (> 0).
+- Fee platform Campaign = **buyer-side UMKM** (ADR-008): `fee = floor(budget × FEE_RATE)`, `FEE_RATE` env `create-payment` (default `0.02`); UMKM membayar `budget + fee`, campaign dikredit `budget` saja.
+- Pembayaran harus persis `budget` dan campaign masih `draft` (`create-payment`).
+- Setelah funded (`remainingBudget > 0`): `budget`, `rewardPer1000Views`, `claimLimit`, `thumbnailUrl` terkunci (`patch-campaign-draft`).
+- Creator menerima full calculated reward; tidak ada potongan fee di sisi kreator.
 
 ## 5. Claim Rules
 
-- satu Creator maksimal satu claim per Campaign;
-- Creator profile harus eligible/complete sesuai backend rule;
-- Campaign harus `active`;
-- total claim tidak boleh melewati quota;
-- expired claim mengembalikan slot secara server-side/idempotent.
+| Aturan | Penegakan |
+| ------ | --------- |
+| Campaign harus `active` | Klien |
+| `creator_profiles.isProfileCompleted = true` | Klien |
+| Maksimal satu claim non-`expired` per Creator per Campaign | Klien (tidak ada unique index) |
+| `totalClaims` tidak melewati `claimLimit` | Server: `campaign-claimed` increment atomik `max = claimLimit`; claim yang melebihi → `expired` |
+| Deadline submit = `claimedAt + submissionDays` (default 7) | Server: `expire-stale-claims` tiap 6 jam |
+| Slot kembali saat expired / unclaim / submission ditolak | Server: decrement atomik `min 0` |
 
 Claim status: `claimed | submitted | approved | rejected | expired`.
+
+- `claimed → submitted` (`submit-campaign-proof`), `submitted → approved | rejected` (`review-submission`), `claimed → expired` (cron atau kuota penuh).
+- Unclaim (`unclaim-campaign`) hanya untuk `claimed`, oleh kreator aktif pemilik claim; baris **dihapus** (tidak ada status `unclaimed`).
+- Claim `expired` tidak menghalangi claim ulang.
 
 ## 6. Submission Rules
 
 Submission status: `pending | approved | rejected`.
 
-- Creator hanya boleh submit untuk claim miliknya dengan status `claimed`.
-- Submission terhubung 1:1 dengan claim.
-- Creator mengirim public post URL + optional caption/note; Creator tidak mengisi final views.
-- Trusted Function membuat submission `pending` dan mengubah claim menjadi `submitted`.
-- Client-side validation hanya UX; server-side validation tetap authoritative.
-- Creator tidak boleh mengubah submission setelah final decision jika backend menguncinya.
+- Creator hanya bisa submit untuk claim miliknya berstatus `claimed` (`submit-campaign-proof`).
+- Satu submission per claim (unique index `claimId` + cek Function).
+- Creator mengirim public post URL + optional caption/note; Creator tidak mengisi views (`views` dibuat `0`).
+- Function membuat submission `pending` dan mengubah claim menjadi `submitted`; UMKM mendapat notifikasi.
+- Submission hanya punya permission read untuk Creator & UMKM; tidak ada edit dari klien setelah submit.
+- Batas `submissionDays` tidak dicek saat submit — claim yang lewat deadline baru dibalik oleh cron.
 
 ## 7. Validation Authority
 
-**ADR-010:** Admin Marketiv adalah final user-facing validation authority.
+**ADR-010:** Admin Marketiv adalah final validation authority — **sudah ditegakkan** di `review-submission` (non-Admin → 403).
 
-Admin dapat, melalui trusted Function:
+Admin, melalui trusted Function:
 
-- membuka submission pending;
-- membaca supporting risk/fraud data;
-- menangkap `views_count` final;
-- menetapkan validation timestamp/source;
-- approve atau reject;
-- mencatat reason/note.
+- membuka queue submission (`get-admin-submission-queue`);
+- menangkap `views` final saat approve;
+- approve atau reject dengan `notes` (→ `reviewNotes`).
 
 UMKM:
 
-- dapat membaca submission pada campaign miliknya;
-- tidak dapat approve/reject;
-- tidak dapat menginput atau mengubah final views;
-- tidak dapat langsung memicu payout.
+- membaca submission campaign miliknya (read-only di UI);
+- tidak dapat approve/reject, menginput views, atau memicu payout.
+
+Belum tersedia: queue Admin belum menyertakan data fraud (`fraudScore`/`fraudStatus`/`fraud_checks`).
 
 ## 8. Fraud Rules
 
-`fraudStatus: safe | review | rejected`
+`fraudStatus: safe | review | rejected` (ditulis `ai-fraud-precheck`; 0–30 / 31–70 / 71–100).
 
-- Fraud precheck menghasilkan metadata risiko.
-- Fraud precheck **tidak menjadi final submission authority** pada current implementation/target contract.
-- `safe` tidak otomatis berarti submission approved.
-- `review` berarti prioritas manual review.
-- `rejected` fraud signal harus dipertimbangkan Admin, tetapi final submission status tetap authoritative decision path.
-- Tidak boleh ada payout hanya karena fraud score rendah.
+- Fraud precheck hanya menghasilkan metadata risiko; **tidak** mengubah `status` submission.
+- `safe` tidak otomatis approved; `rejected` tidak otomatis ditolak.
+- Tidak boleh ada payout hanya karena fraud score rendah — reward hanya dari `status = approved` oleh Admin.
+- UI UMKM menghitung "dispute" sebagai submission dengan `fraudStatus` terisi dan ≠ `safe`.
 
 ## 9. Views Rules
 
-- Final views ditetapkan saat Admin validation.
-- Prefer locked fields `views_count`, `views_captured_at`, `views_source`, `views_final` ketika tersedia.
-- `views_source=manual_admin` berarti views dicatat oleh operation Admin Marketiv; label UI user-facing adalah `Diverifikasi Marketiv`.
-- Legacy `views` hanya fallback compatibility, bukan alasan mengklaim data automatic/verified.
-- Views tidak boleh negatif.
+- Final views ditetapkan saat Admin approve, setelah **periode observasi** `VIEW_VALIDATION_DELAY_HOURS` (default 72 jam) sejak submission dibuat.
+- Views harus safe integer ≥ 0.
+- Approve mengunci `views_count`, `views_captured_at`, `views_source = manual_admin`, `views_final = true`, dan menimpa legacy `views` dengan nilai yang sama.
+- Label UI user-facing untuk `manual_admin`: `Diverifikasi Marketiv`.
+- Legacy `views` hanya fallback bila `views_final` tidak `true`.
 
 ## 10. Reward Rules
 
 ```text
-rewardBase = floor(verifiedViews / 1000) × rewardPer1000Views
-reward = min(rewardBase, remainingBudget)
+views  = views_final ? views_count : views
+reward = min( floor(views × rewardPer1000Views / 1000), remainingBudget )
 ```
 
-- Reward diproses backend setelah submission authoritative `approved`.
-- Reward Campaign baru langsung menambah `wallet.balance`; `pendingBalance` hanya untuk data legacy sampai proses retirement terpisah.
-- Event/retry harus idempotent sehingga satu submission tidak menghasilkan reward ganda.
-- `remainingBudget` berkurang dan `spentAmount` bertambah tepat sekali sebesar reward.
-- UI approval status tidak sama dengan `cash paid`; financial wording mengikuti authoritative transaction state.
+- Pembulatan dilakukan **sekali di akhir** (proporsional, bukan per seribu penuh): 999 views × Rp1.000 → Rp999.
+- `reward <= 0` → tidak ada kredit maupun ledger.
+- Reward diproses `calculate-campaign-reward` setelah submission `approved`, langsung ke `wallet.balance`; `pendingBalance` hanya legacy.
+- Idempoten per submission via ledger `transactions` (`referenceType = campaign_submission`).
+- `remainingBudget` berkurang dan `spentAmount` bertambah sebesar reward (atomik). Campaign `completed` bila sisa ≤ 0.
+- Estimasi reward di UI tidak otoritatif dan saat ini memakai rumus berbeda (lihat [100_Testing.md](100_Testing.md)).
 
 ## 11. Read/Write Boundary
 
-- Creator: write only through submit Function.
-- UMKM: read submission only.
-- Admin: review mutation only through trusted Function.
-- Backend: financial mutation only.
-- Direct client write terhadap final status/views/reward dilarang.
+| Data | Klien boleh | Server (Function) |
+| ---- | ----------- | ----------------- |
+| `campaigns` | create draft, delete draft | semua update (draft fields, status, counter, budget) |
+| brief / asset | create, update (sebelum publish), delete | ganti permission saat publish |
+| `campaign_claims` | create (creator) | status, delete (unclaim) |
+| `campaign_submissions` | read | create, status, views, fraud |
+| `fraud_checks` | — | create/read |
+| wallet / ledger reward | read own | create/credit |
 
-## 12. Migration Status
+Direct client write terhadap final status/views/reward dilarang.
 
-Product rule ini aktif sebagai target canonical contract. `review-submission` baseline 2026-08-14 masih mengotorisasi UMKM owner; backend authorization migration belum selesai dan harus dianggap blocker E2E, bukan alasan mempertahankan UI UMKM review.
+> Gap skema: semua tabel campaign masih memberi `create("users")` di level tabel, dan Appwrite tidak membatasi isi kolom saat create. Artinya create langsung dari klien (mis. `campaign_submissions` dengan `status`/`views_*` arbitrer, atau `campaigns` dengan `status`/`remainingBudget` arbitrer) secara teknis belum diblokir server. Boundary di atas adalah kontrak yang dituju, belum sepenuhnya ditegakkan skema.

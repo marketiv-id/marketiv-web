@@ -1,70 +1,63 @@
-# Tutorial: Upload Asset Campaign via Google Drive
+# Tutorial: Membagikan Aset Campaign via Folder Cloud
 
-## Cara Menambahkan Footage (Foto, Video, Dokumen) ke Marketiv
+## Cara Menyediakan Footage (Foto, Video, Logo) untuk Kreator
 
-Marketiv hanya mendukung URL eksternal untuk asset campaign. Gunakan Google Drive untuk menyimpan file lalu bagikan tautannya.
+Marketiv tidak menyimpan file materi produksi. Satu campaign memakai **satu tautan folder cloud publik** yang disimpan di `campaign_assets.fileUrl` (lihat [50_Database.md](50_Database.md)). Layanan yang diterima wizard: **Google Drive, Dropbox, OneDrive/SharePoint**.
+
+> Gambar produk utama (thumbnail campaign) **berbeda**: diunggah langsung di langkah 1 wizard ke storage Marketiv (bucket `campaign-assets`), bukan lewat tautan folder.
 
 ---
 
-## Langkah 1 — Upload File ke Google Drive
+## Langkah 1 — Siapkan Folder
 
-1. Buka [Google Drive](https://drive.google.com) dan login.
-2. Klik tombol **+ Baru** (pojok kiri atas).
-3. Pilih **Upload file** (untuk foto/video/dokumen) atau **Upload folder**.
-4. Pilih file dari komputer Anda.
-5. Tunggu hingga upload selesai (ada notifikasi "Upload selesai").
+1. Buka [Google Drive](https://drive.google.com) (atau Dropbox / OneDrive) dan login.
+2. Buat satu folder khusus untuk campaign.
+3. Unggah materi ke folder tersebut. Materi yang disarankan UI:
 
-**Format file yang didukung:**
-
-| Tipe Asset | Format |
+| Materi | Keterangan |
 |---|---|
-| Image | .jpg, .jpeg, .png, .webp |
-| Video | .mp4, .mov, .avi, .mkv |
-| Dokumen | .pdf, .doc, .docx, .xlsx, .pptx |
-| Link | URL halaman publik |
+| Foto Produk | Foto produk dari beberapa sisi (disarankan) |
+| Video Produk | Video mentah yang bisa dipakai kreator (disarankan) |
+| Logo Usaha | Logo untuk ditampilkan di video (jika ada) |
+| Contoh Video | Contoh gaya video yang disukai (jika ada) |
+
+Format file bebas — Marketiv tidak membaca isi folder.
 
 ---
 
 ## Langkah 2 — Atur Akses Publik
 
-1. Cari file yang sudah di-upload di Google Drive.
-2. **Klik kanan** file tersebut.
-3. Pilih **Bagikan** → **Bagikan**.
-4. Di kolom "Umum", klik **Ubah**.
-5. Pilih opsi: **Siapa saja yang memiliki link**.
-6. Pastikan akses diatur ke **Editor** atau **Lihat** (disarankan **Lihat**).
-7. Klik **Selesai**.
+1. Klik kanan folder → **Bagikan**.
+2. Di bagian "Akses umum", pilih **Siapa saja yang memiliki link**.
+3. Atur peran ke **Pelihat** (disarankan).
+4. Klik **Selesai**.
 
-> Catatan: Jika file tidak diatur ke publik, creator tidak akan bisa melihat asset campaign Anda.
+> Jika folder tidak publik, kreator tidak bisa membuka materi. Sistem tidak memeriksa apakah folder benar-benar publik.
 
 ---
 
-## Langkah 3 — Salin Link
+## Langkah 3 — Salin Tautan
 
-1. Klik kanan file lagi.
-2. Pilih **Bagikan** → **Salin tautan**.
-3. Link akan otomatis tersalin ke clipboard Anda.
-4. Format link akan seperti: `https://drive.google.com/file/d/xxx/view?usp=sharing`
+1. Klik kanan folder → **Bagikan** → **Salin tautan**.
+2. Contoh format: `https://drive.google.com/drive/folders/xxx?usp=sharing`.
 
 ---
 
-## Langkah 4 — Tempel di Marketiv
+## Langkah 4 — Tempel di Wizard Marketiv
 
-1. Buka halaman **Buat Campaign** atau **Edit Campaign** di Marketiv.
-2. Pada seksi **Asset Campaign**, klik **Tambah Asset**.
-3. Pilih **tipe asset** (Image / Video / Dokumen / Link).
-4. Tempel link Google Drive yang sudah disalin ke kolom **URL File**.
-5. (Opsional) Isi **Nama File** sebagai label.
-6. Klik **Simpan**.
+1. Buka **Buat Campaign** (atau **Edit** untuk draft).
+2. Di langkah 3 **Tautan Aset**, tempel tautan pada kolom **Tautan Folder Foto & Video** (wajib).
+3. (Opsional) isi **Catatan untuk Kreator**, mis. "Logo tersedia di folder 'Logo'".
+4. Lanjutkan wizard. Tautan disimpan bersama draft.
 
 ---
 
-## Tips
+## Aturan Validasi
 
-- Pastikan link dimulai dengan `https://` — sistem hanya menerima protokol HTTPS.
-- File dengan akses terbatas (tidak publik) tetap bisa disimpan tetapi creator tidak bisa melihatnya.
-- Gunakan folder di Google Drive untuk mengorganisir file per campaign.
-- Alternatif selain Google Drive: Dropbox, OneDrive, atau CDN publik selama URL dapat diakses publik.
+- Tautan wajib diawali `https://`.
+- Host harus `drive.google.com`, `dropbox.com` / `www.dropbox.com`, `onedrive.live.com`, `1drv.ms`, atau `*.sharepoint.com` (`APPROVED_CLOUD_STORAGE_DOMAINS`). CDN atau situs lain ditolak.
+- Validasi ini hanya di frontend; tidak ada validasi URL aset di server.
+- Tautan aset hanya bisa diubah/dihapus selama campaign masih `draft`.
 
 ---
 
