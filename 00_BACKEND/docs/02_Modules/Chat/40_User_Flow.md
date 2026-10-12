@@ -1,41 +1,63 @@
 # Chat — User Flow
 
-## Memulai Percakapan
+## Membuka Ruang Negosiasi (UMKM)
 
 ```text
-UMKM buka profil Creator
+UMKM buka detail Creator (CreatorDetailPage) → pilih paket rate card
 ↓
-Klik "Chat"
+StartNegotiationModal → "Masuk ke Obrolan Negosiasi" → createConversation(creatorId)
 ↓
-Cek: sudah punya conversation?
-  ├─ Ya → buka conversation yang ada
-  └─ Tidak → buat conversation baru
+Function create-conversation
+  ├─ pasangan sudah ada → kembalikan conversationId lama
+  └─ belum ada → buat conversations (read untuk kedua participant)
 ↓
-Tampilkan chat screen
+Redirect /dashboard/umkm/negosiasi/{conversationId}?packageId={packageId}
 ```
 
-## Mengirim Pesan
+Creator tidak memiliki aksi membuka percakapan; percakapan muncul di `/dashboard/kreator/negosiasi` setelah UMKM membukanya.
+
+## Mengirim Pesan Teks
 
 ```text
-User (UMKM/Creator) ketik pesan
+User (UMKM/Creator) ketik pesan di ruang negosiasi
 ↓
-Pilih tipe: text / image / file / offer
+sendMessage(conversationId, text) → Function send-message
 ↓
-Send → messages.create
+messages.create (type text) → conversations.last_message/last_message_at diperbarui
 ↓
-Realtime event → UI penerima update
+Event messages.rows.*.create → send-chat-notification (notifikasi + push ke penerima)
 ↓
-Update lastMessage + lastMessageAt pada conversation
+Realtime event → ruang penerima memuat ulang DTO + riwayat pesan
+↓
+Pengirim memuat ulang ruang setelah Function berhasil
+```
+
+Lampiran gambar/file tidak tersedia.
+
+## Membuka Ruang (Tandai Dibaca)
+
+```text
+User buka /negosiasi/{conversationId}
+↓
+Muat DTO negosiasi ({ conversationId }) + riwayat pesan
+↓
+markConversationRead(conversationId) — tidak di-await, kegagalan diabaikan
+↓
+unreadCount di daftar negosiasi turun pada pemuatan berikutnya
+```
+
+## Arsip / Batal Arsip
+
+```text
+User klik ikon arsip pada kartu di daftar negosiasi
+↓
+setConversationArchived(conversationId, !isArchived) → Function patch-conversation-archive
+↓
+Hanya kolom arsip milik caller berubah → state lokal diperbarui tanpa reload
+↓
+Kartu pindah antara tab "Kotak Masuk" dan "Arsip"
 ```
 
 ## Membuat Offer dari Chat
 
-```text
-UMKM buka chat
-↓
-Klik "Buat Offer"
-↓
-Isi: title, description, price, deadline, revisionLimit
-↓
-Kirim → pesan tipe `offer` terkirim di chat + dokumen `offers` terbuat
-```
+Lihat `../Offers/40_User_Flow.md` (UMKM-only, lewat Function `create-offer`).

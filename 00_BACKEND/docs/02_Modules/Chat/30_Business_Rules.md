@@ -2,42 +2,45 @@
 
 ## Satu Percakapan per Pasangan
 
-- Hanya boleh ada **satu** `conversation` aktif per pasangan `umkmId` + `creatorId`.
-- Sebelum membuat percakapan baru, cek apakah pasangan tersebut sudah punya conversation; jika ada, gunakan yang sudah ada.
+1. Hanya ada **satu** `conversations` per pasangan `umkm_id + creator_id` (unique index `idx_umkm_creator`).
+2. Hanya **UMKM aktif** yang dapat membuka percakapan (`create-conversation` memeriksa `users.role = umkm` dan `users.status = active`). Caller selalu menjadi `umkm_id`; `creatorId` dari body.
+3. Tidak boleh membuka percakapan dengan diri sendiri; `creatorId` harus berbentuk user ID Appwrite yang sah (`^[a-zA-Z0-9][a-zA-Z0-9._-]{0,35}$`).
+4. Idempoten: pasangan yang sudah punya conversation mengembalikan `conversationId` yang ada. Race dua tab (409 dari unique index) juga mengembalikan baris yang ada.
+5. Keberadaan `creatorId` sebagai user/creator sungguhan tidak diverifikasi oleh Function (hanya format).
+
+## Pengiriman Pesan
+
+1. Hanya participant yang dapat mengirim pesan; non-participant & conversation tidak ada → `404` (bukan 403, agar keberadaan percakapan tidak bocor).
+2. `send-message` hanya menulis tipe `text`. `content` di-trim, wajib tidak kosong, maks **2000** karakter.
+3. `send-message` tidak memeriksa role/status akun (user suspended yang masih punya sesi tetap bisa mengirim).
+4. Pesan tipe `offer` hanya ditulis oleh `create-offer` (lihat `../Offers/30_Business_Rules.md`).
+5. Tipe `system` belum diimplementasikan.
 
 ## Denormalisasi
 
-- `conversations` menyimpan `lastMessage` dan `lastMessageAt` (denormalisasi) agar daftar chat cepat di-query tanpa join ke `messages`.
-- Setiap pesan baru memperbarui `lastMessage` & `lastMessageAt` pada conversation induk.
-
-## Tipe Pesan
-
-`text | offer | system`
-
-- `text` → pesan negosiasi biasa.
-- `offer` → pesan merujuk custom offer yang dibuat UMKM (lihat `../Offers/`).
-- `system` → dibuat oleh sistem, bukan user.
+- `conversations.last_message` (maks 1000 karakter, dipotong) dan `last_message_at` diperbarui **setelah** pesan tersimpan.
+- Kegagalan update ringkasan tidak membatalkan pesan (hanya di-log), agar pengirim tidak retry dan menggandakan pesan.
+- Untuk pesan offer, `last_message = "Penawaran Khusus: {title}"` dan `conversations.offer_id` = offer terbaru.
+- Conversation baru dibuat dengan `last_message = ""` dan `last_message_at = waktu pembuatan`.
 
 ## Read Receipt
 
-- Setiap pesan yang telah dibaca oleh penerima ditandai dengan `read_at` timestamp.
-- Saat user membuka chat room, semua pesan yang belum dibaca (dari lawan bicara) langsung ditandai sebagai telah dibaca.
-- Frontend menampilkan indikator "Sudah dibaca" pada pesan milik pengirim.
+- Belum dibaca = pesan dari lawan bicara dengan `read_at` kosong.
+- Saat participant membuka ruang negosiasi, pesan lawan bicara yang belum dibaca ditandai `read_at = now`. Pesan milik sendiri tidak ditandai.
+- Function resmi `mark-conversation-read` menandai maks **100** pesan per panggilan.
+- Celah saat ini: frontend menandai lewat Client SDK langsung (lihat `80_Frontend.md`), padahal row pesan `text` hanya memberi `read` ke participant — update gagal diam-diam untuk pesan `text`; hanya pesan `offer` (row memberi `update` ke kedua participant) yang berhasil ditandai.
 
 ## Archive
 
-- Participant dapat mengarsipkan percakapan untuk menyembunyikannya dari inbox utama.
-- Archive bersifat per-participant: UMKM hanya mengubah `umkm_archived`, Creator hanya mengubah `creator_archived`.
-- Archive bersifat soft: tidak menghapus conversation, messages, offers, atau orders, dan tidak mengubah state bisnis/order.
-- Percakapan yang diarsipkan tetap dapat diakses melalui tab/filter Arsip.
-- Unarchive hanya mengembalikan percakapan ke inbox participant yang melakukan aksi.
-- Archive atau unarchive satu participant tidak boleh mengubah status archive participant lain.
-- `is_archived` deprecated dan dipertahankan sementara hanya untuk kompatibilitas skema; field ini bukan sumber status archive.
-- Nilai legacy `is_archived = true` tidak dapat dimigrasikan secara akurat karena actor awal tidak tersimpan. Jangan menebak actor atau menyalin nilai ke kedua participant.
-- Field per-participant baru selalu mulai dari default `false`, termasuk untuk conversation lama.
-- Mutasi archive hanya melalui `patch-conversation-archive`; Function menentukan participant dari caller Appwrite authoritative, bukan role dari payload browser.
+1. Archive bersifat per-participant: UMKM hanya mengubah `umkm_archived`, Creator hanya `creator_archived`.
+2. Participant ditentukan dari caller Appwrite (`x-appwrite-user-id`) dibanding `umkm_id`/`creator_id`; role dari payload browser tidak dipakai.
+3. Archive bersifat soft: tidak menghapus/mengubah conversation lain, messages, offers, orders, escrow, atau stage.
+4. Archive/unarchive satu participant tidak mengubah status participant lain.
+5. Mutasi archive hanya lewat `patch-conversation-archive`; browser tidak punya `update` pada conversation.
+6. `is_archived` deprecated: hanya ditulis `false` saat pembuatan, tidak dibaca DTO, tidak di-backfill. Nilai legacy `true` tidak dipetakan ke participant mana pun.
+7. Pesan baru tidak otomatis meng-unarchive percakapan.
 
-## Realtime & Akses
+## Akses
 
-- Pengiriman pesan menggunakan Appwrite Realtime sederhana: `messages.create` memicu update UI penerima.
-- Hanya **participant** (UMKM & creator pemilik conversation) yang dapat membaca/menulis pesan.
+- `conversations` & `messages`: row permission hanya `read` untuk kedua participant (kecuali pesan `offer`, lihat `50_Database.md`).
+- DTO negosiasi menegakkan kepemilikan lewat filter query (`umkm_id`/`creator_id` = caller), bukan pengecekan setelah baca.

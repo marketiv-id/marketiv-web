@@ -2,19 +2,18 @@
 
 ## Istilah
 
-- **Conversation** — ruang chat antara satu UMKM dan satu Content Creator.
-- **Realtime** — mekanisme pengiriman pesan instan via Appwrite Realtime tanpa polling.
-- **Message Type** — tipe pesan MVP: `text`, `offer`, `system`.
-- **Read Receipt** — timestamp saat penerima membaca pesan, ditampilkan sebagai indikator "Sudah dibaca".
-- **Archive** — menyembunyikan percakapan dari inbox utama tanpa menghapus pesan. Pesan tetap utuh dan dapat diakses melalui tab Arsip.
+- **Conversation / Ruang Negosiasi** — baris `conversations` antara satu UMKM (`umkm_id`) dan satu Creator (`creator_id`). `$id`-nya menjadi kunci route `/negosiasi/[id_conversation]` dan `id` DTO negosiasi.
+- **Participant** — `umkm_id` atau `creator_id` sebuah conversation. Hanya participant yang dapat membaca/menulis.
+- **Message Type** — `text`, `offer` (diimplementasikan), `system` (belum ada penulis).
+- **Read Receipt** — `messages.read_at` diisi saat penerima membuka ruang. UI menampilkan centang pada pesan milik pengirim (`isRead`).
+- **Unread Count** — jumlah pesan lawan bicara dengan `read_at` kosong; dihitung di DTO negosiasi.
+- **Archive** — menyembunyikan percakapan dari Kotak Masuk tanpa menghapus data. Bersifat per-participant (`umkm_archived` / `creator_archived`).
+- **Stage** — satu nilai tahap ruang negosiasi yang diturunkan DTO: `chatting`, `offer_pending`, `offer_rejected`, `awaiting_order`, atau status order (`pending_payment`, `in_progress`, `revision`, `approved`, `completed`, `cancelled`, …).
 
 ## Konsep
 
-- Satu percakapan per pasangan UMKM+Creator (unique constraint).
-- Pesan `offer` merujuk ke custom offer di modul Offers.
-- Pesan `system` dibuat otomatis oleh sistem (bukan user).
-- Denormalisasi `lastMessage` pada conversation untuk performa daftar chat.
-- Read receipt diupdate otomatis saat penerima membuka chat room.
-- Arsip bersifat per-user: participant dapat mengarsipkan percakapan tanpa memengaruhi participant lain.
-- Inbox default hanya menampilkan percakapan yang tidak diarsipkan oleh participant aktif.
-- Percakapan yang diarsipkan dapat dikembalikan ke inbox utama kapan saja.
+- Satu percakapan per pasangan (unique index `idx_umkm_creator`); pembuatan idempoten.
+- Satu percakapan dapat memuat beberapa offer berurutan (ditolak/ditarik lalu ditawar ulang, atau deal baru setelah order terminal). DTO memakai offer dengan `$createdAt` terbaru.
+- Pesan `offer` merujuk `offers.$id` lewat `messages.offer_id`; isi kartu offer di-join dari tabel `offers` saat dibaca.
+- Denormalisasi `last_message` + `last_message_at` di conversation untuk daftar negosiasi.
+- Arsip per-participant; `is_archived` deprecated dan tidak authoritative.

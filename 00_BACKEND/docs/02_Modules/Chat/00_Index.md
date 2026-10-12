@@ -1,16 +1,16 @@
 # Modul Chat
 
-Chat untuk negosiasi offer antara UMKM dan Content Creator via Appwrite Realtime. Satu percakapan per pasangan UMKM+creator; MVP mendukung pesan `text`, `offer`, dan `system`. Dilengkapi read receipt. Modul ini memiliki data `conversations` dan `messages`.
+Ruang negosiasi UMKM ↔ Content Creator (Rate Card Jalur B). Satu percakapan per pasangan UMKM+creator, dibuka oleh UMKM. Semua tulis (`conversations`, `messages`) lewat Appwrite Function karena row permission harus menyebut kedua participant. Pesan yang diimplementasikan: `text` (dari `send-message`) dan `offer` (dari `create-offer`). Modul ini memiliki data `conversations` dan `messages`.
 
 ## Daftar Dokumen
 
-- `10_Overview.md` — Gambaran chat dasar negosiasi offer & tipe pesan MVP.
-- `20_Concepts.md` — Istilah & konsep domain Chat.
-- `30_Business_Rules.md` — Aturan satu percakapan per pasangan, denormalisasi lastMessage, tipe pesan MVP (text/offer/system), read receipt, realtime sederhana.
-- `40_User_Flow.md` — Alur memulai percakapan, kirim pesan, buat offer dari chat.
-- `50_Database.md` — Skema, relasi (conversation 1—* messages), dan index koleksi `conversations`, `messages`.
-- `60_API.md` — Kontrak Chat Service (createConversation, sendMessage) & alur realtime.
-- `70_Backend.md` — Appwrite Realtime, validasi backend, read receipt.
-- `80_Frontend.md` — Halaman & komponen chat.
-- `90_Events.md` — Event chat & tautan ke modul Offers.
-- `100_Testing.md` — Skenario uji conversation, pesan, realtime, offer.
+- `10_Overview.md` — Peran chat sebagai ruang negosiasi, tipe pesan, batasan MVP.
+- `20_Concepts.md` — Istilah: conversation, stage negosiasi, unread, arsip per-participant.
+- `30_Business_Rules.md` — Satu percakapan per pasangan, siapa boleh menulis, denormalisasi `last_message`, read receipt, arsip per-participant.
+- `40_User_Flow.md` — Alur buka ruang negosiasi, kirim pesan, buka ruang (tandai dibaca), arsip.
+- `50_Database.md` — Skema, index, dan permission `conversations`, `messages`.
+- `60_API.md` — Kontrak Function `create-conversation`, `send-message`, `mark-conversation-read`, `patch-conversation-archive`, DTO `get-{umkm,creator}-negotiations`.
+- `70_Backend.md` — Konfigurasi Function, env, notifikasi chat, realtime, aturan backend.
+- `80_Frontend.md` — Route, komponen, service frontend, realtime & polling.
+- `90_Events.md` — Event `messages` → `send-chat-notification`, tautan ke Offers/Notifications.
+- `100_Testing.md` — Skenario uji Function, archive, DTO, realtime, notifikasi.

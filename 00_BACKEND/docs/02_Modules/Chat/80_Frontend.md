@@ -1,46 +1,59 @@
 # Chat — Frontend
 
+## Route
+
+| Route | Role | Komponen |
+| --- | --- | --- |
+| `/dashboard/umkm/negosiasi` | UMKM | `NegotiationListPage` |
+| `/dashboard/umkm/negosiasi/[id_conversation]` | UMKM | `NegotiationRoomPage` |
+| `/dashboard/kreator/negosiasi` | Creator | `NegosiasiView` |
+| `/dashboard/kreator/negosiasi/[id_conversation]` | Creator | `NegosiasiRoomView` |
+
+- `id_conversation` = `conversations.$id` (= `id` DTO negosiasi).
+- Data diambil di komponen klien, bukan Server Component: DTO butuh header `x-appwrite-user-id` dari sesi browser (SSR → 401).
+
 ## Halaman
 
-### Chat List (Inbox)
+### Daftar Negosiasi (Inbox + Arsip)
 
-- Daftar percakapan milik user, difilter lewat public DTO `isArchived = false`.
-- Tampilkan: nama lawan bicara, lastMessage, dan waktu pesan terakhir.
-- Urut berdasarkan `lastMessageAt` DESC.
-- Setiap item chat memiliki tombol **Arsipkan** (icon/action) untuk memindahkan ke tab Arsip.
+- Sumber: `get-umkm-negotiations` / `get-creator-negotiations` (tanpa body).
+- Tab **Kotak Masuk** (`isArchived = false`) dan **Arsip** (`isArchived = true`), filter di klien atas public DTO `isArchived`. Hitungan status mengikuti tab aktif.
+- Tampilkan: nama & avatar lawan bicara, judul proyek, `lastMessage`, `lastMessageAt`, badge `unreadCount`, `stage`.
+- Filter status per `stage`; pencarian nama/judul/pesan; sort termasuk "Belum Dibaca" (`unreadCount`).
+- Tombol arsip / kembalikan pada setiap kartu → `setConversationArchived(conversationId, !isArchived)`; state lokal diperbarui tanpa reload.
+- Dimuat sekali saat halaman dibuka (tanpa realtime/polling).
 
-### Tab Arsip
+### Ruang Negosiasi (Chat Room)
 
-- Daftar percakapan yang sudah diarsipkan menurut public DTO `isArchived = true`.
-- Tampilan dan urutan sama dengan inbox.
-- Setiap item chat memiliki tombol **Batalkan Arsip** untuk mengembalikan ke inbox.
+- Muat DTO (`{ conversationId }`) + riwayat pesan (`getMessagesByConversationId`, maks 200 pesan terlama-dulu); deliverables bila sudah ada `orderId`.
+- Setelah muat awal, panggil `markConversationRead(conversationId)` tanpa await.
+- Input pesan teks (`MessageComposer` UMKM / form di `NegosiasiRoomView` Creator) → `sendMessage` → muat ulang ruang. Tidak ada balasan otomatis/mock.
+- Timeline (`ChatTimeline`): `ChatMessageBubble` (text, centang `isRead` pada pesan sendiri), `CustomOfferCard` (pesan `offer`), `SystemMessageCard` (tipe `system`, belum ada penulis).
+- Aksi offer (kirim/tarik untuk UMKM, terima/tolak untuk Creator) → `../Offers/80_Frontend.md`.
 
-### Chat Room
+## Sinkronisasi
 
-- Riwayat pesan (infinite scroll / pagination).
-- Input pesan teks.
-- Tombol "Buat Offer" (khusus UMKM).
-- Real-time update saat pesan baru masuk.
-- Read receipt: tampilkan indikator "Sudah dibaca" pada pesan milik pengirim.
+- **Realtime**: `realtimeClient.subscribe(tableChannels("messages"))`; event dengan `payload.conversation_id` = ruang aktif → muat ulang ruang. Nonaktif saat mock data.
+- **Polling** (`useNegotiationRoomSync`, `src/lib/negotiation/room-sync.ts`): timer berantai muat ulang DTO.
+  - 2 detik: `awaiting_order` (berhenti setelah 20 detik), `pending_payment`, atau verifikasi pembayaran (timeout 60 detik).
+  - 5 detik: stage lain non-terminal.
+  - Berhenti di `completed`/`cancelled`; pause saat tab tersembunyi, refresh saat focus/visible.
 
-## Komponen
+## Service Frontend
 
-- `ConversationList` — sidebar daftar chat (mendukung filter inbox/arsip).
-- `MessageBubble` — bubble pesan dengan tipe (text/offer/system) + indikator read receipt.
-- `ChatInput` — input pesan teks + tombol offer.
-- `OfferMessageCard` — kartu offer di dalam chat (tap untuk detail).
-- `ArchiveToggleButton` — tombol arsip/batal arsip pada item daftar chat.
+Facade (pilih mock/Appwrite): `src/services/shared/conversation.service.ts` (archive, mark read), `src/services/umkm/umkm-dashboard.service.ts` & `src/services/creator/creator-dashboard.service.ts` (`createConversation`, `sendMessage`, `getMessagesByConversationId`). Implementasi Appwrite ada di `src/services/shared/conversation-appwrite.service.ts`:
 
-## Service
+- `createConversationInAppwrite(creatorId)` → Function `create-conversation`. Validasi awal: kosong, diri sendiri, format user ID.
+- `sendMessageInAppwrite(conversationId, content)` → Function `send-message`. Validasi awal: kosong, >2000.
+- `getMessagesByConversationIdInAppwrite(conversationId)` → Client SDK (lihat `60_API.md`).
+- `markConversationReadInAppwrite(conversationId)` → **Client SDK `updateDocument` langsung**, bukan Function `mark-conversation-read`. Row pesan `text` read-only → update gagal diam-diam; badge unread hanya turun untuk pesan `offer`. Perlu dialihkan ke Function `mark-conversation-read`.
+- `setConversationArchivedInAppwrite(conversationId, archived)` → Function `patch-conversation-archive`. Tidak ada `updateDocument` browser pada `conversations`.
+- `getMyConversationsFromAppwrite()` — legacy helper (baca `is_archived`); tidak dipakai layar negosiasi untuk status arsip.
 
-### `getMyConversations()`
+DTO list/detail: `src/services/umkm/umkm-appwrite.service.ts` (`getNegotiationsFromAppwrite`, `getNegotiationByIdFromAppwrite`) dan `src/services/creator/creator-appwrite.service.ts` (`getCreatorNegotiationsFromAppwrite`, `getCreatorNegotiationByIdFromAppwrite`).
 
-- Layar negosiasi UMKM memakai `get-umkm-negotiations`; layar Creator memakai `get-creator-negotiations`.
-- Kedua Function mengembalikan `isArchived` tanpa mengekspos `umkm_archived` atau `creator_archived`.
-- Filter inbox/arsip dilakukan di klien terhadap public DTO `isArchived`.
+Function ID terdaftar di `src/lib/appwrite/functions.ts` (`FUNCTION_IDS`): `createConversation`, `sendMessage`, `patchConversationArchive`, `createOffer`, `umkmNegotiations`, `creatorNegotiations`. `mark-conversation-read` belum terdaftar.
 
-### `setConversationArchived(conversationId, archived)`
+## Tipe
 
-- Panggil trusted Function `patch-conversation-archive` dengan `{ conversationId, isArchived: archived }`.
-- Jangan memanggil browser `updateDocument` untuk collection `conversations`.
-- Update state lokal tanpa reload halaman.
+- `NegotiationOrder` (`src/types/umkm-dashboard.types.ts`), `CreatorNegotiation` (`src/types/creator-dashboard.ts`), `NegotiationStage` (`src/types/domain.ts`), `ChatMessage` (`src/types/umkm-dashboard.types.ts`).

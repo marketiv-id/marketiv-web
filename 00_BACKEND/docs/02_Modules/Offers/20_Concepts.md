@@ -2,17 +2,21 @@
 
 ## Istilah
 
-- **Custom Offer** — penawaran khusus yang dibuat UMKM untuk Creator dalam percakapan chat.
-- **Accept** — aksi Creator menyetujui offer, memicu pembuatan order.
-- **Reject** — aksi Creator menolak offer.
+- **Custom Offer / Penawaran Khusus** — baris `offers` yang dikirim UMKM ke creator dalam satu conversation.
+- **Accept** — creator mengubah `status` menjadi `accepted`; memicu `create-order`.
+- **Reject** — creator mengubah `status` menjadi `rejected`; UMKM diberi notifikasi dan boleh menawar ulang.
+- **Tarik Offer** — UMKM menghapus offer yang masih `pending` (hard delete; tidak ada status `withdrawn`).
+- **Offer Aktif** — offer dengan `$createdAt` terbaru dalam conversation; dipakai DTO negosiasi.
+- **Deal Aktif** — offer terbaru `accepted` yang belum punya order, atau order terbaru dalam conversation yang statusnya bukan `completed`/`cancelled`.
+- **Provenance Paket** — `packageId`, `packageNameSnapshot`, `packagePriceSnapshot`: paket rate card acuan yang di-snapshot saat offer dibuat. Bukan kontrak.
 
 ## Status Offer
 
-`pending → accepted | rejected`
+`pending → accepted | rejected` (atau dihapus saat `pending`).
 
 ## Konsep
 
-- Hanya UMKM yang dapat membuat offer.
-- Offer menjadi jembatan antara negosiasi (chat) dan eksekusi (order).
-- Saat di-accept, sistem otomatis membuat Order dengan status `pending_payment`.
-- Field offer: title, description, price, deadline, revisionLimit.
+- Offer menjembatani negosiasi (chat) dan eksekusi (order).
+- Satu offer → maks satu order (unique index `orders.idx_offerId`).
+- Order dibuat asinkron oleh `create-order`; selama order belum ada, stage negosiasi `awaiting_order`.
+- Snapshot paket immutable: perubahan paket setelah offer dibuat tidak mengubah riwayat offer/order.
