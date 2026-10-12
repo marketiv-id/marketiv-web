@@ -1,87 +1,84 @@
 # Payments — Testing
 
-## Service Layer (`payment.service.ts`, `wallet.service.ts`)
+Lokasi test:
 
-### Create Payment (`createPayment`)
+- Backend service & Function (Vitest): `00_BACKEND/tests/unit/*`, `00_BACKEND/tests/integration/functions.test.ts`, `00_BACKEND/tests/integration/services.test.ts`, `00_BACKEND/tests/integration/function-inventory.test.ts`.
+- Unit test per Function (`node:test`): `functions/get-admin-withdrawal-queue/src/main.test.js`, `functions/review-withdrawal/src/main.test.js`, `functions/review-withdrawal/src/withdrawal-transition.test.js`.
+- Admin app: `admin/src/features/admin/withdrawals/__tests__/withdrawal.service.test.ts`, `admin/src/features/admin/withdrawals/utils.test.ts`.
 
-- Input valid → panggil function `create-payment` → return `{ paymentId, gateway: 'midtrans', snapToken, redirectUrl, status }`.
-- `amount` bukan integer >0 → throw `PaymentServiceError('validation', 'Jumlah pembayaran tidak valid.')`.
-- `purpose` bukan `order`/`campaign` → throw `PaymentServiceError('validation', 'Tujuan pembayaran tidak valid.')`.
-- `purpose === 'order'` tanpa `orderId` → throw `PaymentServiceError('validation', 'Order wajib diisi untuk pembayaran order.')`.
-- `purpose === 'campaign'` tanpa `campaignId` → throw `PaymentServiceError('validation', 'Campaign wajib diisi untuk top-up campaign.')`.
-- `purpose === 'campaign'` → `totalAmount = amount + floor(amount ×2%)` (fee 2% via `calculateTotalPayment`).
-- `purpose === 'order'` → `totalAmount = amount` (tanpa fee, fee dipotong saat release escrow).
-- Function gagal → throw `PaymentServiceError('server', 'Gagal membuat pembayaran. Coba lagi.')`.
-- Response tidak lengkap (tanpa `paymentId`/`gateway`/`status`) → throw `PaymentServiceError('server', 'Response pembayaran tidak lengkap.')`.
+## Service Layer Referensi (`00_BACKEND/src/services`)
 
-> ✅ **Sudah diperbaiki**: Function `create-payment` sekarang menerima `purpose: 'campaign'`
-> (ditambah ke `PURPOSES`), dan `create-escrow` menjalankan `purpose: 'campaign'`
-> melalui jalur `completeTopup` yang mengkredit **campaign.remainingBudget** (bukan wallet.balance).
-> Model dompet: UMKM top-up campaign → `remainingBudget` bertambah (besaran `amount`/budget bersih,
-> fee 2% menjadi pendapatan platform karena `totalAmount = amount + fee` yang dibayar ke Midtrans);
-> saat UMKM membeli order → saldo tidak terpengaruh (order pakai escrow terpisah) → `release-escrow` mencairkan
-> ke wallet creator. Sesuai dengan `60_API.md` (`purpose: order|campaign`).
+### `payment.service.ts` (`services-validation.test.ts`, `services.test.ts`)
 
-### Get Payment (`getPayment`, `getPayments`)
+- `amount` bukan integer > 0 → `PaymentServiceError('validation', 'Jumlah pembayaran tidak valid.')`.
+- `purpose` bukan `order`/`campaign` → `'Tujuan pembayaran tidak valid.'`.
+- `order` tanpa `orderId` → `'Order wajib diisi untuk pembayaran order.'`; `campaign` tanpa `campaignId` → `'Campaign wajib diisi untuk top-up campaign.'`.
+- `campaign` → payload `totalAmount = amount + floor(amount × PLATFORM_FEE_RATE)`; `order` → `totalAmount = amount`. Function `create-payment` mengabaikan `totalAmount` dari klien dan menghitung ulang fee dari `FEE_RATE`.
+- `getPayment('')` → `'Payment ID wajib diisi.'`.
 
-- `getPayment(paymentId)` → return `Payment` milik user; bukan owner → throw `forbidden`.
-- `getPayments()` → list payment milik user, filter `status`/`purpose` opsional.
-- `paymentId` kosong → throw `PaymentServiceError('validation', 'Payment ID wajib diisi.')`.
+### `wallet.service.ts` (`wallet.service.test.ts`, `services-validation.test.ts`)
 
-### Pure Functions (`wallet.service.ts`)
+- `PLATFORM_FEE_RATE` = `NEXT_PUBLIC_FEE_RATE || FEE_RATE || 0.02`; `calculatePlatformFee` = `floor(nominal × rate)`; `calculateTotalPayment` = nominal + fee; `calculateCreatorPayout` = nominal − fee.
+- `MINIMUM_WITHDRAW` = 50000; `MINIMUM_CAMPAIGN_BUDGET` = 50000; `WITHDRAW_PAYOUT_METHODS` = `['bank', 'ewallet']`.
+- Validasi `requestWithdraw()` (amount < 50000, metode invalid, data kosong) dan `getWallet()` → `not_found`.
+- Catatan: test integrasi `requestWithdraw creates withdrawal (auto processed)` masih mengunci perilaku service lama (tulis langsung, status `processed`) yang tidak lagi dipakai produk. Jalur resmi = Function `request-withdrawal` (lihat bawah).
 
-- `calculatePlatformFee(nominal)` = `Math.floor(nominal × 0.02)`.
-- `calculateTotalPayment(nominal)` = `nominal + calculatePlatformFee(nominal)`.
-- `calculateCreatorPayout(nominal)` = `nominal - calculatePlatformFee(nominal)`.
-- `MINIMUM_WITHDRAW` = 50000; `MINIMUM_CAMPAIGN_BUDGET` = 50000; `PLATFORM_FEE_RATE` = 0.02.
-- `WITHDRAW_PAYOUT_METHODS` = `['bank', 'ewallet']`.
+## Midtrans (`create-payment`, `midtrans-webhook`, `cancel-payment`)
 
-### Wallet (`getWallet`, `getTransactions`, `getWithdrawals`, `requestWithdraw`)
+- Signature valid → payment `paid`; signature invalid → `401`, tanpa mutasi.
+- Status terminal `failed|expired|cancelled` pada order membuka `order_payment_key`; webhook duplikat tidak mengubah apa pun.
+- Rate Card idempotency: satu payment per order, reuse intent `pending`; payment yang dibatalkan lokal tetap reusable; Snap ambigu mempertahankan kunci (`payment_preparing`); unique race dimenangkan satu baris; owner/nominal salah ditolak sebelum create.
+- `purpose: topup` → `400` (T-19); `purpose: campaign` diterima dan mengkredit `remainingBudget` saat `paid`.
+- `FEE_RATE=0.05` dipakai `create-payment` untuk campaign.
 
-- `getWallet()` → return `Wallet` (balance, pendingBalance); tidak ada → throw `not_found`.
-- `getTransactions()` → list `transactions` urut terbaru, filter `type` opsional.
-- `getWithdrawals()` → list `withdrawals` urut terbaru, filter `status` opsional.
-- `requestWithdraw()` valid (amount ≥ 50000, balance cukup, payout lengkap) → withdrawal `requested`, balance berkurang sekali, transaction `pending`, receipt memuat authoritative `balanceAfter`.
-- `requestWithdraw()` amount <50000 → throw `WalletServiceError('validation', 'Minimum penarikan Rp50.000')`.
-- `requestWithdraw()` balance < amount → throw `WalletServiceError('validation', 'Saldo tidak mencukupi')`.
-- `requestWithdraw()` payout method invalid → throw `WalletServiceError('validation', 'Metode penarikan tidak valid')`.
-- `requestWithdraw()` data tujuan kosong → throw `WalletServiceError('validation', 'Lengkapi data penarikan')`.
+## Wallet (`create-user-wallet`)
 
-## Midtrans Payment Gateway (Appwrite Function `create-payment`, `midtrans-webhook`)
+- Wallet dibuat dengan `balance = 0`, `pendingBalance = 0`; idempoten (lookup `userId`).
 
-- `create-payment` membuat dokumen `payments` status `pending` dan mengembalikan `snapToken`/`redirectUrl` Midtrans.
-- Frontend tidak menerima atau menyimpan Midtrans secret key.
-- Webhook Midtrans dengan signature valid mengubah status payment menjadi `paid`.
-- Webhook Midtrans dengan signature/amount invalid ditolak dan tidak mengubah payment.
-- Webhook berulang untuk `gateway_reference` yang sama tidak menggandakan escrow, deposit, atau ledger transaction.
-- Webhook untuk payment yang sudah final tidak menurunkan status payment.
+## Escrow (`create-escrow`, `release-escrow`, `reconcile-release-escrow`)
 
-## Wallet (Appwrite Function `create-user-wallet`)
+- Payment order `paid` → escrow `held`, order `in_progress`; event berulang → satu escrow + satu ledger `payment`.
+- Release mengkredit wallet creator nominal bersih; kredit gagal → escrow tetap `releasing`, retry menyelesaikan tepat sekali.
+- Tanpa validasi Admin `valid`, atau validasi untuk versi deliverable lama → tidak dirilis.
+- Release memakai snapshot `escrow.fee_rate` (0.02) walau env `FEE_RATE=0.05`; escrow tanpa `fee_rate` → fallback 0.02.
+- Reconcile menuntaskan escrow `releasing` yang ledger-nya sudah `completed`.
 
-- Wallet terbuat otomatis saat user register (trigger `users.create`).
-- Satu user hanya punya satu wallet (idempotent).
-- Balance tidak bisa negatif.
+## Refund (`refund-escrow`, `refund-order`)
 
-## Transaction
+- Escrow `held` → UMKM wallet + ledger `refund`; panggilan kedua tidak mengkredit ulang; escrow `released` diabaikan.
+- Order `cancelled` → refund escrow; campaign `completed` dengan sisa budget → kredit wallet + budget nol.
+- Fee tidak dikembalikan (wallet bertambah tepat `escrow.amount`).
 
-- Setiap mutasi saldo tercatat di `transactions`.
-- Tipe transaksi sesuai definisi (`withdrawal`, `payment`, `refund`, `release`, `fee`).
-- ReferenceId mengarah ke dokumen terkait.
+## Reward Campaign (`calculate-campaign-reward`)
 
-## Escrow (Appwrite Function `create-escrow`, `release-escrow`)
+- Submission `approved` → `balance` creator bertambah, ledger `release` `matured`, budget berkurang; submission ditolak tanpa efek; panggilan ulang idempoten.
 
-- Escrow terbuat saat payment sukses (status `held`) → trigger `payments.status` `pending → paid`.
-- Release escrow → balance Creator bertambah (via `release-escrow` trigger `deliverables.status → approved`).
-- Refund escrow → balance UMKM kembali.
-- Escrow tidak bisa diubah oleh user (admin/system only).
+## Fee Monitor (`fee-rate-flip`)
 
-## Withdrawal (`requestWithdraw`, `get-admin-withdrawal-queue`, `review-withdrawal`)
+- 999 transaksi `completed` → `thresholdReached: false`; 1000 → `true` + log alert.
 
-- Withdrawal valid (balance cukup, min amount terpenuhi) → balance langsung di-reserve, status `requested`, transaction `pending`.
-- Withdrawal invalid (balance kurang) → error.
-- Withdrawal invalid (payout method tidak valid atau data tujuan pencairan tidak lengkap) → error.
-- Withdrawal bank dan e-wallet menyimpan `payoutMethod`, `providerName`, `accountNumber`, dan `accountName`.
-- Request path tidak memanggil Iris/payout provider.
-- Active Admin saja dapat membaca queue atau menjalankan mutation.
-- `requested → processing → succeeded` wajib urut dan success wajib transfer reference.
-- `fail` dari requested/processing mengembalikan balance tepat sekali, membuat reversal ledger, dan aman di-retry.
+## Withdrawal (`request-withdrawal`)
+
+- Tanpa sesi → `401`; role selain creator/UMKM eligible → `403`; akun tidak aktif → `403`; T&C belum v3.1 → `403`.
+- Default MVP: penarikan pertama tanpa verifikasi email diizinkan; KYC threshold, limit harian, dan cooling tidak memblokir. Strict mode (`WITHDRAWAL_ADVANCED_GUARDS_ENABLED=true`) memblokir dan men-set `kyc_status: pending_wa`.
+- Request valid → reserve balance, ledger `pending`, status `requested`, tanpa payout provider.
+- Saldo nol / di bawah minimum → ditolak tanpa baris withdrawal.
+- Duplikat nominal sama < 60 detik dengan `requestKey` berbeda → `409`.
+- Recovery: marker legacy ledger diperbaiki tanpa debit kedua; rollback staged debit saat transisi gagal; commit hilang / HTTP 500 direkonsiliasi tanpa debit kedua; `requestKey` baru diblok selama marker internal belum selesai; marker legacy ambigu tidak di-debit ulang.
+- Dua request bersamaan yang total melebihi saldo → hanya satu diterima.
+- UMKM tanpa `sourceOrigin` valid / tanpa sumber ledger → `403`; dengan ledger `refund` → diterima.
+
+## Admin Withdrawal (`get-admin-withdrawal-queue`, `review-withdrawal`)
+
+- Non-admin, admin via prefs saja, label Auth admin dengan profil app non-aktif, dan lookup profil gagal → `403` (fail closed).
+- Admin aktif menerima DTO + paginasi; status invalid ditolak sebelum query.
+- `start_processing` sekali dengan audit processor; `mark_succeeded` wajib `transferReference` dan state `processing`, ledger awal `completed`.
+- `fail` wajib alasan; dari `requested`/`processing` → `reversed`, ledger `withdrawal_reversal` deterministik, kredit tepat sekali; retry/terminal tidak mengkredit ulang.
+- Commit hilang direkonsiliasi lewat state kanonik (notifikasi tetap sekali); ambigu tanpa bukti → gagal tertutup.
+- `withdrawal-transition`: ledger reversal di-stage sebelum kredit wallet; HTTP 500/network saat commit = ambigu (tanpa rollback); 409 saat commit = definitif (rollback).
+
+## Legacy / Inventory
+
+- `function-inventory.test.ts`: `mature-pending-balance` dan `withdrawal-callback` tetap disabled sementara fungsi Midtrans aktif.
+- `legacy-retirement-audit.test.ts`: `audit-legacy-money-state.mjs` melaporkan hitungan tanpa membocorkan data user/rekening.
+- `withdrawal-callback` (retired) masih punya test integrasi historis (Iris completed/failed, idempotensi, 404 referensi tak dikenal).

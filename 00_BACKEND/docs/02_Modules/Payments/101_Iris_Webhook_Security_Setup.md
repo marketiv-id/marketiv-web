@@ -1,6 +1,8 @@
 # Pengaturan Keamanan Webhook Iris (withdrawal-callback) — Superseded
 
-> **Superseded 2026-08-25.** Withdrawal baru memakai transfer manual Admin dan tidak memanggil Iris. Staging inventory menunjukkan zero withdrawal `processing` dan zero `iris_reference`; `withdrawal-callback` kini disabled dengan `execute: []`. Dokumen ini dipertahankan untuk historical audit. Jangan menerapkan langkah berikut untuk flow baru.
+> **Superseded 2026-08-25.** Withdrawal baru memakai transfer manual Admin (`review-withdrawal`) dan tidak memanggil Iris. Staging inventory menunjukkan zero withdrawal `processing` dan zero `iris_reference`; `withdrawal-callback` kini `enabled: false` dengan `execute: []` (`appwrite.config.json`), sehingga URL Function tidak menerima request. Dokumen ini dipertahankan untuk historical audit. Jangan menerapkan langkah berikut untuk flow baru.
+>
+> Status kode saat ini (untuk audit): source `functions/withdrawal-callback/src/main.js` masih memuat validasi `x-iris-callback-token` di bawah, `IRIS_CALLBACK_SECRET` tetap tercantum (nama saja) di `.env.example` Function, mapping status Iris `completed|settled → succeeded`, `failed|rejected|denied → failed` + kredit balik `withdrawal_reversal` lalu `reversed`, `queued|processing|pending → diabaikan`. Script `appwrite/ops/midtrans-webhook-url.mjs` hanya mencetak URL `midtrans-webhook` (tidak ada entri `withdrawal-callback`).
 
 **Untuk:** Tim Backend  
 **Konteks:** Fix SEC-H2 (2026-08-08) — Function `withdrawal-callback` sekarang memvalidasi shared secret sebelum memproses payload apapun.
