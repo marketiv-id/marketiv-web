@@ -1,66 +1,96 @@
 # Users — User Flow
 
-## Onboarding UMKM
+## Onboarding UMKM (`/onboarding`, `UmkmOnboarding`)
 
 ```text
-Register → Login
+Register → Verifikasi OTP email
 ↓
-Onboarding Wizard
-  ├─ Nama Usaha, Kategori (pre-filled dari register)
-  ├─ Deskripsi, Kota, Alamat
-  ├─ Social Media MVP (TikTok, opsional)
-  └─ Upload Logo (opsional)
+Langkah 1: Nama Usaha, Kategori, Kota
+Langkah 2: Deskripsi (≥ 20 karakter)
+Langkah 3: Nomor WhatsApp (wajib), Alamat (opsional), TikTok (opsional), Logo (opsional → bucket logos)
 ↓
-isProfileCompleted = true
+update-profile (satu panggilan)
+  ├─ umkm_profiles: businessName, category, city, description, tiktok, logoUrl
+  └─ users: phone, address
+↓
+Server evaluasi completion → isProfileCompleted = true bila lolos
 ↓
 Dashboard UMKM
 ```
 
-## Onboarding Creator
+## Onboarding Creator (`/onboarding`, `CreatorOnboarding`)
 
 ```text
-Register → Login
+Register → Verifikasi OTP email
 ↓
-Onboarding Wizard
-  ├─ Display Name, Bio, Kota
-  ├─ Avatar
-  ├─ Tambah Akun Sosial TikTok (username, followers)
-  └─ Tambah Portfolio (opsional: title, description, thumbnailUrl, portfolioUrl)
+Langkah 1: Display Name, Niche, Kota
+Langkah 2: Bio (≥ 20 karakter), Avatar (opsional → bucket avatars)
+Langkah 3: Akun TikTok (wajib, tautan/username)
 ↓
-isProfileCompleted = true
+upsert creator_social_accounts (platform tiktok)      ← lebih dulu
+↓
+update-profile (displayName, niche, city, bio, avatarUrl)
+↓
+Server evaluasi completion (termasuk TikTok) → isProfileCompleted = true bila lolos
 ↓
 Dashboard Creator
 ```
 
-## File Manager
+- Portfolio tidak ada di wizard; ditambahkan dari Settings.
+- Wizard bisa dilewati per sesi; `RoleGuard` menawarkan lagi di sesi berikutnya selama flag `false`.
 
-Setiap user (UMKM & Creator) memiliki akses ke File Manager untuk mengelola file yang diupload ke Appwrite Storage.
+## Settings / Edit Profil
 
-Logo UMKM dan portfolio Creator yang tidak diisi saat onboarding dapat ditambahkan atau diganti dari halaman profil.
+- UMKM (`/dashboard/umkm/pengaturan`): edit field profil + phone/address + logo → `update-profile`.
+- Creator (`/dashboard/kreator/settings`; `/dashboard/kreator/profil` redirect ke sini): edit profil, avatar, banner (bucket `creator-banners`), TikTok username & followers, CRUD portfolio + thumbnail (bucket `portfolios`).
+- Setelah simpan, frontend membaca ulang DTO (`get-creator-profile` / profil UMKM).
+
+## Upload File (File Manager via Function)
+
+Dipakai saat kreator mengunggah deliverable di ruang negosiasi rate card (`NegosiasiRoomView`).
 
 ```text
-Buka File Manager
+Pilih file (≤ 20 MB, tipe diizinkan)
 ↓
-Lihat daftar file (nama, ukuran, status)
-   └─ Indikator kuota: usedBytes / quotaBytes (default 100 MB)
+uploadUserFile → validate-and-upload (base64, opsional shareWithOrderId)
+  ├─ cek kuota (usedBytes + size ≤ quotaBytes) & fileCount < 100
+  ├─ simpan ke bucket user-files (read: pemilik + pihak lawan order)
+  ├─ catat user_files (status active)
+  └─ increment user_storage_usage
 ↓
-Upload File
-  ├─ Pilih file (max 20 MB, total max 100 file)
-  └─ Upload → sistem cek kuota → simpan ke Storage
-↓
-Hapus File
-  ├─ Pilih file → delete
-  └─ File dihapus dari Storage → kuota pulih
+fileId (= $id user_files) dipakai deliverables
 ```
 
-## Discovery Creator
+- Hapus file (`delete-file`) dan daftar file/indikator kuota **belum ada di UI frontend**.
+
+## Direktori Creator (UMKM)
 
 ```text
-UMKM buka halaman Browse Creator
+UMKM buka /dashboard/umkm/kreator
 ↓
-Filter & Urutkan: kota, range harga, sort by harga/rating/totalOrders
+get-creator-directory { limit, cursor } → { items, total, nextCursor }
 ↓
-Hasil: card Creator (avatar, name, city, rating, followers, harga termurah)
+Filter & urut di klien: cari nama/bio, niche, sort rating / harga termurah / jobs / engagement
 ↓
-Klik profil → lihat detail + rate card
+Card Creator (avatar, nama, username, niche, lokasi, rating, startingPrice, engagement)
+↓
+Klik → /dashboard/umkm/kreator/[id] → get-creator-directory { creatorId } + rate card + portfolio + akun sosial
+```
+
+- Filter kota/range harga di server **belum diimplementasikan** (Function tidak menerima parameter filter).
+
+## Status Akun & Banding
+
+```text
+Admin (API key) → suspend-user { userId, status: suspended|terminated, reason }
+↓ users.status berubah, suspended_at = now, notifikasi account_suspended/terminated (deadline 14 hari)
+↓
+User → create-appeal { reason, evidence?, actionRef? }   (belum ada UI frontend)
+↓ appeal submitted, notifikasi appeal_submitted (SLA 7 hari)
+↓
+Admin → review-appeal { appealId, decision: approved|rejected, note? }
+  ├─ approved → users.status = active, notifikasi "Banding Disetujui"
+  └─ rejected → status tetap, notifikasi "Banding Ditolak"
+
+Alternatif admin: unsuspend-user { userId, note? } (hanya dari suspended)
 ```

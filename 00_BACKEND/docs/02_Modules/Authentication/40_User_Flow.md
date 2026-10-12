@@ -1,99 +1,126 @@
 # Authentication — User Flow
 
-## Register → Complete Profile
+## Register → Verifikasi Email → Onboarding
 
-### UMKM
+### UMKM (manual)
 
 ```text
 Landing Page
 ↓
 Daftar UMKM (/register?role=umkm)
 ↓
-Pilih metode:
-  A. Manual: Isi Nama Usaha, Kategori, Email, Nomor HP, Password
-  B. Google OAuth: Klik "Daftar dengan Google" → Google Auth
-                      ↓
-                 Isi data tambahan: Nama Usaha, Kategori, Nomor HP
-                      ↓
-                 create-user-profile
+Isi Email, Nomor WhatsApp, Password
 ↓
-Submit
+account.create → createEmailPasswordSession → updatePrefs({ role: "umkm", phone })
 ↓
-Account Created
+create-user-profile (sinkron; gagal → profileProvisioned:false, tidak menggagalkan register)
 ↓
-Login
+requestEmailOtp → layar "Kode Verifikasi 6 Digit" (EmailVerificationPending)
 ↓
-Lengkapi Profil (Onboarding Wizard)
+confirmEmailOtp (account.createSession(userId, kode))
 ↓
-Dashboard
+/onboarding (Nama Usaha, Kategori, Kota, Deskripsi, Kontak, Logo)
+↓
+Dashboard UMKM
 ```
 
-### Creator
+### Creator (manual)
 
 ```text
 Landing Page
 ↓
 Daftar Creator (/register?role=creator)
 ↓
-Pilih metode:
-  A. Manual: Isi Nama Lengkap, Email, Password
-  B. Google OAuth: Klik "Daftar dengan Google" → Google Auth
-                      ↓
-                 create-user-profile
+Isi Nama Lengkap, Email, Password
 ↓
-Submit
+account.create(name) → createEmailPasswordSession → updatePrefs({ role: "creator", displayName })
 ↓
-Account Created
+create-user-profile (sinkron)
 ↓
-Login
+Verifikasi OTP email (sama seperti UMKM)
 ↓
-Lengkapi Profil (Onboarding Wizard)
+/onboarding (Display Name, Niche, Kota, Bio, Avatar, TikTok)
 ↓
-Dashboard
+Dashboard Creator
 ```
+
+### Google OAuth (UMKM & Creator, bila flag aktif)
+
+```text
+Klik "Google" di /login atau /register (role terpilih)
+↓
+account.createOAuth2Session → Google
+↓
+/auth/callback?role=<role>&next=<path>
+↓
+getSession()
+  ├─ sukses, role cocok      → dashboard / next
+  ├─ sukses, role beda       → logout → /login?role=..&error=role_mismatch&actualRole=..
+  ├─ not_found + role        → setOAuthAccountPrefs(role) → create-user-profile → refresh → /onboarding
+  │                              gagal → kartu recovery (coba lagi / keluar)
+  ├─ not_found tanpa role    → /register?error=profile_missing
+  └─ error lain              → /login?error=oauth
+```
+
+- Tidak ada form perantara: seluruh data usaha UMKM (termasuk Nomor WhatsApp) diisi sekali di wizard `/onboarding`.
 
 ## Login
 
 ```text
-Login (/login)
+Login (/login?role=umkm|creator)
 ↓
-Email + Password ATAU Google Login
+Email + Password ATAU Google
 ↓
-Appwrite Auth session aktif
+createEmailPasswordSession
 ↓
-users mirror ditemukan
+getSession() → baris users ditemukan?
+  ├─ not_found → provisionUserProfile() sekali → getSession() lagi
 ↓
-Dashboard
+status = suspended? → deleteSession('current') → tampil "Akun Ditangguhkan"
+↓
+role akun = tab portal? tidak → logout + banner mismatch
+↓
+Dashboard (RoleGuard) → profil belum lengkap? → /onboarding
+↓
+TosConsentGate → needsConsent? → interstitial setuju T&C
 ```
 
-- Login manual dan Google Login berlaku untuk kedua role.
-- Appwrite Auth session saja belum cukup untuk dianggap siap masuk dashboard.
-- `getSession()` wajib menemukan baris `users` berdasarkan `userId`.
-- `not_found` setelah OAuth berarti profil Marketiv belum selesai dibuat, bukan credential Google salah.
-- UMKM & Creator OAuth tanpa mirror simetris: `setOAuthAccountPrefs(role)` + `create-user-profile`, lalu `/onboarding`.
-- Tidak ada form perantara: seluruh data usaha UMKM (termasuk Nomor WhatsApp) diisi sekali di wizard `/onboarding`.
-- Provisioning gagal menampilkan recovery dengan tombol coba ulang dan keluar, bukan redirect diam-diam ke form login/register.
+- Appwrite Auth session saja belum cukup untuk masuk dashboard; `getSession()` wajib menemukan baris `users` berdasarkan kolom `userId`.
+- `not_found` setelah login/OAuth berarti profil Marketiv belum selesai dibuat, bukan credential salah.
+- Provisioning gagal menampilkan kartu recovery (coba ulang / keluar), bukan redirect diam-diam.
+- Melewati onboarding berlaku per sesi browser; `login()` menghapus penanda skip sehingga wizard ditawarkan lagi.
 
-## Forgot Password
+## Forgot Password (OTP)
 
 ```text
-Klik Lupa Password
+Klik Lupa Password (/forgot-password)
 ↓
 Input Email
 ↓
 request-password-otp Function
-↓ rate limit 3 request / 10 menit per email+IP
-↓ Appwrite Email OTP dikirim
+↓ rate limit 3 request / 10 menit per email+IP (429 bila lewat)
+↓ email terdaftar → Appwrite Email OTP dikirim; tidak terdaftar → tetap { success: true }
 ↓
-Buka /reset-password dengan email + userId
+Layar "Cek email kamu" → tombol ke /reset-password?email=<email>
 ↓
-Input OTP 6 digit + password baru
+Input Email Akun, OTP 6 digit, password baru + konfirmasi
 ↓
 reset-password-with-otp Function
-↓ verify OTP server-side
-↓ users.updatePassword()
+↓ lookup user by email → account.createSession(userId, OTP) → users.updatePassword()
+↓ hapus sesi OTP (best-effort)
 ↓
-Login
+Logout sesi browser → /login
+```
+
+## Re-consent T&C
+
+```text
+Dashboard (RoleGuard → TosConsentGate)
+↓
+accept-tos { action: "status" }
+↓ needsConsent?
+  ├─ tidak → render dashboard
+  └─ ya    → dialog T&C → accept-tos { action: "accept", tos_version } → render dashboard
 ```
 
 ## Lihat Juga

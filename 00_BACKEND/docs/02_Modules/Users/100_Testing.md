@@ -1,66 +1,58 @@
 # Users — Testing
 
-## Service Layer (`user.service.ts`)
+Lokasi test: `00_BACKEND/tests/` (Vitest). Test komponen frontend ada di `src/**/__tests__/`.
 
-### Profil
+## Completion (`functions/update-profile/src/completion.js`) — `tests/unit/update-profile-completion.test.ts`
 
-- `getProfile(userId, role)` → return profil sesuai role (umkm/creator).
-- `getProfile(userId)` tanpa role → role di-resolve dari user mirror.
-- Profil UMKM terbuat dengan data pre-filled dari register.
-- Profil Creator terbuat dengan data pre-filled dari register.
-- `userId` kosong → throw `UserServiceError('validation', 'User ID wajib diisi.')`.
+- UMKM lengkap → `true`; `phone` kosong atau bukan format HP Indonesia → `false`; prefix `628`/`+628` diterima.
+- `description` 19 karakter → `false`; tepat 20 → `true`; whitespace di-trim sebelum hitung.
+- `businessName`/`category`/`city` kosong → `false`; TikTok tidak wajib untuk UMKM.
+- Creator lengkap → `true`; tanpa TikTok username, bio < 20, `niche`/`city`/`displayName` kosong → `false`.
+- `nextProfileCompleted`: `true` tetap `true`; `false → true` hanya bila evaluasi lolos.
+- `umkmFailedFields` mengembalikan field gagal sesuai urutan aturan.
 
-### Update Profil (`updateProfile`)
+## Function `update-profile` — `tests/integration/update-profile.test.ts`
 
-- Update field profil → tersimpan dengan benar (hanya field allowed untuk role).
-- UMKM: allowed fields `businessName`, `category`, `description`, `city`, `address`, `tiktok`, `logoUrl`.
-- Creator: allowed fields `displayName`, `bio`, `city`, `avatarUrl`.
-- `isProfileCompleted` TIDAK ada di allow-list — flag hanya ditulis Function `update-profile`.
-- Tidak ada field valid → throw `UserServiceError('validation', 'Tidak ada data profil untuk diperbarui.')`.
+- Tanpa header user → 401; method selain POST → 405.
+- Baris `users` tidak ada → 404; role tidak didukung → 400.
+- `isProfileCompleted` dari body diabaikan; profil tidak lengkap → `false`.
+- Profil UMKM yang sudah `true` tidak pernah turun.
+- UMKM: semua field canonical + `phone` ditulis → flag `true`.
+- Creator: profil lengkap + akun TikTok → `true`; tanpa TikTok → tetap `false`; never downgrade.
+- Membaca env `CREATOR_SOCIAL_ACCOUNT_COLLECTION_ID` (nama live) bila nama jamak tidak ada.
+- `listDocuments` stale setelah write → flag tetap tersimpan `true` (evaluasi memakai hasil `updateDocument`).
+- Log field gagal saat evaluasi `false`.
+- Field tidak dikenal di-strip.
 
-### Upload File (`uploadFile`)
+## Guard Status Akun — `tests/unit/require-active-role.test.ts`, `tests/unit/sec-03-role-guard.test.ts`
 
-Catatan: `uploadFile()` memanggil Appwrite Function `validate-and-upload` (bukan langsung ke Storage bucket).
+- `requireActiveRole`: UMKM aktif → return dokumen; profil hilang → 404; status non-active → 403; role salah → 403; tanpa `Query` → error jelas.
+- `create-conversation` & `create-offer`: requester creator → 403; UMKM `suspended` → 403; UMKM aktif → sukses.
 
-- File valid → Base64 dikirim ke function → return `UserFile` dari response.
-- Function gagal (`execution.status === 'failed'`) → throw `UserServiceError('server', 'Upload file gagal.')`.
-- Response kosong → throw `UserServiceError('server', 'Response function kosong.')`.
-- Response invalid JSON → throw `UserServiceError('server', 'Response function tidak valid.')`.
+## Functions lain — `tests/integration/functions.test.ts`
 
-### Delete File (`deleteFile`)
+- `get-creator-directory`: mengembalikan DTO paginasi `{ items, total, nextCursor }`.
+- `verify-kyc`: menandai `kyc_status: verified` + notifikasi; idempoten untuk user yang sudah `verified` (tanpa notifikasi ganda).
 
-- `fileId` valid → panggil function `delete-file` → return `UserFile` terupdate status `deleted`.
-- `fileId` kosong → throw `UserServiceError('validation', 'File ID wajib diisi.')`.
+## Service Referensi Lama (`00_BACKEND/src/services/user.service.ts`)
 
-### Get My Files (`getMyFiles`)
+Tidak dipakai frontend, tetapi masih diuji:
 
-- User login → list file milik sendiri, filter `status` opsional.
+- `tests/unit/services-validation.test.ts`: `getProfile('')` → `'User ID wajib diisi.'`; `addSocialAccount` platform ≠ tiktok → `'MVP hanya mendukung akun TikTok.'`; username kosong → `'Username akun sosial wajib diisi.'`; `removeSocialAccount('')` → `'ID akun sosial wajib diisi.'`; `deleteFile('')` → `'File ID wajib diisi.'`.
+- `tests/integration/services.test.ts`: `addSocialAccount` hanya TikTok; `getProfile` by role.
+- `tests/integration/functions.test.ts`: `searchCreators` filter range harga via `rate_card_packages`.
 
-### Get Storage Usage (`getStorageUsage`)
+## Skenario Belum Tercakup Test Otomatis
 
-- User login → return `{ usedBytes, quotaBytes, fileCount }`.
-- Data tidak ada → throw `UserServiceError('not_found', 'Data penggunaan storage tidak ditemukan.')`.
+- `create-user-profile`: idempoten (eksekusi ganda tidak menduplikasi baris), backfill `phone`, role tidak valid → 400, `tos_version` hanya terisi bila sama dengan versi aktif.
+- `get-umkm-profile` / `get-creator-profile`: 404 profil hilang, 403 role salah, fallback `ownerName`/`name` saat akun Auth tak terbaca.
+- `get-creator-directory`: hanya profil lengkap di daftar; akun sosial TikTok diprioritaskan; `startingPrice` mengabaikan rate card `draft`; `creatorId` tidak ada → 404.
+- `validate-and-upload`: MIME tidak diizinkan / > 20 MB → 400; kuota penuh / 100 file → 409; `shareWithOrderId` hanya membagikan ke peserta order.
+- `delete-file`: bukan pemilik → 403; file sudah `deleted` → 200 idempoten; usage tidak negatif.
+- `suspend-user` / `unsuspend-user` / `create-appeal` / `review-appeal`: transisi status & kode 400/403/404/409 sesuai [70_Backend.md](70_Backend.md); batas 14 hari; satu banding terbuka.
 
-### Onboarding
+## Onboarding (frontend)
 
-- UMKM dapat menyelesaikan onboarding tanpa upload logo.
-- Creator dapat menyelesaikan onboarding tanpa menambah portfolio.
-- Logo UMKM dan portfolio Creator dapat ditambahkan dari halaman profil setelah onboarding.
-
-### Social Accounts (`addSocialAccount`, `removeSocialAccount`)
-
-- Creator menambah akun TikTok → tersimpan (`creator_social_accounts`).
-- Creator menambah platform selain `tiktok` → throw `UserServiceError('validation', 'MVP hanya mendukung akun TikTok.')`.
-- `username` kosong → throw `UserServiceError('validation', 'Username akun sosial wajib diisi.')`.
-- Creator menghapus akun TikTok → terhapus (`deleteDocument`).
-- `id` kosong → throw `UserServiceError('validation', 'ID akun sosial wajib diisi.')`.
-
-### Discovery (`searchCreators`)
-
-- Pencarian Creator berdasarkan kota (`city`) → hasil sesuai (`Query.equal('city', ...)`).
-- Pencarian Creator berdasarkan range harga (`minPrice`/`maxPrice`) → filter via `rate_card_packages` price, `getCreatorIdsByRateCardPrice()`.
-- Sort `rating_desc` / `orders_desc` → urut via `creator_profiles`.
-- Sort `price_asc` / `price_desc` → urut via `rate_card_packages` price.
-- Hanya creator dengan `isProfileCompleted === true` yang muncul.
-- Creator dengan profil tidak lengkap tidak muncul di discovery.
-- Data denormalisasi (`totalFollowers`, `totalOrders`, `rating`) akurat setelah event.
+- `src/components/features/onboarding/__tests__/umkm-profile-onboarding.integration.test.tsx` — wizard UMKM.
+- UMKM dapat menyelesaikan onboarding tanpa logo; Creator tanpa portfolio (portfolio tidak ada di wizard).
+- Creator wajib mengisi TikTok sebelum submit; akun sosial ditulis sebelum `update-profile`.
