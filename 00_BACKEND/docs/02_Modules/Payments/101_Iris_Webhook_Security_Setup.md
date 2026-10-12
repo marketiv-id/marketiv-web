@@ -104,7 +104,7 @@ if (expectedToken) {
 
 ## Referensi
 
-- Implementasi: [`00_BACKEND/functions/withdrawal-callback/src/main.js`](../../functions/withdrawal-callback/src/main.js)
+- Implementasi: [`00_BACKEND/functions/withdrawal-callback/src/main.js`](../../../functions/withdrawal-callback/src/main.js)
 - Dokumentasi Function lengkap: [`70_Backend.md`](70_Backend.md) → section `withdrawal-callback`
 - Appwrite Console: `sgp.cloud.appwrite.io`
 - Midtrans Iris Sandbox: `app.sandbox.midtrans.com/iris`

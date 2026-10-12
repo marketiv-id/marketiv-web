@@ -36,15 +36,15 @@ Temuan di bawah ditemukan saat membaca kode. Tidak ada kode yang diubah dalam au
 
 ### P0 — Keamanan
 
-1. **`create("users")` level tabel melewati Function.** `appwrite.config.json` memberi `create("users")` pada `campaigns`, `campaign_submissions`, `campaign_claims`, `conversations`, `messages`, `offers`, `withdrawals`, `appeals`, `rate_cards`, dan profil. Dampak:
+1. **Eskalasi ke Admin (paling kritis).** `create-user-profile/src/main.js:116` memasang `Permission.update(Role.user(userId))` pada baris `users`. User bisa menulis `role:"admin"` ke barisnya sendiri dari browser, dan guard admin membaca `users.role` (mis. `get-admin-withdrawal-queue` & `review-withdrawal` `findActiveAdmin`, `review-submission`, `review-ratecard-deliverable`). Dampak: user mana pun bisa menyetujui withdrawal, submission, dan validasi deliverable. Baris yang sama juga membuat user bisa mencabut suspend sendiri (`status`), memalsukan `kyc_status`, `email_verified_at`, dan `tos_*`. Perlu perbaikan kode **dan** backfill permission baris lama.
+2. **`create("users")` level tabel melewati Function.** `appwrite.config.json` memberi `create("users")` pada `campaigns`, `campaign_submissions`, `campaign_claims`, `conversations`, `messages`, `offers`, `withdrawals`, `appeals`, `rate_cards`, dan profil. Dampak:
    - `campaign_submissions`: buat baris `status:"approved"` + `views_count` besar → `ai-fraud-precheck` update → `calculate-campaign-reward` membayar reward tanpa Admin.
    - `campaigns`: buat campaign `active` dengan `remainingBudget` sembarang tanpa Midtrans.
    - `messages`: baris palsu memicu `send-chat-notification` (tidak memeriksa peserta).
    - `offers`: offer buatan sendiri lalu `accepted` → `create-order` membuat order.
    - `withdrawals`: baris `requested` palsu masuk antrean Admin.
-2. **Fallback admin via `prefs.role === "admin"`** di `review-submission`, `get-admin-submission-queue`, `review-ratecard-deliverable`, `get-admin-ratecard-deliverable-queue`. Prefs bisa ditulis user sendiri (`account.updatePrefs`). Dampak nyata bergantung pada scope API key Function (butuh `users.read`). `review-withdrawal`/`get-admin-withdrawal-queue` hanya memakai label (aman).
-3. **`create-user-profile` mempercayai payload**: `$id`/`role` dari body/event tanpa dicocokkan dengan `x-appwrite-user-id`; role `admin` diterima.
-4. **Baris `users` punya `update` untuk pemilik** (`create-user-profile/src/main.js:116`): user bisa mengubah `status`, `role`, `kyc_status`, `tos_*` sendiri.
+3. **Fallback admin via `prefs.role === "admin"`** di `review-submission`, `get-admin-submission-queue`, `review-ratecard-deliverable`, `get-admin-ratecard-deliverable-queue` (prefs bisa ditulis user via `account.updatePrefs`). Saat ini fallback Users API kemungkinan selalu gagal karena dynamic key Function hanya punya scope `documents.*` (tanpa `users.read`), tetapi menjadi celah begitu scope ditambah. Hapus fallback `prefs`; pakai label saja.
+4. **`create-user-profile` mempercayai payload**: `$id`/`role` dari body/event tanpa dicocokkan dengan `x-appwrite-user-id`; role `admin` diterima.
 5. **Baris profil punya `update` pemilik**: `isProfileCompleted` bisa di-set klien, melewati `update-profile`.
 6. **Bucket publik** `avatars`, `creator-banners`, `logos`, `portfolios`, `campaign-assets`: `fileSecurity:false` + `update/delete("users")` → user mana pun bisa mengganti/menghapus file user lain.
 7. **Offer**: kreator punya `update` atas semua kolom (termasuk `price`) dan aturan "hanya `pending`" hanya di klien.
@@ -73,13 +73,15 @@ Temuan di bawah ditemukan saat membaca kode. Tidak ada kode yang diubah dalam au
 - Notifikasi suspend kedua untuk user yang sama hilang (id deterministik); reminder H-1 hanya sekali per order.
 - Frontend `TYPE_ALIAS` notifikasi tidak mencakup `keuangan`, `campaign`, `refund`, `order`, `order_tos_blocked`; tombol hapus notifikasi tetap tampil padahal selalu gagal.
 - `appwrite/generate_appwrite_json.cjs`: path `patch-conversation-archive` menunjuk `../functions/get-umkm-ratecard-reviews`.
+- `appwrite.json` usang (lihat atas); `scripts/deploy-all-functions.sh` memakai `--code functions/<id>` sehingga merusak `create-conversation`/`create-offer` (`path: "functions"`, impor `../../_shared/`).
+- CI tidak menjalankan Vitest; test `node:test` di dalam `functions/` tidak dijalankan runner mana pun; tidak ada `playwright.config.*`.
 - Service legacy `00_BACKEND/src/services/*` (order, wallet, user, chat, offer, submission, claim) tidak lagi cocok dengan permission/aturan saat ini, tetapi masih diuji seolah aktif.
 - Test usang: `request-password-otp` diharapkan mengembalikan `userId`; e2e register masih mengisi "Nama Usaha"/"Kategori"; test auto-approve `expect(true)`.
 
 ## Rekomendasi Urutan Tindak Lanjut
 
-1. Cabut `create("users")` level tabel pada tabel yang ditulis Function (P0-1), hapus fallback `prefs.role` (P0-2), validasi `x-appwrite-user-id` di `create-user-profile` & tolak role `admin` (P0-3), cabut update pemilik pada `users` (P0-4).
-2. Ubah bucket publik ke `fileSecurity:true` dengan izin per file (P0-6).
+1. Cabut update pemilik pada baris `users` + backfill (P0-1), cabut `create("users")` level tabel pada tabel yang ditulis Function (P0-2), hapus fallback `prefs.role` (P0-3), validasi `x-appwrite-user-id` di `create-user-profile` & tolak role `admin` (P0-4).
+2. Ubah bucket publik ke `fileSecurity:true` dengan izin per file (P0-6); cabut `read("any")` pada `campaign_claims`/`campaign_submissions` (skor fraud & catatan review terbaca publik).
 3. Jadikan reward & refund idempoten dengan ledger id deterministik yang ditulis lebih dulu (P1-1..3).
 4. Perbaiki gate auto-approve vs validasi Admin (P1-4) dan guard status order di `create-escrow` (P1-5).
 5. Setelah perbaikan kode, perbarui dokumen modul terkait (aturan permission di `50_Database.md` dan `30_Business_Rules.md`).
