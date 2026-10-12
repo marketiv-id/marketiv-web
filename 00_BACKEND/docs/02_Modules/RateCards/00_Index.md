@@ -1,16 +1,18 @@
 # Modul Rate Cards
 
-Creator mempublikasikan rate card berisi paket layanan (Basic/Standard/Premium); UMKM menemukan creator dan memesan paket. Modul ini memiliki data `rate_cards` dan `rate_card_packages`.
+Creator mempublikasikan paket layanan (maks 3 paket, satu baris `rate_cards` per paket); UMKM melihat paket di profil Creator lalu memulai negosiasi dengan paket sebagai acuan offer. Modul ini memiliki data `rate_cards` dan `rate_card_packages`.
+
+> Pemesanan langsung paket tanpa negosiasi (Direct Order) **belum diimplementasikan**; order selalu lahir dari offer (lihat `../Orders/`).
 
 ## Daftar Dokumen
 
-- `10_Overview.md` — Gambaran rate card & paket, alur publish dan discovery.
+- `10_Overview.md` — Peran rate card, model data 1:1 rate card ↔ paket, alur publish & discovery.
 - `20_Concepts.md` — Istilah & konsep domain Rate Cards.
-- `30_Business_Rules.md` — Status rate card, field wajib paket, kepemilikan.
-- `40_User_Flow.md` — Alur pembuatan rate card & pemesanan paket.
-- `50_Database.md` — Skema, relasi (1—* packages), dan index koleksi `rate_cards`, `rate_card_packages`.
-- `60_API.md` — Kontrak Rate Card Service & tautan discovery creator.
-- `70_Backend.md` — Aturan backend & search creator.
-- `80_Frontend.md` — Halaman & komponen rate card.
-- `90_Events.md` — Event publish rate card.
-- `100_Testing.md` — Skenario uji pembuatan, publish, discovery, akses.
+- `30_Business_Rules.md` — Status draft/published, batas 3 paket, field wajib & validasi, hapus, fee.
+- `40_User_Flow.md` — Alur kelola paket (Creator) & pilih paket → negosiasi (UMKM).
+- `50_Database.md` — Skema, relasi, index, dan permission `rate_cards`, `rate_card_packages`.
+- `60_API.md` — Kontrak service frontend rate card & Functions yang membaca rate card.
+- `70_Backend.md` — Aturan backend & Functions yang memakai data rate card.
+- `80_Frontend.md` — Halaman & komponen rate card (Creator & UMKM).
+- `90_Events.md` — Event (tidak ada consumer) & keterkaitan dengan Offers/Orders.
+- `100_Testing.md` — Skenario uji CRUD paket, publish, akses, discovery.

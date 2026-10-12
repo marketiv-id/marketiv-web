@@ -2,50 +2,74 @@
 
 ## Service Layer (Client SDK)
 
-Fungsi-fungsi berikut dipanggil langsung dari frontend Next.js via **Appwrite Client SDK (Database)**. Berjalan di browser user.
+CRUD rate card berjalan di browser via Appwrite Client SDK (Database). Service aktif di root repo: `src/services/creator/creator-dashboard.service.ts` (facade + mock) → `creator-appwrite.service.ts`, dan `src/services/umkm/umkm-appwrite.service.ts`. Semua mengembalikan `ServiceResult`.
+
+> `00_BACKEND/src/services/creator.service.ts` (`createRateCard`, `updateRateCard`, `deleteRateCard`, `getRateCards`, `getRateCardById`, `getMyRateCards`) adalah implementasi **legacy** multi-paket yang tidak diimpor frontend. `updateRateCard` di sana masih delete-recreate paket (mengorphankan `packageId` order/offer). Jangan dipakai sebagai kontrak.
 
 ---
 
-### Rate Card Service
+### Creator — Paket Saya
 
-Dimiliki Creator.
+Input tulis bersama (`RateCardPackageWriteInput`): `{ name, description, output, deliveryDays, price, revisionLimit, published: boolean }` (divalidasi `rateCardPackageSchema` di UI).
 
-#### `createRateCard()` — [Client SDK]
+#### `getCreatorRateCardPackages()` — [Client SDK]
 
-- **Input**: `{ title, description?, packages[] }` — tiap paket wajib `{ name, description, output, deliveryDays, price, revisionLimit }`.
-- **Proses**: buat dokumen `rate_cards` (`status = draft`) + dokumen `rate_card_packages`.
+- **Proses**: list `rate_cards` `creatorId = uid` (limit 100) → list `rate_card_packages` `rateCardId IN …`.
+- **Return**: `CreatorRateCardPackage[]` `{ id, rateCardId, name, description, price, deliverable (= output), estimatedDays (= deliveryDays), status, revisionCount (= revisionLimit) }`.
+- **Akses**: Creator (own, termasuk draft).
+
+#### `createRateCardPackage(input)` — [Client SDK]
+
+- **Validasi**: jumlah `rate_cards` milik Creator < 3, else `validation` "Maksimal 3 paket. Hapus satu paket dulu."
+- **Proses**: create `rate_cards` `{ creatorId, title: name, description, status, createdAt }` lalu `rate_card_packages`; child gagal → hapus parent.
+- **Permission baris**: `read(any)`, `update/delete(user:uid)`.
+- **Akses**: Creator.
+
+#### `updateRateCardPackage({ id, rateCardId }, input)` — [Client SDK]
+
+- **Validasi**: rate card milik caller, else `forbidden` "Paket tidak ditemukan atau bukan milik Anda."
+- **Proses**: update package in place; mirror `title` + `status` ke parent.
 - **Akses**: Creator (owner).
 
-#### `updateRateCard()` — [Client SDK]
+#### `setRateCardPackageStatus({ id, rateCardId, base }, status)` — [Client SDK]
 
-- **Input**: `{ rateCardId, ...fields, packages? }`
-- **Proses**: ubah rate card / paket; set `status = published` untuk publish.
+- **Proses**: owner check → update `rate_cards.status` (`draft|published`) → baca ulang package.
 - **Akses**: Creator (owner).
 
-#### `deleteRateCard()` — [Client SDK]
+#### `deleteRateCardPackage({ id, rateCardId })` — [Client SDK]
 
-- **Input**: `{ rateCardId }`
-- **Validasi**: Rate card harus milik kreator yang login, status `draft`.
-- **Proses**: hapus dokumen `rate_cards` + paket terkait.
-- **Akses**: Creator (owner).
+- **Validasi**: owner; tidak ada order `packageId = id` dengan status `pending_payment|escrow|in_progress|revision|approved` (else `validation` "…masih ada order berjalan. Jadikan Draft saja.").
+- **Proses**: hapus package lalu rate card. 401/403 (baris lama tanpa permission delete) → `forbidden` dengan saran Jadikan Draft.
+- **Akses**: Creator (owner). Status rate card tidak dibatasi.
 
-#### `getRateCards()` — [Client SDK]
+---
 
-- **Input**: `{ creatorId }`
-- **Proses**: list rate card published milik creator + paketnya.
-- **Akses**: Public.
+### UMKM — Paket Creator
+
+#### `getCreatorRateCards(creatorId)` — [Client SDK]
+
+- **Proses**: wajib sesi login; list `rate_cards` `creatorId` + `status = published` (limit 100) → paket (limit 100).
+- **Return**: `RateCardPackage[]` `{ id, creatorId, name, description, price, deliverable, estimatedDays, revisionLimit, status }`.
+- **Akses**: user login (UMKM).
 
 ---
 
 ### Discovery Creator
 
-`searchCreators({ city, minPrice?, maxPrice?, sortBy?, order? })` digunakan untuk menemukan creator beserta rate card-nya. Filter platform tidak ada karena MVP hanya TikTok. Service ini **dibagi dengan modul Users** — lihat `../Users/` (jangan diduplikasi di sini).
+Direktori & profil Creator memakai Function `get-creator-directory` / `get-creator-profile` (modul Users, lihat `../Users/60_API.md`). Kontribusi Rate Cards: `startingPrice` = harga paket termurah (> 0) dari rate card `published`. Filter & sort direktori dikerjakan di klien. `searchCreators({ minPrice, maxPrice, … })` di `00_BACKEND/src/services/user.service.ts` legacy dan tidak dipakai UI aktif.
 
 ---
 
 ## Appwrite Functions (Server-side)
 
-Module ini tidak memiliki REST API publik sendiri. Operasi CRUD dilakukan langsung via Appwrite SDK dan tidak ada Appwrite Function khusus untuk modul ini.
+Tidak ada Function yang menulis `rate_cards`/`rate_card_packages`. Function berikut **membaca** data rate card:
+
+| Function | Pemakaian |
+| --- | --- |
+| `create-offer` | Validasi `packageId` (paket ada, milik Creator, parent `published`, else 422) + snapshot nama/harga ke offer |
+| `get-creator-directory`, `get-creator-profile` | `startingPrice` dari paket published |
+| `request-ratecard-revision`, `track-order-review` | Fallback `revisionLimit` paket bila order tanpa `offerId`/`revision_limit` |
+| `get-umkm-ratecard-reviews` | `packageContext` (nama, deskripsi, output, deliveryDays, harga) untuk review UMKM |
 
 ---
 

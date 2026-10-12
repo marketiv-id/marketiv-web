@@ -1,48 +1,49 @@
 # Rate Cards — Testing
 
-## Service Layer (`creator.service.ts`)
+Service yang diuji: `src/services/creator/creator-appwrite.service.ts` (CRUD paket), `src/services/umkm/umkm-appwrite.service.ts` (`getCreatorRateCardsFromAppwrite`), validasi `src/lib/validations/rate-card.schema.ts`, Function `create-offer` (paket acuan), `get-creator-directory`/`get-creator-profile` (`startingPrice`).
 
-### Create Rate Card (`createRateCard`)
+## Validasi Input (`rateCardPackageSchema`)
 
-- Creator membuat rate card dengan ≥1 paket valid → dokumen `rate_cards` status `draft` + `rate_card_packages` terbuat.
-- `title` kosong → throw `CreatorServiceError('validation', 'Judul rate card wajib diisi.')`.
-- Paket kosong (`packages.length === 0`) → throw `CreatorServiceError('validation', 'Minimal satu paket wajib ditambahkan.')`.
-- Paket dengan `name` kosong → throw `CreatorServiceError('validation', 'Paket #N: nama wajib diisi.')`.
-- Paket dengan `description` kosong → throw `CreatorServiceError('validation', 'Paket #N: deskripsi wajib diisi.')`.
-- Paket dengan `output` kosong → throw `CreatorServiceError('validation', 'Paket #N: output wajib diisi.')`.
-- Paket dengan `deliveryDays` ≤0 → throw `CreatorServiceError('validation', 'Paket #N: deliveryDays harus angka > 0.')`.
-- Paket dengan `price` ≤0 → throw `CreatorServiceError('validation', 'Paket #N: price harus angka > 0.')`.
-- Paket dengan `revisionLimit` <0 → throw `CreatorServiceError('validation', 'Paket #N: revisionLimit tidak valid.')`.
+- `name` kosong / > 100 → error.
+- `description` atau `output` kosong / > 2000 → error.
+- `deliveryDays` < 1 atau bukan integer → error.
+- `price` < 1.000, ≤ 0, atau desimal → error.
+- `revisionLimit` < 0 atau desimal → error; 0 diterima.
 
-### Update Rate Card (`updateRateCard`)
+## Create Paket
 
-- Owner update → field `title`/`description`/`status` ter-update.
-- Bukan owner → throw `CreatorServiceError('forbidden', 'Kamu bukan pemilik rate card ini.')`.
-- `rateCardId` kosong → throw `CreatorServiceError('validation', 'Rate card ID wajib diisi.')`.
-- Update dengan paket kosong → throw `CreatorServiceError('validation', 'Minimal satu paket wajib ditambahkan.')`.
-- Update menghapus paket lama & buat baru (replace).
+- Creator dengan < 3 paket → `rate_cards` (status sesuai toggle, `title` = nama) + `rate_card_packages` terbuat, permission `read(any)` + `update/delete` owner.
+- Creator dengan 3 paket → `validation` "Maksimal 3 paket. Hapus satu paket dulu."
+- Create child gagal → parent dihapus, error dikembalikan.
 
-### Get Rate Cards (`getRateCards`)
+## Update & Status
 
-- `creatorId` valid → list rate card `status === 'published'` + paketnya.
-- `creatorId` kosong → throw `CreatorServiceError('validation', 'Creator ID wajib diisi.')`.
+- Owner update → package di-update in place (ID tetap), parent `title`/`status` ikut.
+- Bukan owner → `forbidden` "Paket tidak ditemukan atau bukan milik Anda."
+- Toggle status → hanya `rate_cards.status` berubah.
 
-### Access Control
+## Hapus
 
-- Creator A tidak bisa `updateRateCard` rate card Creator B (→ `forbidden`).
-- UMKM hanya bisa membaca (read-only, permission `Role.any()`).
+- Tanpa order aktif → package lalu rate card terhapus (draft maupun published).
+- Ada order `packageId` berstatus `pending_payment|escrow|in_progress|revision|approved` → `validation`, tidak ada yang terhapus.
+- Baris lama tanpa permission delete → `forbidden` dengan saran Jadikan Draft.
 
-## Publish (via Flag Status)
+## Akses & Visibilitas
 
-- Set `status: 'published'` → muncul di discovery / profil Creator.
-- Publish tanpa paket → error (minimal 1 paket, divalidasi di `createRateCard`/`updateRateCard`).
+- Creator A tidak bisa update/hapus paket Creator B (row permission + owner check).
+- `getCreatorRateCards(creatorId)` hanya mengembalikan paket dari rate card `published`.
+- Draft tidak dihitung `startingPrice` di direktori/profil.
 
-## Discovery (via `user.service.ts` `searchCreators`)
+## Paket sebagai Acuan Offer (`create-offer`)
 
-- UMKM mencari Creator → hasil sesuai filter.
-- Creator dengan rate card published muncul di pencarian.
-- Creator tanpa rate card published tidak muncul.
-- Filter harga (`minPrice`/`maxPrice`) → query `rate_card_packages` collection (bukan `rate_cards`), field `price`.
-- Sort `price_asc`/`price_desc` → urut via `rate_card_packages.price`.
+- `packageId` valid milik Creator lawan bicara & published → offer berisi `packageId` + snapshot nama/harga.
+- Paket tidak ada / milik Creator lain / parent draft → 422.
+- Harga offer bebas dari harga paket (snapshot hanya provenance).
 
-Catatan: Di source code (`user.service.ts` `getCreatorIdsByRateCardPrice`), filter price sekarang menggunakan `COLLECTIONS.rateCardPackages` dengan field `price` (bukan `rate_cards`/`is_active`). Hasil `rateCardId` dipetakan ke `creatorId` lewat koleksi `rate_cards`, lalu difilter di `searchCreators` berdasarkan `creator.userId`.
+## Discovery (`get-creator-directory`)
+
+- Creator dengan paket published → `startingPrice` = harga termurah (> 0).
+- Creator tanpa paket published → `startingPrice` 0, tetap tampil di direktori (direktori hanya menyaring `creator_profiles.isProfileCompleted = true`, bukan kepemilikan rate card).
+- Sort "Harga Terendah" di klien memakai `startingPrice`.
+
+> `tests/integration/functions.test.ts` masih memuat suite `user.service searchCreators price filter (rate_card_packages)` untuk service legacy `searchCreators` (filter `minPrice`/`maxPrice` via `rate_card_packages.price`); service itu tidak dipakai UI aktif.

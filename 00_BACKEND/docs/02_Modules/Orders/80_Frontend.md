@@ -1,40 +1,52 @@
 # Orders — Frontend
 
+Tidak ada halaman "My Orders" / `/orders/{id}` khusus. Order hidup di ruang negosiasi (key `conversationId`) dan halaman Tinjauan Pekerjaan UMKM (key `orderId`).
+
 ## Halaman UMKM
 
-### My Orders
+### Ruang Negosiasi — `/dashboard/umkm/negosiasi/[id_conversation]`
 
-- Daftar order milik UMKM (buyer).
-- Filter status: all, pending_payment, in_progress, completed.
-- Detail order: info Creator, amount, status, timeline.
+- Komponen: `NegotiationRoomPage`, `OrderSummaryCard`, `CustomOfferCard`, `DeliverableReviewCard`.
+- Order `pending_payment`: tombol bayar (`createOrderPayment` → redirect Snap; nominal = `order.amount`, tanpa fee tambahan) dan "Batalkan Pesanan" (`cancelOrder`, ConfirmDialog).
+- Setelah bayar, status dimuat ulang dari DTO (`get-umkm-negotiations`); escrow tidak di-set optimistis.
+- Deliverable dibaca `getDeliverables`; `DeliverableReviewCard` menautkan ke halaman review untuk aksi approve/revisi.
 
-### Order Detail
+### Tinjauan Pekerjaan — `/dashboard/umkm/review-rate-card`
 
-- Status badge sesuai status order.
-- **Saat `in_progress` (menunggu deliverable):**
-  - Informasi Creator, paket, amount.
-  - CTA pasif: "Menunggu deliverable dari Creator..."
-  - Belum ada tombol aksi.
-- **Saat `submitted` (deliverable sudah diupload):**
-  - Deliverable viewer (preview file, notes, version).
-  - Tombol Approve / Request Revision.
-- **Riwayat revisi** (tampil jika ada).
+- `RatecardReviewListPage` memanggil `getUmkmRatecardReviews()`.
+- Filter: Semua, Perlu Tindakan, Menunggu Marketiv, Revisi, Selesai (urut prioritas sama).
+- Kartu: status order, status validasi Marketiv, nominal, tautan detail. Menu sidebar "Tinjauan Pekerjaan".
+
+### Detail Tinjauan — `/dashboard/umkm/review-rate-card/[orderId]`
+
+- `RatecardReviewDetailPage` memanggil `getUmkmRatecardReview(orderId)`.
+- Panel: konteks paket/offer, latest deliverable + riwayat versi, rail validasi Marketiv (status, catatan, waktu), riwayat revisi, kuota revisi (`revisionCount / revisionLimit`).
+- Aksi dihitung `getRatecardReviewState` (`src/lib/ratecard-review/review-state.ts`):
+  - **Setujui** hanya bila latest `submitted`, validasi `valid`, order `in_progress|revision` → `approveDeliverable`. Toast: settlement asinkron.
+  - **Minta Revisi** bila latest `submitted`, order aktif, dan `revisionCount < revisionLimit` → form alasan → `requestRevision`.
 
 ## Halaman Creator
 
-### My Orders
+### Ruang Negosiasi — `/dashboard/kreator/negosiasi/[id_conversation]`
 
-- Daftar order milik Creator (seller).
-- Filter status: all, in_progress, revision, completed.
+- `NegosiasiRoomView`: menerima/menolak offer, lalu mengirim hasil kerja saat order aktif.
+- Modal kirim hasil kerja, dua mode:
+  - "Kirim Tautan" (`external_url`, wajib `https://`).
+  - "Unggah Berkas" (`storage`): `uploadUserFile({ file, shareWithOrderId })` lalu `uploadDeliverable` dengan `fileId`.
+- Setiap kirim = versi baru; riwayat deliverable dibaca `getDeliverables`.
+- `/dashboard/kreator/pekerjaan-aktif` adalah pekerjaan **Campaign** (claim), bukan order Rate Card.
 
-### Upload Deliverable
+## Halaman Admin (app `admin/`)
 
-- Form upload file + notes.
-- Menampilkan version number dan riwayat upload.
+### Validasi Rate Card — `/rate-card-validations`
 
-## Komponen
+- Antrian dari `get-admin-ratecard-deliverable-queue` (tombol "Segarkan"); "Tandai Valid" / "Tandai Invalid" (catatan wajib untuk invalid, konfirmasi `window.confirm`) via `review-ratecard-deliverable`.
+- Validasi manual (MVP): tidak ada verifikasi otomatis TikTok/Instagram; keputusan `valid` tidak memindahkan dana sendiri.
 
-- `OrderCard` — ringkasan order dengan status badge.
-- `DeliverablePreview` — preview file deliverable.
-- `RevisionList` — riwayat revisi.
-- `UploadForm` — form upload deliverable.
+## Komponen & Modul
+
+- `NegotiationRoomPage`, `OrderSummaryCard`, `CustomOfferCard`, `DeliverableReviewCard` — sisi UMKM negosiasi.
+- `RatecardReviewListPage`, `RatecardReviewDetailPage` — review UMKM.
+- `NegosiasiRoomView` — sisi Creator.
+- Tipe: `src/types/ratecard-review.types.ts`, `src/types/domain.ts` (`OrderStatus`, `DeliverableStatus`, `RevisionStatus`).
+- Label status order: `src/lib/dashboard-labels.ts` (masih memuat `escrow`/`approved` yang tidak pernah ditulis backend).
