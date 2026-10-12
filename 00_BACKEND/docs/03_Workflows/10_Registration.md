@@ -75,7 +75,7 @@ User submit form di `/register?role=umkm` atau `/register?role=creator` (`src/ap
 
 16. **Users** — Wizard 3 langkah per role (`src/components/features/onboarding/`):
     - UMKM: nama usaha + kategori + kota → deskripsi + logo → alamat & TikTok (opsional).
-    - Creator: nama display + niche + kota → bio + avatar → akun TikTok (**wajib**) & Instagram (opsional). TikTok di-upsert ke `creator_social_accounts` **sebelum** profil dikirim.
+    - Creator: nama display + niche + kota → bio + avatar → akun TikTok (**wajib**). Instagram tidak ada di wizard (`CreatorOnboarding.tsx` hanya TikTok). TikTok di-upsert ke `creator_social_accounts` **sebelum** profil dikirim.
 17. **Users** — Simpan lewat `update-profile` (HTTP). Function memakai whitelist field per role, menulis `phone`/`address` UMKM ke `users`, lalu mengevaluasi completion dari hasil write (`completion.js`):
     - UMKM: `businessName`, `category`, `city`, `description` ≥ 20 karakter, `phone` valid (`^(\+62|62|0)8[0-9]{8,11}$`).
     - Creator: `displayName`, `niche`, `city`, `bio` ≥ 20 karakter, username TikTok di `creator_social_accounts`.
