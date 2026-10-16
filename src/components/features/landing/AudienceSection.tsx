@@ -79,8 +79,15 @@ export function AudienceSection({ umkm, kreator }: AudienceSectionProps) {
                 </LandingButton>
               </div>
             </div>
-            <div data-stack-item className="lg:col-span-6 lg:col-start-7">
-              <ExampleBrief brief={umkm.brief} />
+            <div className="relative lg:col-span-7 lg:col-start-6">
+              <div data-stack-item className="mx-auto w-[min(72vw,360px)] lg:ml-auto lg:mr-8 lg:w-[min(26vw,400px)]">
+                <Parallax speed={8}>
+                  <Image src={umkm.image} alt={umkm.imageAlt} width={900} height={1532} sizes="(min-width: 1024px) 26vw, 72vw" className="h-auto w-full select-none" />
+                </Parallax>
+              </div>
+              <div data-stack-item className="relative -mt-24 lg:absolute lg:bottom-10 lg:left-0 lg:mt-0 lg:w-[56%]">
+                <ExampleBrief brief={umkm.brief} />
+              </div>
             </div>
           </div>
         </article>
@@ -98,12 +105,10 @@ export function AudienceSection({ umkm, kreator }: AudienceSectionProps) {
             </h2>
 
             <div className="mt-12 grid gap-10 lg:grid-cols-12 lg:items-start lg:gap-8">
-              <div data-stack-item className="mx-auto w-full max-w-[300px] lg:col-span-3 lg:mx-0 lg:max-w-none">
+              <div data-stack-item className="mx-auto w-[min(70vw,320px)] lg:col-span-3 lg:mx-0 lg:-mt-16 lg:w-full">
                 <Parallax speed={8}>
-                  <TiltCard className="-rotate-2">
-                    <div className="img-outline overflow-hidden rounded-3xl bg-white shadow-[0_30px_60px_rgba(16,32,51,0.16)]">
-                      <Image src={kreator.jobImage} alt={kreator.jobImageAlt} width={640} height={709} sizes="(min-width: 1024px) 22vw, 300px" className="h-auto w-full" />
-                    </div>
+                  <TiltCard>
+                    <Image src={kreator.jobImage} alt={kreator.jobImageAlt} width={900} height={1532} sizes="(min-width: 1024px) 22vw, 70vw" className="h-auto w-full select-none" />
                   </TiltCard>
                 </Parallax>
               </div>

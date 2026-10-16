@@ -31,8 +31,8 @@ export function ProblemSection({ content }: ProblemSectionProps) {
       className="relative z-[11] rounded-b-[24px] bg-neutral-25 px-5 pb-24 pt-28 md:rounded-b-[40px] md:px-10 md:pb-32 md:pt-36"
     >
       <div className="mx-auto max-w-[1400px]">
-        <ScrollHighlight runs={content.statement} className="text-statement max-w-[30ch] text-secondary-900 [text-wrap:balance] lg:ml-[16.66%]" />
-        <div className="mt-16 grid gap-12 md:grid-cols-2 md:gap-10 lg:ml-[16.66%] lg:max-w-[880px]">
+        <ScrollHighlight runs={content.statement} className="text-statement mx-auto max-w-[28ch] text-center text-secondary-900 [text-wrap:balance]" />
+        <div className="mx-auto mt-20 grid max-w-[880px] gap-12 md:grid-cols-2 md:gap-10">
           <PainList title={content.umkm.title} items={content.umkm.items} />
           <PainList title={content.kreator.title} items={content.kreator.items} />
         </div>

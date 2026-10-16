@@ -1,88 +1,71 @@
-import Image from "next/image";
+import { ChartLineUp, ShieldCheck, UsersThree } from "@phosphor-icons/react/dist/ssr";
 import { cn } from "@/lib/utils";
-import type { PillarItem, PillarsContent } from "@/types/landing";
+import type { PillarIcon, PillarsContent } from "@/types/landing";
 import { Parallax } from "./motion/Parallax";
 import { Reveal } from "./motion/Reveal";
+import { Spotlight } from "./motion/Spotlight";
 
 interface PillarsSectionProps {
   content: PillarsContent;
 }
 
-function StampVisual({ stamp }: { stamp: string }) {
-  return (
-    <div aria-hidden="true" className="relative flex h-full min-h-[260px] items-center justify-center">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.22),transparent_55%)]" />
-      <span className="-rotate-6 rounded-2xl px-6 py-3 font-mono-nota text-[clamp(2.25rem,5vw,4.5rem)] font-bold tracking-[0.08em] text-white ring-[5px] ring-inset ring-white/90">
-        {stamp}
-      </span>
-    </div>
-  );
-}
+const ICONS: Record<PillarIcon, typeof ShieldCheck> = {
+  shield: ShieldCheck,
+  chart: ChartLineUp,
+  users: UsersThree,
+};
 
-function ImageVisual({ item, wide }: { item: PillarItem; wide: boolean }) {
-  if (!item.image) return null;
-  return (
-    <div className={cn("relative overflow-hidden rounded-2xl", wide ? "aspect-[1400/211]" : "aspect-[560/667] max-h-[300px]")}>
-      <Parallax speed={6} className="h-full w-full">
-        <Image
-          src={item.image}
-          alt={item.imageAlt ?? ""}
-          width={wide ? 1400 : 560}
-          height={wide ? 211 : 667}
-          sizes={wide ? "(min-width: 1024px) 40vw, 90vw" : "(min-width: 1024px) 24vw, 90vw"}
-          className={cn("img-outline h-full w-full rounded-2xl", wide ? "object-contain" : "object-cover object-top")}
-        />
-      </Parallax>
-    </div>
-  );
-}
+// Two-column zigzag: the right column starts lower and drifts faster, so the cards read as a staggered stack.
+const PLACEMENT = ["lg:col-start-1 lg:row-start-1", "lg:col-start-2 lg:row-start-1 lg:mt-40", "lg:col-start-1 lg:row-start-2"];
+const SPEED = [4, 12, 4];
 
-// Three different jobs, three different cells: the escrow promise is the anchor, the other two show the product doing it.
 export function PillarsSection({ content }: PillarsSectionProps) {
-  const [escrow, results, creators] = content.items;
   return (
     <section
       id="solusi"
       data-section-label={content.label}
       aria-labelledby="solusi-title"
-      className="relative z-[10] -mt-10 rounded-b-[24px] bg-neutral-100 px-5 pb-24 pt-32 md:rounded-b-[40px] md:px-10 md:pb-32 md:pt-40"
+      className="relative z-[10] -mt-10 rounded-b-[24px] bg-neutral-100 px-3 pb-3 pt-32 md:rounded-b-[40px] md:px-4 md:pb-4 md:pt-40"
     >
-      <div className="mx-auto max-w-[1400px]">
-        <Reveal as="h2" id="solusi-title" mode="words" className="text-display-lg max-w-[18ch] text-secondary-900">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(194,65,12,0.16)_1.2px,transparent_1.2px)] bg-[size:22px_22px] [mask-image:linear-gradient(to_bottom,black,transparent_55%)]" />
+
+      <div className="relative mx-auto max-w-3xl px-2 text-center">
+        <Reveal as="h2" id="solusi-title" mode="words" className="text-display-lg mx-auto max-w-[16ch] text-secondary-900">
           {content.titleLead} <span className="text-primary-500">{content.titleAccent}</span>
         </Reveal>
+        <Reveal mode="fade" delay={0.1}>
+          <p className="mx-auto mt-6 max-w-lg text-[17px] leading-relaxed text-neutral-700 [text-wrap:pretty]">{content.intro}</p>
+        </Reveal>
+      </div>
 
-        <div className="mt-14 grid gap-4 lg:grid-cols-12 lg:grid-rows-[auto_auto]">
-          <Reveal mode="clip" className="lg:col-span-5 lg:row-span-2">
-            <article className="landing-grain relative flex h-full flex-col overflow-hidden rounded-3xl bg-primary-500 p-7 text-white md:p-9">
-              <StampVisual stamp={escrow.stamp ?? ""} />
-              <h3 className="mt-6 text-2xl font-extrabold tracking-[-0.02em] md:text-3xl">{escrow.title}</h3>
-              <p className="mt-3 max-w-sm text-[16px] leading-relaxed text-white/85">{escrow.description}</p>
-            </article>
-          </Reveal>
-
-          <Reveal mode="clip" delay={0.08} className="lg:col-span-7">
-            <article className="flex h-full flex-col justify-between gap-8 rounded-3xl bg-white p-7 md:p-9">
-              <ImageVisual item={results} wide />
-              <div className="max-w-md">
-                <h3 className="text-2xl font-extrabold tracking-[-0.02em] text-secondary-900">{results.title}</h3>
-                <p className="mt-3 text-[16px] leading-relaxed text-neutral-700">{results.description}</p>
-              </div>
-            </article>
-          </Reveal>
-
-          <Reveal mode="clip" delay={0.16} className="lg:col-span-7">
-            <article className="grid h-full items-center gap-8 rounded-3xl bg-secondary-50 p-7 sm:grid-cols-[1fr_auto] md:p-9">
-              <div className="max-w-sm">
-                <h3 className="text-2xl font-extrabold tracking-[-0.02em] text-secondary-900">{creators.title}</h3>
-                <p className="mt-3 text-[16px] leading-relaxed text-neutral-700">{creators.description}</p>
-              </div>
-              <div className="w-full max-w-[240px] justify-self-center sm:justify-self-end">
-                <ImageVisual item={creators} wide={false} />
-              </div>
-            </article>
-          </Reveal>
-        </div>
+      <div className="landing-grain relative isolate mt-20 overflow-hidden rounded-[32px] bg-[#1d0e06] px-5 py-16 text-white md:rounded-[40px] md:px-10 md:py-24">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_70%_at_15%_10%,rgba(249,115,22,0.95)_0%,rgba(234,88,12,0.55)_35%,transparent_70%),radial-gradient(50%_60%_at_90%_95%,rgba(194,65,12,0.5)_0%,transparent_70%)]"
+        />
+        <Spotlight />
+        <ul className="relative z-[2] mx-auto grid max-w-[1100px] gap-5 lg:grid-cols-2 lg:gap-x-8 lg:gap-y-8">
+          {content.items.map((item, index) => {
+            const Icon = ICONS[item.icon];
+            return (
+              <li key={item.title} className={cn(PLACEMENT[index])}>
+                <Parallax speed={SPEED[index]}>
+                  <Reveal mode="clip" delay={index * 0.08}>
+                    <article className="group flex min-h-[420px] flex-col rounded-3xl bg-white/[0.06] p-8 ring-1 ring-inset ring-white/15 backdrop-blur-md transition-[box-shadow,background-color] duration-500 hover:bg-white/[0.09] hover:ring-white/30 md:min-h-[460px] md:p-10">
+                      <h3 className="text-2xl font-extrabold tracking-[-0.02em] md:text-[28px]">
+                        <span className="font-mono-nota text-white/60">0{index + 1}</span> {item.title}
+                      </h3>
+                      <div className="flex flex-1 items-center justify-center py-10">
+                        <Icon aria-hidden="true" weight="thin" className="h-32 w-32 text-white/90 transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110" />
+                      </div>
+                      <p className="max-w-sm text-[16px] leading-relaxed text-white/75">{item.description}</p>
+                    </article>
+                  </Reveal>
+                </Parallax>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </section>
   );

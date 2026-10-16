@@ -34,17 +34,9 @@ export const LANDING_CONTENT: LandingContent = {
     ctaCreator: "Daftar sebagai Kreator",
     dashboardCta: "Buka Dashboard",
     backdropWord: "TAYANG",
-    sampleLabel: "Contoh",
-    chips: [
-      { label: "Dana ditahan", value: "Rp 1.500.000", tone: "navy" },
-      { label: "Bukti tayang terkirim", value: "tiktok.com/@kreator", tone: "white" },
-      { label: "Views tervalidasi", value: "100.000", tone: "orange" },
-    ],
     phone: {
-      title: "Lowongan Kampanye",
-      subtitle: "Pilih kampanye UMKM yang cocok",
-      image: "/landing/jobpool-card-kopi.webp",
-      imageAlt: "Kartu lowongan kampanye kopi di aplikasi Marketiv, data contoh",
+      image: "/landing/renders/hero-phones.webp",
+      imageAlt: "Dua layar aplikasi Marketiv di ponsel: lowongan kampanye untuk kreator dan ringkasan UMKM, data contoh",
     },
   },
   problem: {
@@ -77,26 +69,22 @@ export const LANDING_CONTENT: LandingContent = {
     label: "Solusi",
     titleLead: "Tiga pegangan supaya promosi",
     titleAccent: "tidak boncos.",
+    intro: "Uang UMKM aman, hasil kampanye terukur, dan kreator lokal dapat pekerjaan yang jelas.",
     items: [
       {
         title: "Dana ditahan escrow",
         description: "Pembayaran lewat Midtrans masuk ke escrow. Kreator menerima dana setelah kerjanya tervalidasi.",
-        visual: "stamp",
-        stamp: "DITAHAN",
+        icon: "shield",
       },
       {
         title: "Bayar sesuai hasil",
         description: "Di Campaign Mode, reward kreator dihitung dari views yang lolos validasi.",
-        visual: "image",
-        image: "/landing/pillar-views.webp",
-        imageAlt: "Kartu total tayangan di dashboard UMKM Marketiv, data contoh",
+        icon: "chart",
       },
       {
         title: "Kreator lokal dapat kerja",
         description: "Kreator mikro bisa klaim job campaign atau membuka rate card sendiri.",
-        visual: "image",
-        image: "/landing/pillar-kreator.webp",
-        imageAlt: "Daftar kreator yang sedang mengerjakan kampanye di dashboard UMKM Marketiv, data contoh",
+        icon: "users",
       },
     ],
   },
@@ -117,6 +105,8 @@ export const LANDING_CONTENT: LandingContent = {
       ],
       rules: ["Tanpa chat", "Tanpa revisi", "Divalidasi sistem dan tim Marketiv", "Biaya platform 2% ditanggung UMKM"],
       tone: "umkm",
+      image: "/landing/renders/phone-buat.webp",
+      imageAlt: "Layar Buat Kampanye Baru di aplikasi Marketiv, data contoh",
     },
     rateCard: {
       id: "rate-card",
@@ -131,6 +121,8 @@ export const LANDING_CONTENT: LandingContent = {
       ],
       rules: ["Ada chat negosiasi", "Revisi sesuai batas paket", "Disetujui UMKM", "Biaya platform 2% dipotong dari pendapatan kreator"],
       tone: "kreator",
+      image: "/landing/renders/phone-nego.webp",
+      imageAlt: "Layar Negosiasi Paket Harga di aplikasi Marketiv, data contoh",
     },
   },
   escrow: {
@@ -210,6 +202,8 @@ export const LANDING_CONTENT: LandingContent = {
       "Sisa budget yang tidak terpakai kembali ke dompetmu.",
     ],
     cta: "Mulai Buat Campaign",
+    image: "/landing/renders/phone-keuangan.webp",
+    imageAlt: "Layar Keuangan Saya di aplikasi Marketiv untuk UMKM, data contoh",
     brief: {
       title: "Contoh saran brief dari AI",
       meta: [
@@ -232,8 +226,8 @@ export const LANDING_CONTENT: LandingContent = {
       "Tarik saldo mulai Rp 50.000 ke rekening bank atau e-wallet.",
     ],
     cta: "Daftar sebagai Kreator",
-    jobImage: "/landing/jobpool-card.webp",
-    jobImageAlt: "Kartu lowongan kampanye di Job Pool Marketiv, data contoh",
+    jobImage: "/landing/renders/phone-kreator.webp",
+    jobImageAlt: "Layar ringkasan kreator di aplikasi Marketiv, data contoh",
     simulator: {
       title: "Simulasi reward campaign",
       viewsLabel: "Views yang lolos validasi",

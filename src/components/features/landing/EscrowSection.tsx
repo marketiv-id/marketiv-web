@@ -115,7 +115,7 @@ export function EscrowSection({ content }: EscrowSectionProps) {
       aria-labelledby="escrow-title"
       className="landing-grain relative isolate z-[8] -mt-10 overflow-hidden rounded-b-[24px] bg-secondary-900 text-white md:rounded-b-[40px]"
     >
-      <ScreenSlice colorClassName="bg-white" />
+      <ScreenSlice colorClassName="bg-neutral-25" />
       <div data-escrow-pin className="relative flex min-h-svh items-center px-5 pb-20 pt-32 md:px-10 lg:pb-12 lg:pt-28">
         <Spotlight />
         <div className="relative z-[2] mx-auto grid w-full max-w-[1400px] gap-14 lg:grid-cols-12 lg:items-center lg:gap-8">

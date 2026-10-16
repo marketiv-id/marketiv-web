@@ -24,7 +24,7 @@ export function HeroMotion({ children, className }: HeroMotionProps) {
 
       mm.add(MOTION_OK, () => {
         gsap.set(q("[data-hero-chip]"), { autoAlpha: 0, scale: 0.8, y: 24 });
-        gsap.set(q("[data-hero-phone]"), { autoAlpha: 0, y: 90, rotate: -4 });
+        gsap.set(q("[data-hero-phone]"), { autoAlpha: 0, y: 140 });
         gsap.set(q("[data-hero-word]"), { autoAlpha: 0, yPercent: 30 });
         let split: SplitText | null = null;
         if (curtainPlayed) {
@@ -38,7 +38,7 @@ export function HeroMotion({ children, className }: HeroMotionProps) {
           intro = gsap.timeline({ defaults: { ease: EASE_OUT } });
           intro
             .to(q("[data-hero-word]"), { autoAlpha: 1, yPercent: 0, duration: 1.4 }, 0)
-            .to(q("[data-hero-phone]"), { autoAlpha: 1, y: 0, rotate: -4, duration: 1.3 }, 0.1)
+            .to(q("[data-hero-phone]"), { autoAlpha: 1, y: 0, duration: 1.4 }, 0.1)
             .to(q("[data-hero-chip]"), { autoAlpha: 1, scale: 1, y: 0, duration: 1, stagger: 0.08 }, 0.45);
           if (split) intro.to(split.words, { yPercent: 0, duration: 1.1, stagger: 0.035 }, 0.15);
           if (curtainPlayed) intro.to(q("[data-hero-fade]"), { autoAlpha: 1, y: 0, duration: 1, stagger: 0.08 }, 0.55);

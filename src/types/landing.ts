@@ -26,14 +26,6 @@ export interface LandingNavContent {
   dashboard: string;
 }
 
-export type HeroChipTone = "navy" | "white" | "orange";
-
-export interface HeroChip {
-  label: string;
-  value: string;
-  tone: HeroChipTone;
-}
-
 export interface HeroContent {
   titleLead: string;
   titleRest: string;
@@ -43,11 +35,7 @@ export interface HeroContent {
   ctaCreator: string;
   dashboardCta: string;
   backdropWord: string;
-  sampleLabel: string;
-  chips: HeroChip[];
   phone: {
-    title: string;
-    subtitle: string;
     image: string;
     imageAlt: string;
   };
@@ -60,20 +48,19 @@ export interface ProblemContent {
   kreator: { title: string; items: string[] };
 }
 
+export type PillarIcon = "shield" | "chart" | "users";
+
 export interface PillarItem {
   title: string;
   description: string;
-  // "stamp" renders the escrow stamp; "image" shows a real app crop.
-  visual: "stamp" | "image";
-  image?: string;
-  imageAlt?: string;
-  stamp?: string;
+  icon: PillarIcon;
 }
 
 export interface PillarsContent {
   label: string;
   titleLead: string;
   titleAccent: string;
+  intro: string;
   items: PillarItem[];
 }
 
@@ -85,6 +72,8 @@ export interface ModePanel {
   steps: string[];
   rules: string[];
   tone: "umkm" | "kreator";
+  image: string;
+  imageAlt: string;
 }
 
 export interface ModesContent {
@@ -132,6 +121,8 @@ export interface UmkmContent {
   titleAccent: string;
   points: string[];
   cta: string;
+  image: string;
+  imageAlt: string;
   brief: {
     title: string;
     meta: { label: string; value: string }[];

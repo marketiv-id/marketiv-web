@@ -468,4 +468,7 @@ Penyimpangan dari rencana dan sisa pekerjaan, supaya dokumen tetap jujur terhada
 - **Distortion memakai filter SVG** (D8), tanpa dependency WebGL.
 - **Belum diukur:** LCP mobile, bundle size per route, dan fps di Android mid-range. Jalankan Lighthouse pada build produksi sebelum merge.
 - **Di luar cakupan dan belum disentuh:** font variable di `layout.tsx`, `lang="en"`, `images.unoptimized`, duplikasi `motion` dan `framer-motion`, halaman placeholder publik.
+- **Revisi visual 2026-10-16 (owner: "tiru UI referensi").** Hero dan panel Solusi memakai glow oranye ke ember gelap ala Armor, panel Dua Mode memakai panel warna penuh ala DontMatter, Final CTA ala Sphere. Ini menyimpang dari `07-landing-page-guidelines.md` §18 (hindari hero gelap) atas permintaan owner.
+- **Gambar HP adalah render, bukan hasil AI.** Tidak ada tool generate gambar di sesi ini. Screenshot asli aplikasi (mode mock, 390x844@3x) dimasukkan ke frame HP dengan `scripts/landing-render-mockups.cjs`. Foto merek pihak ketiga di data mock di-blur.
+- **Belum ada fotografi.** Ketiga referensi kuat karena foto asli. Foto UMKM atau kreator butuh aset dari owner atau izin memakai foto stok.
 
