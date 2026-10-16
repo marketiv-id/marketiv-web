@@ -13,6 +13,27 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/components/providers/AuthProvider", () => ({
   useAuth: () => mocks.auth,
 }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
+// jsdom has no matchMedia; GSAP queries it when ScrollTrigger registers. "matches: false" behaves like reduced motion.
+if (!window.matchMedia) {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: (query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    }),
+  });
+}
+
 vi.mock("next/link", () => ({
   default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => (
     <a href={href} {...props}>{children}</a>
@@ -78,7 +99,7 @@ describe("auth-aware landing actions", () => {
 
     expect(document.querySelectorAll('a[href="/login"]')).toHaveLength(2);
     expect(document.querySelectorAll('a[href="/register"]')).toHaveLength(2);
-    await click('button[aria-label="Toggle navigation menu"]');
+    await click('button[aria-label="Buka menu navigasi"]');
     expect(document.body.textContent).toContain("Daftar Sekarang");
   });
 
