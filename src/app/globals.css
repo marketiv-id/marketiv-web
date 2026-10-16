@@ -168,7 +168,7 @@
     transition-duration: 0.01ms !important;
   }
 }
-/* Range slider custom thumb styling — used by CuanEstimatorSection */
+/* Range slider custom thumb styling, used by the landing RewardSimulator */
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
@@ -1417,3 +1417,186 @@ body.theme-kreator {
 }
 
 
+
+/* Landing page "/" */
+
+/* Lenis adds these classes to <html>; native smooth scroll would fight its interpolation. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+html.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+@layer utilities {
+  .font-mono-nota {
+    font-family: var(--font-landing-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .text-display-xl {
+    font-size: clamp(2.6rem, 6.4vw, 6.25rem);
+    line-height: 0.98;
+    letter-spacing: -0.045em;
+    font-weight: 800;
+  }
+  .text-display-lg {
+    font-size: clamp(2.1rem, 4.8vw, 4.5rem);
+    line-height: 1.02;
+    letter-spacing: -0.04em;
+    font-weight: 800;
+  }
+  .text-display-md {
+    font-size: clamp(1.75rem, 3.2vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    font-weight: 800;
+  }
+  .text-statement {
+    font-size: clamp(1.6rem, 3.4vw, 3.15rem);
+    line-height: 1.16;
+    letter-spacing: -0.03em;
+    font-weight: 700;
+  }
+}
+
+.landing-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* The intro curtain renders only when the inline head script decided to play it, so no-JS and reduced-motion visitors never see it. */
+.intro-curtain {
+  display: none;
+}
+html[data-intro="play"] .intro-curtain {
+  display: block;
+}
+
+.hl-mark {
+  background-image: linear-gradient(var(--color-primary-500), var(--color-primary-500));
+  background-repeat: no-repeat;
+  background-position: 0 94%;
+  background-size: var(--hl-size, 100%) 0.11em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.liquid-btn .liquid-fill {
+  clip-path: circle(0% at var(--lx, 50%) var(--ly, 50%));
+  transition: clip-path 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.liquid-btn:hover .liquid-fill,
+.liquid-btn:focus-visible .liquid-fill {
+  clip-path: circle(150% at var(--lx, 50%) var(--ly, 50%));
+}
+
+.roll {
+  position: relative;
+  display: inline-flex;
+  overflow: hidden;
+  vertical-align: top;
+}
+.roll > span {
+  display: block;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.roll > span + span {
+  position: absolute;
+  inset: 0;
+  transform: translateY(105%);
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .roll-host:hover .roll > span:first-child,
+  .roll-host:focus-visible .roll > span:first-child {
+    transform: translateY(-105%);
+  }
+  .roll-host:hover .roll > span + span,
+  .roll-host:focus-visible .roll > span + span {
+    transform: translateY(0);
+  }
+}
+
+/* Scalloped tear-off edge for the escrow receipt. */
+.nota-edge::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -11px;
+  height: 12px;
+  background: radial-gradient(circle at 10px 0, transparent 7px, var(--nota-bg, #fffdf9) 7.5px) repeat-x;
+  background-size: 20px 12px;
+}
+
+.faq-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.faq-panel[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+.faq-panel > div {
+  min-height: 0;
+  overflow: hidden;
+}
+
+@keyframes landing-pulse {
+  0% { transform: scale(1); opacity: 0.55; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+.landing-pulse::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: landing-pulse 1.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.landing-cursor {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .landing-cursor {
+    display: block;
+  }
+}
+
+/* If the intro script ran but the bundle never hydrates, the curtain still gets out of the way. */
+@keyframes intro-failsafe {
+  to {
+    visibility: hidden;
+  }
+}
+
+@keyframes landing-label-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Hero decorations wait hidden for their entrance; the animation is a failsafe if the bundle never runs. */
+html[data-motion="on"] [data-hero-pre] {
+  opacity: 0;
+  animation: hero-failsafe 0s linear 5s forwards;
+}
+@keyframes hero-failsafe {
+  to {
+    opacity: 1;
+  }
+}
