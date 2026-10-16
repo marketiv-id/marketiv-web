@@ -140,19 +140,22 @@ Background boleh primary soft atau navy very dark dengan card light, tetapi teta
 
 ## 15. Landing Page Sections Order
 
+Urutan yang berlaku sejak revamp 2026-10-16 (`docs/landing-revamp/PLAN.md`):
+
 ```txt
 1. Navbar
 2. Hero
-3. Problem
-4. Solution Benefits
-5. Two Modes
-6. Escrow Trust
-7. Product Preview
-8. UMKM Growth
-9. Creator Opportunity
-10. FAQ
-11. Final CTA
-12. Footer
+3. Masalah (Problem)
+4. Tiga Pegangan (Solution Benefits)
+5. Dua Mode
+6. Escrow
+7. Lihat Aplikasinya (Product Preview)
+8. Untuk UMKM (UMKM Growth)
+9. Untuk Kreator (Creator Opportunity)
+10. Konteks (pengganti Social Proof sampai ada data asli)
+11. FAQ
+12. Final CTA
+13. Footer
 ```
 
 ## 16. Navbar
@@ -181,6 +184,7 @@ Hindari dark hero full-screen.
 
 ## 19. Implementation Priority Landing
 
-Kerjakan landing page setelah dashboard utama stabil.
-Jika harus dibuat lebih awal, buat versi sederhana dulu: Hero, Two Modes, Escrow, CTA.
-Jangan habiskan waktu membuat animasi kompleks sebelum fitur MVP selesai.
+Owner menyatakan MVP selesai pada 2026-10-16, sehingga landing boleh motion-led.
+Stack motion landing: GSAP + ScrollTrigger + Lenis, hanya di route `/`, dengan katalog efek dan guardrail di `docs/landing-revamp/PLAN.md` bagian 5.
+Setiap efek wajib punya jalur reduced motion dan touch, dan konten harus terbaca tanpa JavaScript.
+Dashboard tetap memakai motion token pendek di `02-design-tokens.md` §18.

@@ -1,8 +1,8 @@
 # Plan Revamp Landing Page Marketiv
 
-Status: DISETUJUI ARAHNYA, belum dieksekusi. Tanggal: 2026-10-16. Owner: Sehan (CTO).
+Status: DIIMPLEMENTASI di branch `feat/landing-revamp-motion`. Tanggal: 2026-10-16. Owner: Sehan (CTO).
 
-Dokumen ini adalah rencana penggantian total landing page `/`. Belum ada kode yang diubah. D1, D2, D3, D6 sudah diputuskan; D4, D5, D7 masih terbuka tapi tidak memblokir P1 (bagian 10). Referensi owner (Armor, Sphere, DontMatter) sudah dipetakan di bagian 3.1 dan diterapkan di bagian 4 dan 6.
+Dokumen ini adalah rencana penggantian total landing page `/`. P0 sampai P5 sudah dikerjakan; D4, D5, D7, D8 masih terbuka dan dicatat di bagian 11. Referensi owner (Armor, Sphere, DontMatter) sudah dipetakan di bagian 3.1 dan diterapkan di bagian 4 dan 6.
 
 ## 1. Kenapa landing sekarang perlu diganti
 
@@ -455,3 +455,17 @@ Satu PR per fase ke `staging` supaya review tetap kecil.
 | D6 | Konflik K1: lanjut revamp motion-led walau guideline §19 menyarankan menunda? | **Lanjut.** Owner, 2026-10-16: MVP sudah selesai, landing dibuat sebagus mungkin. Premis §19 tidak berlaku lagi; §19 dan §15 diperbarui di P5. |
 | D8 | Hover distortion (M11) cukup dengan filter SVG, atau pakai WebGL (shader displacement) lewat library kecil seperti `ogl`? | Mulai dengan filter SVG (tanpa dependency baru). WebGL hanya jika hasil SVG kurang halus setelah dicoba di P3; dependency baru tetap butuh persetujuan owner. |
 | D7 | Foto asli: (a) foto pendiri + kutipan yang ditulis owner untuk Catatan Pendiri, (b) foto UMKM mitra di tempat usahanya (dengan izin) untuk hotspot Untuk UMKM. | Terbuka. Tanpa (a), Catatan Pendiri dihapus. Tanpa (b), panel UMKM memakai mockup wizard. Tidak memblokir P1. |
+
+## 11. Catatan implementasi
+
+Penyimpangan dari rencana dan sisa pekerjaan, supaya dokumen tetap jujur terhadap kode.
+
+- **Peta Jawa dengan pin (6.9) diganti kartu koordinat Sukabumi.** Skill `build-awwwards-quality-sites` melarang ilustrasi yang digambar model; garis pantai Jawa buatan tangan tidak akurat.
+- **Preview berisi 2 screenshot, bukan 3.** Screenshot Keuangan/Escrow tidak diambil karena owner meminta fokus ke landing saja. Alur escrow sudah dijelaskan oleh scene Escrow.
+- **Foto mock "Sambal Roa" di screenshot di-blur** karena memuat merek pihak ketiga.
+- **Hotspot foto UMKM dan Catatan Pendiri belum dibuat** (D7 terbuka). Panel UMKM memakai mockup brief.
+- **Nomor WhatsApp dan tahun P2MW dihapus dari footer** sampai owner memberi data asli (D5). Footer memakai email dan Instagram.
+- **Distortion memakai filter SVG** (D8), tanpa dependency WebGL.
+- **Belum diukur:** LCP mobile, bundle size per route, dan fps di Android mid-range. Jalankan Lighthouse pada build produksi sebelum merge.
+- **Di luar cakupan dan belum disentuh:** font variable di `layout.tsx`, `lang="en"`, `images.unoptimized`, duplikasi `motion` dan `framer-motion`, halaman placeholder publik.
+
