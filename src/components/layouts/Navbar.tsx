@@ -8,6 +8,7 @@ import { NAVBAR_CONTENT } from "@/data/content";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { dashboardByRole, isUserPortalRole } from "@/lib/constants/routes";
 import { SECTION_EVENT } from "@/components/features/landing/motion/SectionObserver";
+import { ScrollTrigger } from "@/lib/gsap";
 
 const content = NAVBAR_CONTENT;
 
@@ -16,24 +17,6 @@ function RollLabel({ text }: { text: string }) {
     <span className="roll">
       <span>{text}</span>
       <span aria-hidden="true">{text}</span>
-    </span>
-  );
-}
-
-function LocalClock({ city }: { city: string }) {
-  const [time, setTime] = useState<string | null>(null);
-
-  useEffect(() => {
-    const format = new Intl.DateTimeFormat("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" });
-    const update = () => setTime(format.format(new Date()));
-    update();
-    const timer = window.setInterval(update, 15_000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  return (
-    <span className="font-mono-nota text-[11px] uppercase tracking-[0.08em] text-neutral-600">
-      {city} <span className="text-secondary-900">{time ?? "--.--"}</span> WIB
     </span>
   );
 }
@@ -49,8 +32,8 @@ function SectionIndicator() {
 
   if (!label) return null;
   return (
-    <span aria-hidden="true" className="relative hidden h-4 overflow-hidden xl:inline-block">
-      <span key={label} className="block animate-[landing-label-in_0.5s_cubic-bezier(0.16,1,0.3,1)] font-mono-nota text-[11px] uppercase tracking-[0.08em] text-primary-700">
+    <span aria-hidden="true" className="relative hidden h-5 overflow-hidden xl:inline-block">
+      <span key={label} className="block animate-[landing-label-in_0.5s_cubic-bezier(0.16,1,0.3,1)] text-[13px] font-semibold text-neutral-600">
         {label}
       </span>
     </span>
@@ -69,25 +52,19 @@ export function Navbar() {
   const toggleRef = useRef<HTMLButtonElement>(null);
 
   // Hides while reading downward and returns on any upward scroll, so the bar never covers content for long.
+  // ScrollTrigger batches with the page's other scroll work instead of adding a raw scroll listener.
   useEffect(() => {
-    let lastY = window.scrollY;
-    let frame = 0;
-    const onScroll = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const y = window.scrollY;
+    const trigger = ScrollTrigger.create({
+      start: 0,
+      end: "max",
+      onUpdate: (self) => {
+        const y = self.scroll();
         setIsScrolled(y > 24);
         setShowMobileCta(y > window.innerHeight * 0.7);
-        if (Math.abs(y - lastY) > 6) setIsHidden(y > lastY && y > 160);
-        lastY = y;
-      });
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", onScroll);
-    };
+        setIsHidden(self.direction === 1 && y > 160);
+      },
+    });
+    return () => trigger.kill();
   }, []);
 
   useEffect(() => {
@@ -155,10 +132,6 @@ export function Navbar() {
           </div>
           <div className="flex-1 lg:hidden" />
 
-          <div className="hidden xl:block">
-            <LocalClock city={content.clockCity} />
-          </div>
-
           <button
             ref={toggleRef}
             type="button"
@@ -189,7 +162,7 @@ export function Navbar() {
             )}
           >
             <ul className="flex flex-col">
-              {content.menu.map((link, index) => (
+              {content.menu.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
@@ -197,7 +170,6 @@ export function Navbar() {
                     className="roll-host flex items-center justify-between rounded-2xl px-4 py-3.5 text-lg font-bold tracking-[-0.02em] text-secondary-900 transition-colors hover:bg-neutral-100"
                   >
                     <RollLabel text={link.label} />
-                    <span className="font-mono-nota text-xs text-neutral-500">0{index + 1}</span>
                   </Link>
                 </li>
               ))}
@@ -226,16 +198,16 @@ export function Navbar() {
       {!loading && !dashboardHref && (
         <div
           className={cn(
-            "fixed bottom-6 left-3 right-[92px] z-40 grid grid-cols-2 gap-2 rounded-full bg-secondary-900/95 p-1.5 shadow-[0_18px_40px_rgba(16,32,51,0.28)] backdrop-blur transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden",
+            "fixed bottom-6 left-3 right-[92px] z-40 grid grid-cols-2 gap-2 rounded-full bg-secondary-900/95 p-1.5 shadow-[0_18px_40px_rgba(16,32,51,0.28)] backdrop-blur transition-[opacity,translate] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden",
             showMobileCta ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-[150%] opacity-0",
           )}
           inert={!showMobileCta}
         >
-          <Link href={content.mobileCtaUmkm.href} className="flex h-11 items-center justify-center rounded-full bg-primary-500 text-[13px] font-bold text-white">
-            {content.mobileCtaUmkm.label}
+          <Link href="/register" className="flex h-11 items-center justify-center rounded-full bg-primary-500 text-[14px] font-bold text-white transition-[scale] duration-150 active:scale-[0.96]">
+            {content.register}
           </Link>
-          <Link href={content.mobileCtaKreator.href} className="flex h-11 items-center justify-center rounded-full bg-white/10 text-[13px] font-bold text-white">
-            {content.mobileCtaKreator.label}
+          <Link href="/login" className="flex h-11 items-center justify-center rounded-full bg-white/10 text-[14px] font-bold text-white transition-[scale] duration-150 active:scale-[0.96]">
+            {content.login}
           </Link>
         </div>
       )}

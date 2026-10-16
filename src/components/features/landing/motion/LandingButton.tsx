@@ -63,7 +63,7 @@ export function LandingButton({
   variant = "primary",
   size = "lg",
   curtain = false,
-  arrow = true,
+  arrow = false,
   id,
   className,
   cursorLabel,
@@ -131,7 +131,7 @@ export function LandingButton({
         data-cursor="button"
         data-cursor-label={cursorLabel}
         className={cn(
-          "group/btn liquid-btn roll-host relative isolate inline-flex items-center justify-center overflow-hidden rounded-full font-bold tracking-[-0.01em] outline-none",
+          "group/btn liquid-btn roll-host relative isolate inline-flex items-center justify-center overflow-hidden whitespace-nowrap rounded-full font-bold tracking-[-0.01em] outline-none transition-[scale] duration-150 active:scale-[0.96]",
           "focus-visible:ring-4 focus-visible:ring-primary-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
           styles.base,
           SIZE_CLASSES[size],

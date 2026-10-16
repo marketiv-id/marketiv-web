@@ -97,10 +97,11 @@ describe("auth-aware landing actions", () => {
     mockAuth({ user: null, loading: false });
     await render(<Navbar />);
 
-    expect(document.querySelectorAll('a[href="/login"]')).toHaveLength(2);
-    expect(document.querySelectorAll('a[href="/register"]')).toHaveLength(2);
+    // Desktop bar, mobile menu, and the mobile CTA bar each carry one login and one register link.
+    expect(document.querySelectorAll('a[href="/login"]')).toHaveLength(3);
+    expect(document.querySelectorAll('a[href="/register"]')).toHaveLength(3);
     await click('button[aria-label="Buka menu navigasi"]');
-    expect(document.body.textContent).toContain("Daftar Sekarang");
+    expect(document.querySelector('button[aria-label="Tutup menu navigasi"]')).not.toBeNull();
   });
 
   it("shows UMKM dashboard on desktop and mobile", async () => {
@@ -110,7 +111,7 @@ describe("auth-aware landing actions", () => {
 
     const dashboardLinks = document.querySelectorAll('a[href="/dashboard/umkm"]');
     expect(dashboardLinks).toHaveLength(2);
-    expect(document.body.textContent).not.toContain("Daftar Sekarang");
+    expect(document.querySelector('a[href="/register?role=umkm"]')).toBeNull();
     expect(document.querySelectorAll('a[href="/login"]')).toHaveLength(0);
     expect(document.querySelectorAll('a[href="/register"]')).toHaveLength(0);
   });

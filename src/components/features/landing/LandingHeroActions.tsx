@@ -33,7 +33,7 @@ export function LandingHeroActions({ ctaUmkm, ctaCreator, dashboardCta = "Buka D
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-      <LandingButton href={routes.registerWithRole("umkm")} variant="primary" curtain cursorLabel="Mulai">
+      <LandingButton href={routes.registerWithRole("umkm")} variant="primary" curtain arrow cursorLabel="Mulai">
         {ctaUmkm}
       </LandingButton>
       <LandingButton href={routes.registerWithRole("creator")} variant="outline" curtain cursorLabel="Daftar">

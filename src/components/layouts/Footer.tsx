@@ -34,7 +34,7 @@ export function Footer({ reveal = false }: FooterProps) {
 
           <div className="grid grid-cols-2 gap-10 sm:grid-cols-3 lg:col-span-6">
             <div>
-              <h2 className="font-mono-nota text-[11px] uppercase tracking-[0.12em] text-white/45">{footer.nav.title}</h2>
+              <h2 className="text-[13px] font-semibold text-white/50">{footer.nav.title}</h2>
               <ul className="mt-5 flex flex-col gap-3">
                 {footer.nav.links.map((link) => (
                   <li key={link.href}>
@@ -49,7 +49,7 @@ export function Footer({ reveal = false }: FooterProps) {
               </ul>
             </div>
             <div>
-              <h2 className="font-mono-nota text-[11px] uppercase tracking-[0.12em] text-white/45">{footer.legal.title}</h2>
+              <h2 className="text-[13px] font-semibold text-white/50">{footer.legal.title}</h2>
               <ul className="mt-5 flex flex-col gap-3">
                 {footer.legal.links.map((link) => (
                   <li key={link.href}>
@@ -61,7 +61,7 @@ export function Footer({ reveal = false }: FooterProps) {
               </ul>
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <h2 className="font-mono-nota text-[11px] uppercase tracking-[0.12em] text-white/45">{footer.contact.title}</h2>
+              <h2 className="text-[13px] font-semibold text-white/50">{footer.contact.title}</h2>
               <ul className="mt-5 flex flex-col gap-3">
                 <li>
                   <a href={`mailto:${footer.contact.email}`} className="text-[15px] font-semibold text-white/85 transition-colors hover:text-primary-400">
@@ -87,7 +87,7 @@ export function Footer({ reveal = false }: FooterProps) {
 
         <div className="flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
           <p>{footer.copyright}</p>
-          <p className="font-mono-nota uppercase tracking-[0.1em]">{footer.program}</p>
+          <p>{footer.program}</p>
         </div>
       </div>
     </footer>

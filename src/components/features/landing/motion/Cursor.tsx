@@ -3,7 +3,8 @@
 import { useRef } from "react";
 import { FINE_POINTER, gsap, useGSAP } from "@/lib/gsap";
 
-// Follower cursor for a fine pointer. The native cursor stays visible, so a failed script never leaves the visitor without one.
+// Trailing follower that appears only over buttons, links and media (owner asked for it on buttons).
+// The native cursor always stays visible, so a failed script never leaves the visitor without one.
 export function Cursor() {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -51,7 +52,6 @@ export function Cursor() {
           if (!visible) {
             visible = true;
             gsap.set([dot, ring], { x: event.clientX, y: event.clientY });
-            setState("idle");
           }
         };
 
@@ -67,11 +67,11 @@ export function Cursor() {
             setState("label", labelled.dataset.cursorLabel);
             return;
           }
-          if (target.closest("a, button, [role='button'], summary, label, [data-cursor]")) {
+          if (target.closest("a, button, [role='button'], [role='tab'], [data-cursor]")) {
             setState("link");
             return;
           }
-          setState("idle");
+          setState("hidden");
         };
 
         const hide = () => {

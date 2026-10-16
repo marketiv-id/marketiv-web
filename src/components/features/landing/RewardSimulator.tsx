@@ -48,8 +48,8 @@ export function RewardSimulator({ content }: RewardSimulatorProps) {
   const clampRate = (value: number) => Math.min(content.maxRate, Math.max(content.minRate, Number.isFinite(value) ? value : content.minRate));
 
   return (
-    <div className="nota-edge relative rounded-t-[24px] bg-white p-6 shadow-[0_24px_60px_rgba(16,32,51,0.12)] ring-1 ring-neutral-200 [--nota-bg:#ffffff] md:p-7">
-      <p className="font-mono-nota text-[11px] uppercase tracking-[0.12em] text-neutral-600">{content.title}</p>
+    <div className="nota-edge relative rounded-t-3xl bg-white p-6 shadow-[0_24px_60px_rgba(16,32,51,0.12)] ring-1 ring-neutral-200 [--nota-bg:#ffffff] md:p-7">
+      <p className="text-[15px] font-bold text-secondary-900">{content.title}</p>
 
       <div className="mt-5">
         <div className="flex items-baseline justify-between gap-4">
@@ -95,7 +95,7 @@ export function RewardSimulator({ content }: RewardSimulatorProps) {
 
       <div className="mt-6 border-t border-dashed border-neutral-300 pt-5">
         <p className="text-sm text-neutral-600">{content.resultLabel}</p>
-        <output ref={outputRef} htmlFor={`${viewsId} ${rateId}`} aria-live="polite" className="mt-1 block font-mono-nota text-4xl font-bold tracking-[-0.03em] text-secondary-900">
+        <output ref={outputRef} htmlFor={`${viewsId} ${rateId}`} aria-live="polite" className="mt-1 block font-mono-nota text-4xl font-bold tracking-[-0.03em] text-secondary-900 [font-variant-numeric:tabular-nums]">
           {rupiah.format(reward)}
         </output>
         <p className="mt-3 font-mono-nota text-[12px] text-neutral-600">

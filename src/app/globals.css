@@ -1446,16 +1446,22 @@ html.lenis.lenis-smooth {
     font-weight: 800;
   }
   .text-display-lg {
-    font-size: clamp(2.1rem, 4.8vw, 4.5rem);
-    line-height: 1.02;
-    letter-spacing: -0.04em;
+    font-size: clamp(2rem, 3.7vw, 3.5rem);
+    line-height: 1.04;
+    letter-spacing: -0.035em;
     font-weight: 800;
+    text-wrap: balance;
   }
   .text-display-md {
-    font-size: clamp(1.75rem, 3.2vw, 3rem);
-    line-height: 1.08;
+    font-size: clamp(1.6rem, 2.6vw, 2.4rem);
+    line-height: 1.1;
     letter-spacing: -0.03em;
     font-weight: 800;
+    text-wrap: balance;
+  }
+  .img-outline {
+    outline: 1px solid oklch(0 0 0 / 0.1);
+    outline-offset: -1px;
   }
   .text-statement {
     font-size: clamp(1.6rem, 3.4vw, 3.15rem);
@@ -1537,32 +1543,6 @@ html[data-intro="play"] .intro-curtain {
   height: 12px;
   background: radial-gradient(circle at 10px 0, transparent 7px, var(--nota-bg, #fffdf9) 7.5px) repeat-x;
   background-size: 20px 12px;
-}
-
-.faq-panel {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.faq-panel[data-open="true"] {
-  grid-template-rows: 1fr;
-}
-.faq-panel > div {
-  min-height: 0;
-  overflow: hidden;
-}
-
-@keyframes landing-pulse {
-  0% { transform: scale(1); opacity: 0.55; }
-  100% { transform: scale(2.4); opacity: 0; }
-}
-.landing-pulse::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  background: currentColor;
-  animation: landing-pulse 1.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
 .landing-cursor {

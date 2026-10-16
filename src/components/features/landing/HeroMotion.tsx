@@ -49,7 +49,7 @@ export function HeroMotion({ children, className }: HeroMotionProps) {
           scrollTrigger: { trigger: root, start: "top top", end: "bottom top", scrub: 1 },
         });
         out
-          .to(q("[data-hero-frame]"), { scale: 0.92, borderRadius: 48, ease: "none" }, 0)
+          .to(q("[data-hero-frame]"), { scale: 0.92, borderRadius: 64, ease: "none" }, 0)
           .to(q("[data-hero-word-layer]"), { yPercent: 40, ease: "none" }, 0)
           .to(q("[data-hero-phone-layer]"), { yPercent: -18, ease: "none" }, 0);
 
@@ -94,7 +94,7 @@ export function HeroMotion({ children, className }: HeroMotionProps) {
   );
 
   return (
-    <section ref={ref} id="beranda" data-section-label="00 / Beranda" className={className}>
+    <section ref={ref} id="beranda" data-section-label="Beranda" className={className}>
       {children}
     </section>
   );

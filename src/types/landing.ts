@@ -24,9 +24,6 @@ export interface LandingNavContent {
   register: string;
   registerMobile: string;
   dashboard: string;
-  clockCity: string;
-  mobileCtaUmkm: LandingLink;
-  mobileCtaKreator: LandingLink;
 }
 
 export type HeroChipTone = "navy" | "white" | "orange";
@@ -38,7 +35,6 @@ export interface HeroChip {
 }
 
 export interface HeroContent {
-  eyebrow: string;
   titleLead: string;
   titleRest: string;
   titleAccent: string;
@@ -46,7 +42,6 @@ export interface HeroContent {
   ctaUmkm: string;
   ctaCreator: string;
   dashboardCta: string;
-  note: string;
   backdropWord: string;
   sampleLabel: string;
   chips: HeroChip[];
@@ -65,13 +60,21 @@ export interface ProblemContent {
   kreator: { title: string; items: string[] };
 }
 
-export type PillarIcon = "chart" | "shield" | "users";
+export interface PillarItem {
+  title: string;
+  description: string;
+  // "stamp" renders the escrow stamp; "image" shows a real app crop.
+  visual: "stamp" | "image";
+  image?: string;
+  imageAlt?: string;
+  stamp?: string;
+}
 
 export interface PillarsContent {
   label: string;
   titleLead: string;
   titleAccent: string;
-  items: { no: string; title: string; description: string; icon: PillarIcon }[];
+  items: PillarItem[];
 }
 
 export interface ModePanel {
@@ -90,11 +93,6 @@ export interface ModesContent {
   titleAccent: string;
   campaign: ModePanel;
   rateCard: ModePanel;
-  compare: {
-    caption: string;
-    headers: [string, string, string];
-    rows: [string, string, string][];
-  };
 }
 
 export interface EscrowStep {
@@ -125,7 +123,6 @@ export interface PreviewContent {
   titleAccent: string;
   intro: string;
   caption: string;
-  scrollHint: string;
   panels: { id: string; tag: string; title: string; description: string; image: string; alt: string }[];
 }
 
@@ -137,26 +134,10 @@ export interface UmkmContent {
   cta: string;
   brief: {
     title: string;
-    productLabel: string;
-    productValue: string;
-    budgetLabel: string;
-    budgetValue: string;
-    rateLabel: string;
-    rateValue: string;
-    aiLabel: string;
-    aiText: string;
+    meta: { label: string; value: string }[];
+    text: string;
     sampleLabel: string;
   };
-}
-
-export interface JobCard {
-  id: string;
-  title: string;
-  brand: string;
-  category: string;
-  platform: string;
-  rate: string;
-  quota: string;
 }
 
 export interface KreatorContent {
@@ -165,19 +146,8 @@ export interface KreatorContent {
   titleAccent: string;
   points: string[];
   cta: string;
-  jobsTitle: string;
-  jobsSampleLabel: string;
-  jobCta: string;
-  jobLabels: {
-    badge: string;
-    category: string;
-    platform: string;
-    quota: string;
-    perViews: string;
-    previous: string;
-    next: string;
-  };
-  jobs: JobCard[];
+  jobImage: string;
+  jobImageAlt: string;
   simulator: {
     title: string;
     viewsLabel: string;

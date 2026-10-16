@@ -115,12 +115,12 @@ export function EscrowSection({ content }: EscrowSectionProps) {
       aria-labelledby="escrow-title"
       className="landing-grain relative isolate z-[8] -mt-10 overflow-hidden rounded-b-[24px] bg-secondary-900 text-white md:rounded-b-[40px]"
     >
-      <ScreenSlice colorClassName="bg-neutral-25" />
+      <ScreenSlice colorClassName="bg-white" />
       <div data-escrow-pin className="relative flex min-h-svh items-center px-5 pb-20 pt-32 md:px-10 lg:pb-12 lg:pt-28">
         <Spotlight />
         <div className="relative z-[2] mx-auto grid w-full max-w-[1400px] gap-14 lg:grid-cols-12 lg:items-center lg:gap-8">
           <div className="lg:col-span-6">
-            <p className="font-mono-nota text-xs uppercase tracking-[0.12em] text-primary-400">{content.label}</p>
+            <p className="text-[15px] font-bold text-primary-400">{content.label}</p>
             <Reveal as="h2" id="escrow-title" mode="words" className="text-display-md mt-5 max-w-[18ch]">
               {content.titleLead} <span className="text-primary-400">{content.titleAccent}</span>
             </Reveal>
@@ -150,14 +150,14 @@ export function EscrowSection({ content }: EscrowSectionProps) {
           <div className="flex justify-center lg:col-span-6">
             <div
               data-escrow-receipt
-              className="nota-edge relative w-full max-w-[400px] -rotate-[1.5deg] rounded-t-[22px] bg-neutral-25 px-7 pb-9 pt-7 text-secondary-900 shadow-[0_40px_90px_rgba(0,0,0,0.45)] [--nota-bg:#fffdf9]"
+              className="nota-edge relative w-full max-w-[400px] -rotate-[1.5deg] rounded-t-3xl bg-neutral-25 px-7 pb-9 pt-7 text-secondary-900 shadow-[0_40px_90px_rgba(0,0,0,0.45)] [--nota-bg:#fffdf9]"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="font-mono-nota text-[11px] uppercase tracking-[0.16em] text-neutral-600">{content.receipt.title}</p>
+                  <p className="font-mono-nota text-[12px] text-neutral-600">{content.receipt.title}</p>
                   <p className="mt-1 font-mono-nota text-lg font-bold">{content.receipt.code}</p>
                 </div>
-                <span className="rounded-full bg-neutral-200 px-2 py-0.5 font-mono-nota text-[10px] uppercase tracking-[0.1em] text-neutral-700">
+                <span className="text-[11px] font-medium text-neutral-500">
                   {content.receipt.sampleLabel}
                 </span>
               </div>
@@ -209,7 +209,7 @@ export function EscrowSection({ content }: EscrowSectionProps) {
       </div>
 
       <div className="relative z-[2] mx-auto max-w-[1400px] px-5 pb-24 md:px-10 lg:pb-28">
-        <p data-escrow-note className="max-w-3xl border-l-2 border-primary-500 pl-5 text-[15px] leading-relaxed text-white/70">
+        <p data-escrow-note className="max-w-3xl text-[15px] leading-relaxed text-white/60 [text-wrap:pretty]">
           {content.disputeNote}
         </p>
       </div>
