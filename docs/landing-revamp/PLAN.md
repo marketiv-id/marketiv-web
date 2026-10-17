@@ -509,3 +509,12 @@ Owner menilai versi Armor/Sphere/DontMatter masih terlalu kosong dan terlihat bu
   - Final CTA duduk di section navy yang menyatu dengan footer.
   - Cakupan copy diperluas: berawal dari Sukabumi, terbuka untuk seluruh Indonesia. Pendaftaran tidak dibatasi wilayah, dan UMKM bisa memilih domisili kreator di form campaign.
   - Tombol di permukaan gelap memakai prop `surface="dark"`, supaya warna hover tetap kontras. Kursor berubah navy di atas permukaan oranye (`data-cursor-tone="ink"`).
+- **Revisi 2026-10-17 malam (feedback owner pada zoom 100%).**
+  - Acuan layout sekarang viewport pendek, sekitar 1280x630 CSS (laptop dengan scaling 150%). Ukuran poster dibatasi `min(vw, vh)`, dan scene yang di-pin (Escrow, Preview) hanya di-pin pada tinggi minimal 620px (`PIN_MOTION`). Footer sticky hanya aktif pada tinggi minimal 900px.
+  - Root landing memakai `overflow-x: clip`, supaya elemen `100vw` tidak memunculkan scrollbar horizontal.
+  - Intro diganti versi cepat: wordmark navy dan garis progres, lalu layar terbelah. Durasinya sekitar 1,5 detik dan tidak lagi menyalin pola portofolio.
+  - Efek distorsi hover di screenshot Preview dihapus karena terlihat blur.
+  - Hero memakai tagline brand dari banner booth KMI: "Dari kreasi konten jadi omset nyata", "Kolaborasi hebat, bisnis melesat", "Create · Connect · Grow".
+  - Galeri Prestasi berbentuk polaroid: pengumuman resmi, roll-up banner booth (panel Marketiv dari `kmiexpo.png` milik owner), dan desain banner meja. Foto tim belum ada.
+  - Chatbot Tivvy memakai wajah maskot sebagai avatar dengan tampilan baru. Logika chat tidak diubah, dan komponen ini global sehingga ikut tampil di dashboard.
+

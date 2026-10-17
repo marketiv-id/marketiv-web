@@ -189,7 +189,8 @@ export interface AchievementContent {
   titleAccent: string;
   intro: string;
   facts: { label: string; value: string }[];
-  photos: (LandingImage & { caption?: string })[];
+  // width and height set each polaroid's aspect ratio.
+  photos: (LandingImage & { caption?: string; width: number; height: number })[];
 }
 
 export interface FaqContent {
@@ -205,8 +206,8 @@ export interface FinalCtaContent {
   titleLead: string;
   titleAccent: string;
   subtitle: string;
-  umkm: { prompt: string; cta: string; mascot: LandingImage };
-  kreator: { prompt: string; cta: string; mascot: LandingImage };
+  umkm: { name: string; prompt: string; cta: string; mascot: LandingImage };
+  kreator: { name: string; prompt: string; cta: string; mascot: LandingImage };
 }
 
 export interface FooterContent {

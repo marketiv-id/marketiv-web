@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { DESKTOP_MOTION, gsap, MOTION_OK, useGSAP } from "@/lib/gsap";
+import { gsap, MOTION_OK, NO_PIN_MOTION, PIN_MOTION, useGSAP } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
 import type { EscrowContent } from "@/types/landing";
 import { Reveal } from "./motion/Reveal";
@@ -37,7 +37,7 @@ export function EscrowSection({ content }: EscrowSectionProps) {
       const q = gsap.utils.selector(root);
       const mm = gsap.matchMedia();
 
-      mm.add(DESKTOP_MOTION, () => {
+      mm.add(PIN_MOTION, () => {
         const steps = q("[data-escrow-step]");
         const rows = q("[data-escrow-row]");
         const stamps = q("[data-escrow-stamp]");
@@ -79,7 +79,7 @@ export function EscrowSection({ content }: EscrowSectionProps) {
         tl.to({}, { duration: 0.6 });
       });
 
-      mm.add("(prefers-reduced-motion: no-preference) and (max-width: 1023px)", () => {
+      mm.add(NO_PIN_MOTION, () => {
         gsap.from(q("[data-escrow-step]"), {
           y: 24,
           autoAlpha: 0,
@@ -112,20 +112,20 @@ export function EscrowSection({ content }: EscrowSectionProps) {
       aria-labelledby="escrow-title"
       className="relative z-[8] -mt-10 overflow-hidden rounded-b-[24px] bg-secondary-900 text-white md:rounded-b-[40px]"
     >
-      <div data-escrow-pin className="halftone relative flex min-h-svh items-center px-5 pb-20 pt-32 [--ht-dir:160deg] [--ht-dot:rgba(249,115,22,0.38)] md:px-10 lg:pb-12 lg:pt-28">
+      <div data-escrow-pin className="halftone relative flex min-h-svh items-center px-5 pb-20 pt-32 [--ht-dir:160deg] [--ht-dot:rgba(249,115,22,0.38)] md:px-10 lg:pb-8 lg:pt-24">
         <div className="relative z-[2] mx-auto grid w-full max-w-[1600px] gap-14 lg:grid-cols-12 lg:items-center lg:gap-8">
           <div className="lg:col-span-6">
             <p data-scramble className="text-caption-mono text-primary-400">{content.label}</p>
-            <Reveal as="h2" id="escrow-title" mode="words" className="font-display-cond text-poster-sm mt-5 max-w-[17ch]">
+            <Reveal as="h2" id="escrow-title" mode="words" className="font-display-cond text-poster-sm mt-4 max-w-[22ch]">
               {content.titleLead} <span className="hl-box">{content.titleAccent}</span>
             </Reveal>
 
-            <div className="relative mt-10">
+            <div className="relative mt-8 lg:mt-7">
               <svg aria-hidden="true" className="absolute left-[15px] top-4 h-[calc(100%-2rem)] w-[2px] overflow-visible" preserveAspectRatio="none" viewBox="0 0 2 100">
                 <line x1="1" y1="0" x2="1" y2="100" stroke="rgba(255,255,255,0.12)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
                 <line data-escrow-line x1="1" y1="0" x2="1" y2="100" stroke="#f97316" strokeWidth="2" vectorEffect="non-scaling-stroke" />
               </svg>
-              <ol data-escrow-steps className="relative grid gap-6">
+              <ol data-escrow-steps className="relative grid gap-5 lg:gap-4">
                 {content.steps.map((step, index) => (
                   <li key={step.title} data-escrow-step className="flex gap-5">
                     <span className="relative mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center">

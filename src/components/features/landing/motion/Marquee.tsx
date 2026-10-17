@@ -22,7 +22,7 @@ function MarqueeRow({ items, outline = false, reverse = false, onOrange = false 
             <span key={`${copy}-${item}`} className="flex items-center">
               <span
                 className={cn(
-                  "font-display-cond px-5 text-[clamp(3.25rem,10vw,9.5rem)] leading-[0.95] md:px-8",
+                  "font-display-cond px-5 text-[clamp(2.8rem,min(7.5vw,13vh),7.5rem)] leading-[0.95] md:px-8",
                   outline
                     ? onOrange
                       ? "text-transparent [-webkit-text-stroke:1.5px_var(--color-secondary-900)]"

@@ -64,8 +64,9 @@ function ExampleBrief({ brief }: { brief: UmkmContent["brief"] }) {
 }
 
 export function AudienceSection({ umkm, kreator }: AudienceSectionProps) {
+  // overflow-clip (not hidden) rounds the section bottom without turning it into a scroll container, so the panels stay sticky.
   return (
-    <section aria-label={`${umkm.label} dan ${kreator.label}`} className="relative z-[6] -mt-10 rounded-b-[24px] md:rounded-b-[40px]">
+    <section aria-label={`${umkm.label} dan ${kreator.label}`} className="relative z-[6] -mt-10 overflow-clip rounded-b-[24px] md:rounded-b-[40px]">
       <StickyStack>
         <article
           id="umkm"
@@ -115,7 +116,7 @@ export function AudienceSection({ umkm, kreator }: AudienceSectionProps) {
           id="kreator"
           data-stack-panel
           aria-labelledby="kreator-title"
-          className="sticky z-[1] flex min-h-dvh flex-col justify-center overflow-hidden rounded-[24px] bg-white px-5 pb-20 pt-24 shadow-[0_-24px_60px_rgba(16,32,51,0.08)] md:rounded-[40px] md:px-10 md:pt-28"
+          className="sticky z-[1] flex min-h-dvh flex-col justify-center overflow-hidden rounded-t-[24px] bg-white px-5 pb-20 pt-24 shadow-[0_-24px_60px_rgba(16,32,51,0.08)] md:rounded-t-[40px] md:px-10 md:pt-28"
         >
           <div data-stack-inner className="mx-auto w-full max-w-[1600px] origin-top">
             <div className="grid gap-6 lg:grid-cols-12 lg:items-end">

@@ -24,12 +24,13 @@ export const NAVBAR_CONTENT: LandingNavContent = {
 // Facts on this page come from src/content/terms.ts; mockup numbers are labelled "Contoh" on screen.
 export const LANDING_CONTENT: LandingContent = {
   hero: {
-    meta: ["Marketplace UMKM × kreator mikro", "Campaign Mode · Rate Card Mode", "Dari Sukabumi untuk Indonesia"],
-    titleLead: "Kreator lokal promosikan produkmu.",
-    titleRest: "Dananya ditahan sampai",
-    titleAccent: "terbukti tayang.",
+    // Taglines from the owner's KMI EXPO booth banner and table banner, so the hero speaks in the brand's own voice.
+    meta: ["Kolaborasi hebat, bisnis melesat", "Campaign Mode · Rate Card Mode", "Create · Connect · Grow"],
+    titleLead: "Dari kreasi konten",
+    titleRest: "jadi",
+    titleAccent: "omset nyata.",
     subtitle:
-      "Pilih campaign yang dibayar per views atau pesan kreator dengan harga tetap. Dananya masuk escrow Marketiv, bukan langsung ke kreator.",
+      "Marketiv mempertemukan UMKM dengan kreator lokal. Pilih campaign yang dibayar per views atau pesan kreator dengan harga tetap. Dananya ditahan escrow sampai konten terbukti tayang.",
     ctaUmkm: "Mulai Buat Campaign",
     ctaCreator: "Daftar sebagai Kreator",
     dashboardCta: "Buka Dashboard",
@@ -315,6 +316,22 @@ export const LANDING_CONTENT: LandingContent = {
         src: "/landing/prestasi/pengumuman-kmi-expo-2026.webp",
         alt: "Pengumuman resmi Juara Harapan 2 KMI EXPO 2026 Kategori Bisnis Digital Tahapan Awal untuk Marketiv dari Universitas Nusa Putra",
         caption: "Pengumuman pemenang, 1 Oktober 2026",
+        width: 880,
+        height: 495,
+      },
+      {
+        src: "/landing/prestasi/banner-booth-kmi-2026.webp",
+        alt: "Roll-up banner Marketiv untuk booth KMI EXPO XVII 2026 dengan maskot dan tampilan aplikasi",
+        caption: "Banner booth Marketiv",
+        width: 666,
+        height: 1150,
+      },
+      {
+        src: "/landing/prestasi/banner-meja-booth.webp",
+        alt: "Desain banner meja booth Marketiv bertuliskan Satu Ekosistem, Banyak Peluang",
+        caption: "Desain banner meja booth",
+        width: 1400,
+        height: 700,
       },
     ],
   },
@@ -360,11 +377,13 @@ export const LANDING_CONTENT: LandingContent = {
     titleAccent: "peranmu.",
     subtitle: "Daftar gratis. Kamu baru membayar saat membuat campaign atau memesan kreator.",
     umkm: {
+      name: "UMKM",
       prompt: "Punya produk yang perlu dikenal lebih banyak orang?",
       cta: "Mulai Buat Campaign",
       mascot: { src: "/brand/maskot-umkm.webp", alt: "Maskot Marketiv, burung hantu oranye bertopi yang sedang melihat ponsel" },
     },
     kreator: {
+      name: "Kreator",
       prompt: "Bisa bikin konten dan ingin dibayar dengan aman?",
       cta: "Daftar sebagai Kreator",
       mascot: { src: "/brand/maskot-kreator.webp", alt: "Maskot Marketiv, burung hantu oranye berkacamata yang memegang kamera dan mengacungkan jempol" },

@@ -50,7 +50,7 @@ function NicheCard({ card, index }: { card: CategoryCard; index: number }) {
         {hasMedia && <div aria-hidden="true" className="photo-scrim absolute inset-0" />}
         <span className="text-caption-mono absolute left-5 top-5 rounded-full bg-black/25 px-2 py-0.5 text-white/90 md:left-6 md:top-6">0{index + 1}</span>
         <div className="relative">
-          <h3 className="font-display-cond text-[clamp(2.4rem,3.6vw,3.6rem)] leading-[0.86]">{card.label}</h3>
+          <h3 className="font-display-cond text-[clamp(2.2rem,min(3vw,6vh),3.1rem)] leading-[0.88]">{card.label}</h3>
           <p className="mt-2 text-[14px] font-medium text-white/85">{card.description}</p>
         </div>
       </article>
@@ -97,7 +97,7 @@ export function ContextSection({ content }: ContextSectionProps) {
               </div>
             </div>
             <p className="text-caption-mono mt-12 text-primary-400">{content.reach.label}</p>
-            <p className="font-display-cond mt-2 text-[clamp(2.8rem,4vw,4rem)] leading-[0.86]">{content.reach.title}</p>
+            <p className="font-display-cond mt-2 text-[clamp(2.5rem,min(3.4vw,6.5vh),3.4rem)] leading-[0.88]">{content.reach.title}</p>
             <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-white/75 [text-wrap:pretty]">{content.reach.text}</p>
             <p className="mt-8 font-mono-nota text-[12px] text-white/40 [font-variant-numeric:tabular-nums]">{content.origin.coordinates}</p>
           </div>

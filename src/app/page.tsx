@@ -38,7 +38,9 @@ export default function LandingPage() {
   const content = LANDING_CONTENT;
 
   return (
-    <div className={`${landingMono.variable} ${landingDisplay.variable}`}>
+    // overflow-x-clip: 100vw pieces include the vertical scrollbar width in Chrome, which would add a horizontal scrollbar.
+    // clip (not hidden) keeps sticky panels working.
+    <div className={`${landingMono.variable} ${landingDisplay.variable} overflow-x-clip`}>
       {/* Must run before the hero paints so the intro curtain and hidden decorations never flash. */}
       <script dangerouslySetInnerHTML={{ __html: INTRO_INLINE_SCRIPT }} />
       <a

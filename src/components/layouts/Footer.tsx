@@ -17,7 +17,8 @@ export function Footer({ reveal = false }: FooterProps) {
     <footer
       className={cn(
         "halftone relative w-full overflow-hidden bg-secondary-900 text-white [--ht-dir:0deg] [--ht-dot:rgba(249,115,22,0.3)]",
-        reveal && "lg:sticky lg:bottom-0 lg:z-0",
+        // Reveal only when the whole footer fits the viewport; on short screens a sticky footer would hide its top.
+        reveal && "[@media(min-width:1024px)_and_(min-height:900px)]:sticky [@media(min-width:1024px)_and_(min-height:900px)]:bottom-0 [@media(min-width:1024px)_and_(min-height:900px)]:z-0",
       )}
     >
       <div className="mx-auto max-w-[1400px] px-5 pb-6 pt-20 md:px-10 md:pt-28">

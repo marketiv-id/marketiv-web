@@ -75,7 +75,7 @@ export function SliceTransition() {
   );
 
   return (
-    <div ref={ref} aria-hidden="true" className="fixed inset-y-0 left-0 z-[85] hidden w-screen">
+    <div ref={ref} aria-hidden="true" className="fixed inset-0 z-[85] hidden">
       <div className="flex h-full">
         {Array.from({ length: SLICES }, (_, index) => (
           <span key={index} data-slice className="h-full flex-1 bg-primary-500" style={{ marginLeft: index ? -1 : 0 }} />
@@ -84,7 +84,7 @@ export function SliceTransition() {
       <span className="absolute inset-0 flex items-center justify-center px-5">
         {/* The label rises through its own line mask while the slices hold. */}
         <span className="block overflow-hidden pb-[0.04em]">
-          <span ref={labelRef} className="font-display-cond block text-center text-[17vw] leading-[0.86] text-secondary-900 md:text-[10vw]" />
+          <span ref={labelRef} className="font-display-cond block text-center text-[min(17vw,22vh)] leading-[0.86] text-white md:text-[min(10vw,20vh)]" />
         </span>
       </span>
     </div>

@@ -1,6 +1,6 @@
+import Image from "next/image";
 import type { ReactNode } from "react";
 import type { PreviewContent } from "@/types/landing";
-import { DistortImage } from "./motion/DistortImage";
 import { HorizontalTrack } from "./motion/HorizontalTrack";
 import { Reveal } from "./motion/Reveal";
 import { ScrollScale } from "./motion/ScrollScale";
@@ -29,7 +29,7 @@ export function PreviewSection({ content }: PreviewSectionProps) {
       aria-labelledby="preview-title"
       className="relative z-[7] -mt-10 rounded-b-[24px] bg-white pt-10 md:rounded-b-[40px]"
     >
-      <HorizontalTrack className="lg:flex lg:h-dvh lg:items-center" trackClassName="lg:gap-12 lg:pl-[max(2.5rem,calc((100vw-1600px)/2+2.5rem))] lg:pr-[10vw]">
+      <HorizontalTrack className="lg:flex lg:h-dvh lg:flex-col lg:justify-center" trackClassName="lg:gap-12 lg:pl-[max(2.5rem,calc((100vw-1600px)/2+2.5rem))] lg:pr-[10vw]">
         <div className="flex w-[85vw] shrink-0 snap-start flex-col justify-center pt-20 sm:w-[60vw] lg:w-[30vw] lg:pt-0">
           <p data-scramble className="text-caption-mono text-primary-600">{content.label}</p>
           <Reveal as="h2" id="preview-title" mode="words" className="font-display-cond text-poster-sm mt-5 text-secondary-900">
@@ -41,29 +41,30 @@ export function PreviewSection({ content }: PreviewSectionProps) {
 
         {content.panels.map((panel, index) => {
           const figure = (
-            <figure className="flex flex-col gap-6">
+            <figure className="flex flex-col gap-4 lg:gap-5">
               <div data-track-media>
                 <BrowserFrame>
-                  <DistortImage
-                    src={panel.image}
-                    alt={panel.alt}
-                    width={1600}
-                    height={956}
-                    sizes="(min-width: 1024px) 58vw, 88vw"
-                    className="aspect-[1600/956]"
-                    cursorLabel="Lihat"
-                  />
+                  {/* A plain zoom on hover keeps the screenshot sharp; the old displacement filter read as blur. */}
+                  <div className="group/shot relative aspect-[1600/956] overflow-hidden">
+                    <Image
+                      src={panel.image}
+                      alt={panel.alt}
+                      fill
+                      sizes="(min-width: 1024px) 58vw, 88vw"
+                      className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/shot:scale-[1.025]"
+                    />
+                  </div>
                 </BrowserFrame>
               </div>
               <figcaption className="max-w-xl">
                 <p className="text-caption-mono text-primary-600">{panel.tag}</p>
-                <p className="mt-1 text-xl font-extrabold tracking-[-0.02em] text-secondary-900 md:text-2xl">{panel.title}</p>
+                <p className="mt-1 text-xl font-extrabold tracking-[-0.02em] text-secondary-900 [text-wrap:balance] lg:text-[clamp(1.15rem,min(1.6vw,3.4vh),1.5rem)]">{panel.title}</p>
                 <p className="mt-2 text-[15px] leading-relaxed text-neutral-700">{panel.description}</p>
               </figcaption>
             </figure>
           );
           return (
-            <div key={panel.id} className="w-[88vw] shrink-0 snap-center sm:w-[75vw] lg:w-[56vw]">
+            <div key={panel.id} className="w-[88vw] shrink-0 snap-center sm:w-[75vw] lg:w-[min(52vw,calc((100dvh-300px)*1.67))]">
               {index === 0 ? <ScrollScale from={0.86}>{figure}</ScrollScale> : figure}
             </div>
           );

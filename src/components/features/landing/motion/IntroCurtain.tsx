@@ -5,36 +5,18 @@ import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
 import { markIntroDone, resetIntroState } from "./intro-state";
 import { setScrollLocked } from "./SmoothScroll";
 
-// Greets the visitor, cycling through who they might be, then lands on the brand name (same pattern as the owner's portfolio).
-const GREETING = "HALO,";
-const LOADING_WORDS = ["pemilik UMKM", "kreator lokal", "penjual kuliner", "brand fashion"];
-const FINAL_WORD = "ini Marketiv.";
-const CHARS = "abcdefghijklmnopqrstuvwxyz";
-// The loading phase lasts at least this long so the word cycle reads as intentional, and never longer than the cap.
-const MIN_LOADING_MS = 1800;
-const MAX_LOADING_MS = 3600;
-const SAFETY_MS = 9000;
+const WORD = "marketiv";
+// Short on purpose: the wordmark and the progress line finish in CSS by ~0.9s, then the screen splits open.
+// The page never waits for the full load event; fonts are the only thing worth holding for, and only briefly.
+const MIN_MS = 900;
+const MAX_MS = 1500;
+const SAFETY_MS = 5000;
 
 const delay = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
-
-// Resolves once fonts, images, and the hydration burst have settled, so the curtain moves on a quiet main thread.
-function pageSettled() {
-  const fonts = document.fonts?.ready.then(() => undefined) ?? Promise.resolve();
-  const loaded =
-    document.readyState === "complete"
-      ? Promise.resolve()
-      : new Promise<void>((resolve) => window.addEventListener("load", () => resolve(), { once: true }));
-  const idle = new Promise<void>((resolve) => {
-    if (typeof window.requestIdleCallback === "function") window.requestIdleCallback(() => resolve(), { timeout: 1200 });
-    else window.setTimeout(resolve, 300);
-  });
-  return Promise.race([Promise.all([fonts, loaded, idle, delay(MIN_LOADING_MS)]), delay(MAX_LOADING_MS)]);
-}
 
 // Plays on every load when motion is allowed; the inline head script decides that before first paint.
 export function IntroCurtain() {
   const ref = useRef<HTMLDivElement>(null);
-  const counter = useRef<HTMLSpanElement>(null);
 
   useGSAP(
     () => {
@@ -58,7 +40,6 @@ export function IntroCurtain() {
         ended = true;
         html.removeAttribute("data-intro");
         setScrollLocked(false);
-        // Layout settled while the overlay was up (fonts, images), so trigger positions are measured again.
         ScrollTrigger.refresh();
       };
       const safety = window.setTimeout(() => {
@@ -67,23 +48,13 @@ export function IntroCurtain() {
       }, SAFETY_MS);
 
       const q = gsap.utils.selector(el);
-      const word = q("[data-intro-word]");
-      const progress = { value: 0 };
-      const renderCount = () => {
-        if (counter.current) counter.current.textContent = String(Math.round(progress.value)).padStart(3, "0");
-      };
+      // Time already spent before hydration counts toward the minimum, so a slow bundle does not add a second wait.
+      const elapsed = performance.now();
+      const fonts = document.fonts?.ready.then(() => undefined) ?? Promise.resolve();
+      const ready = Promise.race([Promise.all([fonts, delay(Math.max(0, MIN_MS - elapsed))]), delay(Math.max(0, MAX_MS - elapsed))]);
 
-      // The greeting already rose in CSS before hydration; here the word cycles and the counter creeps toward 90.
-      const counting = gsap.to(progress, { value: 90, duration: MAX_LOADING_MS / 1000, ease: "power2.out", onUpdate: renderCount });
-      const cycle = gsap.timeline({ repeat: -1, delay: 0.4 });
-      [...LOADING_WORDS.slice(1), LOADING_WORDS[0]].forEach((text) => {
-        cycle.to(word, { duration: 0.45, ease: "none", scrambleText: { text, chars: CHARS, speed: 0.7 } }).to({}, { duration: 0.2 });
-      });
-
-      const finish = () => {
+      ready.then(() => {
         if (cancelled) return;
-        counting.kill();
-        cycle.kill();
         gsap
           .timeline({
             defaults: { ease: "expo.inOut" },
@@ -92,26 +63,15 @@ export function IntroCurtain() {
               end();
             },
           })
-          .to(progress, { value: 100, duration: 0.45, ease: "power2.out", onUpdate: renderCount }, 0)
-          .to(word, { duration: 0.6, ease: "none", scrambleText: { text: FINAL_WORD, chars: CHARS, speed: 0.7 } }, 0)
-          .addLabel("wipe", 0.7)
-          // y: 0 clears the px offset GSAP parses from the inline translateY, so only yPercent moves the curtain.
-          .fromTo(q("[data-curtain]"), { y: 0, yPercent: 130 }, { yPercent: 0, duration: 1 }, "wipe")
-          .fromTo(q("[data-curtain-lip]"), { scaleY: 1 }, { scaleY: 0, duration: 1 }, "wipe")
-          .addLabel("lift", "wipe+=0.8")
-          .to(q("[data-intro-text]"), { yPercent: -40, autoAlpha: 0, duration: 0.7, ease: "power3.in" }, "lift")
-          .to(el, { yPercent: -100, duration: 1 }, "lift")
-          .fromTo(q("[data-exit-lip]"), { scaleY: 1 }, { scaleY: 0, duration: 1 }, "lift")
-          // The hero starts while the overlay is still lifting, so the handoff reads as one motion.
-          .call(markIntroDone, [], "lift+=0.3");
-      };
-      pageSettled().then(finish);
+          .to(q("[data-intro-content]"), { yPercent: -60, autoAlpha: 0, duration: 0.45, ease: "power3.in" }, 0)
+          .to(q("[data-intro-half='top']"), { yPercent: -100, duration: 0.8 }, 0.2)
+          .to(q("[data-intro-half='bottom']"), { yPercent: 100, duration: 0.8 }, 0.2)
+          // The hero starts while the halves are still opening, so the handoff reads as one motion.
+          .call(markIntroDone, [], 0.4);
+      });
 
-      // Cleanup only releases what this run holds, so a Strict Mode remount replays the intro cleanly.
       return () => {
         cancelled = true;
-        counting.kill();
-        cycle.kill();
         window.clearTimeout(safety);
         setScrollLocked(false);
       };
@@ -120,32 +80,26 @@ export function IntroCurtain() {
   );
 
   return (
-    <div ref={ref} aria-hidden="true" className="intro-curtain fixed inset-y-0 left-0 z-[90] w-screen">
-      <div className="absolute inset-0 bg-white" />
-      {/* Inline transform, not a translate utility: Tailwind v4 writes the separate translate property, which would stack with GSAP's transform. */}
-      <div data-curtain className="absolute inset-0 bg-primary-500 will-change-transform" style={{ transform: "translateY(130%)" }}>
-        <div data-curtain-lip className="absolute -top-[14vh] left-[-15%] h-[28vh] w-[130%] origin-bottom rounded-[50%] bg-primary-500" />
-      </div>
-      {/* Hangs below the overlay as a half ellipse, so it only shows as a trailing curve once the overlay lifts. */}
-      <div data-exit-lip className="absolute left-[-15%] top-full h-[14vh] w-[130%] origin-top rounded-b-[50%_100%] bg-primary-500" />
+    <div ref={ref} aria-hidden="true" className="intro-curtain pointer-events-none fixed inset-0 z-[90]">
+      <div data-intro-half="top" className="absolute inset-x-0 top-0 h-[50.5%] bg-secondary-900" />
+      <div data-intro-half="bottom" className="absolute inset-x-0 bottom-0 h-[50.5%] bg-secondary-900" />
 
-      <div data-intro-text className="relative z-10 flex h-full flex-col items-center justify-center text-secondary-900">
-        {/* The greeting and labels animate in CSS, so text is on screen from the first paint, before JavaScript runs. */}
-        <p className="font-display-cond flex overflow-hidden pb-[0.06em] text-[30vw] leading-[0.86] md:text-[17vw]">
-          {GREETING.split("").map((char, index) => (
-            <span key={`${char}-${index}`} className="intro-char inline-block" style={{ animationDelay: `${0.1 + index * 0.06}s` }}>
+      <div data-intro-content className="absolute inset-0 flex flex-col items-center justify-center">
+        {/* Letters and line animate in CSS from the first paint, before JavaScript runs. */}
+        <p className="flex overflow-hidden pb-[0.08em] text-[clamp(3.5rem,13vw,10rem)] font-extrabold leading-[0.9] tracking-[-0.06em] text-white">
+          {WORD.split("").map((char, index) => (
+            <span
+              key={`${char}-${index}`}
+              className={index >= WORD.length - 2 ? "intro-char inline-block text-primary-500" : "intro-char inline-block"}
+              style={{ animationDelay: `${0.05 + index * 0.04}s` }}
+            >
               {char}
             </span>
           ))}
         </p>
-        <p className="intro-fade mt-[1.5vw] h-[1.2em] text-[8vw] font-semibold italic tracking-[-0.03em] text-primary-600 md:text-[3.6vw]" style={{ animationDelay: "0.45s" }}>
-          <span data-intro-word>{LOADING_WORDS[0]}</span>
-        </p>
-        <div className="text-caption-mono intro-fade absolute inset-x-5 bottom-6 flex justify-between text-neutral-600 md:inset-x-10 md:bottom-8" style={{ animationDelay: "0.6s" }}>
-          <span>UMKM × Kreator</span>
-          <span ref={counter} className="[font-variant-numeric:tabular-nums]">000</span>
-          <span>Indonesia</span>
-        </div>
+        <span className="mt-6 block h-[3px] w-[min(56vw,420px)] overflow-hidden rounded-full bg-white/10">
+          <span className="intro-line block h-full w-full origin-left rounded-full bg-primary-500" />
+        </span>
       </div>
     </div>
   );

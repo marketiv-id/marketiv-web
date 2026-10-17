@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, type ReactNode } from "react";
-import { DESKTOP_MOTION, gsap, useGSAP } from "@/lib/gsap";
+import { gsap, PIN_MOTION, useGSAP } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
 
 interface HorizontalTrackProps {
@@ -20,7 +20,7 @@ export function HorizontalTrack({ children, className, trackClassName }: Horizon
       const track = el?.querySelector<HTMLElement>("[data-track]");
       if (!el || !track) return;
       const mm = gsap.matchMedia();
-      mm.add(DESKTOP_MOTION, () => {
+      mm.add(PIN_MOTION, () => {
         const distance = () => Math.max(0, track.scrollWidth - el.clientWidth);
         const tween = gsap.to(track, {
           x: () => -distance(),
@@ -75,7 +75,8 @@ export function HorizontalTrack({ children, className, trackClassName }: Horizon
       >
         {children}
       </div>
-      <div aria-hidden="true" className="absolute inset-x-8 bottom-8 hidden h-px bg-secondary-900/15 lg:block">
+      {/* In flow, not absolute: on a short screen an absolute bar would sit on top of the panel captions. */}
+      <div aria-hidden="true" className="mx-8 mt-8 hidden h-px shrink-0 bg-secondary-900/15 lg:block">
         <div data-track-progress className="h-full origin-left scale-x-0 bg-primary-500" />
       </div>
     </div>

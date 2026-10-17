@@ -33,7 +33,7 @@ function StripCell({ item, hidden }: { item: HeroStripItem; hidden?: boolean }) 
 export function HeroSection({ content }: HeroSectionProps) {
   return (
     <HeroMotion className="relative z-[12] overflow-hidden rounded-b-[24px] bg-white md:rounded-b-[40px]">
-      <div className="relative mx-auto flex min-h-[100svh] max-w-[1600px] flex-col px-5 pb-10 pt-28 md:px-10 md:pt-32 lg:pb-12">
+      <div className="relative mx-auto flex min-h-[100svh] max-w-[1600px] flex-col px-5 pb-10 pt-28 md:px-10 md:pt-32 lg:pb-8 lg:pt-28">
         <ul data-hero-fade data-hero-meta className="text-caption-mono grid grid-cols-2 gap-x-6 border-b border-secondary-900/10 pb-4 text-neutral-600 md:grid-cols-3 lg:mr-[clamp(240px,25vw,440px)]">
           {content.meta.map((item, index) => (
             <li key={item} className={cn(index === 1 && "hidden md:block", index === 2 && "text-right")}>
@@ -44,7 +44,7 @@ export function HeroSection({ content }: HeroSectionProps) {
 
         <h1
           data-hero-title
-          className="font-display-cond relative z-[3] mt-8 max-w-[15ch] text-[clamp(3rem,6.8vw,8rem)] leading-[0.86] text-secondary-900 md:mt-10 lg:max-w-[min(68vw,1120px)]"
+          className="font-display-cond relative z-[3] mt-8 max-w-[15ch] text-[clamp(2.6rem,min(5.6vw,9.4vh),6.75rem)] leading-[0.88] text-secondary-900 md:mt-8 lg:max-w-[min(68vw,1120px)]"
         >
           {content.titleLead} {content.titleRest} <span className="hl-box">{content.titleAccent}</span>
         </h1>
@@ -59,16 +59,16 @@ export function HeroSection({ content }: HeroSectionProps) {
           </div>
         </div>
 
-        <div className="relative z-[3] mt-10 grid gap-8 lg:mt-auto lg:grid-cols-12 lg:items-end lg:gap-6 lg:pt-12">
-          <div className="lg:col-span-5">
-            <p data-hero-fade className="max-w-md text-[17px] leading-relaxed text-neutral-700 [text-wrap:pretty] md:text-lg">
+        <div className="relative z-[3] mt-10 grid gap-8 lg:mt-auto lg:grid-cols-12 lg:items-end lg:gap-6 lg:pt-8">
+          <div className="lg:col-span-6">
+            <p data-hero-fade className="max-w-md text-[17px] leading-relaxed text-neutral-700 [text-wrap:pretty]">
               {content.subtitle}
             </p>
             <div data-hero-fade className="mt-8">
               <LandingHeroActions ctaUmkm={content.ctaUmkm} ctaCreator={content.ctaCreator} dashboardCta={content.dashboardCta} />
             </div>
           </div>
-          <ul data-hero-fade className="grid gap-2 lg:col-span-3 lg:col-start-6">
+          <ul data-hero-fade className="grid gap-2 lg:col-span-3 lg:col-start-7">
             {content.proof.map((item) => (
               <li key={item} className="flex items-center gap-3 border-t border-secondary-900/10 pt-2 text-[14px] font-semibold text-secondary-900">
                 <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rotate-45 bg-primary-500" />

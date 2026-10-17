@@ -62,7 +62,7 @@ function ModePanelView({ panel, index }: { panel: ModePanel; index: number }) {
           <h3
             id={`mode-${panel.id}-title`}
             data-stack-item
-            className="font-display-cond mt-auto pt-12 text-[clamp(3.6rem,10.5vw,12rem)] leading-[0.8]"
+            className="font-display-cond mt-auto pt-12 text-[clamp(3.2rem,min(8.5vw,15vh),9.5rem)] leading-[0.82]"
           >
             {panel.tag}
           </h3>
