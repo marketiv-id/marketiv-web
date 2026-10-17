@@ -1277,7 +1277,7 @@ html {
 .chatbot-panel-float {
   position: fixed;
   right: 1rem;
-  bottom: 5.75rem; /* 56px FAB + 24px offset + 12px gap */
+  bottom: 5.25rem; /* 52px FAB + 20px offset + 12px gap */
   width: calc(100vw - 2rem);
   max-width: 400px;
   /* Top room for the fixed navbar; keeps a usable panel on short laptop screens. */
@@ -1296,7 +1296,8 @@ html {
   .chatbot-panel-float {
     right: 1.5rem;
     bottom: 6rem;
-    max-height: min(680px, calc(100dvh - 7.5rem));
+    /* Stops below the fixed navbar (about 5rem) on short screens. */
+    max-height: min(680px, calc(100dvh - 11.5rem));
   }
 }
 

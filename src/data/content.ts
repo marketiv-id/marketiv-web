@@ -26,11 +26,11 @@ export const LANDING_CONTENT: LandingContent = {
   hero: {
     // Taglines from the owner's KMI EXPO booth banner and table banner, so the hero speaks in the brand's own voice.
     meta: ["Kolaborasi hebat, bisnis melesat", "Campaign Mode · Rate Card Mode", "Create · Connect · Grow"],
-    titleLead: "Dari kreasi konten",
-    titleRest: "jadi",
-    titleAccent: "omset nyata.",
+    titleLead: "Dari kreasi konten jadi omset nyata.",
+    titleRest: "Kreator lokal promosikan produkmu, dananya ditahan sampai",
+    titleAccent: "terbukti tayang.",
     subtitle:
-      "Marketiv mempertemukan UMKM dengan kreator lokal. Pilih campaign yang dibayar per views atau pesan kreator dengan harga tetap. Dananya ditahan escrow sampai konten terbukti tayang.",
+      "Marketiv mempertemukan UMKM dengan kreator lokal di seluruh Indonesia. Pilih campaign yang dibayar per views, atau pesan kreator dengan harga tetap lewat Rate Card.",
     ctaUmkm: "Mulai Buat Campaign",
     ctaCreator: "Daftar sebagai Kreator",
     dashboardCta: "Buka Dashboard",

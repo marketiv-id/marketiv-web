@@ -156,7 +156,7 @@ export function Navbar() {
       {!loading && !dashboardHref && (
         <div
           className={cn(
-            "fixed bottom-6 left-3 right-[92px] z-40 grid grid-cols-2 gap-2 rounded-full bg-secondary-900/95 p-1.5 shadow-[0_18px_40px_rgba(16,32,51,0.28)] backdrop-blur transition-[opacity,translate] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden",
+            "fixed bottom-5 left-3 right-[84px] z-40 grid grid-cols-2 gap-2 rounded-full bg-secondary-900/95 p-1.5 shadow-[0_18px_40px_rgba(16,32,51,0.28)] backdrop-blur transition-[opacity,translate] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden",
             showMobileCta ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-[150%] opacity-0",
           )}
           inert={!showMobileCta}
