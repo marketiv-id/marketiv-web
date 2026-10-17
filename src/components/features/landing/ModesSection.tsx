@@ -86,13 +86,13 @@ export function ModesSection({ content }: ModesSectionProps) {
       className="relative z-[9] -mt-10 rounded-b-[24px] bg-neutral-100 px-3 md:rounded-b-[40px] md:px-4"
     >
       <div className="mx-auto grid max-w-[1600px] gap-6 px-2 pb-14 pt-32 md:px-6 md:pt-40 lg:grid-cols-12 lg:items-end">
-        <p className="text-caption-mono text-primary-600 lg:col-span-12">{content.label}</p>
+        <p data-scramble className="text-caption-mono text-primary-600 lg:col-span-12">{content.label}</p>
         <Reveal as="h2" id="mode-title" mode="words" className="font-display-cond text-poster-md max-w-[18ch] text-secondary-900 lg:col-span-8">
           {content.titleLead} <span className="hl-box [--hl-bg:var(--color-secondary-900)]">{content.titleAccent}</span>
         </Reveal>
-        <Reveal mode="fade" delay={0.1} className="lg:col-span-3 lg:col-start-10">
-          <p className="max-w-sm text-[17px] leading-relaxed text-neutral-700 [text-wrap:pretty]">{content.intro}</p>
-        </Reveal>
+        <p data-lines className="max-w-sm text-[17px] leading-relaxed text-neutral-700 [text-wrap:pretty] lg:col-span-3 lg:col-start-10">
+          {content.intro}
+        </p>
       </div>
 
       <StickyStack className="grid gap-3 pb-3 md:pb-4">

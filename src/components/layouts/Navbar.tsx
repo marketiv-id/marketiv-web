@@ -95,6 +95,7 @@ export function Navbar() {
               <li key={link.href}>
                 <Link
                   href={link.href}
+                  data-transition-label={link.label}
                   className="roll-host inline-flex h-10 items-center rounded-full px-3.5 text-[14px] font-semibold text-secondary-800 transition-colors hover:text-primary-600"
                 >
                   <RollLabel text={link.label} />
@@ -138,6 +139,7 @@ export function Navbar() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
+                    data-transition-label={link.label}
                     onClick={closeMenu}
                     className="roll-host flex items-center justify-between rounded-2xl px-4 py-3.5 text-lg font-bold tracking-[-0.02em] text-secondary-900 transition-colors hover:bg-neutral-100"
                   >

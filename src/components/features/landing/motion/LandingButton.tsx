@@ -9,6 +9,8 @@ import { playPageCurtain } from "./PageCurtain";
 
 type LandingButtonVariant = "primary" | "dark" | "light" | "outline" | "outline-light";
 type LandingButtonSize = "md" | "lg";
+// What the button sits on: the hover fill must contrast with both the button and that background.
+type LandingButtonSurface = "light" | "dark";
 
 interface LandingButtonProps {
   href: string;
@@ -21,15 +23,22 @@ interface LandingButtonProps {
   id?: string;
   className?: string;
   cursorLabel?: string;
+  surface?: LandingButtonSurface;
   onNavigate?: () => void;
 }
 
 const VARIANT_CLASSES: Record<LandingButtonVariant, { base: string; fill: string; fillText: string }> = {
   primary: { base: "bg-primary-500 text-white", fill: "bg-secondary-900", fillText: "group-hover/btn:text-white group-focus-visible/btn:text-white" },
   dark: { base: "bg-secondary-900 text-white", fill: "bg-primary-500", fillText: "group-hover/btn:text-white group-focus-visible/btn:text-white" },
-  light: { base: "bg-white text-secondary-900", fill: "bg-primary-500", fillText: "group-hover/btn:text-white group-focus-visible/btn:text-white" },
+  light: { base: "bg-white text-secondary-900", fill: "bg-secondary-900", fillText: "group-hover/btn:text-white group-focus-visible/btn:text-white" },
   outline: { base: "bg-transparent text-secondary-900 ring-1 ring-inset ring-secondary-900/25", fill: "bg-secondary-900", fillText: "group-hover/btn:text-white group-focus-visible/btn:text-white" },
   "outline-light": { base: "bg-white/5 text-white ring-1 ring-inset ring-white/30", fill: "bg-white", fillText: "group-hover/btn:text-secondary-900 group-focus-visible/btn:text-secondary-900" },
+};
+
+// On dark surfaces a navy fill would vanish, so these variants fill with white or orange instead.
+const DARK_SURFACE_FILL: Partial<Record<LandingButtonVariant, { fill: string; fillText: string }>> = {
+  primary: { fill: "bg-white", fillText: "group-hover/btn:text-secondary-900 group-focus-visible/btn:text-secondary-900" },
+  light: { fill: "bg-primary-500", fillText: "group-hover/btn:text-white group-focus-visible/btn:text-white" },
 };
 
 const SIZE_CLASSES: Record<LandingButtonSize, string> = {
@@ -67,12 +76,15 @@ export function LandingButton({
   id,
   className,
   cursorLabel,
+  surface = "light",
   onNavigate,
 }: LandingButtonProps) {
   const router = useRouter();
   const wrapRef = useRef<HTMLSpanElement>(null);
   const linkRef = useRef<HTMLAnchorElement>(null);
-  const styles = VARIANT_CLASSES[variant];
+  const styles = { ...VARIANT_CLASSES[variant], ...(surface === "dark" ? DARK_SURFACE_FILL[variant] : undefined) };
+  // The cursor bubble is orange by default; over an orange hover fill it switches to navy so the label stays readable.
+  const cursorTone = styles.fill === "bg-primary-500" ? "ink" : undefined;
 
   // Magnetic pull only exists for a fine pointer with motion allowed; touch and reduced motion get a plain link.
   useGSAP(
@@ -130,6 +142,7 @@ export function LandingButton({
         onClick={onClick}
         data-cursor="button"
         data-cursor-label={cursorLabel}
+        data-cursor-tone={cursorTone}
         className={cn(
           "group/btn liquid-btn roll-host relative isolate inline-flex items-center justify-center overflow-hidden whitespace-nowrap rounded-full font-bold tracking-[-0.01em] outline-none transition-[scale] duration-150 active:scale-[0.96]",
           "focus-visible:ring-4 focus-visible:ring-primary-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",

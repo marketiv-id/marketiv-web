@@ -1,7 +1,7 @@
 // Usage: node scripts/landing-render-mockups.cjs <projectRoot> <shotsDir> <outDir>
 // shotsDir holds 1170x2532 PNG screenshots of the app at 390x844@3x (mock mode), named as in the calls at the bottom.
 // Builds device renders from real mobile screenshots: a phone frame drawn as SVG, the screen masked into it,
-// third-party brand photos blurred, then rotated single and paired compositions with soft shadows.
+// then rotated compositions with soft shadows. Screens are used as captured (owner asked for no blur).
 const path = require("path");
 const fs = require("fs");
 const sharp = require(path.resolve(process.argv[2], "node_modules/sharp"));
@@ -17,27 +17,12 @@ const R_OUT = 190;
 const R_IN = 150;
 const STATUS = 150;
 
-// Regions (screenshot px) that show third-party brand packaging in mock data.
-const BLUR = {
-  jobpool: [{ left: 600, top: 1990, width: 530, height: 330 }],
-  umkm: [{ left: 40, top: 2110, width: 530, height: 360 }],
-  kreator: [{ left: 40, top: 2330, width: 530, height: 202 }],
-};
-
 function svg(body, w = W, h = H) {
   return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${body}</svg>`);
 }
 
 async function screen(name) {
-  let img = sharp(path.join(shots, `${name}.png`));
-  const base = await img.png().toBuffer();
-  const patches = [];
-  for (const box of BLUR[name] ?? []) {
-    const b = { ...box, height: Math.min(box.height, SH - box.top) };
-    const patch = await sharp(base).extract(b).blur(30).modulate({ saturation: 0.5 }).toBuffer();
-    patches.push({ input: patch, left: b.left, top: b.top });
-  }
-  const cleaned = await sharp(base).composite(patches).png().toBuffer();
+  const cleaned = await sharp(path.join(shots, `${name}.png`)).png().toBuffer();
   // The app header starts at y=0, so the top of the screen gets a status bar and the bottom is trimmed to keep the 390x844 ratio.
   const body = await sharp(cleaned).extract({ left: 0, top: 0, width: SW, height: SH - STATUS }).toBuffer();
   const status = svg(
@@ -122,26 +107,8 @@ async function single(name, angle, out, width = 900) {
   console.log(out, info.width, info.height, info.size);
 }
 
-async function pair(front, back, out, width = 1400) {
-  const b = await placed(await phone(back), 9, 0.9);
-  const f = await placed(await phone(front), -7, 1);
-  const cw = Math.round(f.w + b.w * 0.62 + 280);
-  const ch = Math.max(f.h, b.h) + 320;
-  const canvas = await sharp({ create: { width: cw, height: ch, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
-    .composite([
-      { input: b.shadow, left: cw - b.w - 120, top: 150 },
-      { input: b.img, left: cw - b.w - 140, top: 80 },
-      { input: f.shadow, left: 150, top: 260 },
-      { input: f.img, left: 140, top: 190 },
-    ])
-    .png()
-    .toBuffer();
-  const info = await sharp(canvas).resize({ width }).webp({ quality: 86, alphaQuality: 90 }).toFile(path.join(outDir, out));
-  console.log(out, info.width, info.height, info.size);
-}
 
 (async () => {
-  await pair("jobpool", "umkm", "hero-phones.webp");
   await single("buat", -4, "phone-buat.webp");
   await single("nego", 4, "phone-nego.webp");
   await single("keuangan", -5, "phone-keuangan.webp");

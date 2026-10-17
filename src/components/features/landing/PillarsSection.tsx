@@ -45,9 +45,9 @@ export function PillarsSection({ content }: PillarsSectionProps) {
           <Reveal as="h2" id="solusi-title" mode="words" className="font-display-cond text-poster-md max-w-[18ch] text-secondary-900 lg:col-span-8">
             {content.titleLead} <span className="hl-box">{content.titleAccent}</span>
           </Reveal>
-          <Reveal mode="fade" delay={0.1} className="lg:col-span-3 lg:col-start-10">
-            <p className="max-w-sm text-[17px] leading-relaxed text-neutral-700 [text-wrap:pretty]">{content.intro}</p>
-          </Reveal>
+          <p data-lines className="max-w-sm text-[17px] leading-relaxed text-neutral-700 [text-wrap:pretty] lg:col-span-3 lg:col-start-10">
+            {content.intro}
+          </p>
         </div>
 
         <ol className="mt-16 border-b border-secondary-900/10 md:mt-20">
@@ -61,7 +61,7 @@ export function PillarsSection({ content }: PillarsSectionProps) {
                 <span className="font-mono-nota text-sm text-primary-600 transition-colors duration-300 group-hover/row:text-white/80 group-data-[active=true]/row:text-white/80 lg:col-span-1">
                   0{index + 1}
                 </span>
-                <h3 className="font-display-cond text-poster-sm text-secondary-900 transition-colors duration-300 group-hover/row:text-white group-data-[active=true]/row:text-white lg:col-span-6">
+                <h3 data-lines className="font-display-cond text-poster-sm text-secondary-900 transition-colors duration-300 group-hover/row:text-white group-data-[active=true]/row:text-white lg:col-span-6">
                   {item.title}
                 </h3>
                 <div className="relative hidden aspect-[16/10] overflow-hidden rounded-xl bg-white/20 opacity-0 transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] [transform:translateY(16px)_rotate(-3deg)] group-hover/row:opacity-100 group-hover/row:[transform:none] group-data-[active=true]/row:opacity-100 group-data-[active=true]/row:[transform:none] lg:col-span-2 lg:block">

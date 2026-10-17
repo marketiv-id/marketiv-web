@@ -34,7 +34,7 @@ export function HeroSection({ content }: HeroSectionProps) {
   return (
     <HeroMotion className="relative z-[12] overflow-hidden rounded-b-[24px] bg-white md:rounded-b-[40px]">
       <div className="relative mx-auto flex min-h-[100svh] max-w-[1600px] flex-col px-5 pb-10 pt-28 md:px-10 md:pt-32 lg:pb-12">
-        <ul data-hero-fade className="text-caption-mono grid grid-cols-2 gap-x-6 border-b border-secondary-900/10 pb-4 text-neutral-600 md:grid-cols-3 lg:mr-[clamp(240px,25vw,440px)]">
+        <ul data-hero-fade data-hero-meta className="text-caption-mono grid grid-cols-2 gap-x-6 border-b border-secondary-900/10 pb-4 text-neutral-600 md:grid-cols-3 lg:mr-[clamp(240px,25vw,440px)]">
           {content.meta.map((item, index) => (
             <li key={item} className={cn(index === 1 && "hidden md:block", index === 2 && "text-right")}>
               {item}

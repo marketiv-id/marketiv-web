@@ -22,8 +22,6 @@ export function resetIntroState() {
   done = false;
 }
 
-export const INTRO_STORAGE_KEY = "marketiv.landing.intro";
-
-// Runs inline before first paint: flags that motion will run (so hero decorations can wait hidden) and decides whether
-// the curtain plays, so neither ever flashes in after content.
-export const INTRO_INLINE_SCRIPT = `(function(){try{if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;var d=document.documentElement;d.setAttribute('data-motion','on');if(sessionStorage.getItem('${INTRO_STORAGE_KEY}'))return;d.setAttribute('data-intro','play');}catch(e){}})();`;
+// Runs inline before first paint: flags that motion will run and starts the intro on every load (owner asked for it on refresh),
+// so the overlay never flashes in after content. Reduced-motion visitors and no-JS visitors never see it.
+export const INTRO_INLINE_SCRIPT = `(function(){try{if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;var d=document.documentElement;d.setAttribute('data-motion','on');d.setAttribute('data-intro','play');}catch(e){}})();`;

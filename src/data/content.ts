@@ -24,12 +24,12 @@ export const NAVBAR_CONTENT: LandingNavContent = {
 // Facts on this page come from src/content/terms.ts; mockup numbers are labelled "Contoh" on screen.
 export const LANDING_CONTENT: LandingContent = {
   hero: {
-    meta: ["Marketplace UMKM × kreator lokal", "Campaign Mode · Rate Card Mode", "Sukabumi, Jawa Barat"],
+    meta: ["Marketplace UMKM × kreator mikro", "Campaign Mode · Rate Card Mode", "Dari Sukabumi untuk Indonesia"],
     titleLead: "Kreator lokal promosikan produkmu.",
     titleRest: "Dananya ditahan sampai",
     titleAccent: "terbukti tayang.",
     subtitle:
-      "Pilih campaign yang dibayar per views atau pesan kreator dengan harga tetap. Dananya disimpan escrow, bukan langsung ke kreator.",
+      "Pilih campaign yang dibayar per views atau pesan kreator dengan harga tetap. Dananya masuk escrow Marketiv, bukan langsung ke kreator.",
     ctaUmkm: "Mulai Buat Campaign",
     ctaCreator: "Daftar sebagai Kreator",
     dashboardCta: "Buka Dashboard",
@@ -43,7 +43,7 @@ export const LANDING_CONTENT: LandingContent = {
       { kind: "screen", src: "/landing/renders/phone-buat.webp", alt: "Layar Buat Kampanye Baru di aplikasi Marketiv, data contoh" },
       { kind: "photo", src: "/landing/photos/kategori-kosmetik.webp", alt: "Produk perawatan kulit dengan daun hijau" },
     ],
-    stripCaption: "Foto ilustrasi dari Unsplash, layar aplikasi berisi data contoh",
+    stripCaption: "Layar aplikasi berisi data contoh",
   },
   problem: {
     label: "Masalah",
@@ -75,11 +75,11 @@ export const LANDING_CONTENT: LandingContent = {
     label: "Solusi",
     titleLead: "Tiga pegangan supaya promosi",
     titleAccent: "tidak boncos.",
-    intro: "Uang UMKM aman, hasil kampanye terukur, dan kreator lokal dapat pekerjaan yang jelas.",
+    intro: "Uang UMKM aman di escrow, hasil kampanye terukur, dan kreator mikro dapat pekerjaan yang jelas.",
     items: [
       {
         title: "Dana ditahan escrow",
-        description: "Pembayaran lewat Midtrans masuk ke escrow. Kreator menerima dana setelah kerjanya tervalidasi.",
+        description: "Pembayaran lewat Midtrans masuk ke escrow Marketiv. Kreator baru menerima dana setelah kerjanya tervalidasi atau disetujui UMKM.",
         image: "/landing/umkm-dashboard.webp",
         imageAlt: "Ringkasan kampanye dan dana berjalan di dashboard UMKM, data contoh",
       },
@@ -90,8 +90,8 @@ export const LANDING_CONTENT: LandingContent = {
         imageAlt: "Lowongan kampanye dengan imbalan per 1.000 tayangan, data contoh",
       },
       {
-        title: "Kreator lokal dapat kerja",
-        description: "Kreator mikro bisa klaim job campaign atau membuka rate card sendiri.",
+        title: "Kreator dapat job",
+        description: "Kreator mikro bisa klaim job campaign di Job Pool, atau membuka rate card sendiri dengan harga tetap.",
         image: "/landing/photos/kreator-dslr.webp",
         imageAlt: "Perempuan berhijab memegang kamera di jembatan gantung",
       },
@@ -126,7 +126,7 @@ export const LANDING_CONTENT: LandingContent = {
       steps: [
         "UMKM memilih kreator dan paketnya dari katalog.",
         "Pesan langsung, atau negosiasi lewat chat sampai jadi Custom Offer.",
-        "UMKM bayar, dana ditahan escrow. Kreator mengerjakan dan posting sebagai Collab Post.",
+        "UMKM bayar, dana ditahan escrow. Kreator mengerjakan lalu posting sebagai Collab Post, jadi tampil di akun kreator dan akun UMKM.",
         "UMKM menyetujui hasil, atau otomatis disetujui setelah 3 hari tanpa tanggapan. Dana dilepas ke kreator.",
       ],
       rules: ["Ada chat negosiasi", "Revisi sesuai batas paket", "Disetujui UMKM", "Biaya platform 2% dipotong dari pendapatan kreator"],
@@ -178,9 +178,9 @@ export const LANDING_CONTENT: LandingContent = {
   },
   preview: {
     label: "Lihat aplikasinya",
-    titleLead: "Bukan janji di brosur.",
-    titleAccent: "Aplikasinya sudah jalan.",
-    intro: "Dua tampilan yang paling sering dibuka: ringkasan UMKM dan lowongan kampanye untuk kreator.",
+    titleLead: "Lihat langsung,",
+    titleAccent: "aplikasinya sudah jalan.",
+    intro: "Dua layar utama: ringkasan kampanye untuk UMKM dan daftar lowongan untuk kreator.",
     caption: "Tampilan aplikasi Marketiv. Data pada gambar adalah contoh.",
     panels: [
       {
@@ -217,7 +217,6 @@ export const LANDING_CONTENT: LandingContent = {
     // Unsplash, foto oleh @p_kuzovkova (Lombok). Ilustrasi suasana, bukan pengguna Marketiv.
     photo: "/landing/photos/umkm-penjual-jagung.webp",
     photoAlt: "Pedagang jagung di Lombok memegang dagangannya",
-    photoCaption: "Ilustrasi · Pedagang jagung, Lombok",
     // Unsplash, foto oleh @anisa_flg. Ilustrasi suasana, bukan pengguna Marketiv.
     secondPhoto: "/landing/photos/kategori-handmade.webp",
     secondPhotoAlt: "Perempuan membatik kain dengan canting",
@@ -248,7 +247,6 @@ export const LANDING_CONTENT: LandingContent = {
     // Unsplash, foto oleh @mruqi (Bandung). Ilustrasi suasana, bukan pengguna Marketiv.
     photo: "/landing/photos/kreator-dslr.webp",
     photoAlt: "Perempuan berhijab memegang kamera di jembatan gantung",
-    photoCaption: "Ilustrasi · Kreator, Bandung",
     simulator: {
       title: "Simulasi reward campaign",
       viewsLabel: "Views yang lolos validasi",
@@ -266,27 +264,58 @@ export const LANDING_CONTENT: LandingContent = {
     },
   },
   context: {
-    label: "Konteks",
+    label: "Asal dan jangkauan",
     titleLead: "Dibangun di Sukabumi,",
-    titleAccent: "untuk UMKM daerah.",
+    titleAccent: "terbuka untuk Indonesia.",
     facts: [
       "Bagian dari Program P2MW bersama Universitas Nusa Putra.",
-      "Mendukung SDG 8: membuka kerja layak bagi kreator lokal dan memperkuat ekonomi UMKM.",
+      "Mendukung SDG 8: membuka kerja layak bagi kreator mikro dan memperkuat ekonomi UMKM.",
     ],
-    mapLabel: "Mulai dari sini",
-    mapCity: "Sukabumi",
-    mapRegion: "Jawa Barat",
-    coordinates: "6°55′ LS · 106°56′ BT",
+    origin: { label: "Berawal dari", city: "Sukabumi", region: "Jawa Barat", coordinates: "6°55′ LS · 106°56′ BT" },
+    // Registration is not region-gated; the create-campaign form lets UMKM narrow creators by domicile (ProductInfoStep).
+    reach: {
+      label: "Terbuka untuk",
+      title: "Seluruh Indonesia",
+      text: "UMKM dan kreator dari daerah mana pun di Indonesia bisa daftar dan bertransaksi sepenuhnya online. Kalau usahamu hanya melayani daerah tertentu, pilih domisili kreator saat membuat campaign.",
+    },
     // Same niche list as NICHE_OPTIONS in the create-campaign form.
     categoriesTop: ["Kuliner", "Fashion", "Kecantikan", "Pariwisata", "Edukasi"],
     categoriesBottom: ["TikTok", "Instagram", "Campaign Mode", "Rate Card"],
     categoriesTitle: "Niche yang bisa dipilih saat membuat campaign",
-    categoriesNote: "Foto ilustrasi dari Unsplash",
     categoryCards: [
-      { label: "Kuliner", description: "Makanan dan minuman" },
+      { label: "Kuliner", description: "Makanan dan minuman", image: "/landing/photos/kategori-kuliner.webp", imageAlt: "Pedagang soto melayani pembeli di gerobak biru" },
       { label: "Fashion", description: "Pakaian dan aksesori", image: "/landing/photos/kategori-fashion.webp", imageAlt: "Kain batik motif bunga dan burung" },
       { label: "Kecantikan", description: "Kosmetik dan skin care", image: "/landing/photos/kategori-kosmetik.webp", imageAlt: "Produk perawatan kulit dengan daun hijau" },
-      { label: "Lainnya", description: "Pariwisata, edukasi, serta umum dan jasa" },
+      {
+        label: "Lainnya",
+        description: "Pariwisata, edukasi, serta umum dan jasa",
+        images: [
+          { src: "/landing/photos/kategori-pariwisata.webp", alt: "Pura Ulun Danu Bratan di tepi danau, Bali" },
+          { src: "/landing/photos/kategori-edukasi.webp", alt: "Guru berhijab mendampingi murid sekolah dasar belajar" },
+          { src: "/landing/photos/kategori-jasa.webp", alt: "Tukang cukur melayani pelanggan di pinggir jalan" },
+          { src: "/landing/photos/kategori-umum.webp", alt: "Warung dengan angklung gantung dan rak minuman di Bali" },
+        ],
+      },
+    ],
+  },
+  // Source: about-me/09_ACHIEVEMENT_EVIDENCE_LOG.md entry 1 (VERIFIED). Team photos go in public/landing/prestasi/ when the owner provides them.
+  achievement: {
+    label: "Prestasi",
+    titleLead: "Juara Harapan 2",
+    titleAccent: "KMI EXPO 2026.",
+    intro: "Marketiv mewakili Universitas Nusa Putra di KMI EXPO XVII 2026 dan meraih Juara Harapan 2 di Kategori Bisnis Digital Tahapan Awal.",
+    facts: [
+      { label: "Penghargaan", value: "Juara Harapan 2" },
+      { label: "Kategori", value: "Bisnis Digital, Tahapan Awal" },
+      { label: "Tempat", value: "Universitas Jenderal Soedirman, Purwokerto" },
+      { label: "Tanggal", value: "29 September sampai 1 Oktober 2026" },
+    ],
+    photos: [
+      {
+        src: "/landing/prestasi/pengumuman-kmi-expo-2026.webp",
+        alt: "Pengumuman resmi Juara Harapan 2 KMI EXPO 2026 Kategori Bisnis Digital Tahapan Awal untuk Marketiv dari Universitas Nusa Putra",
+        caption: "Pengumuman pemenang, 1 Oktober 2026",
+      },
     ],
   },
   faq: {
@@ -310,7 +339,7 @@ export const LANDING_CONTENT: LandingContent = {
       },
       {
         q: "Bagaimana cara membuat campaign?",
-        a: "Daftar sebagai UMKM, tulis brief produkmu (AI Brief Assistant bisa membantu), tentukan budget mulai Rp 50.000 dan tarif per 1.000 views, lalu bayar lewat Midtrans. Setelah dana masuk, publikasikan campaign dan campaign-mu tampil di Job Pool kreator.",
+        a: "Daftar sebagai UMKM, tulis brief produkmu (AI Brief Assistant bisa membantu), tentukan budget mulai Rp 50.000 dan tarif per 1.000 views, lalu bayar lewat Midtrans. Setelah dana masuk, publikasikan campaign supaya tampil di Job Pool kreator.",
       },
       {
         q: "Bagaimana kreator mengirim bukti tayang?",
@@ -330,15 +359,23 @@ export const LANDING_CONTENT: LandingContent = {
     titleLead: "Mulai dari",
     titleAccent: "peranmu.",
     subtitle: "Daftar gratis. Kamu baru membayar saat membuat campaign atau memesan kreator.",
-    umkm: { prompt: "Punya produk yang perlu dikenal lebih banyak orang?", cta: "Mulai Buat Campaign" },
-    kreator: { prompt: "Bisa bikin konten dan ingin dibayar dengan aman?", cta: "Daftar sebagai Kreator" },
+    umkm: {
+      prompt: "Punya produk yang perlu dikenal lebih banyak orang?",
+      cta: "Mulai Buat Campaign",
+      mascot: { src: "/brand/maskot-umkm.webp", alt: "Maskot Marketiv, burung hantu oranye bertopi yang sedang melihat ponsel" },
+    },
+    kreator: {
+      prompt: "Bisa bikin konten dan ingin dibayar dengan aman?",
+      cta: "Daftar sebagai Kreator",
+      mascot: { src: "/brand/maskot-kreator.webp", alt: "Maskot Marketiv, burung hantu oranye berkacamata yang memegang kamera dan mengacungkan jempol" },
+    },
   },
   footer: {
-    tagline: "Marketplace yang mempertemukan UMKM dengan kreator lokal, dengan dana yang ditahan escrow sampai kerjanya terbukti.",
+    tagline: "Marketplace yang mempertemukan UMKM dengan kreator mikro di seluruh Indonesia. Dana ditahan escrow sampai kerjanya terbukti.",
     liveLine: {
       prefix: "Sekarang pukul",
       city: "Sukabumi",
-      suffix: "Tim kami membalas pesan paling lambat 3 hari kerja.",
+      suffix: "Tim kami melayani UMKM dan kreator di seluruh Indonesia, dan membalas pesan paling lambat 3 hari kerja.",
     },
     nav: {
       title: "Jelajahi",

@@ -18,16 +18,16 @@ export function FAQSection({ content }: FAQSectionProps) {
     <section
       id="faq"
       aria-labelledby="faq-title"
-      className="relative z-[4] -mt-10 rounded-b-[24px] bg-white px-5 pb-28 pt-32 md:rounded-b-[40px] md:px-10 md:pb-36 md:pt-40"
+      className="relative z-[3] -mt-10 rounded-b-[24px] bg-neutral-100 px-5 pb-28 pt-32 md:rounded-b-[40px] md:px-10 md:pb-36 md:pt-40"
     >
       <div className="mx-auto grid max-w-[1600px] gap-12 lg:grid-cols-12 lg:gap-8">
         <div className="lg:col-span-4">
           <div className="lg:sticky lg:top-28">
-            <p className="text-caption-mono text-primary-600">{content.label}</p>
+            <p data-scramble className="text-caption-mono text-primary-600">{content.label}</p>
             <Reveal as="h2" id="faq-title" mode="words" className="font-display-cond text-poster-sm mt-5 max-w-[12ch] text-secondary-900">
               {content.title}
             </Reveal>
-            <div className="halftone relative mt-10 hidden overflow-hidden rounded-[24px] bg-primary-500 p-7 text-white [--ht-dot:rgba(255,255,255,0.3)] lg:block">
+            <div data-cursor-tone="ink" className="halftone relative mt-10 hidden overflow-hidden rounded-[24px] bg-primary-500 p-7 text-white [--ht-dot:rgba(255,255,255,0.3)] lg:block">
               <p className="font-display-cond text-4xl leading-none">{content.contactTitle}</p>
               <p className="mt-3 max-w-xs text-[15px] leading-relaxed text-white/90">{content.contactText}</p>
               <a
@@ -91,7 +91,7 @@ export function FAQSection({ content }: FAQSectionProps) {
           })}
         </ol>
 
-        <div className="halftone relative overflow-hidden rounded-[24px] bg-primary-500 p-7 text-white [--ht-dot:rgba(255,255,255,0.3)] lg:hidden">
+        <div data-cursor-tone="ink" className="halftone relative overflow-hidden rounded-[24px] bg-primary-500 p-7 text-white [--ht-dot:rgba(255,255,255,0.3)] lg:hidden">
           <p className="font-display-cond text-4xl leading-none">{content.contactTitle}</p>
           <p className="mt-3 text-[15px] leading-relaxed text-white/90">{content.contactText}</p>
           <a href={`mailto:${content.contactEmail}`} className="mt-6 inline-flex h-11 items-center rounded-full bg-secondary-900 px-5 text-sm font-bold text-white active:scale-[0.96]">

@@ -38,6 +38,8 @@ export function HeroMotion({ children, className }: HeroMotionProps) {
           gsap.set(q("[data-hero-strip], [data-hero-strip-mobile]"), { autoAlpha: 0, yPercent: 18 });
           gsap.set(q("[data-hero-title] .hl-box"), { "--hl-w": "0%", color: "#102033" });
         }
+        const metaItems = q("[data-hero-meta] li");
+        const metaText = metaItems.map((item) => item.textContent ?? "");
 
         let intro: gsap.core.Timeline | null = null;
         const stop = whenIntroDone(() => {
@@ -49,6 +51,10 @@ export function HeroMotion({ children, className }: HeroMotionProps) {
             // Re-query: SplitText slices the box per line, so the original span is no longer the one on screen.
             .to(q("[data-hero-title] .hl-box"), { "--hl-w": "100%", color: "#ffffff", duration: 0.9, ease: "power3.inOut", stagger: 0.08 }, 0.75)
             .to(q("[data-hero-fade]"), { autoAlpha: 1, y: 0, duration: 1, stagger: 0.08 }, 0.55);
+          // The meta row decodes like a ticker once it is visible.
+          metaItems.forEach((item, index) => {
+            intro?.to(item, { duration: 0.8, ease: "none", scrambleText: { text: metaText[index], chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ", speed: 0.6 } }, 0.6 + index * 0.1);
+          });
         });
 
         // Scrolling out: the strip keeps travelling faster than the type, which drifts up and fades.

@@ -44,15 +44,31 @@ export function Reveal({ as: Tag = "div", id, className, children, mode = "fade"
           mask: "lines",
           aria: "auto",
           autoSplit: true,
-          onSplit: (self) =>
-            gsap.from(mode === "words" ? self.words : self.lines, {
+          onSplit: (self) => {
+            const tl = gsap.timeline({ delay, scrollTrigger });
+            // A small tilt from the baseline gives the rise some weight without turning into a bounce.
+            tl.from(mode === "words" ? self.words : self.lines, {
               yPercent: 115,
+              rotate: mode === "words" ? 4 : 0,
+              transformOrigin: "0% 100%",
               duration: 1.05,
               ease: EASE_OUT,
               stagger: mode === "words" ? 0.04 : 0.1,
-              delay,
-              scrollTrigger,
-            }),
+            });
+            // Highlighted phrases get their box wiped in after the words land; SplitText slices the box per line.
+            const boxes = Array.from(el.querySelectorAll<HTMLElement>(".hl-box"));
+            if (boxes.length) {
+              const ink = getComputedStyle(el).color;
+              const fill = getComputedStyle(boxes[0]).color;
+              tl.fromTo(
+                boxes,
+                { "--hl-w": "0%", color: ink },
+                { "--hl-w": "100%", color: fill, duration: 0.8, ease: "power3.inOut", stagger: 0.08 },
+                "-=0.6",
+              );
+            }
+            return tl;
+          },
         });
         return () => split.revert();
       });

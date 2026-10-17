@@ -9,6 +9,7 @@ import { EscrowSection } from "@/components/features/landing/EscrowSection";
 import { PreviewSection } from "@/components/features/landing/PreviewSection";
 import { AudienceSection } from "@/components/features/landing/AudienceSection";
 import { ContextSection } from "@/components/features/landing/ContextSection";
+import { AchievementSection } from "@/components/features/landing/AchievementSection";
 import { FAQSection } from "@/components/features/landing/FAQSection";
 import { FinalCtaSection } from "@/components/features/landing/FinalCtaSection";
 import { landingDisplay, landingMono } from "@/components/features/landing/fonts";
@@ -16,6 +17,8 @@ import { SmoothScroll } from "@/components/features/landing/motion/SmoothScroll"
 import { Cursor } from "@/components/features/landing/motion/Cursor";
 import { IntroCurtain } from "@/components/features/landing/motion/IntroCurtain";
 import { PageCurtain } from "@/components/features/landing/motion/PageCurtain";
+import { SliceTransition } from "@/components/features/landing/motion/SliceTransition";
+import { TextMotion } from "@/components/features/landing/motion/TextMotion";
 import { INTRO_INLINE_SCRIPT } from "@/components/features/landing/motion/intro-state";
 import { LANDING_CONTENT, NAVBAR_CONTENT } from "@/data/content";
 
@@ -47,6 +50,8 @@ export default function LandingPage() {
       <SmoothScroll />
       <IntroCurtain />
       <PageCurtain />
+      <SliceTransition />
+      <TextMotion />
       <Cursor />
       <Navbar />
       <main id="konten" className="relative z-10">
@@ -58,6 +63,7 @@ export default function LandingPage() {
         <PreviewSection content={content.preview} />
         <AudienceSection umkm={content.umkm} kreator={content.kreator} />
         <ContextSection content={content.context} />
+        <AchievementSection content={content.achievement} />
         <FAQSection content={content.faq} />
         <FinalCtaSection content={content.finalCta} />
       </main>

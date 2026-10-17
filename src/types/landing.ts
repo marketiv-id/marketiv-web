@@ -132,7 +132,6 @@ export interface UmkmContent {
   imageAlt: string;
   photo: string;
   photoAlt: string;
-  photoCaption: string;
   secondPhoto: string;
   secondPhotoAlt: string;
   brief: {
@@ -153,7 +152,6 @@ export interface KreatorContent {
   jobImageAlt: string;
   photo: string;
   photoAlt: string;
-  photoCaption: string;
   simulator: {
     title: string;
     viewsLabel: string;
@@ -176,15 +174,22 @@ export interface ContextContent {
   titleLead: string;
   titleAccent: string;
   facts: string[];
-  mapLabel: string;
-  mapCity: string;
-  mapRegion: string;
-  coordinates: string;
+  origin: { label: string; city: string; region: string; coordinates: string };
+  reach: { label: string; title: string; text: string };
   categoriesTop: string[];
   categoriesBottom: string[];
   categoriesTitle: string;
-  categoriesNote: string;
-  categoryCards: { label: string; description: string; image?: string; imageAlt?: string }[];
+  // A card shows one photo, a 2x2 grid when it groups several niches, or a flat brand field when it has neither.
+  categoryCards: { label: string; description: string; image?: string; imageAlt?: string; images?: LandingImage[] }[];
+}
+
+export interface AchievementContent {
+  label: string;
+  titleLead: string;
+  titleAccent: string;
+  intro: string;
+  facts: { label: string; value: string }[];
+  photos: (LandingImage & { caption?: string })[];
 }
 
 export interface FaqContent {
@@ -200,8 +205,8 @@ export interface FinalCtaContent {
   titleLead: string;
   titleAccent: string;
   subtitle: string;
-  umkm: { prompt: string; cta: string };
-  kreator: { prompt: string; cta: string };
+  umkm: { prompt: string; cta: string; mascot: LandingImage };
+  kreator: { prompt: string; cta: string; mascot: LandingImage };
 }
 
 export interface FooterContent {
@@ -225,6 +230,7 @@ export interface LandingContent {
   umkm: UmkmContent;
   kreator: KreatorContent;
   context: ContextContent;
+  achievement: AchievementContent;
   faq: FaqContent;
   finalCta: FinalCtaContent;
   footer: FooterContent;

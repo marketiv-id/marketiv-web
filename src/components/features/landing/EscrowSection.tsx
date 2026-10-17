@@ -115,7 +115,7 @@ export function EscrowSection({ content }: EscrowSectionProps) {
       <div data-escrow-pin className="halftone relative flex min-h-svh items-center px-5 pb-20 pt-32 [--ht-dir:160deg] [--ht-dot:rgba(249,115,22,0.38)] md:px-10 lg:pb-12 lg:pt-28">
         <div className="relative z-[2] mx-auto grid w-full max-w-[1600px] gap-14 lg:grid-cols-12 lg:items-center lg:gap-8">
           <div className="lg:col-span-6">
-            <p className="text-caption-mono text-primary-400">{content.label}</p>
+            <p data-scramble className="text-caption-mono text-primary-400">{content.label}</p>
             <Reveal as="h2" id="escrow-title" mode="words" className="font-display-cond text-poster-sm mt-5 max-w-[17ch]">
               {content.titleLead} <span className="hl-box">{content.titleAccent}</span>
             </Reveal>

@@ -27,34 +27,11 @@ function PointList({ points }: { points: string[] }) {
   );
 }
 
-// Onseis-style photo card: the image carries the frame, a mono caption sits on a bottom scrim.
-function PhotoCard({
-  src,
-  alt,
-  caption,
-  captionTop = false,
-  sizes,
-  className,
-}: {
-  src: string;
-  alt: string;
-  caption?: string;
-  captionTop?: boolean;
-  sizes: string;
-  className?: string;
-}) {
+// Onseis-style photo card: the image carries the frame and zooms slightly on hover.
+function PhotoCard({ src, alt, sizes, className }: { src: string; alt: string; sizes: string; className?: string }) {
   return (
     <figure className={cn("group/photo relative overflow-hidden rounded-[22px] bg-neutral-200 md:rounded-[28px]", className)}>
       <Image src={src} alt={alt} fill sizes={sizes} className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/photo:scale-[1.04]" />
-      {caption && (
-        <>
-          <div aria-hidden="true" className={cn("photo-scrim absolute inset-0", captionTop && "rotate-180")} />
-          {/* Kept outside cn(): tailwind-merge reads text-caption-mono as a text colour and would drop it next to text-white. */}
-          <figcaption className={`text-caption-mono ${cn("absolute left-4 right-4 text-white/85 md:left-5", captionTop ? "top-4 md:top-5" : "bottom-4 md:bottom-5")}`}>
-            {caption}
-          </figcaption>
-        </>
-      )}
     </figure>
   );
 }
@@ -99,7 +76,7 @@ export function AudienceSection({ umkm, kreator }: AudienceSectionProps) {
           <div data-stack-shade aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 bg-secondary-900 opacity-0" />
           <div data-stack-inner className="mx-auto grid w-full max-w-[1600px] origin-top gap-12 lg:grid-cols-12 lg:items-center lg:gap-8">
             <div className="lg:col-span-5">
-              <p data-stack-item className="text-caption-mono text-primary-600">{umkm.label}</p>
+              <p data-stack-item data-scramble className="text-caption-mono text-primary-600">{umkm.label}</p>
               <h2 id="umkm-title" data-stack-item className="font-display-cond text-poster-sm mt-5 max-w-[14ch] text-secondary-900">
                 {umkm.titleLead} <span className="hl-box">{umkm.titleAccent}</span>
               </h2>
@@ -115,7 +92,7 @@ export function AudienceSection({ umkm, kreator }: AudienceSectionProps) {
 
             <div className="relative lg:col-span-7 lg:h-[min(78vh,720px)]">
               <div data-stack-item className="relative lg:absolute lg:right-0 lg:top-0 lg:h-[76%] lg:w-[56%]">
-                <PhotoCard src={umkm.photo} alt={umkm.photoAlt} caption={umkm.photoCaption} captionTop sizes="(min-width: 1024px) 30vw, 92vw" className="aspect-[4/3] lg:aspect-auto lg:h-full" />
+                <PhotoCard src={umkm.photo} alt={umkm.photoAlt} sizes="(min-width: 1024px) 30vw, 92vw" className="aspect-[4/3] lg:aspect-auto lg:h-full" />
               </div>
               <div data-stack-item className="hidden lg:absolute lg:left-0 lg:top-[4%] lg:block lg:h-[46%] lg:w-[34%]">
                 <Parallax speed={6} className="h-full">
@@ -143,7 +120,7 @@ export function AudienceSection({ umkm, kreator }: AudienceSectionProps) {
           <div data-stack-inner className="mx-auto w-full max-w-[1600px] origin-top">
             <div className="grid gap-6 lg:grid-cols-12 lg:items-end">
               <div className="lg:col-span-8">
-                <p data-stack-item className="text-caption-mono text-primary-600">{kreator.label}</p>
+                <p data-stack-item data-scramble className="text-caption-mono text-primary-600">{kreator.label}</p>
                 <h2 id="kreator-title" data-stack-item className="font-display-cond text-poster-sm mt-5 max-w-[18ch] text-secondary-900">
                   {kreator.titleLead} <span className="hl-box [--hl-bg:var(--color-secondary-900)]">{kreator.titleAccent}</span>
                 </h2>
@@ -152,7 +129,7 @@ export function AudienceSection({ umkm, kreator }: AudienceSectionProps) {
 
             <div className="mt-12 grid gap-10 lg:grid-cols-12 lg:items-start lg:gap-8">
               <div data-stack-item className="relative lg:col-span-4">
-                <PhotoCard src={kreator.photo} alt={kreator.photoAlt} caption={kreator.photoCaption} sizes="(min-width: 1024px) 26vw, 92vw" className="aspect-[4/5]" />
+                <PhotoCard src={kreator.photo} alt={kreator.photoAlt} sizes="(min-width: 1024px) 26vw, 92vw" className="aspect-[4/5]" />
                 <div className="absolute -bottom-8 -right-3 w-[38%] max-w-[170px] lg:-right-10 lg:w-[44%] lg:max-w-none">
                   <Parallax speed={10}>
                     <TiltCard>

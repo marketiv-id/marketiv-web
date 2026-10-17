@@ -30,7 +30,7 @@ export function ProblemSection({ content }: ProblemSectionProps) {
       className="relative z-[11] -mt-10 rounded-b-[24px] bg-neutral-100 px-5 pb-24 pt-32 md:rounded-b-[40px] md:px-10 md:pb-32 md:pt-40"
     >
       <div className="mx-auto max-w-[1600px]">
-        <p className="text-caption-mono text-primary-600">{content.label}</p>
+        <p data-scramble className="text-caption-mono text-primary-600">{content.label}</p>
         <ScrollHighlight runs={content.statement} className="text-statement mt-6 max-w-[30ch] text-secondary-900 [text-wrap:balance]" />
         <div className="mt-16 grid gap-12 md:grid-cols-2 md:gap-10 lg:ml-[33.333%] lg:mt-20">
           <PainList title={content.umkm.title} items={content.umkm.items} />

@@ -21,6 +21,18 @@ export function scrollToHash(hash: string): boolean {
   return true;
 }
 
+// Instant jump used while a transition covers the screen.
+export function jumpToHash(hash: string): boolean {
+  const target = document.querySelector<HTMLElement>(hash);
+  if (!target) return false;
+  if (instance) {
+    instance.scrollTo(target, { offset: ANCHOR_OFFSET, immediate: true, force: true });
+    return true;
+  }
+  window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY + ANCHOR_OFFSET, behavior: "auto" });
+  return true;
+}
+
 export function setScrollLocked(locked: boolean) {
   if (instance) {
     if (locked) instance.stop();

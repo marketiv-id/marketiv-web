@@ -479,6 +479,15 @@ Penyimpangan dari rencana dan sisa pekerjaan, supaya dokumen tetap jujur terhada
 | `public/landing/photos/kategori-handmade.webp` | https://unsplash.com/photos/XOvNsILkVCo | @anisa_flg |
 | `public/landing/photos/kategori-fashion.webp` | https://unsplash.com/photos/fCwagrCDsXE | @europeana |
 | `public/landing/photos/kategori-kosmetik.webp` | https://unsplash.com/photos/g6q3lFAe3kA | @mahendra_10 |
+| `public/landing/photos/kategori-kuliner.webp` | https://unsplash.com/photos/UGkh7W3nWDg | @handyanjaya |
+| `public/landing/photos/kategori-pariwisata.webp` | https://unsplash.com/photos/U_i6h9Y50wQ | @sebaspenalambarri |
+| `public/landing/photos/kategori-edukasi.webp` | https://unsplash.com/photos/ldkHWg5s3Ec | @husniatisalma |
+| `public/landing/photos/kategori-jasa.webp` | https://unsplash.com/photos/wT8lsNXUsM8 | @sibaturaspirman |
+| `public/landing/photos/kategori-umum.webp` | https://unsplash.com/photos/yONZh7w144k | @sebuahfotografer |
+| Foto kartu "Review Jujur Sambal Roa" di `umkm-dashboard.webp`, `kreator-jobpool.webp`, `renders/phone-kreator.webp` | https://unsplash.com/photos/Vs8BrdYbCh8 | @mufidpwt |
+
+- **Label "Ilustrasi" dan "Foto dari Unsplash" dihapus dari halaman** atas permintaan owner, 2026-10-17. Kredit tetap di tabel ini dan di komentar `src/data/content.ts`. Foto tetap bukan pengguna Marketiv dan tidak dipasangkan dengan klaim atau testimoni.
+- **Blur di screenshot dan render dihapus** atas permintaan owner. Data mock kampanye "Sambal Roa" memakai foto cokelat bermerek pihak ketiga, jadi foto itu diganti foto nasi ayam bersambal di gambar landing saja. Badge aplikasi (Aktif, KULINER, harga, IMBALAN TINGGI, BAYAR PER TAYANGAN) dipertahankan. Data mock dashboard tidak disentuh.
 
 ## 12. Revisi visual 2026-10-17 (referensi onseis, blue2purple, roveia)
 
@@ -491,4 +500,12 @@ Owner menilai versi Armor/Sphere/DontMatter masih terlalu kosong dan terlihat bu
 - **Per section.** Hero: headline poster dan strip foto miring yang berjalan (foto UMKM, kreator, layar aplikasi). Solusi: row bernomor yang terisi oranye saat aktif. Dua Mode: kartu bertumpuk warna flat dengan chip aturan (roveia). Konteks: kartu niche berfoto sesuai `NICHE_OPTIONS` form campaign, band marquee oranye. FAQ: accordion bernomor dan kartu kontak. Final CTA: band oranye dengan satu pintu per audiens.
 - **Dihapus.** `Spotlight`, `ScreenSlice`, `SectionObserver`, pill audiens di navbar, render `hero-phones.webp`.
 - **Kategori.** "Handmade" dan "Kosmetik" diganti niche yang benar-benar ada di form campaign (Kuliner, Fashion, Kecantikan, Pariwisata, Edukasi, Lainnya).
-
+- **Tambahan 2026-10-17 (lanjutan).**
+  - Intro loader diputar setiap load, tidak lagi sekali per sesi. Polanya mengikuti portofolio owner: sapaan "HALO,", kata yang di-scramble bergantian, counter 000 sampai 100, curtain oranye, lalu overlay terangkat.
+  - Link navbar memakai slice transition: lima bilah oranye dan label section, lalu lompat ke section dan fokus dipindah ke sana.
+  - Animasi teks dibuat seimbang. Heading naik per kata dengan sedikit rotasi, lalu box disapu. Label mono di-scramble sekali (`data-scramble`), dan paragraf intro muncul per baris (`data-lines`).
+  - Section Prestasi: Juara Harapan 2 KMI EXPO XVII 2026, sumber `about-me/09_ACHIEVEMENT_EVIDENCE_LOG.md` (VERIFIED). Foto tim belum ada, jadi galeri baru berisi pengumuman resmi. Foto berikutnya cukup ditambahkan ke `achievement.photos`.
+  - Maskot (`public/brand/maskot-umkm.webp`, `maskot-kreator.webp`, dari file PNG transparan milik owner) dipasang di Final CTA, satu per pintu audiens.
+  - Final CTA duduk di section navy yang menyatu dengan footer.
+  - Cakupan copy diperluas: berawal dari Sukabumi, terbuka untuk seluruh Indonesia. Pendaftaran tidak dibatasi wilayah, dan UMKM bisa memilih domisili kreator di form campaign.
+  - Tombol di permukaan gelap memakai prop `surface="dark"`, supaya warna hover tetap kontras. Kursor berubah navy di atas permukaan oranye (`data-cursor-tone="ink"`).

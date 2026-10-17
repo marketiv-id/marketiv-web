@@ -16,7 +16,7 @@ export function Footer({ reveal = false }: FooterProps) {
   return (
     <footer
       className={cn(
-        "halftone relative w-full overflow-hidden bg-secondary-900 text-white [--ht-dir:200deg] [--ht-dot:rgba(249,115,22,0.35)]",
+        "halftone relative w-full overflow-hidden bg-secondary-900 text-white [--ht-dir:0deg] [--ht-dot:rgba(249,115,22,0.3)]",
         reveal && "lg:sticky lg:bottom-0 lg:z-0",
       )}
     >

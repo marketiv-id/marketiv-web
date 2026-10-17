@@ -25,18 +25,19 @@ export function Cursor() {
         const ringY = gsap.quickTo(ring, "y", { duration: 0.45, ease: "power3.out" });
         let visible = false;
 
-        const setState = (state: "idle" | "link" | "label" | "hidden", text = "") => {
+        const setState = (state: "idle" | "link" | "label" | "hidden", text = "", ink = false) => {
+          const color = ink ? "16,32,51" : "249,115,22";
           label.textContent = text;
           if (state === "hidden") {
             gsap.to([dot, ring], { autoAlpha: 0, duration: 0.2 });
             return;
           }
-          gsap.to(dot, { autoAlpha: state === "label" ? 0 : 1, scale: state === "link" ? 0.5 : 1, duration: 0.25 });
+          gsap.to(dot, { autoAlpha: state === "label" ? 0 : 1, scale: state === "link" ? 0.5 : 1, backgroundColor: `rgb(${color})`, duration: 0.25 });
           gsap.to(ring, {
             autoAlpha: 1,
             scale: state === "label" ? 2.6 : state === "link" ? 1.7 : 1,
-            backgroundColor: state === "label" ? "rgba(249,115,22,0.95)" : "rgba(249,115,22,0)",
-            borderColor: state === "label" ? "rgba(249,115,22,0)" : "rgba(249,115,22,0.85)",
+            backgroundColor: state === "label" ? `rgba(${color},0.95)` : `rgba(${color},0)`,
+            borderColor: state === "label" ? `rgba(${color},0)` : `rgba(${color},0.85)`,
             duration: 0.35,
             ease: "power3.out",
           });
@@ -62,13 +63,15 @@ export function Cursor() {
             setState("hidden");
             return;
           }
+          // Orange surfaces and orange hover fills opt into a navy cursor with data-cursor-tone="ink".
+          const ink = target.closest<HTMLElement>("[data-cursor-tone]")?.dataset.cursorTone === "ink";
           const labelled = target.closest<HTMLElement>("[data-cursor-label]");
           if (labelled?.dataset.cursorLabel) {
-            setState("label", labelled.dataset.cursorLabel);
+            setState("label", labelled.dataset.cursorLabel, ink);
             return;
           }
           if (target.closest("a, button, [role='button'], [role='tab'], [data-cursor]")) {
-            setState("link");
+            setState("link", "", ink);
             return;
           }
           setState("hidden");
