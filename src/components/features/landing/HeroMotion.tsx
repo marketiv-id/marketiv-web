@@ -23,44 +23,51 @@ export function HeroMotion({ children, className }: HeroMotionProps) {
       const mm = gsap.matchMedia();
 
       mm.add(MOTION_OK, () => {
-        gsap.set(q("[data-hero-chip]"), { autoAlpha: 0, scale: 0.8, y: 24 });
-        gsap.set(q("[data-hero-phone]"), { autoAlpha: 0, y: 140 });
-        gsap.set(q("[data-hero-word]"), { autoAlpha: 0, yPercent: 30 });
+        // The strip holds two copies of its cells, so a half-length shift loops without a seam.
+        const loops = q("[data-hero-strip-track]").map((track) => {
+          const axis = (track as HTMLElement).dataset.heroStripTrack === "x" ? "xPercent" : "yPercent";
+          return gsap.fromTo(track, { [axis]: 0 }, { [axis]: -50, duration: axis === "xPercent" ? 36 : 48, ease: "none", repeat: -1 });
+        });
+
         let split: SplitText | null = null;
+        const boxes = q("[data-hero-title] .hl-box");
         if (curtainPlayed) {
           split = SplitText.create(q("[data-hero-title]"), { type: "words,lines", mask: "lines", aria: "auto" });
           gsap.set(split.words, { yPercent: 115 });
           gsap.set(q("[data-hero-fade]"), { autoAlpha: 0, y: 24 });
+          gsap.set(q("[data-hero-strip], [data-hero-strip-mobile]"), { autoAlpha: 0, yPercent: 18 });
+          gsap.set(q("[data-hero-title] .hl-box"), { "--hl-w": "0%", color: "#102033" });
         }
 
         let intro: gsap.core.Timeline | null = null;
         const stop = whenIntroDone(() => {
+          if (!curtainPlayed) return;
           intro = gsap.timeline({ defaults: { ease: EASE_OUT } });
           intro
-            .to(q("[data-hero-word]"), { autoAlpha: 1, yPercent: 0, duration: 1.4 }, 0)
-            .to(q("[data-hero-phone]"), { autoAlpha: 1, y: 0, duration: 1.4 }, 0.1)
-            .to(q("[data-hero-chip]"), { autoAlpha: 1, scale: 1, y: 0, duration: 1, stagger: 0.08 }, 0.45);
-          if (split) intro.to(split.words, { yPercent: 0, duration: 1.1, stagger: 0.035 }, 0.15);
-          if (curtainPlayed) intro.to(q("[data-hero-fade]"), { autoAlpha: 1, y: 0, duration: 1, stagger: 0.08 }, 0.55);
+            .to(q("[data-hero-strip], [data-hero-strip-mobile]"), { autoAlpha: 1, yPercent: 0, duration: 1.6 }, 0)
+            .to(split?.words ?? [], { yPercent: 0, duration: 1.1, stagger: 0.03 }, 0.1)
+            // Re-query: SplitText slices the box per line, so the original span is no longer the one on screen.
+            .to(q("[data-hero-title] .hl-box"), { "--hl-w": "100%", color: "#ffffff", duration: 0.9, ease: "power3.inOut", stagger: 0.08 }, 0.75)
+            .to(q("[data-hero-fade]"), { autoAlpha: 1, y: 0, duration: 1, stagger: 0.08 }, 0.55);
         });
 
-        // Scrolling out: the frame shrinks and rounds, the backdrop word lags behind the phone.
+        // Scrolling out: the strip keeps travelling faster than the type, which drifts up and fades.
         const out = gsap.timeline({
           scrollTrigger: { trigger: root, start: "top top", end: "bottom top", scrub: 1 },
         });
         out
-          .to(q("[data-hero-frame]"), { scale: 0.92, borderRadius: 64, ease: "none" }, 0)
-          .to(q("[data-hero-word-layer]"), { yPercent: 40, ease: "none" }, 0)
-          .to(q("[data-hero-phone-layer]"), { yPercent: -18, ease: "none" }, 0);
+          .to(q("[data-hero-strip-scroll]"), { yPercent: -22, ease: "none" }, 0)
+          .to(q("[data-hero-title]"), { yPercent: -12, ease: "none" }, 0);
 
         return () => {
           stop();
           intro?.kill();
+          loops.forEach((loop) => loop.kill());
           split?.revert();
+          gsap.set(boxes, { clearProps: "all" });
         };
       });
 
-      // Three depth layers follow the pointer at different strengths.
       mm.add(FINE_POINTER, () => {
         const layers = q("[data-depth]").map((layer) => ({
           depth: Number((layer as HTMLElement).dataset.depth ?? 0),
@@ -94,7 +101,7 @@ export function HeroMotion({ children, className }: HeroMotionProps) {
   );
 
   return (
-    <section ref={ref} id="beranda" data-section-label="Beranda" className={className}>
+    <section ref={ref} id="beranda" className={className}>
       {children}
     </section>
   );

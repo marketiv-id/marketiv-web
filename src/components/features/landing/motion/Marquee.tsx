@@ -8,9 +8,10 @@ interface MarqueeRowProps {
   items: string[];
   outline?: boolean;
   reverse?: boolean;
+  onOrange?: boolean;
 }
 
-function MarqueeRow({ items, outline = false, reverse = false }: MarqueeRowProps) {
+function MarqueeRow({ items, outline = false, reverse = false, onOrange = false }: MarqueeRowProps) {
   // Two copies of the row so a -50% shift loops seamlessly.
   const copies = [0, 1];
   return (
@@ -21,13 +22,19 @@ function MarqueeRow({ items, outline = false, reverse = false }: MarqueeRowProps
             <span key={`${copy}-${item}`} className="flex items-center">
               <span
                 className={cn(
-                  "px-5 text-[clamp(3rem,9vw,8.5rem)] font-extrabold uppercase leading-none tracking-[-0.04em] md:px-8",
-                  outline ? "text-transparent [-webkit-text-stroke:1.5px_var(--color-primary-500)]" : "text-secondary-900",
+                  "font-display-cond px-5 text-[clamp(3.25rem,10vw,9.5rem)] leading-[0.95] md:px-8",
+                  outline
+                    ? onOrange
+                      ? "text-transparent [-webkit-text-stroke:1.5px_var(--color-secondary-900)]"
+                      : "text-transparent [-webkit-text-stroke:1.5px_var(--color-primary-500)]"
+                    : onOrange
+                      ? "text-white"
+                      : "text-secondary-900",
                 )}
               >
                 {item}
               </span>
-              <span aria-hidden="true" className="h-3 w-3 shrink-0 rotate-45 bg-primary-500 md:h-4 md:w-4" />
+              <span aria-hidden="true" className={cn("h-3 w-3 shrink-0 rotate-45 md:h-4 md:w-4", onOrange ? "bg-secondary-900" : "bg-primary-500")} />
             </span>
           ))}
         </div>
@@ -40,9 +47,10 @@ interface MarqueeProps {
   top: string[];
   bottom: string[];
   className?: string;
+  onOrange?: boolean;
 }
 
-export function Marquee({ top, bottom, className }: MarqueeProps) {
+export function Marquee({ top, bottom, className, onOrange = false }: MarqueeProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useGSAP(
@@ -102,8 +110,8 @@ export function Marquee({ top, bottom, className }: MarqueeProps) {
 
   return (
     <div ref={ref} className={cn("relative overflow-hidden py-2", className)}>
-      <MarqueeRow items={top} />
-      <MarqueeRow items={bottom} outline reverse />
+      <MarqueeRow items={top} onOrange={onOrange} />
+      <MarqueeRow items={bottom} outline reverse onOrange={onOrange} />
     </div>
   );
 }

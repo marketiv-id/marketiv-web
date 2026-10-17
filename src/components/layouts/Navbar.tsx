@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import { NAVBAR_CONTENT } from "@/data/content";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { dashboardByRole, isUserPortalRole } from "@/lib/constants/routes";
-import { SECTION_EVENT } from "@/components/features/landing/motion/SectionObserver";
 import { ScrollTrigger } from "@/lib/gsap";
 
 const content = NAVBAR_CONTENT;
@@ -17,25 +16,6 @@ function RollLabel({ text }: { text: string }) {
     <span className="roll">
       <span>{text}</span>
       <span aria-hidden="true">{text}</span>
-    </span>
-  );
-}
-
-function SectionIndicator() {
-  const [label, setLabel] = useState("");
-
-  useEffect(() => {
-    const onSection = (event: Event) => setLabel((event as CustomEvent<string>).detail);
-    window.addEventListener(SECTION_EVENT, onSection);
-    return () => window.removeEventListener(SECTION_EVENT, onSection);
-  }, []);
-
-  if (!label) return null;
-  return (
-    <span aria-hidden="true" className="relative hidden h-5 overflow-hidden xl:inline-block">
-      <span key={label} className="block animate-[landing-label-in_0.5s_cubic-bezier(0.16,1,0.3,1)] text-[13px] font-semibold text-neutral-600">
-        {label}
-      </span>
     </span>
   );
 }
@@ -102,34 +82,26 @@ export function Navbar() {
         <nav
           aria-label={content.mainLabel}
           className={cn(
-            "relative mx-auto flex max-w-[1400px] items-center gap-2 rounded-full py-2 pl-4 pr-2 transition-[background-color,box-shadow] duration-300 md:gap-3",
-            isScrolled || isMenuOpen
-              ? "bg-white/90 shadow-[0_10px_30px_rgba(16,32,51,0.08)] ring-1 ring-secondary-900/5 backdrop-blur-xl"
-              : "bg-white/70 ring-1 ring-white/60 backdrop-blur-md",
+            "relative mx-auto flex max-w-[1180px] items-center gap-2 rounded-full bg-white py-2 pl-5 pr-2 ring-1 ring-secondary-900/[0.06] transition-shadow duration-300 md:gap-3",
+            isScrolled || isMenuOpen ? "shadow-[0_12px_32px_rgba(16,32,51,0.12)]" : "shadow-[0_4px_18px_rgba(16,32,51,0.06)]",
           )}
         >
-          <Link href="/" aria-label={content.homeLabel} className="mr-1 inline-flex shrink-0 items-center">
+          <Link href="/" aria-label={content.homeLabel} className="mr-2 inline-flex shrink-0 items-center">
             <Image src="/brand/marketiv-logo.webp" alt="Marketiv" width={545} height={96} priority className="h-7 w-auto md:h-8" />
           </Link>
 
-          <div className="hidden items-center gap-1.5 md:flex">
-            <Link
-              href={content.audienceUmkm.href}
-              className="roll-host inline-flex h-9 items-center rounded-full bg-primary-50 px-4 text-[13px] font-bold text-primary-700 ring-1 ring-inset ring-primary-200 transition-colors hover:bg-primary-100"
-            >
-              <RollLabel text={content.audienceUmkm.label} />
-            </Link>
-            <Link
-              href={content.audienceKreator.href}
-              className="roll-host inline-flex h-9 items-center rounded-full bg-secondary-50 px-4 text-[13px] font-bold text-secondary-800 ring-1 ring-inset ring-secondary-200 transition-colors hover:bg-secondary-100"
-            >
-              <RollLabel text={content.audienceKreator.label} />
-            </Link>
-          </div>
-
-          <div className="ml-2 hidden flex-1 items-center gap-4 lg:flex">
-            <SectionIndicator />
-          </div>
+          <ul className="hidden flex-1 items-center justify-center gap-1 lg:flex">
+            {content.menu.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className="roll-host inline-flex h-10 items-center rounded-full px-3.5 text-[14px] font-semibold text-secondary-800 transition-colors hover:text-primary-600"
+                >
+                  <RollLabel text={link.label} />
+                </Link>
+              </li>
+            ))}
+          </ul>
           <div className="flex-1 lg:hidden" />
 
           <button
@@ -139,7 +111,7 @@ export function Navbar() {
             aria-expanded={isMenuOpen}
             aria-controls={menuId}
             onClick={() => setIsMenuOpen((open) => !open)}
-            className="roll-host inline-flex h-10 items-center gap-2 rounded-full px-3 text-[13px] font-bold text-secondary-900 transition-colors hover:bg-neutral-100"
+            className="roll-host inline-flex h-10 items-center gap-2 rounded-full px-3 text-[13px] font-bold text-secondary-900 transition-colors hover:bg-neutral-100 lg:hidden"
           >
             <span aria-hidden="true" className="relative block h-2.5 w-4">
               <span className={cn("absolute left-0 top-0 h-[1.5px] w-full bg-current transition-transform duration-300", isMenuOpen && "translate-y-[4.5px] rotate-45")} />
@@ -157,7 +129,7 @@ export function Navbar() {
             id={menuId}
             inert={!isMenuOpen}
             className={cn(
-              "absolute right-0 top-[calc(100%+10px)] w-full origin-top-right rounded-[28px] bg-white p-3 shadow-[0_24px_60px_rgba(16,32,51,0.14)] ring-1 ring-secondary-900/5 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:w-[360px]",
+              "absolute right-0 top-[calc(100%+10px)] w-full origin-top-right rounded-[28px] bg-white p-3 shadow-[0_24px_60px_rgba(16,32,51,0.14)] ring-1 ring-secondary-900/5 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:w-[360px] lg:hidden",
               isMenuOpen ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0",
             )}
           >
@@ -174,22 +146,6 @@ export function Navbar() {
                 </li>
               ))}
             </ul>
-            <div className="mt-2 grid grid-cols-2 gap-2 border-t border-neutral-200 pt-3 md:hidden">
-              <Link
-                href={content.audienceUmkm.href}
-                onClick={closeMenu}
-                className="flex h-11 items-center justify-center rounded-full bg-primary-50 text-sm font-bold text-primary-700 ring-1 ring-inset ring-primary-200"
-              >
-                {content.audienceUmkm.label}
-              </Link>
-              <Link
-                href={content.audienceKreator.href}
-                onClick={closeMenu}
-                className="flex h-11 items-center justify-center rounded-full bg-secondary-50 text-sm font-bold text-secondary-800 ring-1 ring-inset ring-secondary-200"
-              >
-                {content.audienceKreator.label}
-              </Link>
-            </div>
             <MobileAuthActions loading={loading} dashboardHref={dashboardHref} onNavigate={closeMenu} />
           </div>
         </nav>
@@ -242,9 +198,12 @@ function DesktopAuthActions({ loading, dashboardHref }: { loading: boolean; dash
       <Link
         href="/register"
         id="navbar-register"
-        className="roll-host inline-flex h-10 items-center rounded-full bg-primary-500 px-5 text-[13px] font-bold text-white transition-colors hover:bg-secondary-900"
+        className="roll-host inline-flex h-10 items-center gap-2 rounded-full bg-secondary-900 px-5 text-[13px] font-bold text-white transition-colors hover:bg-primary-500"
       >
         <RollLabel text={content.register} />
+        <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 10h11m-4-5 5 5-5 5" />
+        </svg>
       </Link>
     </div>
   );

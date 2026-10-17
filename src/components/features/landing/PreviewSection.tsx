@@ -26,15 +26,14 @@ export function PreviewSection({ content }: PreviewSectionProps) {
   return (
     <section
       id="preview"
-      data-section-label={content.label}
       aria-labelledby="preview-title"
-      className="relative z-[7] -mt-10 rounded-b-[24px] bg-neutral-100 pt-10 md:rounded-b-[40px]"
+      className="relative z-[7] -mt-10 rounded-b-[24px] bg-white pt-10 md:rounded-b-[40px]"
     >
-      <HorizontalTrack className="lg:flex lg:h-dvh lg:items-center" trackClassName="lg:gap-12 lg:pl-[max(2.5rem,calc((100vw-1400px)/2+2.5rem))] lg:pr-[10vw]">
+      <HorizontalTrack className="lg:flex lg:h-dvh lg:items-center" trackClassName="lg:gap-12 lg:pl-[max(2.5rem,calc((100vw-1600px)/2+2.5rem))] lg:pr-[10vw]">
         <div className="flex w-[85vw] shrink-0 snap-start flex-col justify-center pt-20 sm:w-[60vw] lg:w-[30vw] lg:pt-0">
-          <p className="text-[15px] font-bold text-primary-600">{content.label}</p>
-          <Reveal as="h2" id="preview-title" mode="words" className="text-display-lg mt-4 text-secondary-900">
-            {content.titleLead} <span className="text-primary-500">{content.titleAccent}</span>
+          <p className="text-caption-mono text-primary-600">{content.label}</p>
+          <Reveal as="h2" id="preview-title" mode="words" className="font-display-cond text-poster-sm mt-5 text-secondary-900">
+            {content.titleLead} <span className="hl-box">{content.titleAccent}</span>
           </Reveal>
           <p className="mt-6 max-w-sm text-[17px] leading-relaxed text-neutral-700 [text-wrap:pretty]">{content.intro}</p>
           <p className="mt-4 max-w-sm text-[13px] text-neutral-500">{content.caption}</p>
@@ -57,7 +56,7 @@ export function PreviewSection({ content }: PreviewSectionProps) {
                 </BrowserFrame>
               </div>
               <figcaption className="max-w-xl">
-                <p className="text-[15px] font-bold text-primary-600">{panel.tag}</p>
+                <p className="text-caption-mono text-primary-600">{panel.tag}</p>
                 <p className="mt-1 text-xl font-extrabold tracking-[-0.02em] text-secondary-900 md:text-2xl">{panel.title}</p>
                 <p className="mt-2 text-[15px] leading-relaxed text-neutral-700">{panel.description}</p>
               </figcaption>

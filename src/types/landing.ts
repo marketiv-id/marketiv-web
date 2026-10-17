@@ -9,14 +9,22 @@ export interface LandingTextRun {
   mark?: boolean;
 }
 
+export interface LandingImage {
+  src: string;
+  alt: string;
+}
+
+// "photo" fills its cell; "screen" is a transparent phone render shown whole on a brand-colour cell.
+export interface HeroStripItem extends LandingImage {
+  kind: "photo" | "screen";
+}
+
 export interface LandingNavContent {
   skipLink: string;
   mainLabel: string;
   homeLabel: string;
   openMenuLabel: string;
   closeMenuLabel: string;
-  audienceUmkm: LandingLink;
-  audienceKreator: LandingLink;
   menu: LandingLink[];
   menuLabel: string;
   closeLabel: string;
@@ -27,6 +35,7 @@ export interface LandingNavContent {
 }
 
 export interface HeroContent {
+  meta: string[];
   titleLead: string;
   titleRest: string;
   titleAccent: string;
@@ -34,11 +43,9 @@ export interface HeroContent {
   ctaUmkm: string;
   ctaCreator: string;
   dashboardCta: string;
-  backdropWord: string;
-  phone: {
-    image: string;
-    imageAlt: string;
-  };
+  proof: string[];
+  strip: HeroStripItem[];
+  stripCaption: string;
 }
 
 export interface ProblemContent {
@@ -48,12 +55,11 @@ export interface ProblemContent {
   kreator: { title: string; items: string[] };
 }
 
-export type PillarIcon = "shield" | "chart" | "users";
-
 export interface PillarItem {
   title: string;
   description: string;
-  icon: PillarIcon;
+  image: string;
+  imageAlt: string;
 }
 
 export interface PillarsContent {
@@ -80,6 +86,7 @@ export interface ModesContent {
   label: string;
   titleLead: string;
   titleAccent: string;
+  intro: string;
   campaign: ModePanel;
   rateCard: ModePanel;
 }
@@ -123,6 +130,11 @@ export interface UmkmContent {
   cta: string;
   image: string;
   imageAlt: string;
+  photo: string;
+  photoAlt: string;
+  photoCaption: string;
+  secondPhoto: string;
+  secondPhotoAlt: string;
   brief: {
     title: string;
     meta: { label: string; value: string }[];
@@ -139,6 +151,9 @@ export interface KreatorContent {
   cta: string;
   jobImage: string;
   jobImageAlt: string;
+  photo: string;
+  photoAlt: string;
+  photoCaption: string;
   simulator: {
     title: string;
     viewsLabel: string;
@@ -167,11 +182,17 @@ export interface ContextContent {
   coordinates: string;
   categoriesTop: string[];
   categoriesBottom: string[];
+  categoriesTitle: string;
+  categoriesNote: string;
+  categoryCards: { label: string; description: string; image?: string; imageAlt?: string }[];
 }
 
 export interface FaqContent {
   label: string;
   title: string;
+  contactTitle: string;
+  contactText: string;
+  contactEmail: string;
   items: { q: string; a: string }[];
 }
 

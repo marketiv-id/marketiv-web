@@ -1439,26 +1439,6 @@ html.lenis.lenis-smooth {
   .font-mono-nota {
     font-family: var(--font-landing-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
   }
-  .text-display-xl {
-    font-size: clamp(2.6rem, 6.4vw, 6.25rem);
-    line-height: 0.98;
-    letter-spacing: -0.045em;
-    font-weight: 800;
-  }
-  .text-display-lg {
-    font-size: clamp(2rem, 3.7vw, 3.5rem);
-    line-height: 1.04;
-    letter-spacing: -0.035em;
-    font-weight: 800;
-    text-wrap: balance;
-  }
-  .text-display-md {
-    font-size: clamp(1.6rem, 2.6vw, 2.4rem);
-    line-height: 1.1;
-    letter-spacing: -0.03em;
-    font-weight: 800;
-    text-wrap: balance;
-  }
   .img-outline {
     outline: 1px solid oklch(0 0 0 / 0.1);
     outline-offset: -1px;
@@ -1469,17 +1449,68 @@ html.lenis.lenis-smooth {
     letter-spacing: -0.03em;
     font-weight: 700;
   }
+  .font-display-cond {
+    font-family: var(--font-landing-display), "Arial Narrow", sans-serif;
+    font-variation-settings: "wdth" 64;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: -0.012em;
+  }
+  .text-poster {
+    font-size: clamp(3.25rem, 9.6vw, 10.5rem);
+    line-height: 0.84;
+  }
+  .text-poster-md {
+    font-size: clamp(2.6rem, 6.4vw, 6.75rem);
+    line-height: 0.86;
+  }
+  .text-poster-sm {
+    font-size: clamp(2.1rem, 4.2vw, 4.25rem);
+    line-height: 0.9;
+  }
+  .text-caption-mono {
+    font-family: var(--font-landing-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
 }
 
-.landing-grain::after {
+/* Filled highlight box behind a phrase; wraps per line so each line gets its own box. */
+/* --hl-w lets the hero wipe the box in from the left. */
+.hl-box {
+  background-image: linear-gradient(var(--hl-bg, var(--color-primary-500)), var(--hl-bg, var(--color-primary-500)));
+  background-repeat: no-repeat;
+  background-size: var(--hl-w, 100%) 100%;
+  color: var(--hl-fg, #fff);
+  padding: 0 0.1em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* Halftone screen: a dot grid faded by a mask, the only gradient language on the landing (no blurred blobs).
+   No position here on purpose: this rule is unlayered and would beat sticky/absolute utilities, so hosts set their own. */
+.halftone {
+  isolation: isolate;
+}
+.halftone::before {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: -1;
   pointer-events: none;
-  opacity: 0.16;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-image: radial-gradient(circle at center, var(--ht-dot, rgba(255, 255, 255, 0.32)) 0 32%, transparent 34%);
+  background-size: var(--ht-size, 10px) var(--ht-size, 10px);
+  -webkit-mask-image: linear-gradient(var(--ht-dir, 200deg), #000 0%, rgba(0, 0, 0, 0.55) 30%, transparent 72%);
+  mask-image: linear-gradient(var(--ht-dir, 200deg), #000 0%, rgba(0, 0, 0, 0.55) 30%, transparent 72%);
 }
+
+/* Bottom scrim for text set on photographs. */
+.photo-scrim {
+  background: linear-gradient(to top, rgba(10, 16, 26, 0.82) 0%, rgba(10, 16, 26, 0.35) 38%, rgba(10, 16, 26, 0) 65%);
+}
+
 
 /* The intro curtain renders only when the inline head script decided to play it, so no-JS and reduced-motion visitors never see it. */
 .intro-curtain {
@@ -1570,13 +1601,3 @@ html[data-intro="play"] .intro-curtain {
   }
 }
 
-/* Hero decorations wait hidden for their entrance; the animation is a failsafe if the bundle never runs. */
-html[data-motion="on"] [data-hero-pre] {
-  opacity: 0;
-  animation: hero-failsafe 0s linear 5s forwards;
-}
-@keyframes hero-failsafe {
-  to {
-    opacity: 1;
-  }
-}

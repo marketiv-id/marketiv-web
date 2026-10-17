@@ -6,12 +6,11 @@ export const NAVBAR_CONTENT: LandingNavContent = {
   homeLabel: "Marketiv, ke beranda",
   openMenuLabel: "Buka menu navigasi",
   closeMenuLabel: "Tutup menu navigasi",
-  audienceUmkm: { label: "Saya UMKM", href: "/#umkm" },
-  audienceKreator: { label: "Saya Kreator", href: "/#kreator" },
   menu: [
     { label: "Cara kerja", href: "/#mode" },
     { label: "Escrow", href: "/#escrow" },
-    { label: "Lihat aplikasi", href: "/#preview" },
+    { label: "Untuk UMKM", href: "/#umkm" },
+    { label: "Untuk kreator", href: "/#kreator" },
     { label: "FAQ", href: "/#faq" },
   ],
   menuLabel: "Menu",
@@ -25,6 +24,7 @@ export const NAVBAR_CONTENT: LandingNavContent = {
 // Facts on this page come from src/content/terms.ts; mockup numbers are labelled "Contoh" on screen.
 export const LANDING_CONTENT: LandingContent = {
   hero: {
+    meta: ["Marketplace UMKM × kreator lokal", "Campaign Mode · Rate Card Mode", "Sukabumi, Jawa Barat"],
     titleLead: "Kreator lokal promosikan produkmu.",
     titleRest: "Dananya ditahan sampai",
     titleAccent: "terbukti tayang.",
@@ -33,11 +33,17 @@ export const LANDING_CONTENT: LandingContent = {
     ctaUmkm: "Mulai Buat Campaign",
     ctaCreator: "Daftar sebagai Kreator",
     dashboardCta: "Buka Dashboard",
-    backdropWord: "TAYANG",
-    phone: {
-      image: "/landing/renders/hero-phones.webp",
-      imageAlt: "Dua layar aplikasi Marketiv di ponsel: lowongan kampanye untuk kreator dan ringkasan UMKM, data contoh",
-    },
+    proof: ["Pembayaran lewat Midtrans", "Konten tayang di TikTok dan Instagram", "Biaya platform 2%"],
+    // Photos are Unsplash illustrations of the setting, not Marketiv users; credits are in docs/landing-revamp/PLAN.md.
+    strip: [
+      { kind: "photo", src: "/landing/photos/umkm-penjual-jagung.webp", alt: "Pedagang jagung di Lombok memegang dagangannya" },
+      { kind: "screen", src: "/landing/renders/phone-kreator.webp", alt: "Layar ringkasan kreator di aplikasi Marketiv, data contoh" },
+      { kind: "photo", src: "/landing/photos/kategori-handmade.webp", alt: "Perempuan membatik kain dengan canting" },
+      { kind: "photo", src: "/landing/photos/kreator-dslr.webp", alt: "Perempuan berhijab memegang kamera di jembatan gantung" },
+      { kind: "screen", src: "/landing/renders/phone-buat.webp", alt: "Layar Buat Kampanye Baru di aplikasi Marketiv, data contoh" },
+      { kind: "photo", src: "/landing/photos/kategori-kosmetik.webp", alt: "Produk perawatan kulit dengan daun hijau" },
+    ],
+    stripCaption: "Foto ilustrasi dari Unsplash, layar aplikasi berisi data contoh",
   },
   problem: {
     label: "Masalah",
@@ -74,17 +80,20 @@ export const LANDING_CONTENT: LandingContent = {
       {
         title: "Dana ditahan escrow",
         description: "Pembayaran lewat Midtrans masuk ke escrow. Kreator menerima dana setelah kerjanya tervalidasi.",
-        icon: "shield",
+        image: "/landing/umkm-dashboard.webp",
+        imageAlt: "Ringkasan kampanye dan dana berjalan di dashboard UMKM, data contoh",
       },
       {
         title: "Bayar sesuai hasil",
         description: "Di Campaign Mode, reward kreator dihitung dari views yang lolos validasi.",
-        icon: "chart",
+        image: "/landing/kreator-jobpool.webp",
+        imageAlt: "Lowongan kampanye dengan imbalan per 1.000 tayangan, data contoh",
       },
       {
         title: "Kreator lokal dapat kerja",
         description: "Kreator mikro bisa klaim job campaign atau membuka rate card sendiri.",
-        icon: "users",
+        image: "/landing/photos/kreator-dslr.webp",
+        imageAlt: "Perempuan berhijab memegang kamera di jembatan gantung",
       },
     ],
   },
@@ -92,6 +101,7 @@ export const LANDING_CONTENT: LandingContent = {
     label: "Cara kerja",
     titleLead: "Pilih cara yang cocok dengan",
     titleAccent: "budget dan waktumu.",
+    intro: "Dua mode, satu escrow. Campaign Mode untuk jangkauan luas, Rate Card Mode untuk kreator yang sudah kamu pilih.",
     campaign: {
       id: "campaign",
       tag: "Campaign Mode",
@@ -204,6 +214,13 @@ export const LANDING_CONTENT: LandingContent = {
     cta: "Mulai Buat Campaign",
     image: "/landing/renders/phone-keuangan.webp",
     imageAlt: "Layar Keuangan Saya di aplikasi Marketiv untuk UMKM, data contoh",
+    // Unsplash, foto oleh @p_kuzovkova (Lombok). Ilustrasi suasana, bukan pengguna Marketiv.
+    photo: "/landing/photos/umkm-penjual-jagung.webp",
+    photoAlt: "Pedagang jagung di Lombok memegang dagangannya",
+    photoCaption: "Ilustrasi · Pedagang jagung, Lombok",
+    // Unsplash, foto oleh @anisa_flg. Ilustrasi suasana, bukan pengguna Marketiv.
+    secondPhoto: "/landing/photos/kategori-handmade.webp",
+    secondPhotoAlt: "Perempuan membatik kain dengan canting",
     brief: {
       title: "Contoh saran brief dari AI",
       meta: [
@@ -228,6 +245,10 @@ export const LANDING_CONTENT: LandingContent = {
     cta: "Daftar sebagai Kreator",
     jobImage: "/landing/renders/phone-kreator.webp",
     jobImageAlt: "Layar ringkasan kreator di aplikasi Marketiv, data contoh",
+    // Unsplash, foto oleh @mruqi (Bandung). Ilustrasi suasana, bukan pengguna Marketiv.
+    photo: "/landing/photos/kreator-dslr.webp",
+    photoAlt: "Perempuan berhijab memegang kamera di jembatan gantung",
+    photoCaption: "Ilustrasi · Kreator, Bandung",
     simulator: {
       title: "Simulasi reward campaign",
       viewsLabel: "Views yang lolos validasi",
@@ -256,12 +277,24 @@ export const LANDING_CONTENT: LandingContent = {
     mapCity: "Sukabumi",
     mapRegion: "Jawa Barat",
     coordinates: "6°55′ LS · 106°56′ BT",
-    categoriesTop: ["Kuliner", "Fashion", "Handmade", "Kosmetik"],
+    // Same niche list as NICHE_OPTIONS in the create-campaign form.
+    categoriesTop: ["Kuliner", "Fashion", "Kecantikan", "Pariwisata", "Edukasi"],
     categoriesBottom: ["TikTok", "Instagram", "Campaign Mode", "Rate Card"],
+    categoriesTitle: "Niche yang bisa dipilih saat membuat campaign",
+    categoriesNote: "Foto ilustrasi dari Unsplash",
+    categoryCards: [
+      { label: "Kuliner", description: "Makanan dan minuman" },
+      { label: "Fashion", description: "Pakaian dan aksesori", image: "/landing/photos/kategori-fashion.webp", imageAlt: "Kain batik motif bunga dan burung" },
+      { label: "Kecantikan", description: "Kosmetik dan skin care", image: "/landing/photos/kategori-kosmetik.webp", imageAlt: "Produk perawatan kulit dengan daun hijau" },
+      { label: "Lainnya", description: "Pariwisata, edukasi, serta umum dan jasa" },
+    ],
   },
   faq: {
     label: "FAQ",
     title: "Pertanyaan yang sering ditanyakan",
+    contactTitle: "Belum terjawab?",
+    contactText: "Kirim pertanyaanmu lewat email. Tim kami membalas paling lambat 3 hari kerja.",
+    contactEmail: "hello@marketiv.id",
     items: [
       {
         q: "Bagaimana dana saya diamankan?",

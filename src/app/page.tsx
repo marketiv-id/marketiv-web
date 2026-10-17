@@ -11,9 +11,8 @@ import { AudienceSection } from "@/components/features/landing/AudienceSection";
 import { ContextSection } from "@/components/features/landing/ContextSection";
 import { FAQSection } from "@/components/features/landing/FAQSection";
 import { FinalCtaSection } from "@/components/features/landing/FinalCtaSection";
-import { landingMono } from "@/components/features/landing/fonts";
+import { landingDisplay, landingMono } from "@/components/features/landing/fonts";
 import { SmoothScroll } from "@/components/features/landing/motion/SmoothScroll";
-import { SectionObserver } from "@/components/features/landing/motion/SectionObserver";
 import { Cursor } from "@/components/features/landing/motion/Cursor";
 import { IntroCurtain } from "@/components/features/landing/motion/IntroCurtain";
 import { PageCurtain } from "@/components/features/landing/motion/PageCurtain";
@@ -36,7 +35,7 @@ export default function LandingPage() {
   const content = LANDING_CONTENT;
 
   return (
-    <div className={landingMono.variable}>
+    <div className={`${landingMono.variable} ${landingDisplay.variable}`}>
       {/* Must run before the hero paints so the intro curtain and hidden decorations never flash. */}
       <script dangerouslySetInnerHTML={{ __html: INTRO_INLINE_SCRIPT }} />
       <a
@@ -46,7 +45,6 @@ export default function LandingPage() {
         {NAVBAR_CONTENT.skipLink}
       </a>
       <SmoothScroll />
-      <SectionObserver />
       <IntroCurtain />
       <PageCurtain />
       <Cursor />

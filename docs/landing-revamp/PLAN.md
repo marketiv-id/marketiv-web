@@ -470,5 +470,25 @@ Penyimpangan dari rencana dan sisa pekerjaan, supaya dokumen tetap jujur terhada
 - **Di luar cakupan dan belum disentuh:** font variable di `layout.tsx`, `lang="en"`, `images.unoptimized`, duplikasi `motion` dan `framer-motion`, halaman placeholder publik.
 - **Revisi visual 2026-10-16 (owner: "tiru UI referensi").** Hero dan panel Solusi memakai glow oranye ke ember gelap ala Armor, panel Dua Mode memakai panel warna penuh ala DontMatter, Final CTA ala Sphere. Ini menyimpang dari `07-landing-page-guidelines.md` §18 (hindari hero gelap) atas permintaan owner.
 - **Gambar HP adalah render, bukan hasil AI.** Tidak ada tool generate gambar di sesi ini. Screenshot asli aplikasi (mode mock, 390x844@3x) dimasukkan ke frame HP dengan `scripts/landing-render-mockups.cjs`. Foto merek pihak ketiga di data mock di-blur.
-- **Belum ada fotografi.** Ketiga referensi kuat karena foto asli. Foto UMKM atau kreator butuh aset dari owner atau izin memakai foto stok.
+- **Fotografi memakai Unsplash (Unsplash License), dipilih owner 2026-10-17.** Syarat owner: orang Indonesia, UMKM terlihat memegang produknya. Foto adalah ilustrasi suasana, bukan pengguna Marketiv, dan ditandai "Ilustrasi" atau "Foto ilustrasi dari Unsplash" di halaman. Pilihan A1 (penjual merokok) diganti A2, B1 (tidak terlihat kamera) diganti B2.
+
+| File | Foto | Fotografer |
+|---|---|---|
+| `public/landing/photos/umkm-penjual-jagung.webp` | https://unsplash.com/photos/OA05YUmDtnY | @p_kuzovkova |
+| `public/landing/photos/kreator-dslr.webp` | https://unsplash.com/photos/t1m6ipM9_xA | @mruqi |
+| `public/landing/photos/kategori-handmade.webp` | https://unsplash.com/photos/XOvNsILkVCo | @anisa_flg |
+| `public/landing/photos/kategori-fashion.webp` | https://unsplash.com/photos/fCwagrCDsXE | @europeana |
+| `public/landing/photos/kategori-kosmetik.webp` | https://unsplash.com/photos/g6q3lFAe3kA | @mahendra_10 |
+
+## 12. Revisi visual 2026-10-17 (referensi onseis, blue2purple, roveia)
+
+Owner menilai versi Armor/Sphere/DontMatter masih terlalu kosong dan terlihat buatan AI, terutama komposisi gradient oranye ke gelap. Arah baru menggantikan revisi 2026-10-16 di §11.
+
+- **Tesis visual.** Kertas terang, poster tipografi, foto nyata. Tidak ada lagi blob gradient blur, glass card, atau hero gelap.
+- **Tipografi.** Headline memakai Archivo variable condensed (`wdth` 64, weight 800, uppercase) lewat `next/font`, khusus landing (`--font-landing-display`, utility `.font-display-cond`, `.text-poster*`). Body tetap Plus Jakarta Sans, caption tetap JetBrains Mono (`.text-caption-mono`).
+- **Gradient.** Satu-satunya bahasa gradient adalah halftone: grid titik yang dipudarkan mask (`.halftone`, variabel `--ht-dot`, `--ht-dir`, `--ht-size`), di atas bidang warna flat oranye atau navy, ala blue2purple. Foto memakai scrim linear (`.photo-scrim`) untuk teks di atasnya.
+- **Aksen.** Frasa kunci memakai kotak isi (`.hl-box`, ala blue2purple), dianimasikan lewat `--hl-w` di hero.
+- **Per section.** Hero: headline poster dan strip foto miring yang berjalan (foto UMKM, kreator, layar aplikasi). Solusi: row bernomor yang terisi oranye saat aktif. Dua Mode: kartu bertumpuk warna flat dengan chip aturan (roveia). Konteks: kartu niche berfoto sesuai `NICHE_OPTIONS` form campaign, band marquee oranye. FAQ: accordion bernomor dan kartu kontak. Final CTA: band oranye dengan satu pintu per audiens.
+- **Dihapus.** `Spotlight`, `ScreenSlice`, `SectionObserver`, pill audiens di navbar, render `hero-phones.webp`.
+- **Kategori.** "Handmade" dan "Kosmetik" diganti niche yang benar-benar ada di form campaign (Kuliner, Fashion, Kecantikan, Pariwisata, Edukasi, Lainnya).
 

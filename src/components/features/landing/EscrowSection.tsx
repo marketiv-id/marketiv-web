@@ -5,8 +5,6 @@ import { DESKTOP_MOTION, gsap, MOTION_OK, useGSAP } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
 import type { EscrowContent } from "@/types/landing";
 import { Reveal } from "./motion/Reveal";
-import { ScreenSlice } from "./motion/ScreenSlice";
-import { Spotlight } from "./motion/Spotlight";
 
 interface EscrowSectionProps {
   content: EscrowContent;
@@ -111,18 +109,15 @@ export function EscrowSection({ content }: EscrowSectionProps) {
     <section
       ref={ref}
       id="escrow"
-      data-section-label={content.label}
       aria-labelledby="escrow-title"
-      className="landing-grain relative isolate z-[8] -mt-10 overflow-hidden rounded-b-[24px] bg-secondary-900 text-white md:rounded-b-[40px]"
+      className="relative z-[8] -mt-10 overflow-hidden rounded-b-[24px] bg-secondary-900 text-white md:rounded-b-[40px]"
     >
-      <ScreenSlice colorClassName="bg-neutral-25" />
-      <div data-escrow-pin className="relative flex min-h-svh items-center px-5 pb-20 pt-32 md:px-10 lg:pb-12 lg:pt-28">
-        <Spotlight />
-        <div className="relative z-[2] mx-auto grid w-full max-w-[1400px] gap-14 lg:grid-cols-12 lg:items-center lg:gap-8">
+      <div data-escrow-pin className="halftone relative flex min-h-svh items-center px-5 pb-20 pt-32 [--ht-dir:160deg] [--ht-dot:rgba(249,115,22,0.38)] md:px-10 lg:pb-12 lg:pt-28">
+        <div className="relative z-[2] mx-auto grid w-full max-w-[1600px] gap-14 lg:grid-cols-12 lg:items-center lg:gap-8">
           <div className="lg:col-span-6">
-            <p className="text-[15px] font-bold text-primary-400">{content.label}</p>
-            <Reveal as="h2" id="escrow-title" mode="words" className="text-display-md mt-5 max-w-[18ch]">
-              {content.titleLead} <span className="text-primary-400">{content.titleAccent}</span>
+            <p className="text-caption-mono text-primary-400">{content.label}</p>
+            <Reveal as="h2" id="escrow-title" mode="words" className="font-display-cond text-poster-sm mt-5 max-w-[17ch]">
+              {content.titleLead} <span className="hl-box">{content.titleAccent}</span>
             </Reveal>
 
             <div className="relative mt-10">
@@ -208,7 +203,7 @@ export function EscrowSection({ content }: EscrowSectionProps) {
         </div>
       </div>
 
-      <div className="relative z-[2] mx-auto max-w-[1400px] px-5 pb-24 md:px-10 lg:pb-28">
+      <div className="relative z-[2] mx-auto max-w-[1600px] px-5 pb-24 md:px-10 lg:pb-28">
         <p data-escrow-note className="max-w-3xl text-[15px] leading-relaxed text-white/60 [text-wrap:pretty]">
           {content.disputeNote}
         </p>
