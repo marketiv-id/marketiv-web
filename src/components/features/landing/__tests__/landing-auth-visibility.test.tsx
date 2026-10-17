@@ -13,6 +13,27 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/components/providers/AuthProvider", () => ({
   useAuth: () => mocks.auth,
 }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
+// jsdom has no matchMedia; GSAP queries it when ScrollTrigger registers. "matches: false" behaves like reduced motion.
+if (!window.matchMedia) {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: (query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    }),
+  });
+}
+
 vi.mock("next/link", () => ({
   default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => (
     <a href={href} {...props}>{children}</a>
@@ -76,10 +97,11 @@ describe("auth-aware landing actions", () => {
     mockAuth({ user: null, loading: false });
     await render(<Navbar />);
 
-    expect(document.querySelectorAll('a[href="/login"]')).toHaveLength(2);
-    expect(document.querySelectorAll('a[href="/register"]')).toHaveLength(2);
-    await click('button[aria-label="Toggle navigation menu"]');
-    expect(document.body.textContent).toContain("Daftar Sekarang");
+    // Desktop bar, mobile menu, and the mobile CTA bar each carry one login and one register link.
+    expect(document.querySelectorAll('a[href="/login"]')).toHaveLength(3);
+    expect(document.querySelectorAll('a[href="/register"]')).toHaveLength(3);
+    await click('button[aria-label="Buka menu navigasi"]');
+    expect(document.querySelector('button[aria-label="Tutup menu navigasi"]')).not.toBeNull();
   });
 
   it("shows UMKM dashboard on desktop and mobile", async () => {
@@ -89,7 +111,7 @@ describe("auth-aware landing actions", () => {
 
     const dashboardLinks = document.querySelectorAll('a[href="/dashboard/umkm"]');
     expect(dashboardLinks).toHaveLength(2);
-    expect(document.body.textContent).not.toContain("Daftar Sekarang");
+    expect(document.querySelector('a[href="/register?role=umkm"]')).toBeNull();
     expect(document.querySelectorAll('a[href="/login"]')).toHaveLength(0);
     expect(document.querySelectorAll('a[href="/register"]')).toHaveLength(0);
   });

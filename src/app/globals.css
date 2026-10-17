@@ -168,7 +168,7 @@
     transition-duration: 0.01ms !important;
   }
 }
-/* Range slider custom thumb styling — used by CuanEstimatorSection */
+/* Range slider custom thumb styling, used by the landing RewardSimulator */
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
@@ -1277,15 +1277,16 @@ html {
 .chatbot-panel-float {
   position: fixed;
   right: 1rem;
-  bottom: 6.25rem; /* 56px FAB + 16px gap + 28px safe padding */
+  bottom: 5.75rem; /* 56px FAB + 24px offset + 12px gap */
   width: calc(100vw - 2rem);
   max-width: 400px;
-  max-height: calc(100vh - 240px);
+  /* Top room for the fixed navbar; keeps a usable panel on short laptop screens. */
+  max-height: min(640px, calc(100dvh - 7rem));
   z-index: var(--z-index-modal, 50);
-  border-radius: 24px;
-  border: 1px solid var(--border, rgba(17,24,39,0.08));
-  background: white;
-  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.15);
+  border-radius: 28px;
+  border: 1px solid rgba(16, 32, 51, 0.08);
+  background: #f8f5ef;
+  box-shadow: 0 32px 80px rgba(16, 32, 51, 0.24);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1293,16 +1294,16 @@ html {
 
 @media (min-width: 768px) {
   .chatbot-panel-float {
-    right: 2rem;
-    bottom: 7rem;
-    max-height: calc(100vh - 200px);
+    right: 1.5rem;
+    bottom: 6rem;
+    max-height: min(680px, calc(100dvh - 7.5rem));
   }
 }
 
 @media (min-width: 1024px) {
   .chatbot-panel-float {
-    right: 2.5rem;
-    bottom: 8rem;
+    right: 1.5rem;
+    bottom: 6rem;
   }
 }
 
@@ -1416,4 +1417,214 @@ body.theme-kreator {
   background: var(--scrollbar-thumb-hover);
 }
 
+
+
+/* Landing page "/" */
+
+/* Lenis adds these classes to <html>; native smooth scroll would fight its interpolation. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+html.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+@layer utilities {
+  .font-mono-nota {
+    font-family: var(--font-landing-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .img-outline {
+    outline: 1px solid oklch(0 0 0 / 0.1);
+    outline-offset: -1px;
+  }
+  .text-statement {
+    font-size: clamp(1.6rem, 3.4vw, 3.15rem);
+    line-height: 1.16;
+    letter-spacing: -0.03em;
+    font-weight: 700;
+  }
+  .font-display-cond {
+    font-family: var(--font-landing-display), "Arial Narrow", sans-serif;
+    font-variation-settings: "wdth" 64;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: -0.012em;
+  }
+  /* Capped by viewport height too, so a short laptop screen at 100% zoom is not swallowed by one headline. */
+  .text-poster {
+    font-size: clamp(2.9rem, min(8vw, 14vh), 9rem);
+    line-height: 0.86;
+  }
+  .text-poster-md {
+    font-size: clamp(2.3rem, min(5.2vw, 9.5vh), 5.75rem);
+    line-height: 0.88;
+  }
+  .text-poster-sm {
+    font-size: clamp(1.95rem, min(3.5vw, 6.6vh), 3.6rem);
+    line-height: 0.92;
+  }
+  .text-caption-mono {
+    font-family: var(--font-landing-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+}
+
+/* Filled highlight box behind a phrase; wraps per line so each line gets its own box. */
+/* --hl-w lets the hero wipe the box in from the left. */
+.hl-box {
+  background-image: linear-gradient(var(--hl-bg, var(--color-primary-500)), var(--hl-bg, var(--color-primary-500)));
+  background-repeat: no-repeat;
+  background-size: var(--hl-w, 100%) 100%;
+  color: var(--hl-fg, #fff);
+  padding: 0 0.1em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* Halftone screen: a dot grid faded by a mask, the only gradient language on the landing (no blurred blobs).
+   No position here on purpose: this rule is unlayered and would beat sticky/absolute utilities, so hosts set their own. */
+.halftone {
+  isolation: isolate;
+}
+.halftone::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(circle at center, var(--ht-dot, rgba(255, 255, 255, 0.32)) 0 32%, transparent 34%);
+  background-size: var(--ht-size, 10px) var(--ht-size, 10px);
+  -webkit-mask-image: linear-gradient(var(--ht-dir, 200deg), #000 0%, rgba(0, 0, 0, 0.55) 30%, transparent 72%);
+  mask-image: linear-gradient(var(--ht-dir, 200deg), #000 0%, rgba(0, 0, 0, 0.55) 30%, transparent 72%);
+}
+
+/* Bottom scrim for text set on photographs. */
+.photo-scrim {
+  background: linear-gradient(to top, rgba(10, 16, 26, 0.82) 0%, rgba(10, 16, 26, 0.35) 38%, rgba(10, 16, 26, 0) 65%);
+}
+
+
+/* The intro curtain renders only when the inline head script decided to play it, so no-JS and reduced-motion visitors never see it. */
+.intro-curtain {
+  display: none;
+}
+html[data-intro="play"] .intro-curtain {
+  display: block;
+  /* If the bundle never hydrates, the overlay still gets out of the way. */
+  animation: intro-failsafe 0s linear 4s forwards;
+}
+
+@keyframes intro-rise {
+  from {
+    transform: translateY(115%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.intro-char {
+  animation: intro-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes intro-line {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.intro-line {
+  animation: intro-line 0.85s cubic-bezier(0.65, 0, 0.35, 1) 0.1s both;
+}
+
+.hl-mark {
+  background-image: linear-gradient(var(--color-primary-500), var(--color-primary-500));
+  background-repeat: no-repeat;
+  background-position: 0 94%;
+  background-size: var(--hl-size, 100%) 0.11em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.liquid-btn .liquid-fill {
+  clip-path: circle(0% at var(--lx, 50%) var(--ly, 50%));
+  transition: clip-path 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.liquid-btn:hover .liquid-fill,
+.liquid-btn:focus-visible .liquid-fill {
+  clip-path: circle(150% at var(--lx, 50%) var(--ly, 50%));
+}
+
+.roll {
+  position: relative;
+  display: inline-flex;
+  overflow: hidden;
+  vertical-align: top;
+}
+.roll > span {
+  display: block;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.roll > span + span {
+  position: absolute;
+  inset: 0;
+  transform: translateY(105%);
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .roll-host:hover .roll > span:first-child,
+  .roll-host:focus-visible .roll > span:first-child {
+    transform: translateY(-105%);
+  }
+  .roll-host:hover .roll > span + span,
+  .roll-host:focus-visible .roll > span + span {
+    transform: translateY(0);
+  }
+}
+
+/* Scalloped tear-off edge for the escrow receipt. */
+.nota-edge::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -11px;
+  height: 12px;
+  background: radial-gradient(circle at 10px 0, transparent 7px, var(--nota-bg, #fffdf9) 7.5px) repeat-x;
+  background-size: 20px 12px;
+}
+
+.landing-cursor {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .landing-cursor {
+    display: block;
+  }
+}
+
+/* If the intro script ran but the bundle never hydrates, the curtain still gets out of the way. */
+@keyframes intro-failsafe {
+  to {
+    visibility: hidden;
+  }
+}
+
+@keyframes landing-label-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
 

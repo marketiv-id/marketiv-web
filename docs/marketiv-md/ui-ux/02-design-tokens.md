@@ -282,6 +282,22 @@ transitionDuration: {
 }
 ```
 
+### Landing Motion Tokens
+
+Khusus landing page `/` (GSAP). Token dashboard di atas tidak berubah.
+
+```txt
+ease enter      expo.out / power3.out
+reveal          0.9s sampai 1.1s, offset y 32px
+word stagger    0.04s
+card stagger    0.08s
+trigger         start "top 85%", once: true
+scrub           0.6 sampai 1.2
+hover           0.35s sampai 0.6s
+```
+
+Tidak memakai ease elastic atau bounce. Animasi saat scroll hanya `transform`, `opacity`, dan `clip-path`.
+
 ## 19. Tailwind Implementation Note
 
 Semua token di atas harus dimasukkan ke `tailwind.config.ts`.

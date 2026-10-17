@@ -1,51 +1,47 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { dashboardByRole, isUserPortalRole, routes } from "@/lib/constants/routes";
+import { LandingButton } from "./motion/LandingButton";
 
 interface LandingHeroActionsProps {
   ctaUmkm: string;
   ctaCreator: string;
+  dashboardCta?: string;
+  // "dark" is for the orange hero frame, where the primary action turns white.
+  tone?: "light" | "dark";
 }
 
-export function LandingHeroActions({ ctaUmkm, ctaCreator }: LandingHeroActionsProps) {
+export function LandingHeroActions({ ctaUmkm, ctaCreator, dashboardCta = "Buka Dashboard", tone = "light" }: LandingHeroActionsProps) {
   const { user, loading } = useAuth();
   const dashboardHref = user && isUserPortalRole(user.role) ? dashboardByRole[user.role] : null;
+  const onDark = tone === "dark";
 
   if (loading) {
     return (
-      <div
-        aria-hidden="true"
-        className="flex flex-col sm:flex-row gap-4 sm:gap-5"
-      >
-        <div className="h-11 w-full min-w-56 rounded-full bg-white/20" />
-        <div className="h-11 w-full min-w-56 rounded-full bg-white/20" />
+      <div aria-hidden="true" className="flex flex-col gap-3 sm:flex-row">
+        <div className={onDark ? "h-14 w-full rounded-full bg-white/25 sm:w-60" : "h-14 w-full rounded-full bg-secondary-900/10 sm:w-60"} />
+        <div className={onDark ? "h-14 w-full rounded-full bg-white/10 sm:w-60" : "h-14 w-full rounded-full bg-secondary-900/5 sm:w-60"} />
       </div>
     );
   }
 
   if (dashboardHref) {
     return (
-      <Button variant="primary" size="xl" href={dashboardHref}>
-        Buka Dashboard
-      </Button>
+      <LandingButton href={dashboardHref} variant={onDark ? "light" : "dark"} curtain cursorLabel="Masuk">
+        {dashboardCta}
+      </LandingButton>
     );
   }
 
   return (
-    <>
-      <Button variant="primary" size="xl" href={routes.registerWithRole("umkm")}>
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+      <LandingButton href={routes.registerWithRole("umkm")} variant={onDark ? "light" : "primary"} curtain arrow cursorLabel="Mulai">
         {ctaUmkm}
-      </Button>
-      <Button
-        variant="outline"
-        size="xl"
-        href={routes.registerWithRole("creator")}
-        className="!bg-white/20 !backdrop-blur-md !border-white/40 !text-white font-semibold hover:!bg-white/40 hover:!border-white/70 transition-all duration-300"
-      >
+      </LandingButton>
+      <LandingButton href={routes.registerWithRole("creator")} variant={onDark ? "outline-light" : "outline"} curtain cursorLabel="Daftar">
         {ctaCreator}
-      </Button>
-    </>
+      </LandingButton>
+    </div>
   );
 }

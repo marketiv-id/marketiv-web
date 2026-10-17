@@ -3,45 +3,48 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ChatbotPanel } from "@/components/features/chatbot/ChatbotPanel";
+import { TivvyAvatar } from "@/components/features/chatbot/TivvyAvatar";
 
 export function ChatbotFab() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      {/* Chat Panel */}
       <ChatbotPanel isOpen={isOpen} onClose={() => setIsOpen(false)} />
 
-      {/* FAB Button */}
+      {/* A round avatar on phones (the landing CTA bar sits beside it); a labelled pill from md up. */}
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        aria-label="Toggle AI Message Bot"
+        aria-label={isOpen ? "Tutup Tivvy, asisten AI Marketiv" : "Buka Tivvy, asisten AI Marketiv"}
+        aria-expanded={isOpen}
         className={cn(
-          "fixed bottom-6 right-6 z-40",
-          "flex items-center justify-center",
-          "w-14 h-14 md:w-16 md:h-16 lg:w-18 lg:h-18",
-          "rounded-full bg-brand-coral shadow-2xl",
-          "hover:scale-110 transition-all duration-200",
-          "border-4 border-white/20 cursor-pointer",
+          "group fixed bottom-6 right-6 z-40 flex h-14 items-center gap-3 rounded-full bg-secondary-900 p-1 text-white",
+          "shadow-[0_18px_40px_rgba(16,32,51,0.32)] ring-1 ring-white/10 transition-[translate,scale,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+          "hover:-translate-y-0.5 hover:shadow-[0_24px_50px_rgba(16,32,51,0.38)] active:scale-[0.96] md:pr-5",
         )}
       >
-        {/* Toggle between robot icon and close icon */}
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cn("w-7 h-7 md:w-8 md:h-8 lg:w-9 lg:h-9", "transition-transform duration-300", isOpen && "rotate-90")}>
-          {isOpen ? (
-            <>
-              <path d="M18 6L6 18" />
-              <path d="M6 6l12 12" />
-            </>
-          ) : (
-            <>
-              <path d="M12 2C8.686 2 6 4.686 6 8v1H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2v1c0 3.314 2.686 6 6 6s6-2.686 6-6v-1h2a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2V8c0-3.314-2.686-6-6-6z" />
-              <path d="M9 13v-2" />
-              <path d="M15 13v-2" />
-              <path d="M10 17h4" />
-            </>
-          )}
-        </svg>
+        <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-500">
+          <TivvyAvatar size={48} className={cn("transition-[opacity,scale] duration-300", isOpen ? "scale-75 opacity-0" : "scale-100 opacity-100")} />
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            className={cn("absolute h-5 w-5 transition-[opacity,rotate] duration-300", isOpen ? "rotate-0 opacity-100" : "-rotate-90 opacity-0")}
+          >
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </span>
+        {!isOpen && (
+          <span aria-hidden="true" className="absolute left-[2.6rem] top-1.5 h-3 w-3 rounded-full bg-success ring-2 ring-secondary-900" />
+        )}
+        <span className="hidden text-left leading-tight md:block">
+          <span className="block text-[14px] font-bold">{isOpen ? "Tutup chat" : "Tanya Tivvy"}</span>
+          <span className="block text-[11px] text-white/60">Asisten AI Marketiv</span>
+        </span>
       </button>
     </>
   );
