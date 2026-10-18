@@ -21,22 +21,31 @@ export function HorizontalTrack({ children, className, trackClassName }: Horizon
       if (!el || !track) return;
       const mm = gsap.matchMedia();
       mm.add(PIN_MOTION, () => {
-        const distance = () => Math.max(0, track.scrollWidth - el.clientWidth);
-        const tween = gsap.to(track, {
-          x: () => -distance(),
-          ease: "none",
-          // Keeps the track on its own layer between scrub updates, so resuming never re-rasterises the panels.
-          force3D: true,
+        // Measured from the last panel's edge plus the track's end padding: scrollWidth leaves that padding out,
+        // which released the pin while the last panel was still partly off screen.
+        const distance = () => {
+          const last = track.lastElementChild as HTMLElement | null;
+          if (!last) return 0;
+          const endPadding = parseFloat(getComputedStyle(track).paddingRight) || 0;
+          return Math.max(0, last.offsetLeft + last.offsetWidth + endPadding - el.clientWidth);
+        };
+        // A short hold after the last panel lands, so it can be read before the page scrolls on.
+        const hold = () => window.innerHeight * 0.35;
+        // Slide, then hold: durations are in px so the slide maps 1:1 to scroll and the hold is pure pinned time.
+        const tween = gsap.timeline({
+          defaults: { ease: "none" },
           scrollTrigger: {
             trigger: el,
             start: "top top",
-            end: () => `+=${distance()}`,
+            end: () => `+=${distance() + hold()}`,
             pin: true,
             scrub: 1,
             anticipatePin: 1,
             invalidateOnRefresh: true,
           },
         });
+        // force3D keeps the track on its own layer between scrub updates, so resuming never re-rasterises the panels.
+        tween.to(track, { x: () => -distance(), duration: distance(), force3D: true }).to({}, { duration: hold() });
 
         // Panels after the first wipe open as they slide in, timed against the horizontal tween.
         gsap.utils.toArray<HTMLElement>("[data-track-media]", track).forEach((media, index) => {
@@ -57,7 +66,7 @@ export function HorizontalTrack({ children, className, trackClassName }: Horizon
           gsap.fromTo(bar, { scaleX: 0 }, {
             scaleX: 1,
             ease: "none",
-            scrollTrigger: { trigger: el, start: "top top", end: () => `+=${distance()}`, scrub: true, invalidateOnRefresh: true },
+            scrollTrigger: { trigger: el, start: "top top", end: () => `+=${distance() + hold()}`, scrub: true, invalidateOnRefresh: true },
           });
         }
       });
