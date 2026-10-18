@@ -21,7 +21,8 @@ export function Footer({ reveal = false }: FooterProps) {
         reveal && "[@media(min-width:1024px)_and_(min-height:900px)]:sticky [@media(min-width:1024px)_and_(min-height:900px)]:bottom-0 [@media(min-width:1024px)_and_(min-height:900px)]:z-0",
       )}
     >
-      <div className="mx-auto max-w-[1400px] px-5 pb-6 pt-20 md:px-10 md:pt-28">
+      {/* Extra bottom room on phones: the fixed sign-up bar would otherwise sit on the copyright row. */}
+      <div className="mx-auto max-w-[1400px] px-5 pb-28 pt-20 md:px-10 md:pb-6 md:pt-28">
         <div className="grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-6">
             <Link href="/" aria-label={NAVBAR_CONTENT.homeLabel} className="inline-flex">
@@ -36,10 +37,10 @@ export function Footer({ reveal = false }: FooterProps) {
           <div className="grid grid-cols-2 gap-10 sm:grid-cols-3 lg:col-span-6">
             <div>
               <h2 className="text-[13px] font-semibold text-white/50">{footer.nav.title}</h2>
-              <ul className="mt-5 flex flex-col gap-3">
+              <ul className="mt-3 flex flex-col md:mt-5 md:gap-3">
                 {footer.nav.links.map((link) => (
                   <li key={link.href}>
-                    <Link href={link.href} className="roll-host inline-flex text-[15px] font-semibold text-white/85 transition-colors hover:text-primary-400">
+                    <Link href={link.href} className="roll-host inline-flex min-h-10 items-center text-[15px] font-semibold text-white/85 transition-colors hover:text-primary-400 md:min-h-0">
                       <span className="roll">
                         <span>{link.label}</span>
                         <span aria-hidden="true">{link.label}</span>
@@ -51,10 +52,10 @@ export function Footer({ reveal = false }: FooterProps) {
             </div>
             <div>
               <h2 className="text-[13px] font-semibold text-white/50">{footer.legal.title}</h2>
-              <ul className="mt-5 flex flex-col gap-3">
+              <ul className="mt-3 flex flex-col md:mt-5 md:gap-3">
                 {footer.legal.links.map((link) => (
                   <li key={link.href}>
-                    <Link href={link.href} className="text-[15px] font-semibold text-white/85 transition-colors hover:text-primary-400">
+                    <Link href={link.href} className="inline-flex min-h-10 items-center text-[15px] font-semibold text-white/85 transition-colors hover:text-primary-400 md:min-h-0">
                       {link.label}
                     </Link>
                   </li>
@@ -63,9 +64,9 @@ export function Footer({ reveal = false }: FooterProps) {
             </div>
             <div className="col-span-2 sm:col-span-1">
               <h2 className="text-[13px] font-semibold text-white/50">{footer.contact.title}</h2>
-              <ul className="mt-5 flex flex-col gap-3">
+              <ul className="mt-3 flex flex-col md:mt-5 md:gap-3">
                 <li>
-                  <a href={`mailto:${footer.contact.email}`} className="text-[15px] font-semibold text-white/85 transition-colors hover:text-primary-400">
+                  <a href={`mailto:${footer.contact.email}`} className="inline-flex min-h-10 items-center text-[15px] font-semibold text-white/85 transition-colors hover:text-primary-400 md:min-h-0">
                     {footer.contact.email}
                   </a>
                 </li>
@@ -74,7 +75,7 @@ export function Footer({ reveal = false }: FooterProps) {
                     href={footer.contact.instagramHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[15px] font-semibold text-white/85 transition-colors hover:text-primary-400"
+                    className="inline-flex min-h-10 items-center text-[15px] font-semibold text-white/85 transition-colors hover:text-primary-400 md:min-h-0"
                   >
                     Instagram {footer.contact.instagram}
                   </a>

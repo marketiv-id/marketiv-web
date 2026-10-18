@@ -44,7 +44,7 @@ export function HeroSection({ content }: HeroSectionProps) {
 
         <h1
           data-hero-title
-          className="font-display-cond relative z-[3] mt-8 max-w-[15ch] text-[clamp(2.6rem,min(5.6vw,9.4vh),6.75rem)] leading-[0.88] text-secondary-900 md:mt-8 lg:max-w-[min(68vw,1120px)]"
+          className="font-display-cond relative z-[3] mt-8 max-w-[15ch] text-[clamp(2.15rem,min(5.6vw,9.4vh),6.75rem)] sm:text-[clamp(2.6rem,min(5.6vw,9.4vh),6.75rem)] leading-[0.88] text-secondary-900 md:mt-8 lg:max-w-[min(68vw,1120px)]"
         >
           {content.titleLead} {content.titleRest} <span className="hl-box">{content.titleAccent}</span>
         </h1>

@@ -183,7 +183,7 @@ export function EscrowSection({ content }: EscrowSectionProps) {
                 <span className="font-mono-nota text-2xl font-bold">{content.receipt.totalValue}</span>
               </div>
 
-              <div aria-hidden="true" className="pointer-events-none absolute -right-5 bottom-[30%]">
+              <div aria-hidden="true" className="pointer-events-none absolute -right-1 bottom-[30%] sm:-right-5">
                 {stampedSteps.map((step) => (
                   <span
                     key={step.stamp}

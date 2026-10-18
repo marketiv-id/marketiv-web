@@ -59,7 +59,7 @@ export function FinalCtaSection({ content }: FinalCtaSectionProps) {
                   className={cn("group/door relative flex min-h-[320px] flex-col justify-between rounded-[28px] p-7 md:min-h-[360px] md:rounded-[36px] md:p-10", door.tone)}
                 >
                   {/* The clip box ends at the card's bottom edge: the mascot's head rises above the card, its feet stay hidden below it. */}
-                  <div aria-hidden="true" className="pointer-events-none absolute bottom-0 right-1 h-[160%] w-[38%] max-w-[400px] overflow-hidden md:right-6 md:w-[54%]">
+                  <div aria-hidden="true" className="pointer-events-none absolute bottom-0 right-1 h-[160%] w-[33%] max-w-[400px] overflow-hidden md:right-6 md:w-[54%]">
                     <MascotFloat
                       src={door.mascot.src}
                       alt=""
