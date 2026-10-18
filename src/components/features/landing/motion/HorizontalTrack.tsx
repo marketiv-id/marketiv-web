@@ -25,6 +25,8 @@ export function HorizontalTrack({ children, className, trackClassName }: Horizon
         const tween = gsap.to(track, {
           x: () => -distance(),
           ease: "none",
+          // Keeps the track on its own layer between scrub updates, so resuming never re-rasterises the panels.
+          force3D: true,
           scrollTrigger: {
             trigger: el,
             start: "top top",

@@ -1503,6 +1503,8 @@ html.lenis.lenis-smooth {
   inset: 0;
   z-index: -1;
   pointer-events: none;
+  /* Own compositor layer: the dot grid and its mask are rasterised once instead of on every repaint of the host. */
+  transform: translateZ(0);
   background-image: radial-gradient(circle at center, var(--ht-dot, rgba(255, 255, 255, 0.32)) 0 32%, transparent 34%);
   background-size: var(--ht-size, 10px) var(--ht-size, 10px);
   -webkit-mask-image: linear-gradient(var(--ht-dir, 200deg), #000 0%, rgba(0, 0, 0, 0.55) 30%, transparent 72%);

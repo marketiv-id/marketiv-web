@@ -25,6 +25,7 @@ export function Parallax({ children, className, speed = 12 }: ParallaxProps) {
           {
             yPercent: amount,
             ease: "none",
+            force3D: true,
             scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: 1 },
           },
         );

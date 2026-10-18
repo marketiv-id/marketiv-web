@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRef } from "react";
-import { gsap, MOTION_OK, useGSAP } from "@/lib/gsap";
+import { gsap, MOTION_OK, ScrollTrigger, useGSAP } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
 
 interface MascotFloatProps {
@@ -34,8 +34,13 @@ export function MascotFloat({ src, alt, width, height, sizes, className, phase =
           ease: "expo.out",
           scrollTrigger: { trigger: el, start: "top 88%", once: true },
         });
-        const idle = gsap.to(el, { y: -10, rotate: phase ? -1.5 : 1.5, duration: 2.6, ease: "sine.inOut", yoyo: true, repeat: -1, delay: phase });
-        return () => idle.kill();
+        const idle = gsap.to(el, { y: -10, rotate: phase ? -1.5 : 1.5, duration: 2.6, ease: "sine.inOut", yoyo: true, repeat: -1, delay: phase, paused: true });
+        // The idle loop only runs while the mascot is on screen.
+        const visible = ScrollTrigger.create({ trigger: el, start: "top bottom", end: "bottom top", onToggle: (self) => (self.isActive ? idle.play() : idle.pause()) });
+        return () => {
+          visible.kill();
+          idle.kill();
+        };
       });
       return () => mm.revert();
     },
@@ -45,7 +50,7 @@ export function MascotFloat({ src, alt, width, height, sizes, className, phase =
   return (
     <div className={cn("pointer-events-none transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]", className)}>
       <div ref={ref}>
-        <Image src={src} alt={alt} width={width} height={height} sizes={sizes} className="h-auto w-full select-none drop-shadow-[0_24px_30px_rgba(0,0,0,0.35)]" />
+        <Image src={src} alt={alt} width={width} height={height} sizes={sizes} className="h-auto w-full select-none" />
       </div>
     </div>
   );

@@ -74,10 +74,13 @@ export function Marquee({ top, bottom, className, onOrange = false }: MarqueePro
         let hovered = false;
         const base = () => (hovered ? 0.25 : 1);
         // Scroll velocity speeds the loop up, then it eases back to its idle pace.
+        loops.forEach((loop) => loop.pause());
         const trigger = ScrollTrigger.create({
           trigger: el,
           start: "top bottom",
           end: "bottom top",
+          // Off screen the rows stop entirely instead of animating where nobody can see them.
+          onToggle: (self) => loops.forEach((loop) => (self.isActive ? loop.play() : loop.pause())),
           onUpdate: (self) => {
             const boost = gsap.utils.clamp(1, 5, 1 + Math.abs(self.getVelocity()) / 400);
             const direction = self.direction === -1 ? -1 : 1;

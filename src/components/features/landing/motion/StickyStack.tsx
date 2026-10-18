@@ -44,7 +44,7 @@ export function StickyStack({ children, className }: StickyStackProps) {
           const tl = gsap.timeline({
             scrollTrigger: { trigger: next, start: "top bottom", end: "top top", scrub: 1 },
           });
-          tl.to(inner, { scale: 0.94, ease: "none" }, 0);
+          tl.to(inner, { scale: 0.94, ease: "none", force3D: true }, 0);
           if (shade) tl.to(shade, { opacity: 0.35, ease: "none" }, 0);
         });
       });

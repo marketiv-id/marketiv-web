@@ -102,7 +102,7 @@ export function AudienceSection({ umkm, kreator }: AudienceSectionProps) {
               </div>
               <div data-stack-item className="hidden lg:absolute lg:bottom-0 lg:right-[3%] lg:z-10 lg:block lg:w-[19%]">
                 <Parallax speed={14}>
-                  <Image src={umkm.image} alt={umkm.imageAlt} width={900} height={1532} sizes="(min-width: 1024px) 12vw, 34vw" className="h-auto w-full select-none drop-shadow-[0_24px_40px_rgba(16,32,51,0.3)]" />
+                  <Image src={umkm.image} alt={umkm.imageAlt} width={900} height={1532} sizes="(min-width: 1024px) 12vw, 34vw" className="h-auto w-full select-none" />
                 </Parallax>
               </div>
               <div data-stack-item className="relative z-[5] -mt-10 mx-3 lg:absolute lg:bottom-0 lg:left-[6%] lg:mx-0 lg:mt-0 lg:w-[58%]">
@@ -116,7 +116,7 @@ export function AudienceSection({ umkm, kreator }: AudienceSectionProps) {
           id="kreator"
           data-stack-panel
           aria-labelledby="kreator-title"
-          className="sticky z-[1] flex min-h-dvh flex-col justify-center overflow-hidden rounded-t-[24px] bg-white px-5 pb-20 pt-24 shadow-[0_-24px_60px_rgba(16,32,51,0.08)] md:rounded-t-[40px] md:px-10 md:pt-28"
+          className="sticky z-[1] flex min-h-dvh flex-col justify-center overflow-hidden rounded-t-[24px] bg-white px-5 pb-20 pt-24 ring-1 ring-secondary-900/[0.06] md:rounded-t-[40px] md:px-10 md:pt-28"
         >
           <div data-stack-inner className="mx-auto w-full max-w-[1600px] origin-top">
             <div className="grid gap-6 lg:grid-cols-12 lg:items-end">
@@ -134,7 +134,7 @@ export function AudienceSection({ umkm, kreator }: AudienceSectionProps) {
                 <div className="absolute -bottom-8 -right-3 w-[38%] max-w-[170px] lg:-right-10 lg:w-[44%] lg:max-w-none">
                   <Parallax speed={10}>
                     <TiltCard>
-                      <Image src={kreator.jobImage} alt={kreator.jobImageAlt} width={900} height={1532} sizes="(min-width: 1024px) 12vw, 38vw" className="h-auto w-full select-none drop-shadow-[0_24px_40px_rgba(16,32,51,0.3)]" />
+                      <Image src={kreator.jobImage} alt={kreator.jobImageAlt} width={900} height={1532} sizes="(min-width: 1024px) 12vw, 38vw" className="h-auto w-full select-none" />
                     </TiltCard>
                   </Parallax>
                 </div>

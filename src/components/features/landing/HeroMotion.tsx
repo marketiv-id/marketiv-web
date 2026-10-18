@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, type ReactNode } from "react";
-import { EASE_OUT, FINE_POINTER, gsap, MOTION_OK, SplitText, useGSAP } from "@/lib/gsap";
+import { EASE_OUT, FINE_POINTER, gsap, MOTION_OK, ScrollTrigger, SplitText, useGSAP } from "@/lib/gsap";
 import { whenIntroDone } from "./motion/intro-state";
 
 interface HeroMotionProps {
@@ -27,6 +27,13 @@ export function HeroMotion({ children, className }: HeroMotionProps) {
         const loops = q("[data-hero-strip-track]").map((track) => {
           const axis = (track as HTMLElement).dataset.heroStripTrack === "x" ? "xPercent" : "yPercent";
           return gsap.fromTo(track, { [axis]: 0 }, { [axis]: -50, duration: axis === "xPercent" ? 36 : 48, ease: "none", repeat: -1 });
+        });
+        // The strip loops only while the hero is on screen.
+        const stripVisible = ScrollTrigger.create({
+          trigger: root,
+          start: "top bottom",
+          end: "bottom top",
+          onToggle: (self) => loops.forEach((loop) => (self.isActive ? loop.play() : loop.pause())),
         });
 
         let split: SplitText | null = null;
@@ -68,6 +75,7 @@ export function HeroMotion({ children, className }: HeroMotionProps) {
         return () => {
           stop();
           intro?.kill();
+          stripVisible.kill();
           loops.forEach((loop) => loop.kill());
           split?.revert();
           gsap.set(boxes, { clearProps: "all" });

@@ -517,4 +517,16 @@ Owner menilai versi Armor/Sphere/DontMatter masih terlalu kosong dan terlihat bu
   - Hero memakai tagline brand dari banner booth KMI: "Dari kreasi konten jadi omset nyata", "Kolaborasi hebat, bisnis melesat", "Create · Connect · Grow".
   - Galeri Prestasi berbentuk polaroid: pengumuman resmi, roll-up banner booth (panel Marketiv dari `kmiexpo.png` milik owner), dan desain banner meja. Foto tim belum ada.
   - Chatbot Tivvy memakai wajah maskot sebagai avatar dengan tampilan baru. Logika chat tidak diubah, dan komponen ini global sehingga ikut tampil di dashboard.
+- **Audit performa 2026-10-18.** Diukur di build produksi (headless Edge, scroll 20 detik).
+  - CPU normal, 1280x720 DPR 1 dan 1280x630 DPR 1,5: 60 fps stabil (p95 16,8 ms), tanpa long task.
+  - CPU diperlambat 4x: rata-rata frame turun dari 79,5 ms ke kisaran 55 sampai 68 ms. Pada 2x di DPR 1,5: p95 33 ms.
+  - Biaya terbesar ada di render, bukan JS. Ablasi menunjukkan mask halftone, filter `drop-shadow`, dan shadow besar pada elemen yang bergerak adalah penyebab utamanya.
+  - Perbaikan:
+    - `.halftone::before` dibuat jadi layer sendiri.
+    - `drop-shadow` dihapus dari render ponsel dan maskot (bayangan render sudah ter-bake).
+    - Shadow 60px pada panel kreator diganti ring tipis.
+    - Loop tak berujung (strip hero, marquee, idle maskot) berhenti saat tidak terlihat.
+    - `force3D` dipasang pada track horizontal, StickyStack, dan Parallax.
+  - Beban load: `src/app/icon.png`, `apple-icon.png`, dan `favicon.ico` adalah PNG 1254px berukuran 633 KB yang terunduh dua kali per halaman. Ukurannya diperkecil ke 512, 180, dan 64 px (58, 9, dan 2 KB). LCP 1,0 detik.
+  - Dev server (`next dev`) wajar terasa lebih berat daripada produksi. Penilaian performa sebaiknya memakai `npm run build` lalu `npm start`.
 
