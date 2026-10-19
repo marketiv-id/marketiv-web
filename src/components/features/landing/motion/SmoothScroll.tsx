@@ -33,6 +33,11 @@ export function jumpToHash(hash: string): boolean {
   return true;
 }
 
+export function jumpToTop() {
+  instance?.scrollTo(0, { immediate: true, force: true });
+  window.scrollTo(0, 0);
+}
+
 export function setScrollLocked(locked: boolean) {
   if (instance) {
     if (locked) instance.stop();

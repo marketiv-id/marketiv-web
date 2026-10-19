@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRef } from "react";
 import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
 import { markIntroDone, resetIntroState } from "./intro-state";
-import { setScrollLocked } from "./SmoothScroll";
+import { jumpToTop, setScrollLocked } from "./SmoothScroll";
 
 // The logo wipes in on paper (CSS, from the first paint), then flies into the navbar's own logo slot while the
 // paper fades, so the loader hands off to the page as one motion. Kept short: no waiting for the full load event.
@@ -30,8 +30,10 @@ export function IntroCurtain() {
       }
 
       // A refresh would otherwise restore the old scroll position behind the overlay and skip the hero entrance.
+      // The old hash goes too, so the address bar matches the hero the visitor lands on.
       if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
-      window.scrollTo(0, 0);
+      if (window.location.hash) window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+      jumpToTop();
       setScrollLocked(true);
 
       let ended = false;
@@ -55,6 +57,8 @@ export function IntroCurtain() {
 
       ready.then(() => {
         if (cancelled) return;
+        // A late restore or anchor jump can still move the page under the overlay; the logo must fly to a visible navbar.
+        jumpToTop();
         // Measure every trigger and pin while the paper still covers the page; doing it after the handoff made
         // one long task land on the first frames of the hero entrance.
         ScrollTrigger.refresh();

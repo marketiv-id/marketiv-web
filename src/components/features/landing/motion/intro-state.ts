@@ -24,4 +24,6 @@ export function resetIntroState() {
 
 // Runs inline before first paint: flags that motion will run and starts the intro on every load (owner asked for it on refresh),
 // so the overlay never flashes in after content. Reduced-motion visitors and no-JS visitors never see it.
-export const INTRO_INLINE_SCRIPT = `(function(){try{if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;var d=document.documentElement;d.setAttribute('data-motion','on');d.setAttribute('data-intro','play');}catch(e){}})();`;
+// Scroll restoration is switched off here, before the browser restores the old position on load; switching it later
+// from React let the restore land after the intro and left the page mid-scroll with the navbar hidden.
+export const INTRO_INLINE_SCRIPT = `(function(){try{if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;if('scrollRestoration' in history)history.scrollRestoration='manual';var d=document.documentElement;d.setAttribute('data-motion','on');d.setAttribute('data-intro','play');}catch(e){}})();`;

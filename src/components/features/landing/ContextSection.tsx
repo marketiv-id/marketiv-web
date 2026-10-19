@@ -65,43 +65,74 @@ export function ContextSection({ content }: ContextSectionProps) {
       aria-labelledby="konteks-title"
       className="relative z-[5] -mt-10 overflow-hidden rounded-b-[24px] bg-neutral-100 pt-32 md:rounded-b-[40px] md:pt-40"
     >
-      <div className="mx-auto grid max-w-[1600px] gap-12 px-5 md:px-10 lg:grid-cols-12 lg:items-end">
-        <div className="lg:col-span-7">
+      <div className="mx-auto grid max-w-[1600px] gap-12 px-5 md:px-10 lg:grid-cols-12 lg:items-center lg:gap-10">
+        <div className="lg:col-span-5">
           <p data-scramble className="text-caption-mono text-primary-600">
             {content.label}
           </p>
           <Reveal as="h2" id="konteks-title" mode="words" className="font-display-cond text-poster-md mt-5 max-w-[15ch] text-secondary-900">
             {content.titleLead} <span className="hl-box">{content.titleAccent}</span>
           </Reveal>
-          <ul className="mt-10 max-w-xl border-b border-secondary-900/10">
-            {content.facts.map((fact) => (
-              <Reveal as="li" key={fact} mode="fade" className="border-t border-secondary-900/10 py-4 text-[17px] leading-snug text-neutral-700 [text-wrap:pretty]">
-                {fact}
-              </Reveal>
-            ))}
-          </ul>
+          <p data-lines className="mt-8 max-w-md text-[17px] leading-relaxed text-neutral-700 [text-wrap:pretty]">
+            {content.intro}
+          </p>
         </div>
 
-        {/* Origin and reach in one card: where Marketiv started, and that it is open beyond that city. */}
-        <Reveal mode="clip" className="lg:col-span-4 lg:col-start-9">
-          <div className="halftone relative overflow-hidden rounded-[28px] bg-secondary-900 p-8 text-white [--ht-dir:200deg] [--ht-dot:rgba(249,115,22,0.45)]">
-            <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-500">
-                <MapPin aria-hidden="true" weight="fill" className="h-5 w-5" />
-              </span>
-              <div>
+        {/* Four facts as a bento: where the team works, how far the platform reaches, the program, and the SDG it serves. */}
+        <ul className="grid gap-3 sm:grid-cols-2 md:gap-4 lg:col-span-7">
+          <Reveal as="li" mode="clip">
+            <article className="halftone relative flex h-full min-h-[280px] flex-col overflow-hidden rounded-[24px] bg-secondary-900 p-6 text-white [--ht-dir:200deg] [--ht-dot:rgba(249,115,22,0.45)] md:rounded-[28px] md:p-8">
+              <div className="relative flex items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-500">
+                  <MapPin aria-hidden="true" weight="fill" className="h-5 w-5" />
+                </span>
                 <p className="text-caption-mono text-white/60">{content.origin.label}</p>
-                <p className="text-[15px] font-semibold">
-                  {content.origin.city}, {content.origin.region}
+              </div>
+              <div className="relative mt-auto pt-10">
+                <p className="font-display-cond text-[clamp(2.8rem,min(4.2vw,8vh),4.4rem)] leading-[0.82]">{content.origin.city}</p>
+                <p className="mt-2 text-[17px] font-semibold text-primary-400">{content.origin.region}</p>
+                <p className="mt-4 max-w-[26ch] text-[15px] leading-relaxed text-white/70 [text-wrap:pretty]">{content.origin.text}</p>
+                <p className="mt-6 border-t border-white/10 pt-4 font-mono-nota text-[12px] text-white/45 [font-variant-numeric:tabular-nums]">
+                  {content.origin.coordinates}
                 </p>
               </div>
-            </div>
-            <p className="text-caption-mono mt-12 text-primary-400">{content.reach.label}</p>
-            <p className="font-display-cond mt-2 text-[clamp(2.5rem,min(3.4vw,6.5vh),3.4rem)] leading-[0.88]">{content.reach.title}</p>
-            <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-white/75 [text-wrap:pretty]">{content.reach.text}</p>
-            <p className="mt-8 font-mono-nota text-[12px] text-white/40 [font-variant-numeric:tabular-nums]">{content.origin.coordinates}</p>
-          </div>
-        </Reveal>
+            </article>
+          </Reveal>
+
+          <Reveal as="li" mode="clip" delay={0.08}>
+            <article className="halftone relative flex h-full flex-col overflow-hidden rounded-[24px] bg-primary-500 p-6 text-white [--ht-dot:rgba(255,255,255,0.3)] md:rounded-[28px] md:p-7">
+              <p className="text-caption-mono relative text-white/80">{content.reach.label}</p>
+              <p className="font-display-cond relative mt-3 text-[clamp(2.3rem,min(3.2vw,6vh),3.2rem)] leading-[0.86]">{content.reach.title}</p>
+              <p className="relative mt-3 text-[15px] leading-relaxed text-white/90 [text-wrap:pretty]">{content.reach.text}</p>
+              <ul className="relative mt-5 flex flex-wrap gap-1.5">
+                {content.reach.chips.map((chip) => (
+                  <li key={chip} className="rounded-full bg-white/95 px-3 py-1 text-[12px] font-semibold text-primary-700">
+                    {chip}
+                  </li>
+                ))}
+              </ul>
+            </article>
+          </Reveal>
+
+          <Reveal as="li" mode="clip" delay={0.14}>
+              <article className="flex h-full flex-col rounded-[24px] bg-white p-5 ring-1 ring-secondary-900/[0.07] md:rounded-[28px] md:p-6">
+                <p className="text-caption-mono text-neutral-500">{content.program.label}</p>
+                <p className="font-display-cond mt-2 text-[clamp(2.4rem,min(3.4vw,6.5vh),3.4rem)] leading-[0.86] text-secondary-900">{content.program.title}</p>
+                <p className="mt-auto pt-6 text-[14px] leading-relaxed text-neutral-600 [text-wrap:pretty]">{content.program.text}</p>
+              </article>
+          </Reveal>
+          <Reveal as="li" mode="clip" delay={0.2}>
+              <article className="relative flex h-full flex-col overflow-hidden rounded-[24px] bg-secondary-900/[0.05] p-5 md:rounded-[28px] md:p-6">
+                <p className="text-caption-mono text-neutral-500">{content.sdg.label}</p>
+                <p className="mt-2 flex items-baseline gap-1.5 text-secondary-900">
+                  <span className="font-display-cond text-[clamp(1.4rem,min(1.8vw,3.4vh),1.8rem)] leading-none">SDG</span>
+                  <span className="font-display-cond text-[clamp(2.4rem,min(3.4vw,6.5vh),3.4rem)] leading-[0.86] text-primary-500">{content.sdg.number}</span>
+                </p>
+                <p className="mt-3 text-[15px] font-semibold leading-snug text-secondary-900 [text-wrap:pretty]">{content.sdg.title}</p>
+                <p className="mt-auto pt-4 text-[14px] leading-relaxed text-neutral-600 [text-wrap:pretty]">{content.sdg.text}</p>
+              </article>
+          </Reveal>
+        </ul>
       </div>
 
       <div className="mx-auto mt-24 max-w-[1600px] px-5 md:mt-32 md:px-10">
