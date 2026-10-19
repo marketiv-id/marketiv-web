@@ -8,33 +8,33 @@ export const NAVBAR_CONTENT: LandingNavContent = {
   closeMenuLabel: "Tutup menu navigasi",
   menu: [
     { label: "Cara kerja", href: "/#mode" },
-    { label: "Escrow", href: "/#escrow" },
+    { label: "Dana Aman", href: "/#escrow" },
     { label: "Untuk UMKM", href: "/#umkm" },
     { label: "Untuk kreator", href: "/#kreator" },
-    { label: "FAQ", href: "/#faq" },
+    { label: "Tanya jawab", href: "/#faq" },
   ],
   menuLabel: "Menu",
   closeLabel: "Tutup",
   login: "Masuk",
   register: "Daftar",
   registerMobile: "Daftar",
-  dashboard: "Dashboard",
+  dashboard: "Dasbor",
 };
 
 // Facts on this page come from src/content/terms.ts; mockup numbers are labelled "Contoh" on screen.
 export const LANDING_CONTENT: LandingContent = {
   hero: {
     // Taglines from the owner's KMI EXPO booth banner and table banner, so the hero speaks in the brand's own voice.
-    meta: ["Kolaborasi hebat, bisnis melesat", "Campaign Mode · Rate Card Mode", "Create · Connect · Grow"],
+    meta: ["Kolaborasi hebat, bisnis melesat", "Mode Kampanye · Mode Paket Harga", "Berkarya · Terhubung · Bertumbuh"],
     titleLead: "Dari kreasi konten jadi omset nyata.",
     titleRest: "Kreator lokal promosikan produkmu, dananya ditahan sampai",
     titleAccent: "terbukti tayang.",
     subtitle:
-      "Marketiv mempertemukan UMKM dengan kreator lokal di seluruh Indonesia. Pilih campaign yang dibayar per views, atau pesan kreator dengan harga tetap lewat Rate Card.",
-    ctaUmkm: "Mulai Buat Campaign",
+      "Marketiv mempertemukan UMKM dengan kreator lokal di seluruh Indonesia. Pilih kampanye yang dibayar per tayangan, atau pesan kreator dengan harga tetap lewat Paket Harga.",
+    ctaUmkm: "Mulai Buat Kampanye",
     ctaCreator: "Daftar sebagai Kreator",
-    dashboardCta: "Buka Dashboard",
-    proof: ["Pembayaran lewat Midtrans", "Konten tayang di TikTok dan Instagram", "Biaya platform 2%"],
+    dashboardCta: "Buka Dasbor",
+    proof: ["Pembayaran lewat Midtrans", "Konten tayang di TikTok dan Instagram", "Biaya layanan 2%"],
     // Photos are Unsplash illustrations of the setting, not Marketiv users; credits are in docs/landing-revamp/PLAN.md.
     strip: [
       { kind: "photo", src: "/landing/photos/umkm-penjual-jagung.webp", alt: "Pedagang jagung di Lombok memegang dagangannya" },
@@ -59,14 +59,14 @@ export const LANDING_CONTENT: LandingContent = {
       title: "Yang dirasakan UMKM",
       items: [
         "Biaya promosi tidak terukur.",
-        "Susah membedakan kreator asli dan akun buzzer.",
+        "Susah membedakan kreator asli dan akun pendengung bayaran.",
         "Bayar di muka tanpa kepastian konten tayang.",
       ],
     },
     kreator: {
       title: "Yang dirasakan kreator",
       items: [
-        "Sulit dapat job pertama tanpa portofolio.",
+        "Sulit dapat pekerjaan pertama tanpa portofolio.",
         "Negosiasi dan revisi tanpa batas.",
         "Pembayaran telat atau tidak cair.",
       ],
@@ -76,23 +76,23 @@ export const LANDING_CONTENT: LandingContent = {
     label: "Solusi",
     titleLead: "Tiga pegangan supaya promosi",
     titleAccent: "tidak boncos.",
-    intro: "Uang UMKM aman di escrow, hasil kampanye terukur, dan kreator mikro dapat pekerjaan yang jelas.",
+    intro: "Uang UMKM ditahan dulu sampai konten tayang, hasil kampanye terukur, dan kreator mikro dapat pekerjaan yang jelas.",
     items: [
       {
-        title: "Dana ditahan escrow",
-        description: "Pembayaran lewat Midtrans masuk ke escrow Marketiv. Kreator baru menerima dana setelah kerjanya tervalidasi atau disetujui UMKM.",
+        title: "Dana ditahan dulu",
+        description: "Pembayaran lewat Midtrans masuk ke Dana Aman Marketiv. Kreator baru menerima dana setelah kerjanya tervalidasi atau disetujui UMKM.",
         image: "/landing/pillar-escrow.webp",
         imageAlt: "Kartu Sistem Dana Aman di aplikasi Marketiv: dana disimpan, ditahan, lalu dicairkan ke kreator",
       },
       {
         title: "Bayar sesuai hasil",
-        description: "Di Campaign Mode, reward kreator dihitung dari views yang lolos validasi.",
+        description: "Di Mode Kampanye, imbalan kreator dihitung dari tayangan yang lolos validasi.",
         image: "/landing/pillar-views.webp",
         imageAlt: "Kartu lowongan kampanye dengan imbalan Rp 20.000 per 1.000 tayangan, data contoh",
       },
       {
-        title: "Kreator dapat job",
-        description: "Kreator mikro bisa klaim job campaign di Job Pool, atau membuka rate card sendiri dengan harga tetap.",
+        title: "Kreator dapat pekerjaan",
+        description: "Kreator mikro bisa mengambil kampanye di menu Lowongan, atau membuka Paket Harga sendiri dengan tarif tetap.",
         image: "/landing/photos/kreator-dslr.webp",
         imageAlt: "Perempuan berhijab memegang kamera di jembatan gantung",
       },
@@ -101,36 +101,36 @@ export const LANDING_CONTENT: LandingContent = {
   modes: {
     label: "Cara kerja",
     titleLead: "Pilih cara yang cocok dengan",
-    titleAccent: "budget dan waktumu.",
-    intro: "Dua mode, satu escrow. Campaign Mode untuk jangkauan luas, Rate Card Mode untuk kreator yang sudah kamu pilih.",
+    titleAccent: "anggaran dan waktumu.",
+    intro: "Dua mode, satu Dana Aman. Mode Kampanye untuk jangkauan luas, Mode Paket Harga untuk kreator yang sudah kamu pilih.",
     campaign: {
       id: "campaign",
-      tag: "Campaign Mode",
-      title: "Bayar per views",
+      tag: "Mode Kampanye",
+      title: "Bayar per tayangan",
       audience: "Untuk UMKM yang ingin jangkauan luas tanpa memilih kreator satu per satu.",
       steps: [
-        "UMKM menulis brief, bisa dibantu AI, lalu menyetor budget mulai Rp 50.000.",
-        "Kreator klaim job. Siapa cepat dia dapat.",
-        "Kreator posting di akun TikTok atau Instagram miliknya, lalu kirim link dalam 24 jam.",
-        "Views divalidasi, reward masuk ke dompet kreator.",
+        "UMKM menulis arahan konten, bisa dibantu AI, lalu menyetor anggaran mulai Rp 50.000.",
+        "Kreator mengambil lowongan. Siapa cepat dia dapat.",
+        "Kreator mengunggah konten di akun TikTok atau Instagram miliknya, lalu mengirim tautannya dalam 24 jam.",
+        "Tayangan divalidasi, imbalan masuk ke dompet kreator.",
       ],
-      rules: ["Tanpa chat", "Tanpa revisi", "Divalidasi sistem dan tim Marketiv", "Biaya platform 2% ditanggung UMKM"],
+      rules: ["Tanpa obrolan", "Tanpa revisi", "Divalidasi sistem dan tim Marketiv", "Biaya layanan 2% ditanggung UMKM"],
       tone: "umkm",
       image: "/landing/renders/phone-jobpool.webp",
       imageAlt: "Layar Lowongan Kampanye dengan imbalan per 1.000 tayangan di aplikasi Marketiv, data contoh",
     },
     rateCard: {
       id: "rate-card",
-      tag: "Rate Card Mode",
+      tag: "Mode Paket Harga",
       title: "Harga tetap",
       audience: "Untuk UMKM yang sudah tahu kreator mana yang cocok dengan produknya.",
       steps: [
         "UMKM memilih kreator dan paketnya dari katalog.",
-        "Pesan langsung, atau negosiasi lewat chat sampai jadi Custom Offer.",
-        "UMKM bayar, dana ditahan escrow. Kreator mengerjakan lalu posting sebagai Collab Post, jadi tampil di akun kreator dan akun UMKM.",
+        "Pesan langsung, atau tawar lewat obrolan sampai jadi Penawaran Khusus.",
+        "UMKM bayar, dana ditahan di Dana Aman. Kreator mengerjakan lalu mengunggahnya sebagai Postingan Bersama, jadi tampil di akun kreator dan akun UMKM.",
         "UMKM menyetujui hasil, atau otomatis disetujui setelah 3 hari tanpa tanggapan. Dana dilepas ke kreator.",
       ],
-      rules: ["Ada chat negosiasi", "Revisi sesuai batas paket", "Disetujui UMKM", "Biaya platform 2% dipotong dari pendapatan kreator"],
+      rules: ["Ada obrolan untuk tawar-menawar", "Revisi sesuai batas paket", "Disetujui UMKM", "Biaya layanan 2% dipotong dari pendapatan kreator"],
       tone: "kreator",
       image: "/landing/renders/phone-ratecard.webp",
       imageAlt: "Layar Paket Harga Jasa kreator di aplikasi Marketiv, data contoh",
@@ -143,30 +143,30 @@ export const LANDING_CONTENT: LandingContent = {
     steps: [
       {
         title: "UMKM bayar lewat Midtrans",
-        description: "Dana masuk ke escrow Marketiv, bukan ke rekening kreator.",
+        description: "Dana masuk ke Dana Aman Marketiv, bukan ke rekening kreator.",
         stamp: "DITAHAN",
       },
       {
-        title: "Kreator mengerjakan dan posting",
-        description: "Konten tayang di akun kreator, lalu link-nya dikirim ke Marketiv.",
+        title: "Kreator membuat dan mengunggah konten",
+        description: "Konten tayang di akun kreator, lalu tautannya dikirim ke Marketiv.",
         stamp: null,
       },
       {
         title: "Bukti tayang divalidasi",
-        description: "Campaign divalidasi sistem dan tim Marketiv. Rate Card disetujui oleh UMKM.",
+        description: "Kampanye divalidasi sistem dan tim Marketiv. Pesanan Paket Harga disetujui oleh UMKM.",
         stamp: "TERVALIDASI",
       },
       {
         title: "Dana dicairkan ke dompet kreator",
-        description: "Kreator bisa menarik saldo mulai Rp 50.000 ke rekening bank atau e-wallet.",
+        description: "Kreator bisa menarik saldo mulai Rp 50.000 ke rekening bank atau dompet digital.",
         stamp: "DICAIRKAN",
       },
     ],
     receipt: {
-      title: "Nota Escrow",
-      code: "ESC-0001",
+      title: "Nota Dana Aman",
+      code: "DA-0001",
       rows: [
-        { label: "Mode", value: "Rate Card" },
+        { label: "Mode", value: "Paket Harga" },
         { label: "Paket", value: "1 video TikTok" },
         { label: "Metode", value: "Midtrans" },
       ],
@@ -175,7 +175,7 @@ export const LANDING_CONTENT: LandingContent = {
       sampleLabel: "Contoh",
     },
     disputeNote:
-      "Ada masalah? Ajukan sengketa. Selama ditinjau, dana dibekukan dan tidak bisa dicairkan siapa pun. Jika UMKM menang sengketa atau campaign dihentikan, sisa dana kembali 100% ke dompet UMKM. Biaya platform yang sudah terpakai tidak dikembalikan.",
+      "Ada masalah? Ajukan sengketa. Selama ditinjau, dana dibekukan dan tidak bisa dicairkan siapa pun. Jika UMKM menang sengketa atau kampanye dihentikan, sisa dana kembali 100% ke dompet UMKM. Biaya layanan yang sudah terpakai tidak dikembalikan.",
   },
   preview: {
     label: "Lihat aplikasinya",
@@ -186,11 +186,11 @@ export const LANDING_CONTENT: LandingContent = {
     panels: [
       {
         id: "umkm",
-        tag: "Dashboard UMKM",
+        tag: "Dasbor UMKM",
         title: "Pantau kampanye, tayangan, dan dana dalam satu layar.",
         description: "Ringkasan kampanye aktif, total tayangan, kreator yang ikut, dan dana yang sedang berjalan.",
         image: "/landing/umkm-dashboard.webp",
-        alt: "Dashboard UMKM Marketiv berisi ringkasan kampanye, tayangan, dan dana berjalan, data contoh",
+        alt: "Dasbor UMKM Marketiv berisi ringkasan kampanye, tayangan, dan dana berjalan, data contoh",
       },
       {
         id: "kreator",
@@ -204,15 +204,15 @@ export const LANDING_CONTENT: LandingContent = {
   },
   umkm: {
     label: "Untuk UMKM",
-    titleLead: "Bikin brief, atur budget, lalu",
+    titleLead: "Tulis arahan, atur anggaran, lalu",
     titleAccent: "pantau hasilnya.",
     points: [
-      "AI Brief Assistant membantu menulis brief dari deskripsi produkmu.",
-      "Kamu yang menentukan budget dan tarif per 1.000 views.",
+      "Asisten AI membantu menulis arahan konten dari deskripsi produkmu.",
+      "Kamu yang menentukan anggaran dan tarif per 1.000 tayangan.",
       "Pantau setiap bukti tayang yang masuk tanpa harus mengejar kreator.",
-      "Sisa budget yang tidak terpakai kembali ke dompetmu.",
+      "Sisa anggaran yang tidak terpakai kembali ke dompetmu.",
     ],
-    cta: "Mulai Buat Campaign",
+    cta: "Mulai Buat Kampanye",
     image: "/landing/renders/phone-keuangan.webp",
     imageAlt: "Layar Keuangan Saya di aplikasi Marketiv untuk UMKM, data contoh",
     // Unsplash, foto oleh @p_kuzovkova (Lombok). Ilustrasi suasana, bukan pengguna Marketiv.
@@ -222,11 +222,11 @@ export const LANDING_CONTENT: LandingContent = {
     secondPhoto: "/landing/photos/kategori-handmade.webp",
     secondPhotoAlt: "Perempuan membatik kain dengan canting",
     brief: {
-      title: "Contoh saran brief dari AI",
+      title: "Contoh arahan konten dari AI",
       meta: [
         { label: "Produk", value: "Sambal roa pedas" },
-        { label: "Budget", value: "Rp 500.000" },
-        { label: "Tarif", value: "Rp 15.000 per 1.000 views" },
+        { label: "Anggaran", value: "Rp 500.000" },
+        { label: "Tarif", value: "Rp 15.000 per 1.000 tayangan" },
       ],
       text: "Tunjukkan reaksi pertama saat mencoba sambal, sebut level pedasnya, lalu tutup dengan cara pesan. Durasi 15 sampai 30 detik.",
       sampleLabel: "Contoh",
@@ -234,13 +234,13 @@ export const LANDING_CONTENT: LandingContent = {
   },
   kreator: {
     label: "Untuk kreator",
-    titleLead: "Ambil job dari UMKM, atau",
-    titleAccent: "buka rate card sendiri.",
+    titleLead: "Ambil kampanye dari UMKM, atau",
+    titleAccent: "buka paket harga sendiri.",
     points: [
-      "Klaim campaign yang cocok dengan nichemu di Job Pool.",
-      "Buat sampai 3 paket rate card dengan harga tetap.",
-      "Setiap job selesai jadi portofolio di profilmu.",
-      "Tarik saldo mulai Rp 50.000 ke rekening bank atau e-wallet.",
+      "Ambil kampanye yang cocok dengan kategorimu di menu Lowongan.",
+      "Buat sampai 3 paket harga dengan tarif tetap.",
+      "Setiap pekerjaan yang selesai masuk ke portofolio di profilmu.",
+      "Tarik saldo mulai Rp 50.000 ke rekening bank atau dompet digital.",
     ],
     cta: "Daftar sebagai Kreator",
     jobImage: "/landing/renders/phone-dompet.webp",
@@ -249,12 +249,12 @@ export const LANDING_CONTENT: LandingContent = {
     photo: "/landing/photos/kreator-dslr.webp",
     photoAlt: "Perempuan berhijab memegang kamera di jembatan gantung",
     simulator: {
-      title: "Simulasi reward campaign",
-      viewsLabel: "Views yang lolos validasi",
-      rateLabel: "Tarif per 1.000 views",
-      resultLabel: "Simulasi reward",
+      title: "Simulasi imbalan kampanye",
+      viewsLabel: "Tayangan yang lolos validasi",
+      rateLabel: "Tarif per 1.000 tayangan",
+      resultLabel: "Simulasi imbalan",
       formulaLabel: "Rumus",
-      note: "Ini simulasi, bukan jaminan penghasilan. Tarif ditentukan oleh tiap campaign dan reward hanya dihitung dari views yang lolos validasi.",
+      note: "Ini simulasi, bukan jaminan penghasilan. Tarif ditentukan oleh tiap kampanye dan imbalan hanya dihitung dari tayangan yang lolos validasi.",
       defaultViews: 50000,
       minViews: 1000,
       maxViews: 500000,
@@ -269,7 +269,7 @@ export const LANDING_CONTENT: LandingContent = {
     titleLead: "Dibangun di Sukabumi,",
     titleAccent: "terbuka untuk Indonesia.",
     intro:
-      "Tim Marketiv berbasis di Sukabumi, tapi pendaftarannya tidak dibatasi wilayah. UMKM dan kreator dari kota mana pun bisa bergabung, membuat campaign, dan bertransaksi sepenuhnya online.",
+      "Tim Marketiv berbasis di Sukabumi, tapi pendaftarannya tidak dibatasi wilayah. UMKM dan kreator dari kota mana pun bisa bergabung, membuat kampanye, dan bertransaksi sepenuhnya daring.",
     origin: {
       label: "Berawal dari",
       city: "Sukabumi",
@@ -281,8 +281,8 @@ export const LANDING_CONTENT: LandingContent = {
     reach: {
       label: "Terbuka untuk",
       title: "Seluruh Indonesia",
-      text: "Usahamu hanya melayani daerah tertentu? Pilih domisili kreator saat membuat campaign.",
-      chips: ["Daftar online", "Transaksi online", "Filter domisili kreator"],
+      text: "Usahamu hanya melayani daerah tertentu? Pilih domisili kreator saat membuat kampanye.",
+      chips: ["Daftar daring", "Transaksi daring", "Saring domisili kreator"],
     },
     program: {
       label: "Program",
@@ -296,13 +296,13 @@ export const LANDING_CONTENT: LandingContent = {
       text: "Membuka kerja layak bagi kreator mikro dan memperkuat ekonomi UMKM.",
     },
     // Same niche list as NICHE_OPTIONS in the create-campaign form.
-    categoriesTop: ["Kuliner", "Fashion", "Kecantikan", "Pariwisata", "Edukasi"],
-    categoriesBottom: ["TikTok", "Instagram", "Campaign Mode", "Rate Card"],
-    categoriesTitle: "Niche yang bisa dipilih saat membuat campaign",
+    categoriesTop: ["Kuliner", "Busana", "Kecantikan", "Pariwisata", "Edukasi"],
+    categoriesBottom: ["TikTok", "Instagram", "Mode Kampanye", "Paket Harga"],
+    categoriesTitle: "Kategori yang bisa dipilih saat membuat kampanye",
     categoryCards: [
       { label: "Kuliner", description: "Makanan dan minuman", image: "/landing/photos/kategori-kuliner.webp", imageAlt: "Pedagang soto melayani pembeli di gerobak biru" },
-      { label: "Fashion", description: "Pakaian dan aksesori", image: "/landing/photos/kategori-fashion.webp", imageAlt: "Kain batik motif bunga dan burung" },
-      { label: "Kecantikan", description: "Kosmetik dan skin care", image: "/landing/photos/kategori-kosmetik.webp", imageAlt: "Produk perawatan kulit dengan daun hijau" },
+      { label: "Busana", description: "Pakaian dan aksesori", image: "/landing/photos/kategori-fashion.webp", imageAlt: "Kain batik motif bunga dan burung" },
+      { label: "Kecantikan", description: "Kosmetik dan perawatan kulit", image: "/landing/photos/kategori-kosmetik.webp", imageAlt: "Produk perawatan kulit dengan daun hijau" },
       {
         label: "Lainnya",
         description: "Pariwisata, edukasi, serta umum dan jasa",
@@ -357,50 +357,50 @@ export const LANDING_CONTENT: LandingContent = {
     badge: { top: "Juara Harapan 2", bottom: "KMI EXPO 2026" },
   },
   faq: {
-    label: "FAQ",
+    label: "Tanya jawab",
     title: "Pertanyaan yang sering ditanyakan",
     contactTitle: "Belum terjawab?",
-    contactText: "Kirim pertanyaanmu lewat email. Tim kami membalas paling lambat 3 hari kerja.",
+    contactText: "Kirim pertanyaanmu lewat surel. Tim kami membalas paling lambat 3 hari kerja.",
     contactEmail: "hello@marketiv.id",
     items: [
       {
         q: "Bagaimana dana saya diamankan?",
-        a: "Pembayaran lewat Midtrans masuk ke escrow Marketiv, tidak langsung ke kreator. Status escrow hanya diubah oleh sistem dan admin Marketiv. Dana dilepas setelah bukti tayang tervalidasi atau pekerjaan disetujui.",
+        a: "Pembayaran lewat Midtrans masuk ke Dana Aman Marketiv, tidak langsung ke kreator. Status Dana Aman hanya diubah oleh sistem dan admin Marketiv. Dana dilepas setelah bukti tayang tervalidasi atau pekerjaan disetujui.",
       },
       {
         q: "Kapan kreator menerima bayaran?",
-        a: "Di Campaign Mode, reward masuk ke dompet kreator setelah bukti tayang tervalidasi. Di Rate Card Mode, dana dilepas setelah UMKM menyetujui hasil, atau otomatis setelah 3 hari jika UMKM tidak menanggapi.",
+        a: "Di Mode Kampanye, imbalan masuk ke dompet kreator setelah bukti tayang tervalidasi. Di Mode Paket Harga, dana dilepas setelah UMKM menyetujui hasil, atau otomatis setelah 3 hari jika UMKM tidak menanggapi.",
       },
       {
-        q: "Apakah UMKM dan kreator bisa chat?",
-        a: "Di Campaign Mode tidak ada chat sama sekali, supaya tidak ada drama revisi. Di Rate Card Mode ada chat untuk negosiasi harga dan deliverable sampai menjadi Custom Offer.",
+        q: "Apakah UMKM dan kreator bisa saling berkirim pesan?",
+        a: "Di Mode Kampanye tidak ada obrolan sama sekali, supaya tidak ada drama revisi. Di Mode Paket Harga ada obrolan untuk tawar-menawar harga dan hasil kerja sampai menjadi Penawaran Khusus.",
       },
       {
-        q: "Bagaimana cara membuat campaign?",
-        a: "Daftar sebagai UMKM, tulis brief produkmu (AI Brief Assistant bisa membantu), tentukan budget mulai Rp 50.000 dan tarif per 1.000 views, lalu bayar lewat Midtrans. Setelah dana masuk, publikasikan campaign supaya tampil di Job Pool kreator.",
+        q: "Bagaimana cara membuat kampanye?",
+        a: "Daftar sebagai UMKM, tulis arahan untuk produkmu (asisten AI bisa membantu), tentukan anggaran mulai Rp 50.000 dan tarif per 1.000 tayangan, lalu bayar lewat Midtrans. Setelah dana masuk, terbitkan kampanye supaya tampil di menu Lowongan kreator.",
       },
       {
         q: "Bagaimana kreator mengirim bukti tayang?",
-        a: "Setelah klaim job, kreator posting di akun TikTok atau Instagram miliknya, lalu mengirim URL publik postingan dalam 24 jam. Video tidak boleh dihapus selama masa verifikasi.",
+        a: "Setelah mengambil lowongan, kreator mengunggah konten di akun TikTok atau Instagram miliknya, lalu mengirim tautan publik postingan dalam 24 jam. Video tidak boleh dihapus selama masa verifikasi.",
       },
       {
-        q: "Berapa biaya platform Marketiv?",
-        a: "2% per transaksi. Di Campaign Mode, biaya ditanggung UMKM saat menyetor budget dan kreator menerima reward penuh. Di Rate Card Mode, UMKM membayar sesuai harga paket dan 2% dipotong dari pendapatan kreator saat dana dilepas.",
+        q: "Berapa biaya layanan Marketiv?",
+        a: "2% per transaksi. Di Mode Kampanye, biaya ditanggung UMKM saat menyetor anggaran dan kreator menerima imbalan penuh. Di Mode Paket Harga, UMKM membayar sesuai harga paket dan 2% dipotong dari pendapatan kreator saat dana dilepas.",
       },
       {
         q: "Bagaimana cara menarik saldo?",
-        a: "Saldo bisa ditarik mulai Rp 50.000 per transaksi ke rekening bank atau e-wallet. Penarikan Rp 5.000.000 atau lebih melalui verifikasi manual oleh admin Marketiv.",
+        a: "Saldo bisa ditarik mulai Rp 50.000 per transaksi ke rekening bank atau dompet digital. Penarikan Rp 5.000.000 atau lebih melalui verifikasi manual oleh admin Marketiv.",
       },
     ],
   },
   finalCta: {
     titleLead: "Mulai dari",
     titleAccent: "peranmu.",
-    subtitle: "Daftar gratis. Kamu baru membayar saat membuat campaign atau memesan kreator.",
+    subtitle: "Daftar gratis. Kamu baru membayar saat membuat kampanye atau memesan kreator.",
     umkm: {
       name: "UMKM",
       prompt: "Punya produk yang perlu dikenal lebih banyak orang?",
-      cta: "Mulai Buat Campaign",
+      cta: "Mulai Buat Kampanye",
       mascot: { src: "/brand/maskot-umkm.webp", alt: "Maskot Marketiv, burung hantu oranye bertopi yang sedang melihat ponsel" },
     },
     kreator: {
@@ -411,19 +411,19 @@ export const LANDING_CONTENT: LandingContent = {
     },
   },
   footer: {
-    tagline: "Marketplace yang mempertemukan UMKM dengan kreator mikro di seluruh Indonesia. Dana ditahan escrow sampai kerjanya terbukti.",
+    tagline: "Pasar daring yang mempertemukan UMKM dengan kreator mikro di seluruh Indonesia. Dana ditahan sampai kerjanya terbukti.",
     liveLine: {
       city: "Sukabumi",
-      suffix: "Ada pertanyaan soal campaign, rate card, atau pencairan dana? Kirim pesan, kami balas paling lambat 3 hari kerja.",
+      suffix: "Ada pertanyaan soal kampanye, paket harga, atau pencairan dana? Kirim pesan, kami balas paling lambat 3 hari kerja.",
     },
     nav: {
       title: "Jelajahi",
       links: [
         { label: "Cara kerja", href: "/#mode" },
-        { label: "Escrow", href: "/#escrow" },
+        { label: "Dana Aman", href: "/#escrow" },
         { label: "Untuk UMKM", href: "/#umkm" },
         { label: "Untuk kreator", href: "/#kreator" },
-        { label: "FAQ", href: "/#faq" },
+        { label: "Tanya jawab", href: "/#faq" },
       ],
     },
     legal: {

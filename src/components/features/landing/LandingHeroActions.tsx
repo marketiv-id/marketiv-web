@@ -12,7 +12,7 @@ interface LandingHeroActionsProps {
   tone?: "light" | "dark";
 }
 
-export function LandingHeroActions({ ctaUmkm, ctaCreator, dashboardCta = "Buka Dashboard", tone = "light" }: LandingHeroActionsProps) {
+export function LandingHeroActions({ ctaUmkm, ctaCreator, dashboardCta = "Buka Dasbor", tone = "light" }: LandingHeroActionsProps) {
   const { user, loading } = useAuth();
   const dashboardHref = user && isUserPortalRole(user.role) ? dashboardByRole[user.role] : null;
   const onDark = tone === "dark";

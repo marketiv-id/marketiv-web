@@ -156,7 +156,7 @@ describe("auth-aware landing actions", () => {
     expect(document.querySelector('a[href="/dashboard/kreator"]')).not.toBeNull();
     expect(document.querySelector('a[href="/register?role=umkm"]')).toBeNull();
     expect(document.querySelector('a[href="/register?role=creator"]')).toBeNull();
-    expect(document.body.textContent).toContain("Buka Dashboard");
+    expect(document.body.textContent).toContain("Buka Dasbor");
   });
 
   it("does not show hero auth CTAs while session is loading", async () => {
