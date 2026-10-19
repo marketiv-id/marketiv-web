@@ -97,9 +97,9 @@ describe("auth-aware landing actions", () => {
     mockAuth({ user: null, loading: false });
     await render(<Navbar />);
 
-    // Desktop bar, mobile menu, and the mobile CTA bar each carry one login and one register link.
-    expect(document.querySelectorAll('a[href="/login"]')).toHaveLength(3);
-    expect(document.querySelectorAll('a[href="/register"]')).toHaveLength(3);
+    // The desktop bar and the mobile burger menu each carry one login and one register link.
+    expect(document.querySelectorAll('a[href="/login"]')).toHaveLength(2);
+    expect(document.querySelectorAll('a[href="/register"]')).toHaveLength(2);
     await click('button[aria-label="Buka menu navigasi"]');
     expect(document.querySelector('button[aria-label="Tutup menu navigasi"]')).not.toBeNull();
   });

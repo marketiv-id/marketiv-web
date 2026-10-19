@@ -24,7 +24,6 @@ export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [showMobileCta, setShowMobileCta] = useState(false);
   const { user, loading } = useAuth();
   const dashboardHref = user && isUserPortalRole(user.role) ? dashboardByRole[user.role] : null;
   const menuId = useId();
@@ -40,7 +39,6 @@ export function Navbar() {
       onUpdate: (self) => {
         const y = self.scroll();
         setIsScrolled(y > 24);
-        setShowMobileCta(y > window.innerHeight * 0.7);
         setIsHidden(self.direction === 1 && y > 160);
       },
     });
@@ -112,11 +110,13 @@ export function Navbar() {
             aria-expanded={isMenuOpen}
             aria-controls={menuId}
             onClick={() => setIsMenuOpen((open) => !open)}
-            className="roll-host inline-flex h-10 items-center gap-2 rounded-full px-3 text-[13px] font-bold text-secondary-900 transition-colors hover:bg-neutral-100 lg:hidden"
+            className="roll-host inline-flex h-11 w-11 items-center justify-center gap-2 rounded-full bg-secondary-900 text-[13px] font-bold text-white transition-[background-color,scale] hover:bg-primary-500 active:scale-[0.94] sm:w-auto sm:px-4 lg:hidden"
           >
-            <span aria-hidden="true" className="relative block h-2.5 w-4">
-              <span className={cn("absolute left-0 top-0 h-[1.5px] w-full bg-current transition-transform duration-300", isMenuOpen && "translate-y-[4.5px] rotate-45")} />
-              <span className={cn("absolute bottom-0 left-0 h-[1.5px] w-full bg-current transition-transform duration-300", isMenuOpen && "-translate-y-[4.5px] -rotate-45")} />
+            {/* Three-line burger that folds into a cross. */}
+            <span aria-hidden="true" className="relative block h-3 w-[18px]">
+              <span className={cn("absolute left-0 top-0 h-[2px] w-full rounded-full bg-current transition-[translate,rotate] duration-300", isMenuOpen && "translate-y-[5px] rotate-45")} />
+              <span className={cn("absolute left-0 top-[5px] h-[2px] w-full rounded-full bg-current transition-opacity duration-200", isMenuOpen && "opacity-0")} />
+              <span className={cn("absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-current transition-[translate,rotate] duration-300", isMenuOpen && "-translate-y-[5px] -rotate-45")} />
             </span>
             <span className="hidden sm:inline-flex">
               <RollLabel text={isMenuOpen ? content.closeLabel : content.menuLabel} />
@@ -130,7 +130,7 @@ export function Navbar() {
             id={menuId}
             inert={!isMenuOpen}
             className={cn(
-              "absolute right-0 top-[calc(100%+10px)] w-full origin-top-right rounded-[28px] bg-white p-3 shadow-[0_24px_60px_rgba(16,32,51,0.14)] ring-1 ring-secondary-900/5 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:w-[360px] lg:hidden",
+              "absolute right-0 top-[calc(100%+10px)] w-full origin-top-right rounded-[28px] bg-white p-3 shadow-[0_24px_60px_rgba(16,32,51,0.14)] ring-1 ring-secondary-900/5 transition-[opacity,scale] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:w-[360px] lg:hidden",
               isMenuOpen ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0",
             )}
           >
@@ -153,22 +153,6 @@ export function Navbar() {
         </nav>
       </div>
 
-      {!loading && !dashboardHref && (
-        <div
-          className={cn(
-            "fixed bottom-5 left-3 right-[84px] z-40 grid grid-cols-2 gap-2 rounded-full bg-secondary-900/95 p-1.5 shadow-[0_18px_40px_rgba(16,32,51,0.28)] backdrop-blur transition-[opacity,translate] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden",
-            showMobileCta ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-[150%] opacity-0",
-          )}
-          inert={!showMobileCta}
-        >
-          <Link href="/register" className="flex h-11 items-center justify-center rounded-full bg-primary-500 text-[14px] font-bold text-white transition-[scale] duration-150 active:scale-[0.96]">
-            {content.register}
-          </Link>
-          <Link href="/login" className="flex h-11 items-center justify-center rounded-full bg-white/10 text-[14px] font-bold text-white transition-[scale] duration-150 active:scale-[0.96]">
-            {content.login}
-          </Link>
-        </div>
-      )}
     </>
   );
 }

@@ -39,6 +39,8 @@ export function Reveal({ as: Tag = "div", id, className, children, mode = "fade"
           );
           return;
         }
+        // Nothing to split while hidden at this breakpoint; splitting a display:none node yields no lines.
+        if (el.getClientRects().length === 0) return;
         const split = SplitText.create(el, {
           type: mode === "words" ? "words,lines" : "lines",
           mask: "lines",
