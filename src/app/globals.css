@@ -1527,16 +1527,34 @@ html[data-intro="play"] .intro-curtain {
   animation: intro-failsafe 0s linear 4s forwards;
 }
 
-@keyframes intro-rise {
+/* Logo wipes in left to right; tagline rises after it. Both run in CSS so the loader moves before hydration. */
+@keyframes intro-wipe {
   from {
-    transform: translateY(115%);
+    clip-path: inset(0 100% 0 0);
   }
   to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+.intro-wipe {
+  animation: intro-wipe 0.8s cubic-bezier(0.65, 0, 0.35, 1) 0.05s both;
+}
+@keyframes intro-rise-soft {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
     transform: translateY(0);
   }
 }
-.intro-char {
-  animation: intro-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+.intro-rise-soft {
+  animation: intro-rise-soft 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
+}
+/* The navbar logo waits under the loader; the flying logo lands on it and the real one takes over. */
+html[data-intro="play"] nav a[aria-label="Marketiv, ke beranda"] img {
+  opacity: 0;
 }
 @keyframes intro-line {
   from {
