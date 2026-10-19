@@ -173,9 +173,11 @@ export interface ContextContent {
   label: string;
   titleLead: string;
   titleAccent: string;
-  facts: string[];
-  origin: { label: string; city: string; region: string; coordinates: string };
-  reach: { label: string; title: string; text: string };
+  intro: string;
+  origin: { label: string; city: string; region: string; coordinates: string; text: string };
+  reach: { label: string; title: string; text: string; chips: string[] };
+  program: { label: string; title: string; text: string };
+  sdg: { label: string; number: string; title: string; text: string };
   categoriesTop: string[];
   categoriesBottom: string[];
   categoriesTitle: string;
@@ -189,8 +191,9 @@ export interface AchievementContent {
   titleAccent: string;
   intro: string;
   facts: { label: string; value: string }[];
-  // width and height set each polaroid's aspect ratio.
-  photos: (LandingImage & { caption?: string; width: number; height: number })[];
+  // width and height set each polaroid's aspect ratio; note is the small mono line under the caption.
+  photos: (LandingImage & { caption: string; note: string; width: number; height: number })[];
+  badge: { top: string; bottom: string };
 }
 
 export interface FaqContent {
@@ -212,7 +215,7 @@ export interface FinalCtaContent {
 
 export interface FooterContent {
   tagline: string;
-  liveLine: { prefix: string; suffix: string; city: string };
+  liveLine: { suffix: string; city: string };
   nav: { title: string; links: LandingLink[] };
   legal: { title: string; links: LandingLink[] };
   contact: { title: string; email: string; instagram: string; instagramHref: string };

@@ -39,18 +39,29 @@ export function HeroMotion({ children, className }: HeroMotionProps) {
         let split: SplitText | null = null;
         const boxes = q("[data-hero-title] .hl-box");
         if (curtainPlayed) {
-          split = SplitText.create(q("[data-hero-title]"), { type: "words,lines", mask: "lines", aria: "auto" });
-          gsap.set(split.words, { yPercent: 115 });
+          // The title is split once the web fonts are ready, so line breaks match the final font, and it happens
+          // while the loader still covers the page, so the handoff frame only starts tweens.
+          gsap.set(q("[data-hero-title]"), { autoAlpha: 0 });
           gsap.set(q("[data-hero-fade]"), { autoAlpha: 0, y: 24 });
           gsap.set(q("[data-hero-strip], [data-hero-strip-mobile]"), { autoAlpha: 0, yPercent: 18 });
-          gsap.set(q("[data-hero-title] .hl-box"), { "--hl-w": "0%", color: "#102033" });
         }
         const metaItems = q("[data-hero-meta] li");
         const metaText = metaItems.map((item) => item.textContent ?? "");
 
         let intro: gsap.core.Timeline | null = null;
+        let cancelled = false;
+        const prepareTitle = () => {
+          if (split || cancelled) return;
+          split = SplitText.create(q("[data-hero-title]"), { type: "words,lines", mask: "lines", aria: "auto" });
+          gsap.set(split.words, { yPercent: 115 });
+          gsap.set(q("[data-hero-title] .hl-box"), { "--hl-w": "0%", color: "#102033" });
+          gsap.set(q("[data-hero-title]"), { autoAlpha: 1 });
+        };
+        if (curtainPlayed) (document.fonts?.ready ?? Promise.resolve()).then(prepareTitle);
         const stop = whenIntroDone(() => {
           if (!curtainPlayed) return;
+          // Fallback when the intro finished before fonts reported ready.
+          prepareTitle();
           intro = gsap.timeline({ defaults: { ease: EASE_OUT } });
           intro
             .to(q("[data-hero-strip], [data-hero-strip-mobile]"), { autoAlpha: 1, yPercent: 0, duration: 1.6 }, 0)
@@ -73,6 +84,7 @@ export function HeroMotion({ children, className }: HeroMotionProps) {
           .to(q("[data-hero-title]"), { yPercent: -12, ease: "none" }, 0);
 
         return () => {
+          cancelled = true;
           stop();
           intro?.kill();
           stripVisible.kill();

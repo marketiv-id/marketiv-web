@@ -30,7 +30,7 @@ export function Footer({ reveal = false }: FooterProps) {
             </Link>
             <p className="mt-6 max-w-md text-sm leading-relaxed text-white/60">{footer.tagline}</p>
             <div className="mt-10">
-              <FooterLiveLine prefix={footer.liveLine.prefix} city={footer.liveLine.city} suffix={footer.liveLine.suffix} />
+              <FooterLiveLine city={footer.liveLine.city} suffix={footer.liveLine.suffix} />
             </div>
           </div>
 

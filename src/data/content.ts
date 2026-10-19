@@ -268,16 +268,32 @@ export const LANDING_CONTENT: LandingContent = {
     label: "Asal dan jangkauan",
     titleLead: "Dibangun di Sukabumi,",
     titleAccent: "terbuka untuk Indonesia.",
-    facts: [
-      "Bagian dari Program P2MW bersama Universitas Nusa Putra.",
-      "Mendukung SDG 8: membuka kerja layak bagi kreator mikro dan memperkuat ekonomi UMKM.",
-    ],
-    origin: { label: "Berawal dari", city: "Sukabumi", region: "Jawa Barat", coordinates: "6°55′ LS · 106°56′ BT" },
+    intro:
+      "Tim Marketiv berbasis di Sukabumi, tapi pendaftarannya tidak dibatasi wilayah. UMKM dan kreator dari kota mana pun bisa bergabung, membuat campaign, dan bertransaksi sepenuhnya online.",
+    origin: {
+      label: "Berawal dari",
+      city: "Sukabumi",
+      region: "Jawa Barat",
+      coordinates: "6°55′ LS · 106°56′ BT",
+      text: "Dikembangkan oleh mahasiswa Universitas Nusa Putra.",
+    },
     // Registration is not region-gated; the create-campaign form lets UMKM narrow creators by domicile (ProductInfoStep).
     reach: {
       label: "Terbuka untuk",
       title: "Seluruh Indonesia",
-      text: "UMKM dan kreator dari daerah mana pun di Indonesia bisa daftar dan bertransaksi sepenuhnya online. Kalau usahamu hanya melayani daerah tertentu, pilih domisili kreator saat membuat campaign.",
+      text: "Usahamu hanya melayani daerah tertentu? Pilih domisili kreator saat membuat campaign.",
+      chips: ["Daftar online", "Transaksi online", "Filter domisili kreator"],
+    },
+    program: {
+      label: "Program",
+      title: "P2MW",
+      text: "Bagian dari Program Pembinaan Mahasiswa Wirausaha bersama Universitas Nusa Putra.",
+    },
+    sdg: {
+      label: "Mendukung",
+      number: "8",
+      title: "Pekerjaan layak dan pertumbuhan ekonomi",
+      text: "Membuka kerja layak bagi kreator mikro dan memperkuat ekonomi UMKM.",
     },
     // Same niche list as NICHE_OPTIONS in the create-campaign form.
     categoriesTop: ["Kuliner", "Fashion", "Kecantikan", "Pariwisata", "Edukasi"],
@@ -299,7 +315,7 @@ export const LANDING_CONTENT: LandingContent = {
       },
     ],
   },
-  // Source: about-me/09_ACHIEVEMENT_EVIDENCE_LOG.md entry 1 (VERIFIED). Team photos go in public/landing/prestasi/ when the owner provides them.
+  // Source: about-me/09_ACHIEVEMENT_EVIDENCE_LOG.md entry 1 (VERIFIED).
   achievement: {
     label: "Prestasi",
     titleLead: "Juara Harapan 2",
@@ -311,29 +327,34 @@ export const LANDING_CONTENT: LandingContent = {
       { label: "Tempat", value: "Universitas Jenderal Soedirman, Purwokerto" },
       { label: "Tanggal", value: "29 September sampai 1 Oktober 2026" },
     ],
+    // Team photos from the owner (p2mw-tim-1..3). Order fits the collage: landscape, portrait, landscape.
     photos: [
       {
-        src: "/landing/prestasi/pengumuman-kmi-expo-2026.webp",
-        alt: "Pengumuman resmi Juara Harapan 2 KMI EXPO 2026 Kategori Bisnis Digital Tahapan Awal untuk Marketiv dari Universitas Nusa Putra",
-        caption: "Pengumuman pemenang, 1 Oktober 2026",
-        width: 880,
-        height: 495,
+        src: "/landing/prestasi/tim-panggung-kmi.webp",
+        alt: "Tim Marketiv bersama kontingen Universitas Nusa Putra berfoto di depan panggung KMI EXPO XVII 2026 dengan papan Juara Harapan 2 dan bendera kampus",
+        caption: "Bersama kontingen Nusa Putra",
+        note: "Panggung KMI EXPO XVII",
+        width: 1280,
+        height: 720,
       },
       {
-        src: "/landing/prestasi/banner-booth-kmi-2026.webp",
-        alt: "Roll-up banner Marketiv untuk booth KMI EXPO XVII 2026 dengan maskot dan tampilan aplikasi",
-        caption: "Banner booth Marketiv",
-        width: 666,
-        height: 1150,
+        src: "/landing/prestasi/tim-tribun-unsoed.webp",
+        alt: "Tiga anggota tim Marketiv di tribun Universitas Jenderal Soedirman memegang piala, bendera Universitas Nusa Putra, dan papan Juara Harapan 2",
+        caption: "Piala pulang ke Sukabumi",
+        note: "Unsoed, Purwokerto",
+        width: 900,
+        height: 1200,
       },
       {
-        src: "/landing/prestasi/banner-meja-booth.webp",
-        alt: "Desain banner meja booth Marketiv bertuliskan Satu Ekosistem, Banyak Peluang",
-        caption: "Desain banner meja booth",
-        width: 1400,
-        height: 700,
+        src: "/landing/prestasi/tim-penyerahan-juara.webp",
+        alt: "Penyerahan papan Juara Harapan 2 Kategori Bisnis Digital Tahapan Awal kepada tim Marketiv",
+        caption: "Penyerahan Juara Harapan 2",
+        note: "1 Oktober 2026",
+        width: 1200,
+        height: 676,
       },
     ],
+    badge: { top: "Juara Harapan 2", bottom: "KMI EXPO 2026" },
   },
   faq: {
     label: "FAQ",
@@ -392,9 +413,8 @@ export const LANDING_CONTENT: LandingContent = {
   footer: {
     tagline: "Marketplace yang mempertemukan UMKM dengan kreator mikro di seluruh Indonesia. Dana ditahan escrow sampai kerjanya terbukti.",
     liveLine: {
-      prefix: "Sekarang pukul",
       city: "Sukabumi",
-      suffix: "Tim kami melayani UMKM dan kreator di seluruh Indonesia, dan membalas pesan paling lambat 3 hari kerja.",
+      suffix: "Ada pertanyaan soal campaign, rate card, atau pencairan dana? Kirim pesan, kami balas paling lambat 3 hari kerja.",
     },
     nav: {
       title: "Jelajahi",

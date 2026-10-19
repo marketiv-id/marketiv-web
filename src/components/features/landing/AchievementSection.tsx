@@ -15,18 +15,41 @@ const SLOTS = ["lg:col-start-2 lg:row-start-1", "lg:col-start-1 lg:row-start-1 l
 const TILTS = ["-rotate-[2deg]", "rotate-[2.5deg]", "-rotate-[1.25deg]", "rotate-[1.75deg]", "-rotate-[2.25deg]"];
 const SPANS = ["col-span-2 lg:col-span-1", "col-span-1", "col-span-1"];
 
+// Washi tape strips: one per print, alternating side and angle so the stack reads as hand-placed.
+const TAPES = [
+  "left-1/2 -translate-x-1/2 -rotate-[4deg]",
+  "left-6 -rotate-[8deg]",
+  "right-8 rotate-[6deg]",
+];
+
 function Polaroid({ photo, index, sizes }: { photo: Photo; index: number; sizes: string }) {
   return (
     <figure
       className={cn(
-        "group/polaroid relative rounded-[6px] bg-white p-2.5 pb-3 shadow-[0_22px_50px_rgba(16,32,51,0.22)] ring-1 ring-black/5 md:p-3 md:pb-4",
-        "transition-[rotate,translate,box-shadow] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1.5 hover:rotate-0 hover:shadow-[0_30px_70px_rgba(16,32,51,0.3)]",
+        "group/polaroid relative bg-[#fdfbf6] p-2.5 pb-0 shadow-[0_2px_4px_rgba(16,32,51,0.08),0_24px_50px_rgba(16,32,51,0.24)] md:p-3.5 md:pb-0",
+        "transition-[rotate,translate,box-shadow] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-2 hover:rotate-0 hover:shadow-[0_2px_4px_rgba(16,32,51,0.08),0_34px_70px_rgba(16,32,51,0.32)]",
         TILTS[index % TILTS.length],
       )}
     >
-      <span aria-hidden="true" className="absolute -top-3 left-1/2 h-6 w-20 -translate-x-1/2 -rotate-3 bg-primary-500/70 md:w-24" />
-      <Image src={photo.src} alt={photo.alt} width={photo.width} height={photo.height} sizes={sizes} className="h-auto w-full rounded-[3px]" />
-      {photo.caption && <figcaption className="text-caption-mono px-1 pt-3 text-neutral-600">{photo.caption}</figcaption>}
+      <span
+        aria-hidden="true"
+        className={cn("absolute -top-3.5 z-10 h-7 w-24 bg-[#f4ead6]/85 shadow-[0_1px_3px_rgba(16,32,51,0.12)] md:w-28", TAPES[index % TAPES.length])}
+      />
+      <div className="relative overflow-hidden bg-neutral-300" style={{ aspectRatio: `${photo.width} / ${photo.height}` }}>
+        <Image
+          src={photo.src}
+          alt={photo.alt}
+          fill
+          sizes={sizes}
+          className="object-cover saturate-[1.05] transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/polaroid:scale-[1.04]"
+        />
+        {/* A soft inner edge so the print looks developed rather than pasted. */}
+        <span aria-hidden="true" className="pointer-events-none absolute inset-0 shadow-[inset_0_0_40px_rgba(16,32,51,0.18)]" />
+      </div>
+      <figcaption className="flex flex-col gap-1 px-1 pb-4 pt-3.5 md:pb-6 md:pt-4">
+        <span className="text-[14px] font-semibold leading-tight text-secondary-900 md:text-[16px]">{photo.caption}</span>
+        <span className="text-caption-mono text-neutral-500">{photo.note}</span>
+      </figcaption>
     </figure>
   );
 }
@@ -66,8 +89,17 @@ export function AchievementSection({ content }: AchievementSectionProps) {
           <div aria-hidden="true" className="halftone absolute -inset-x-3 bottom-[-6%] top-[8%] rounded-[28px] bg-primary-500 [--ht-dot:rgba(255,255,255,0.3)] md:-inset-x-6 md:rounded-[36px]" />
           <ul className="relative grid grid-cols-2 items-start gap-x-4 gap-y-10 px-2 py-6 md:gap-x-6 md:px-6 lg:grid-cols-[0.82fr_1fr] lg:gap-y-8">
             {collage.map((photo, index) => (
-              <Reveal as="li" key={photo.src} mode="clip" delay={index * 0.1} className={cn(SPANS[index], SLOTS[index])}>
+              <Reveal as="li" key={photo.src} mode="fade" delay={index * 0.1} className={cn("relative", SPANS[index], SLOTS[index])}>
                 <Polaroid photo={photo} index={index} sizes={index === 0 ? "(min-width: 1024px) 30vw, 88vw" : "(min-width: 1024px) 26vw, 44vw"} />
+                {index === 1 && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -right-2 -top-6 z-20 flex h-[76px] w-[76px] rotate-[12deg] flex-col items-center justify-center rounded-full bg-secondary-900 text-center text-white shadow-[0_14px_30px_rgba(16,32,51,0.35)] ring-4 ring-white md:-right-6 md:-top-9 md:h-28 md:w-28"
+                  >
+                    <span className="font-display-cond text-[15px] leading-[0.9] md:text-[22px]">{content.badge.top}</span>
+                    <span className="text-caption-mono mt-1 text-[8px] text-primary-400 md:text-[10px]">{content.badge.bottom}</span>
+                  </span>
+                )}
               </Reveal>
             ))}
           </ul>
