@@ -102,7 +102,7 @@ export function AudienceSection({ umkm, kreator }: AudienceSectionProps) {
               </div>
               <div data-stack-item className="hidden lg:absolute lg:bottom-0 lg:right-[3%] lg:z-10 lg:block lg:w-[19%]">
                 <Parallax speed={14}>
-                  <Image src={umkm.image} alt={umkm.imageAlt} width={900} height={1532} sizes="(min-width: 1024px) 12vw, 34vw" className="h-auto w-full select-none" />
+                  <Image src={umkm.image} alt={umkm.imageAlt} width={900} height={1562} sizes="(min-width: 1024px) 12vw, 34vw" className="h-auto w-full select-none" />
                 </Parallax>
               </div>
               <div data-stack-item className="relative z-[5] -mt-10 mx-3 lg:absolute lg:bottom-0 lg:left-[6%] lg:mx-0 lg:mt-0 lg:w-[58%]">
@@ -134,7 +134,7 @@ export function AudienceSection({ umkm, kreator }: AudienceSectionProps) {
                 <div className="absolute -bottom-8 -right-3 w-[38%] max-w-[170px] lg:-right-10 lg:w-[44%] lg:max-w-none">
                   <Parallax speed={10}>
                     <TiltCard>
-                      <Image src={kreator.jobImage} alt={kreator.jobImageAlt} width={900} height={1532} sizes="(min-width: 1024px) 12vw, 38vw" className="h-auto w-full select-none" />
+                      <Image src={kreator.jobImage} alt={kreator.jobImageAlt} width={900} height={1562} sizes="(min-width: 1024px) 12vw, 38vw" className="h-auto w-full select-none" />
                     </TiltCard>
                   </Parallax>
                 </div>
