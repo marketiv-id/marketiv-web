@@ -5,7 +5,7 @@ import type { KreatorContent, UmkmContent } from "@/types/landing";
 import { LandingButton } from "./motion/LandingButton";
 import { Parallax } from "./motion/Parallax";
 import { RewardSimulator } from "./RewardSimulator";
-import { Scramble } from "./motion/Scramble";
+import { AiTypewriter } from "./motion/AiTypewriter";
 import { StickyStack } from "./motion/StickyStack";
 import { TiltCard } from "./motion/TiltCard";
 
@@ -44,16 +44,15 @@ function ExampleBrief({ brief }: { brief: UmkmContent["brief"] }) {
         <span className="text-caption-mono text-primary-400">{brief.title}</span>
         <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-white/70">{brief.sampleLabel}</span>
       </figcaption>
-      <Scramble
+      <AiTypewriter
         as="blockquote"
         text={brief.text}
-        chars="abcdefghijklmnopqrstuvwxyz"
-        duration={2.2}
+        followSelector="[data-brief-meta]"
         className="mt-5 text-[clamp(1.1rem,1.5vw,1.4rem)] font-semibold leading-snug tracking-[-0.015em] [text-wrap:pretty]"
       />
       <dl className="mt-6 grid gap-3 border-t border-white/15 pt-5 sm:grid-cols-3">
         {brief.meta.map((item) => (
-          <div key={item.label}>
+          <div key={item.label} data-brief-meta>
             <dt className="text-[12px] text-white/50">{item.label}</dt>
             <dd className="mt-1 text-[14px] font-semibold text-white">{item.value}</dd>
           </div>

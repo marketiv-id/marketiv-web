@@ -34,9 +34,10 @@ export function HeroSection({ content }: HeroSectionProps) {
   return (
     <HeroMotion className="relative z-[12] overflow-hidden rounded-b-[24px] bg-white md:rounded-b-[40px]">
       <div className="relative mx-auto flex min-h-[100svh] max-w-[1600px] flex-col px-5 pb-10 pt-28 md:px-10 md:pt-32 lg:pb-8 lg:pt-28">
-        <ul data-hero-fade data-hero-meta className="text-caption-mono grid grid-cols-2 gap-x-6 border-b border-secondary-900/10 pb-4 text-neutral-600 md:grid-cols-3 lg:mr-[clamp(240px,25vw,440px)]">
+        <ul data-hero-fade data-hero-meta className="text-caption-mono grid gap-x-6 border-b border-secondary-900/10 pb-4 text-neutral-600 sm:grid-cols-2 md:grid-cols-3 lg:mr-[clamp(240px,25vw,440px)]">
+          {/* Phones keep only the brand tagline; two mono labels side by side wrapped into a ragged block at 360 to 430 px. */}
           {content.meta.map((item, index) => (
-            <li key={item} className={cn(index === 1 && "hidden md:block", index === 2 && "text-right")}>
+            <li key={item} className={cn(index === 1 && "hidden md:block", index === 2 && "hidden text-right sm:block")}>
               {item}
             </li>
           ))}
@@ -44,9 +45,13 @@ export function HeroSection({ content }: HeroSectionProps) {
 
         <h1
           data-hero-title
-          className="font-display-cond relative z-[3] mt-8 max-w-[15ch] text-[clamp(2.15rem,min(5.6vw,9.4vh),6.75rem)] sm:text-[clamp(2.6rem,min(5.6vw,9.4vh),6.75rem)] leading-[0.88] text-secondary-900 md:mt-8 lg:max-w-[min(68vw,1120px)]"
+          className="font-display-cond relative z-[3] mt-7 text-[clamp(2.5rem,12.4vw,3.6rem)] leading-[0.88] text-secondary-900 sm:mt-8 sm:max-w-[15ch] sm:text-[clamp(2.6rem,min(5.6vw,9.4vh),6.75rem)] lg:max-w-[min(68vw,1120px)]"
         >
-          {content.titleLead} {content.titleRest} <span className="hl-box">{content.titleAccent}</span>
+          {/* On phones the first sentence carries the poster size and the rest steps down, so the headline reads in two beats instead of nine lines. */}
+          {content.titleLead}{" "}
+          <span className="max-sm:mt-3 max-sm:block max-sm:text-[0.6em] max-sm:leading-[0.95]">
+            {content.titleRest} <span className="hl-box">{content.titleAccent}</span>
+          </span>
         </h1>
 
         <div data-hero-strip-mobile className="-mx-5 mt-10 overflow-hidden py-4 lg:hidden">
