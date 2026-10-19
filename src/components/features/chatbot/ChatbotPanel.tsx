@@ -16,6 +16,7 @@ import {
 } from "@/services/chatbot/chatbot-ui";
 import { ChatbotLoadingState } from "./ChatbotLoadingState";
 import { ChatbotSuggestions } from "./ChatbotSuggestions";
+import { TivvyAvatar } from "./TivvyAvatar";
 import type { ChatMessage, ChatResponse } from "@/types/chat";
 
 interface ChatbotPanelProps {
@@ -50,9 +51,10 @@ export function ChatbotPanel({ isOpen, onClose }: ChatbotPanelProps) {
     visibleSuggestions.length,
   );
 
-  // Auto-scroll to latest message
+  // Follow the conversation, but leave the welcome message in view before the first question.
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length === 0 && !isLoading) return;
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, isLoading, loadingStage]);
 
   useEffect(() => {
@@ -144,129 +146,102 @@ export function ChatbotPanel({ isOpen, onClose }: ChatbotPanelProps) {
 
   return (
     <div
+      role="dialog"
+      aria-label="Tivvy, asisten AI Marketiv"
+      // Closed, the panel stays mounted for its animation, so it is removed from focus and the accessibility tree.
+      inert={!isOpen}
+      aria-hidden={!isOpen}
       className={cn(
         "chatbot-panel-float",
-        // Animation — not covered by .chatbot-panel-float CSS class
-        "transition-all duration-300 ease-out origin-bottom-right",
-        isOpen ? "scale-100 opacity-100 translate-y-0" : "scale-90 opacity-0 translate-y-4 pointer-events-none",
+        // Open and close motion; position and size live in .chatbot-panel-float.
+        "origin-bottom-right transition-[opacity,scale,translate] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+        isOpen ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none translate-y-4 scale-95 opacity-0",
       )}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-brand-coral to-orange-400 shrink-0">
+      <div className="halftone relative flex shrink-0 items-center justify-between gap-3 bg-secondary-900 px-5 py-4 text-white [--ht-dir:200deg] [--ht-dot:rgba(249,115,22,0.4)] [--ht-size:8px]">
         <div className="flex items-center gap-3">
-          {/* Bot Avatar */}
-          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm">
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-              <path d="M12 2C8.686 2 6 4.686 6 8v1H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2v1c0 3.314 2.686 6 6 6s6-2.686 6-6v-1h2a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2V8c0-3.314-2.686-6-6-6z" />
-              <path d="M9 13v-2" />
-              <path d="M15 13v-2" />
-              <path d="M10 17h4" />
-            </svg>
-          </div>
+          <span className="relative">
+            <TivvyAvatar size={44} className="ring-2 ring-white/15" />
+            <span aria-hidden="true" className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-success ring-2 ring-secondary-900" />
+          </span>
           <div>
-            <h3 className="text-white font-semibold text-sm">Tivvy</h3>
-            <p className="text-white/80 text-xs">Asisten AI Marketiv</p>
+            <h3 className="text-[15px] font-bold leading-tight">Tivvy</h3>
+            <p className="text-[12px] text-white/60">Asisten AI Marketiv</p>
           </div>
         </div>
-        <button onClick={onClose} className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-white/20 transition-colors cursor-pointer" aria-label="Tutup chatbot">
-          <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-            <path d="M18 6L6 18" />
-            <path d="M6 6l12 12" />
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 transition-colors hover:bg-white/20"
+          aria-label="Tutup chatbot"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" className="h-4 w-4" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12" />
           </svg>
         </button>
       </div>
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50/50">
-        {/* Welcome Message */}
+      <div className="flex-1 space-y-3 overflow-y-auto bg-neutral-100 px-4 py-5 [scrollbar-color:rgba(16,32,51,0.18)_transparent] [scrollbar-width:thin]">
         {messages.length === 0 && (
-          <div className="flex gap-2.5">
-            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-brand-coral shrink-0 mt-0.5">
-              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-                <path d="M12 2C8.686 2 6 4.686 6 8v1H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2v1c0 3.314 2.686 6 6 6s6-2.686 6-6v-1h2a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2V8c0-3.314-2.686-6-6-6z" />
-                <path d="M9 13v-2" />
-                <path d="M15 13v-2" />
-                <path d="M10 17h4" />
-              </svg>
+          <>
+            <div className="flex gap-2.5">
+              <TivvyAvatar size={30} className="mt-0.5" />
+              <div className="max-w-[85%] rounded-2xl rounded-tl-md bg-white px-4 py-3 ring-1 ring-secondary-900/[0.06]">
+                <p className="text-[14px] leading-relaxed text-secondary-900">{getTivvyWelcomeMessage(welcomeAudience)}</p>
+              </div>
             </div>
-            <div className="bg-white rounded-2xl rounded-tl-md px-4 py-3 shadow-sm border border-gray-100 max-w-[85%]">
-              <p className="text-sm text-text-main leading-relaxed">
-                {getTivvyWelcomeMessage(welcomeAudience)}
-              </p>
-              {showSuggestions && <div className="mt-3">
-                <ChatbotSuggestions
-                  questions={visibleSuggestions}
-                  disabled={false}
-                  onSelect={(question) => void sendMessage(question)}
-                />
-              </div>}
-            </div>
-          </div>
-        )}
-
-        {/* Chat Messages */}
-        {messages.map((msg, idx) => (
-          <div key={idx} className={cn("flex gap-2.5", msg.role === "user" ? "justify-end" : "justify-start")}>
-            {/* Assistant Avatar */}
-            {msg.role === "assistant" && (
-              <div className="flex items-center justify-center w-7 h-7 rounded-full bg-brand-coral shrink-0 mt-0.5">
-                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-                  <path d="M12 2C8.686 2 6 4.686 6 8v1H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2v1c0 3.314 2.686 6 6 6s6-2.686 6-6v-1h2a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2V8c0-3.314-2.686-6-6-6z" />
-                  <path d="M9 13v-2" />
-                  <path d="M15 13v-2" />
-                  <path d="M10 17h4" />
-                </svg>
+            {showSuggestions && (
+              <div className="pl-10">
+                <ChatbotSuggestions questions={visibleSuggestions} disabled={false} onSelect={(question) => void sendMessage(question)} />
               </div>
             )}
+          </>
+        )}
+
+        {messages.map((msg, idx) => (
+          <div key={idx} className={cn("flex gap-2.5", msg.role === "user" ? "justify-end" : "justify-start")}>
+            {msg.role === "assistant" && <TivvyAvatar size={30} className="mt-0.5" />}
             <div
               className={cn(
-                "rounded-2xl px-4 py-3 max-w-[85%] text-sm leading-relaxed shadow-sm overflow-x-auto",
-                msg.role === "user" ? "bg-brand-coral text-white rounded-tr-md" : "bg-white text-text-main rounded-tl-md border border-gray-100",
+                "max-w-[85%] overflow-x-auto rounded-2xl px-4 py-3 text-[14px] leading-relaxed",
+                msg.role === "user" ? "rounded-tr-md bg-secondary-900 text-white" : "rounded-tl-md bg-white text-secondary-900 ring-1 ring-secondary-900/[0.06]",
               )}
             >
-              {msg.role === "assistant" ? <p className="whitespace-pre-wrap">{msg.content}</p> : <p className="whitespace-pre-wrap">{msg.content}</p>}
+              <p className="whitespace-pre-wrap">{msg.content}</p>
             </div>
           </div>
         ))}
 
         {messages.length > 0 && showSuggestions && (
-          <div className="pl-9">
-            <ChatbotSuggestions
-              questions={visibleSuggestions}
-              disabled={false}
-              onSelect={(question) => void sendMessage(question)}
-            />
+          <div className="pl-10">
+            <ChatbotSuggestions questions={visibleSuggestions} disabled={false} onSelect={(question) => void sendMessage(question)} />
           </div>
         )}
 
-        {/* Loading Indicator */}
-        {isLoading && (
-          <ChatbotLoadingState message={getTivvyLoadingMessage(loadingStage)} />
-        )}
+        {isLoading && <ChatbotLoadingState message={getTivvyLoadingMessage(loadingStage)} />}
 
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
-      <form onSubmit={handleSubmit} className="flex items-center gap-2 px-4 py-3 bg-white border-t border-gray-100 shrink-0">
+      <form onSubmit={handleSubmit} className="flex shrink-0 items-center gap-2 border-t border-secondary-900/[0.06] bg-white px-3 py-3">
         <input
           ref={inputRef}
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ketik pesanmu..."
+          placeholder="Tulis pertanyaanmu"
           disabled={isLoading}
-          className="flex-1 px-4 py-2.5 text-sm text-text-main bg-gray-50 rounded-full border border-gray-200 outline-none focus:border-brand-coral/50 focus:ring-2 focus:ring-brand-coral/10 transition-all placeholder:text-text-muted disabled:opacity-50"
+          aria-label="Pesan untuk Tivvy"
+          className="h-11 min-w-0 flex-1 rounded-full bg-neutral-100 px-4 text-[14px] text-secondary-900 outline-none ring-1 ring-secondary-900/[0.06] transition-[box-shadow,background-color] placeholder:text-neutral-500 focus:bg-white focus:ring-2 focus:ring-secondary-900/15 disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={isLoading || !input.trim()}
-          className="flex items-center justify-center w-10 h-10 rounded-full bg-brand-coral text-white hover:bg-brand-coral/90 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary-900 text-white transition-[background-color,color,scale] hover:bg-primary-500 active:scale-[0.94] disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-400"
           aria-label="Kirim pesan"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-            <path d="M22 2L11 13" />
-            <path d="M22 2l-7 20-4-9-9-4 20-7z" />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
+            <path d="M5 12h14M13 6l6 6-6 6" />
           </svg>
         </button>
       </form>

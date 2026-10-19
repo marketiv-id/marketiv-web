@@ -1,43 +1,99 @@
 import Image from "next/image";
-import landingPageBg from "@/assets/images/landing-page.png";
-import heroMobileBg from "@/assets/images/hero-mobile.png";
-import { LANDING_CONTENT } from "@/data/content";
+import { cn } from "@/lib/utils";
+import type { HeroContent, HeroStripItem } from "@/types/landing";
+import { HeroMotion } from "./HeroMotion";
 import { LandingHeroActions } from "./LandingHeroActions";
 
-export function HeroSection() {
-  const { hero } = LANDING_CONTENT;
+interface HeroSectionProps {
+  content: HeroContent;
+}
+
+function StripCell({ item, hidden }: { item: HeroStripItem; hidden?: boolean }) {
+  const screen = item.kind === "screen";
   return (
-    <section className="relative w-full min-h-screen flex flex-col items-center justify-center overflow-hidden pt-16">
-      {/* Background Image (Desktop/Tablet) */}
-      <Image src={landingPageBg} alt="UMKM dan Konten Kreator berkolaborasi" fill priority className="hidden md:block object-cover object-center" sizes="100vw" quality={100} />
-
-      {/* Background Image (Mobile) */}
-      <Image src={heroMobileBg} alt="UMKM dan Konten Kreator berkolaborasi" fill priority className="block md:hidden object-cover object-center" sizes="100vw" quality={100} />
-
-      {/* Gradient Overlay Matching Figma */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: "linear-gradient(238deg, rgba(248,244,11,0.20) 41%, rgba(255,140,0,0.20) 50%)",
-        }}
+    <figure
+      aria-hidden={hidden || undefined}
+      className={cn(
+        "relative aspect-[4/5] w-[42vw] shrink-0 overflow-hidden rounded-[18px] sm:w-[30vw] lg:w-full",
+        screen ? "bg-primary-500 halftone [--ht-dir:160deg] [--ht-size:9px]" : "bg-neutral-200",
+      )}
+    >
+      <Image
+        src={item.src}
+        alt={hidden ? "" : item.alt}
+        fill
+        sizes="(min-width: 1024px) 18vw, 42vw"
+        className={cn("select-none", screen ? "object-contain object-bottom px-3 pt-6" : "object-cover")}
       />
+    </figure>
+  );
+}
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center px-4 sm:px-6 max-w-4xl mx-auto pt-16 sm:pt-20">
-        {/* Headline */}
-        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] font-bold text-white drop-shadow-xl max-w-2xl md:max-w-3xl lg:max-w-4xl whitespace-pre-line leading-tight">{hero.title}</h1>
+// b2p-style poster hero: condensed headline on paper, a tilted strip of real-world photos and app screens cutting through it.
+export function HeroSection({ content }: HeroSectionProps) {
+  return (
+    <HeroMotion className="relative z-[12] overflow-hidden rounded-b-[24px] bg-white md:rounded-b-[40px]">
+      <div className="relative mx-auto flex min-h-[100svh] max-w-[1600px] flex-col px-5 pb-10 pt-28 md:px-10 md:pt-32 lg:pb-8 lg:pt-28">
+        <ul data-hero-fade data-hero-meta className="text-caption-mono grid grid-cols-2 gap-x-6 border-b border-secondary-900/10 pb-4 text-neutral-600 md:grid-cols-3 lg:mr-[clamp(240px,25vw,440px)]">
+          {content.meta.map((item, index) => (
+            <li key={item} className={cn(index === 1 && "hidden md:block", index === 2 && "text-right")}>
+              {item}
+            </li>
+          ))}
+        </ul>
 
-        {/* Subtitle */}
-        <p className="text-sm sm:text-base md:text-lg lg:text-xl font-medium text-white/95 mt-4 sm:mt-5 md:mt-6 max-w-xl md:max-w-2xl drop-shadow-lg">{hero.subtitle}</p>
+        <h1
+          data-hero-title
+          className="font-display-cond relative z-[3] mt-8 max-w-[15ch] text-[clamp(2.15rem,min(5.6vw,9.4vh),6.75rem)] sm:text-[clamp(2.6rem,min(5.6vw,9.4vh),6.75rem)] leading-[0.88] text-secondary-900 md:mt-8 lg:max-w-[min(68vw,1120px)]"
+        >
+          {content.titleLead} {content.titleRest} <span className="hl-box">{content.titleAccent}</span>
+        </h1>
 
-        {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 mt-12 sm:mt-16 md:mt-20 lg:mt-24">
-          <LandingHeroActions ctaUmkm={hero.ctaUmkm} ctaCreator={hero.ctaCreator} />
+        <div data-hero-strip-mobile className="-mx-5 mt-10 overflow-hidden py-4 lg:hidden">
+          <div className="-rotate-3">
+            <div data-hero-strip-track="x" className="flex w-max gap-3">
+              {[...content.strip, ...content.strip].map((item, index) => (
+                <StripCell key={`${item.src}-${index}`} item={item} hidden={index >= content.strip.length} />
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Trust Line */}
-        <p className="text-sm sm:text-base md:text-lg font-semibold text-white/70 mt-6 sm:mt-8 md:mt-10 lg:mt-12">{hero.trustLine}</p>
+        <div className="relative z-[3] mt-10 grid gap-8 lg:mt-auto lg:grid-cols-12 lg:items-end lg:gap-6 lg:pt-8">
+          <div className="lg:col-span-6">
+            <p data-hero-fade className="max-w-md text-[17px] leading-relaxed text-neutral-700 [text-wrap:pretty]">
+              {content.subtitle}
+            </p>
+            <div data-hero-fade className="mt-8">
+              <LandingHeroActions ctaUmkm={content.ctaUmkm} ctaCreator={content.ctaCreator} dashboardCta={content.dashboardCta} />
+            </div>
+          </div>
+          <ul data-hero-fade className="grid gap-2 lg:col-span-3 lg:col-start-7">
+            {content.proof.map((item) => (
+              <li key={item} className="flex items-center gap-3 border-t border-secondary-900/10 pt-2 text-[14px] font-semibold text-secondary-900">
+                <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rotate-45 bg-primary-500" />
+                {item}
+              </li>
+            ))}
+            <li className="text-caption-mono pt-2 text-neutral-500">{content.stripCaption}</li>
+          </ul>
+        </div>
       </div>
-    </section>
+
+      <div
+        data-hero-strip
+        className="pointer-events-none absolute bottom-[-12%] right-[clamp(1.5rem,7vw,9rem)] top-[-12%] z-[2] hidden w-[clamp(170px,16vw,270px)] rotate-[9deg] lg:block"
+      >
+        <div data-depth="12" className="h-full">
+          <div data-hero-strip-scroll className="h-full">
+            <div data-hero-strip-track="y" className="flex flex-col gap-3">
+              {[...content.strip, ...content.strip].map((item, index) => (
+                <StripCell key={`${item.src}-${index}`} item={item} hidden={index >= content.strip.length} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </HeroMotion>
   );
 }

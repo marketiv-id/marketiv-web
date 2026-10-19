@@ -1,164 +1,196 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { Logo } from "@/assets/images";
+import { useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { NAVBAR_CONTENT } from "@/data/content";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { dashboardByRole, isUserPortalRole } from "@/lib/constants/routes";
+import { ScrollTrigger } from "@/lib/gsap";
+
+const content = NAVBAR_CONTENT;
+
+function RollLabel({ text }: { text: string }) {
+  return (
+    <span className="roll">
+      <span>{text}</span>
+      <span aria-hidden="true">{text}</span>
+    </span>
+  );
+}
 
 export function Navbar() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { user, loading } = useAuth();
-  const navLinks = NAVBAR_CONTENT.links;
   const dashboardHref = user && isUserPortalRole(user.role) ? dashboardByRole[user.role] : null;
+  const menuId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
 
+  // Hides while reading downward and returns on any upward scroll, so the bar never covers content for long.
+  // ScrollTrigger batches with the page's other scroll work instead of adding a raw scroll listener.
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 32);
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    const trigger = ScrollTrigger.create({
+      start: 0,
+      end: "max",
+      onUpdate: (self) => {
+        const y = self.scroll();
+        setIsScrolled(y > 24);
+        setIsHidden(self.direction === 1 && y > 160);
+      },
+    });
+    return () => trigger.kill();
   }, []);
 
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMenuOpen(false);
+        toggleRef.current?.focus();
+      }
+    };
+    const onPointer = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (panelRef.current?.contains(target) || toggleRef.current?.contains(target)) return;
+      setIsMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointer);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointer);
+    };
+  }, [isMenuOpen]);
+
+  const closeMenu = () => setIsMenuOpen(false);
+  const navHidden = isHidden && !isMenuOpen;
+
   return (
-    <div className="fixed inset-x-0 top-0 z-50 flex justify-center pointer-events-none">
-      <nav
+    <>
+      <div
         className={cn(
-          "transition-all duration-300 ease-in-out pointer-events-auto",
-          isScrolled
-            ? "w-full bg-white/80 backdrop-blur-xl backdrop-saturate-150 border-b border-neutral-200/80 shadow-sm rounded-none mt-0"
-            : "w-full max-w-5xl bg-white/40 backdrop-blur-xl backdrop-saturate-150 border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-full mt-4 mx-4 md:mx-6",
-          isMobileMenuOpen && "bg-white rounded-none mt-0 max-w-full mx-0"
+          "fixed inset-x-0 top-0 z-50 px-3 pt-3 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] md:px-6 md:pt-6",
+          navHidden && "-translate-y-[130%]",
         )}
       >
-        <div className={cn(
-          "mx-auto flex w-full items-center",
-          isScrolled ? "max-w-7xl px-6 py-4 md:px-12 lg:px-16" : "px-6 py-3 lg:px-8"
-        )}>
-          {/* Logo */}
-          <div className="flex-1 flex items-center">
-            <Link href="/" className="inline-flex items-center shrink-0 cursor-pointer">
-              <Logo
-                className="h-9 w-auto transition-all duration-300"
-              />
-            </Link>
-          </div>
+        <nav
+          aria-label={content.mainLabel}
+          className={cn(
+            "relative mx-auto flex max-w-[1180px] items-center gap-2 rounded-full bg-white py-2 pl-5 pr-2 ring-1 ring-secondary-900/[0.06] transition-shadow duration-300 md:gap-3",
+            isScrolled || isMenuOpen ? "shadow-[0_12px_32px_rgba(16,32,51,0.12)]" : "shadow-[0_4px_18px_rgba(16,32,51,0.06)]",
+          )}
+        >
+          <Link href="/" aria-label={content.homeLabel} className="mr-2 inline-flex shrink-0 items-center">
+            <Image src="/brand/marketiv-logo.webp" alt="Marketiv" width={545} height={96} priority className="h-7 w-auto md:h-8" />
+          </Link>
 
-          {/* Desktop Navigation Links */}
-          <ul className="hidden items-center gap-8 md:flex lg:gap-10">
-            {navLinks.map((link: { label: string; href: string }) => (
+          <ul className="hidden flex-1 items-center justify-center gap-1 lg:flex">
+            {content.menu.map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className="text-sm font-semibold tracking-wide text-neutral-600 hover:text-primary-600 transition-colors duration-200 cursor-pointer"
+                  data-transition-label={link.label}
+                  className="roll-host inline-flex h-10 items-center rounded-full px-3.5 text-[14px] font-semibold text-secondary-800 transition-colors hover:text-primary-600"
                 >
-                  {link.label}
+                  <RollLabel text={link.label} />
                 </Link>
               </li>
             ))}
           </ul>
+          <div className="flex-1 lg:hidden" />
 
-          {/* Desktop Auth Buttons */}
+          <button
+            ref={toggleRef}
+            type="button"
+            aria-label={isMenuOpen ? content.closeMenuLabel : content.openMenuLabel}
+            aria-expanded={isMenuOpen}
+            aria-controls={menuId}
+            onClick={() => setIsMenuOpen((open) => !open)}
+            className="roll-host inline-flex h-11 w-11 items-center justify-center gap-2 rounded-full bg-secondary-900 text-[13px] font-bold text-white transition-[background-color,scale] hover:bg-primary-500 active:scale-[0.94] sm:w-auto sm:px-4 lg:hidden"
+          >
+            {/* Three-line burger that folds into a cross. */}
+            <span aria-hidden="true" className="relative block h-3 w-[18px]">
+              <span className={cn("absolute left-0 top-0 h-[2px] w-full rounded-full bg-current transition-[translate,rotate] duration-300", isMenuOpen && "translate-y-[5px] rotate-45")} />
+              <span className={cn("absolute left-0 top-[5px] h-[2px] w-full rounded-full bg-current transition-opacity duration-200", isMenuOpen && "opacity-0")} />
+              <span className={cn("absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-current transition-[translate,rotate] duration-300", isMenuOpen && "-translate-y-[5px] -rotate-45")} />
+            </span>
+            <span className="hidden sm:inline-flex">
+              <RollLabel text={isMenuOpen ? content.closeLabel : content.menuLabel} />
+            </span>
+          </button>
+
           <DesktopAuthActions loading={loading} dashboardHref={dashboardHref} />
 
-          {/* Mobile Hamburger */}
-          <button
+          <div
+            ref={panelRef}
+            id={menuId}
+            inert={!isMenuOpen}
             className={cn(
-              "flex cursor-pointer flex-col gap-1.5 p-2 md:hidden ml-2 cursor-pointer",
+              "absolute right-0 top-[calc(100%+10px)] w-full origin-top-right rounded-[28px] bg-white p-3 shadow-[0_24px_60px_rgba(16,32,51,0.14)] ring-1 ring-secondary-900/5 transition-[opacity,scale] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:w-[360px] lg:hidden",
+              isMenuOpen ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0",
             )}
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Toggle navigation menu"
           >
-            <span
-              className={cn(
-                "h-0.5 w-6 transition-all duration-300 bg-neutral-700",
-                isMobileMenuOpen && "translate-y-2 rotate-45"
-              )}
-            />
-            <span
-              className={cn(
-                "h-0.5 w-6 transition-all duration-300 bg-neutral-700",
-                isMobileMenuOpen && "opacity-0"
-              )}
-            />
-            <span
-              className={cn(
-                "h-0.5 w-6 transition-all duration-300 bg-neutral-700",
-                isMobileMenuOpen && "-translate-y-2 -rotate-45"
-              )}
-            />
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        <div
-          className={cn(
-            "overflow-hidden transition-all duration-300 md:hidden bg-white border-t border-neutral-100",
-          isMobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
-        )}
-      >
-        <ul className="flex flex-col items-center gap-4 pt-4 pb-6">
-          {navLinks.map((link: { label: string; href: string }) => (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                className="text-sm font-semibold text-neutral-700 transition-colors hover:text-primary-600 cursor-pointer"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                {link.label}
-              </Link>
-            </li>
-          ))}
-          <MobileAuthActions
-            loading={loading}
-            dashboardHref={dashboardHref}
-            onNavigate={() => setIsMobileMenuOpen(false)}
-          />
-        </ul>
+            <ul className="flex flex-col">
+              {content.menu.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    data-transition-label={link.label}
+                    onClick={closeMenu}
+                    className="roll-host flex items-center justify-between rounded-2xl px-4 py-3.5 text-lg font-bold tracking-[-0.02em] text-secondary-900 transition-colors hover:bg-neutral-100"
+                  >
+                    <RollLabel text={link.label} />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <MobileAuthActions loading={loading} dashboardHref={dashboardHref} onNavigate={closeMenu} />
+          </div>
+        </nav>
       </div>
-      </nav>
-    </div>
+
+    </>
   );
 }
 
-function DesktopAuthActions({
-  loading,
-  dashboardHref,
-}: {
-  loading: boolean;
-  dashboardHref: string | null;
-}) {
+function DesktopAuthActions({ loading, dashboardHref }: { loading: boolean; dashboardHref: string | null }) {
+  if (loading) {
+    return <div aria-hidden="true" className="hidden h-10 w-40 rounded-full bg-neutral-200/60 md:block" />;
+  }
+  if (dashboardHref) {
+    return (
+      <Link
+        href={dashboardHref}
+        id="navbar-dashboard"
+        className="roll-host hidden h-10 items-center rounded-full bg-secondary-900 px-5 text-[13px] font-bold text-white transition-colors hover:bg-primary-600 md:inline-flex"
+      >
+        <RollLabel text={content.dashboard} />
+      </Link>
+    );
+  }
   return (
-    <div className="hidden md:flex items-center gap-3 flex-1 justify-end">
-      {loading ? (
-        <div aria-hidden="true" className="h-10 w-32 rounded-full bg-neutral-200/50" />
-      ) : dashboardHref ? (
-        <Link
-          href={dashboardHref}
-          id="navbar-dashboard"
-          className="inline-flex items-center justify-center rounded-full bg-primary-500 px-6 py-2 text-sm font-bold text-white shadow-sm shadow-primary-500/30 transition-all duration-200 hover:bg-primary-600 hover:scale-105 cursor-pointer"
-        >
-          Dashboard
-        </Link>
-      ) : (
-        <>
-          <Link
-            href="/login"
-            id="navbar-login"
-            className="text-sm font-semibold text-neutral-600 hover:text-primary-600 transition-colors duration-200 px-4 py-2 rounded-lg hover:bg-primary-50 cursor-pointer"
-          >
-            Masuk
-          </Link>
-          <Link
-            href="/register"
-            id="navbar-register"
-            className="inline-flex items-center justify-center rounded-full bg-primary-500 px-6 py-2 text-sm font-bold text-white shadow-sm shadow-primary-500/30 transition-all duration-200 hover:bg-primary-600 hover:scale-105 cursor-pointer"
-          >
-            Daftar
-          </Link>
-        </>
-      )}
+    <div className="hidden items-center gap-1 md:flex">
+      <Link
+        href="/login"
+        id="navbar-login"
+        className="roll-host inline-flex h-10 items-center rounded-full px-4 text-[13px] font-bold text-secondary-900 transition-colors hover:bg-neutral-100"
+      >
+        <RollLabel text={content.login} />
+      </Link>
+      <Link
+        href="/register"
+        id="navbar-register"
+        className="roll-host inline-flex h-10 items-center gap-2 rounded-full bg-secondary-900 px-5 text-[13px] font-bold text-white transition-colors hover:bg-primary-500"
+      >
+        <RollLabel text={content.register} />
+        <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 10h11m-4-5 5 5-5 5" />
+        </svg>
+      </Link>
     </div>
   );
 }
@@ -173,36 +205,36 @@ function MobileAuthActions({
   onNavigate: () => void;
 }) {
   return (
-    <li className="w-full px-6 flex flex-col gap-3 mt-2 pt-3 border-t border-neutral-100">
+    <div className="mt-3 flex flex-col gap-2 border-t border-neutral-200 pt-3 md:hidden">
       {loading ? (
-        <div aria-hidden="true" className="h-12 w-full rounded-xl bg-neutral-100" />
+        <div aria-hidden="true" className="h-12 w-full rounded-full bg-neutral-100" />
       ) : dashboardHref ? (
         <Link
           href={dashboardHref}
           id="navbar-dashboard-mobile"
-          className="flex w-full items-center justify-center rounded-xl bg-primary-500 py-3 text-sm font-bold text-white shadow shadow-primary-200 hover:bg-primary-600 transition-colors cursor-pointer"
           onClick={onNavigate}
+          className="flex h-12 w-full items-center justify-center rounded-full bg-secondary-900 text-sm font-bold text-white"
         >
-          Dashboard
+          {content.dashboard}
         </Link>
       ) : (
         <>
           <Link
             href="/login"
-            className="flex w-full items-center justify-center rounded-xl border border-neutral-200 bg-white py-3 text-sm font-bold text-neutral-700 hover:border-primary-300 hover:text-primary-600 transition-all cursor-pointer"
             onClick={onNavigate}
+            className="flex h-12 w-full items-center justify-center rounded-full bg-neutral-100 text-sm font-bold text-secondary-900"
           >
-            Masuk
+            {content.login}
           </Link>
           <Link
             href="/register"
-            className="flex w-full items-center justify-center rounded-xl bg-primary-500 py-3 text-sm font-bold text-white shadow shadow-primary-200 hover:bg-primary-600 transition-colors cursor-pointer"
             onClick={onNavigate}
+            className="flex h-12 w-full items-center justify-center rounded-full bg-primary-500 text-sm font-bold text-white"
           >
-            Daftar Sekarang
+            {content.registerMobile}
           </Link>
         </>
       )}
-    </li>
+    </div>
   );
 }
