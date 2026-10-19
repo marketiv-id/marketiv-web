@@ -392,9 +392,8 @@ export const LANDING_CONTENT: LandingContent = {
   footer: {
     tagline: "Marketplace yang mempertemukan UMKM dengan kreator mikro di seluruh Indonesia. Dana ditahan escrow sampai kerjanya terbukti.",
     liveLine: {
-      prefix: "Sekarang pukul",
       city: "Sukabumi",
-      suffix: "Tim kami melayani UMKM dan kreator di seluruh Indonesia, dan membalas pesan paling lambat 3 hari kerja.",
+      suffix: "Ada pertanyaan soal campaign, rate card, atau pencairan dana? Kirim pesan, kami balas paling lambat 3 hari kerja.",
     },
     nav: {
       title: "Jelajahi",

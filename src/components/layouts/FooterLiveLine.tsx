@@ -3,12 +3,11 @@
 import { useEffect, useState } from "react";
 
 interface FooterLiveLineProps {
-  prefix: string;
   city: string;
   suffix: string;
 }
 
-export function FooterLiveLine({ prefix, city, suffix }: FooterLiveLineProps) {
+export function FooterLiveLine({ city, suffix }: FooterLiveLineProps) {
   const [time, setTime] = useState<string | null>(null);
 
   useEffect(() => {
@@ -19,19 +18,21 @@ export function FooterLiveLine({ prefix, city, suffix }: FooterLiveLineProps) {
     return () => window.clearInterval(timer);
   }, []);
 
-  // Rendered without the time on the server; the clock only exists once the visitor's browser can supply it.
+  // The clock line only renders once the visitor's browser can supply the time; the sentence is in the server HTML.
   return (
-    <p className="max-w-xl text-lg leading-snug text-white/80 md:text-xl">
-      {time ? (
-        <>
-          {prefix}{" "}
-          <span key={time} className="inline-block animate-[landing-label-in_0.5s_cubic-bezier(0.16,1,0.3,1)] font-mono-nota text-primary-400">
-            {time}
-          </span>{" "}
-          WIB di {city}.{" "}
-        </>
-      ) : null}
-      {suffix}
-    </p>
+    <div className="max-w-xl">
+      <p className="text-caption-mono flex h-4 items-center gap-2 text-white/50">
+        {time && (
+          <>
+            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-success" />
+            {city} ·{" "}
+            <span key={time} className="inline-block animate-[landing-label-in_0.5s_cubic-bezier(0.16,1,0.3,1)] text-primary-400">
+              {time} WIB
+            </span>
+          </>
+        )}
+      </p>
+      <p className="mt-3 text-lg leading-snug text-white/85 [text-wrap:pretty] md:text-xl">{suffix}</p>
+    </div>
   );
 }

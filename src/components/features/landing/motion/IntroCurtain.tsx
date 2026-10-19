@@ -41,7 +41,6 @@ export function IntroCurtain() {
         ended = true;
         html.removeAttribute("data-intro");
         setScrollLocked(false);
-        ScrollTrigger.refresh();
       };
       const safety = window.setTimeout(() => {
         markIntroDone();
@@ -56,6 +55,15 @@ export function IntroCurtain() {
 
       ready.then(() => {
         if (cancelled) return;
+        // Measure every trigger and pin while the paper still covers the page; doing it after the handoff made
+        // one long task land on the first frames of the hero entrance.
+        ScrollTrigger.refresh();
+        requestAnimationFrame(() => {
+          if (!cancelled) play();
+        });
+      });
+
+      const play = () => {
         const logo = q("[data-intro-logo]")[0] as HTMLElement | undefined;
         const target = document.querySelector<HTMLElement>(NAV_LOGO);
         const tl = gsap.timeline({
@@ -82,7 +90,7 @@ export function IntroCurtain() {
           // The hero starts while the paper is still fading, so the handoff reads as one motion.
           .call(markIntroDone, [], 0.6)
           .set(logo ?? {}, { autoAlpha: 0 });
-      });
+      };
 
       return () => {
         cancelled = true;

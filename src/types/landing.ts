@@ -212,7 +212,7 @@ export interface FinalCtaContent {
 
 export interface FooterContent {
   tagline: string;
-  liveLine: { prefix: string; suffix: string; city: string };
+  liveLine: { suffix: string; city: string };
   nav: { title: string; links: LandingLink[] };
   legal: { title: string; links: LandingLink[] };
   contact: { title: string; email: string; instagram: string; instagramHref: string };
