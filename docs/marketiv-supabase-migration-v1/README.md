@@ -113,6 +113,11 @@ Vercel Cron ──► /api/cron/*      Midtrans ──► /api/webhooks/midtrans
 | 10 | Cutover produksi | L | [10-cutover.md](./10-cutover.md) |
 | 11 | Bersih-bersih | S | [11-cleanup.md](./11-cleanup.md) |
 
+## Menjalankan fase di sesi baru
+
+- **Prompt siap pakai per fase:** [prompts/](./prompts/README.md). Salin `prompts/fase-NN.md` ke sesi chat baru.
+- **Log serah-terima antar sesi:** [progress/](./progress/README.md). Setiap fase wajib menulis `progress/fase-NN.md` sebelum membuka PR, dan fase berikutnya membaca semua log tersebut.
+
 ## Verifikasi global
 
 **Setiap PR fase:**
