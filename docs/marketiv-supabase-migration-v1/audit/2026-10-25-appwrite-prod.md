@@ -19,7 +19,7 @@ Audit read-only Fase 0. Laporan ini hanya memuat angka, ID, dan status. Tidak ad
 | Tabel uang (`payments`, `transactions`, `escrows`, `withdrawals`) | semua 0 baris |
 | Saldo wallet total (balance + pending) | 0 |
 | Baris yatim | 0 |
-| Anomali kritis | 3 (lihat [Keputusan anomali](#keputusan-anomali)) |
+| Anomali kritis | 3 (lihat [Keputusan anomali](#keputusan-anomali)). Kandidat admin sudah divalidasi sah, jadi yang tersisa hanya pola celah #2 tanpa dampak uang. |
 
 **Dampak keuangan celah #1/#2/#3: nol.** Tidak ada uang yang pernah bergerak di produksi. Tidak ada ledger, payment, escrow, withdrawal, submission, atau saldo.
 
@@ -90,7 +90,7 @@ Audit read-only Fase 0. Laporan ini hanya memuat angka, ID, dan status. Tidak ad
 - Hanya satu akun yang punya sinyal admin.
 - Tidak ada label Auth di produksi sama sekali. Admin app menerima `users.role`, label, atau `prefs.role` (`admin/src/lib/admin/auth.ts`).
 - **Indikasi sah:** akun Auth ini yang pertama dibuat di project. Baris `users`-nya dibuat dari server dengan `$permissions: []`. Baris yang dibuat lewat `create-user-profile` (jalur eskalasi celah #1) selalu memberi `read`/`update` ke pemiliknya.
-- **Status:** menunggu konfirmasi pemilik.
+- **Status:** dikonfirmasi pemilik pada 2026-10-25. Akun ini admin sah yang dibuat pemilik sendiri dan dipakai login ke admin Marketiv. Celah #1/#5 tidak terbukti dimanfaatkan.
 
 ## Campaign vs pembayaran (celah #2)
 
@@ -145,7 +145,7 @@ pendingBalance = Σ release/campaign_submission (status completed, reward lama y
 | `audit-live.mjs` | Bucket, tabel, dan kolom produksi **sama** dengan config. 57 blocker, **semuanya** `NO-VARS`: 57 dari 67 Function tidak punya variabel tingkat function. 13 warning: 10 Function tanpa `APPWRITE_DATABASE_ID`, 3 Function disabled. |
 | `drift.mjs` | 4 field berlaku langsung dan 66 field butuh deploy berbeda dari config. 0 belum di-push, 0 yatim. Config dibuat dari project staging. |
 
-Temuan `NO-VARS` belum bisa dipastikan sebagai kerusakan. Produksi mungkin memakai variabel tingkat project, sedangkan API key audit tidak punya scope `project.read` untuk memeriksanya. Ini masalah kesehatan produksi lama, di luar scope migrasi. Dicatat di log progres.
+Temuan `NO-VARS` **bukan kerusakan**. Pemilik mengonfirmasi bahwa produksi memakai variabel global tingkat project, yang tidak diperiksa `audit-live.mjs`. Hal yang sama menjelaskan 10 warning tanpa `APPWRITE_DATABASE_ID`. API key audit tidak punya scope `project.read`, jadi isi variabel global tidak diverifikasi dari sesi.
 
 ## Keputusan anomali
 
@@ -154,7 +154,7 @@ Temuan `NO-VARS` belum bisa dipastikan sebagai kerusakan. Produksi mungkin memak
 | A1 | Campaign `active` tanpa payment paid (celah #2) | 6 | Ubah ke `draft`, `remaining_budget = 0`, `spent_amount = 0`, `published_at = null`. UMKM membayar lewat alur baru bila ingin aktif. Keputusan pemilik: opsi (a). | Transform saat migrasi (Fase 9) |
 | A2 | Sisa budget > dana masuk | 4 | Tercakup A1. | Transform saat migrasi |
 | A3 | Klaim pada campaign A1 | 2 | Bawa apa adanya (`expired`). | Migrasi biasa |
-| A4 | Admin tanpa label Auth | 1 | Role admin **tidak** disalin dari `users.role`/`prefs.role`. `app_metadata.role = 'admin'` hanya untuk ID di allowlist yang dikonfirmasi pemilik. `prefs.role` tidak dimigrasi. | Transform saat migrasi, menunggu konfirmasi ID |
+| A4 | Admin tanpa label Auth | 1 | Role admin **tidak** disalin dari `users.role`/`prefs.role`. `app_metadata.role = 'admin'` hanya untuk allowlist `['6a8cd8c4002ecd2aac61']`, yang dikonfirmasi pemilik. `prefs.role` tidak dimigrasi. | Transform saat migrasi |
 | A5 | Akun Auth tanpa baris `users` | 1 | Impor ke `auth.users` tanpa baris `public.users`. Onboarding membuat profil saat login pertama. | Transform saat migrasi |
 | A6 | `users.$id` ≠ ID Auth | 14 | `public.users.id` = UUID hasil `legacy_user_map(users.userId)`. `$id` lama baris `users` dibuang karena tidak dirujuk tabel lain. | Transform saat migrasi |
 | A7 | User tanpa password (Google) | 2 | Impor tanpa password. Identitas Google ditautkan lewat email saat login OAuth pertama. Desain di Fase 4. | Transform saat migrasi |

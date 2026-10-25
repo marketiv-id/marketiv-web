@@ -2,7 +2,7 @@
 
 - Tanggal: 2026-10-25
 - PR: https://github.com/marketiv-id/marketiv-web/pull/27
-- Status: sebagian (spike dan audit selesai; infrastruktur berbayar ditunda atas keputusan pemilik; validasi admin menunggu pemilik)
+- Status: sebagian. Spike, audit, dan keputusan semua anomali selesai. Infrastruktur berbayar (Supabase prod, Vercel, SMTP) ditunda atas keputusan pemilik.
 
 ## Status task
 
@@ -29,7 +29,7 @@
 - [x] Jumlah baris per tabel dan file per bucket
 - [x] Baris yatim
 - [x] File privat di `campaign-assets`
-- [ ] Admin: pencarian selesai (1 kandidat), validasi manual pemilik **belum**
+- [x] Admin: 1 kandidat (`6a8cd8c4002ecd2aac61`), dikonfirmasi sah oleh pemilik
 - [x] Campaign `active` tanpa payment `paid`
 - [x] Ledger ganda dan wallet ≠ Σ ledger
 
@@ -54,6 +54,8 @@
   - Free tidak punya backup otomatis dan project di-pause setelah tidak aktif seminggu. Untuk data uang di produksi ini risiko nyata; putuskan sebelum Fase 10.
   - Vercel Hobby hanya mengizinkan cron harian. Fase 1/8 perlu alternatif, misalnya `pg_cron` Supabase.
 - **Campaign aktif tanpa dana (6):** pemilik memilih opsi (a). Saat migrasi, campaign diubah ke `draft` dengan budget 0.
+- **Admin:** pemilik mengonfirmasi `6a8cd8c4002ecd2aac61` sebagai admin sah yang ia buat sendiri. Allowlist admin migrasi = `['6a8cd8c4002ecd2aac61']`.
+- **`NO-VARS` di `audit-live`:** bukan kerusakan. Pemilik mengonfirmasi produksi memakai variabel global tingkat project, yang tidak dibaca `audit-live.mjs`.
 - **Node `fetch` di sesi cloud** butuh `NODE_USE_ENV_PROXY=1` untuk lewat proxy.
 
 ## Hasil verifikasi
@@ -63,7 +65,7 @@
 | Spike 2 (`spike2-large-upload.mjs`, 49 MB) | BERHASIL: standard 6,6 s; TUS 11,5 s; resume OK; 51 MB ditolak 413; bucket 500 MB ditolak di Free |
 | `audit-appwrite.mjs` (produksi) | 95 baris, 13 file, 15 user Auth, 0 yatim, 3 anomali kritis (lihat laporan audit) |
 | `audit-legacy-money-state.mjs` (produksi) | semua nol |
-| `audit-live.mjs` (produksi) | bucket/tabel/kolom sama dengan config; 57 blocker, semuanya `NO-VARS`; 13 warning |
+| `audit-live.mjs` (produksi) | bucket/tabel/kolom sama dengan config; 57 blocker, semuanya `NO-VARS` (alarm palsu: variabel global project); 13 warning |
 | `drift.mjs` (produksi) | 4 field berlaku langsung + 66 field butuh deploy berbeda dari config; exit 1 |
 | `npm run lint` (root) | **gagal**: 4 error, 48 warning. Semua di file app yang tidak disentuh fase ini (`FloatingDemoBar.tsx`, `create-campaign.autodraft.ts`, `BriefGuidelineStep.tsx`, `BudgetQuotaStep.tsx`). Sudah ada sebelumnya. |
 | `npm run typecheck` (root) | **gagal** di checkout baru: deklarasi modul `.png`/`.svg` hilang karena `next-env.d.ts` (gitignored) belum dibuat. **Lulus** setelah `npx next typegen`. |
@@ -81,22 +83,18 @@
 - Opsional: `SPIKE_FILE_MB`, `SPIKE_BUCKET_LIMIT_MB` — ukuran uji Spike 2.
 
 ## Isu terbuka
-- **Validasi admin** `6a8cd8c4002ecd2aac61` (users.role + prefs.role = admin, tanpa label). Bukti mengarah ke sah: akun Auth pertama, baris `users` dibuat dari server. Usul: pemilik konfirmasi, lalu ID ini menjadi allowlist admin satu-satunya untuk migrasi.
 - **Supabase prod & Vercel:** belum dibuat. Putuskan Free vs berbayar sebelum Fase 1 (Vercel) dan Fase 10 (Supabase prod).
 - **Spike 2 pada 500 MB** belum diuji. Ulangi saat ada project Pro, atau ubah batas `deliverables` di produk menjadi ≤ 50 MB.
 - **SMTP Supabase Auth** belum diatur. Staging: Mailtrap. Produksi: menyusul.
-- **API key audit tidak punya scope `project.read`.** Variabel tingkat project produksi tidak bisa diperiksa (lihat isu `NO-VARS` di bawah).
 
 ## Isu untuk fase lain
-- **Produksi Appwrite (di luar migrasi):** `audit-live` melaporkan 57/67 Function produksi tanpa variabel tingkat function. Kalau produksi juga tidak punya variabel tingkat project, Function tersebut gagal saat dieksekusi. Belum terverifikasi. Pemilik perlu cek di Console; tidak dikerjakan di jalur migrasi.
-- **Fase 1:** pemilik menolak biaya. Rencanakan alternatif cron `*/15` (Vercel Hobby hanya harian), misalnya `pg_cron` + `pg_net` memanggil route, atau cron eksternal gratis. Custom domain `api.marketiv.id` / `api.marketiv-dev.my.id` adalah domain Appwrite; domain app untuk Vercel perlu ditentukan.
+- **Fase 1:** pemilik menolak biaya. Rencanakan alternatif cron `*/15` (Vercel Hobby hanya harian), misalnya `pg_cron` + `pg_net` memanggil route, atau cron eksternal gratis. Custom domain `api.marketiv.id` / `api.marketiv-dev.my.id` adalah domain Appwrite; domain app untuk Vercel perlu ditentukan. Secret Function lama ada di variabel **global project** Appwrite, bukan per Function. Inventarisasi lewat Console saat memindahkannya ke env Vercel, karena `audit-live.mjs` tidak membacanya.
 - **Fase 2:**
   - Baris `users` punya `$id` sendiri (≠ ID Auth); relasi lewat `users.userId`. `public.users.id` = UUID dari `legacy_user_map(userId)`. `$id` lama tidak dirujuk tabel mana pun (diverifikasi: 0 referensi).
   - `export-appwrite.ts` wajib memakai env project produksi secara eksplisit, karena default repo menunjuk staging.
   - Skema produksi sama dengan `appwrite.config.json` (bucket/tabel/kolom, menurut `audit-live`).
 - **Fase 4:**
-  - Admin hanya dari `app_metadata.role`, diisi dari allowlist yang dikonfirmasi pemilik. `prefs.role` dan `users.role` lama tidak dipercaya.
-  - 2 user Google tanpa password: desain penautan identitas OAuth berdasarkan email.
+  - Admin hanya dari `app_metadata.role`, diisi dari allowlist `['6a8cd8c4002ecd2aac61']` yang dikonfirmasi pemilik. `prefs.role` dan `users.role` lama tidak dipercaya.  - 2 user Google tanpa password: desain penautan identitas OAuth berdasarkan email.
   - 1 akun Auth tanpa baris `users` (`6aba8a340034686abc0f`): onboarding harus menangani user Auth tanpa profil.
 - **Fase 6:** upload file besar dari browser memakai TUS + `x-signature` ke `https://<ref>.storage.supabase.co/storage/v1/upload/resumable/sign`, chunk 6 MiB. Batas ukuran Supabase dalam MB desimal.
 - **Fase 9:**

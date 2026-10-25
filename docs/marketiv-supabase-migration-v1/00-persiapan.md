@@ -43,8 +43,8 @@
 - [x] Hitung jumlah baris per tabel dan jumlah file per bucket.
 - [x] Hitung baris yatim, yaitu FK implisit yang menunjuk ke ID yang tidak ada.
 - [x] Cari file privat yang nyasar ke bucket publik `campaign-assets`.
-- [ ] Cari user yang punya `prefs.role` atau `users.role` = `admin`, lalu validasi manual siapa admin yang sah.
-  - Pencarian selesai: 1 kandidat. Validasi manual oleh pemilik **belum**.
+- [x] Cari user yang punya `prefs.role` atau `users.role` = `admin`, lalu validasi manual siapa admin yang sah.
+  - 1 kandidat: `6a8cd8c4002ecd2aac61`. Pemilik mengonfirmasi (2026-10-25) bahwa akun ini admin sah yang ia buat sendiri. Ini satu-satunya ID di allowlist admin migrasi.
 - [x] Cari campaign `active` yang tidak punya payment `paid` (kemungkinan memanfaatkan celah #2).
 - [x] Cari ledger ganda atau wallet yang saldonya tidak sama dengan `sum(ledger)` (kemungkinan kena race #3).
 
@@ -104,6 +104,6 @@ Laporan lengkap dan keputusan per anomali ada di [`audit/2026-10-25-appwrite-pro
 
 - Produksi berisi 95 baris, 13 file, dan 15 user Auth. Tabel uang kosong, saldo nol, dan tidak ada baris yatim.
 - **Celah #2:** 6 campaign `active` tanpa payment, dengan dampak uang nol. Keputusan: ubah ke `draft` dengan budget 0 saat migrasi.
-- **Admin:** 1 kandidat, menunggu validasi pemilik.
+- **Admin:** 1 kandidat (`6a8cd8c4002ecd2aac61`), dikonfirmasi sah oleh pemilik. Tidak ada admin tidak sah.
 - **Celah #3:** tidak ada bukti, karena ledger kosong.
 
