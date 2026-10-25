@@ -74,6 +74,10 @@ try {
   // 3. Import ke Supabase staging (idempoten: hapus sisa run sebelumnya)
   const existing = await findSupabaseUserByEmail(email);
   if (existing) {
+    // Hanya hapus sisa run spike sebelumnya. User lain dengan email sama tidak pernah disentuh.
+    if (existing.app_metadata?.spike !== true) {
+      throw new Error("Email uji sudah dipakai user Supabase yang bukan buatan spike. Dibatalkan tanpa menghapus apa pun.");
+    }
     const { error } = await admin.auth.admin.deleteUser(existing.id);
     if (error) throw error;
     step("supabase.cleanupPrevious", true);

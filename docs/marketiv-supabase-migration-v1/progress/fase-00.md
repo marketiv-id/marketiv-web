@@ -86,6 +86,8 @@
 - **Supabase prod & Vercel:** belum dibuat. Putuskan Free vs berbayar sebelum Fase 1 (Vercel) dan Fase 10 (Supabase prod).
 - **Spike 2 pada 500 MB** belum diuji. Ulangi saat ada project Pro, atau ubah batas `deliverables` di produk menjadi ≤ 50 MB.
 - **SMTP Supabase Auth** belum diatur. Staging: Mailtrap. Produksi: menyusul.
+- **Project Appwrite ketiga** bernama "Marketiv Production" (`6a7c4a5d00027d86524c`, Function `accept-tos` dan `expire-stale-claims`) terlihat di komentar bot Appwrite pada PR. Audit memakai `6a8c45ef0023ae195594` sesuai env dari pemilik, karena site "Marketiv Admin" dan "Marketiv Production" ada di project itu. Pemilik perlu memastikan project `6a7c4a5d…` tidak menyimpan data user sungguhan sebelum Fase 9.
+- **PR memicu build preview Appwrite.** Integrasi VCS Appwrite membangun Function staging dan site untuk setiap PR, dan hasilnya sering gagal atau tertunda (juga di PR sebelumnya). Function produksi tidak terhubung ke branch git mana pun. Status merah ini bukan CI repo.
 
 ## Isu untuk fase lain
 - **Fase 1:** pemilik menolak biaya. Rencanakan alternatif cron `*/15` (Vercel Hobby hanya harian), misalnya `pg_cron` + `pg_net` memanggil route, atau cron eksternal gratis. Custom domain `api.marketiv.id` / `api.marketiv-dev.my.id` adalah domain Appwrite; domain app untuk Vercel perlu ditentukan. Secret Function lama ada di variabel **global project** Appwrite, bukan per Function. Inventarisasi lewat Console saat memindahkannya ke env Vercel, karena `audit-live.mjs` tidak membacanya.
