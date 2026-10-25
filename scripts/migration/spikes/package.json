@@ -1,0 +1,15 @@
+{
+  "name": "marketiv-migration-spikes",
+  "private": true,
+  "type": "module",
+  "description": "Fase 0 migrasi Appwrite -> Supabase: spike & audit read-only. Kredensial hanya dari env.",
+  "scripts": {
+    "spike1": "node spike1-password-import.mjs",
+    "spike2": "node spike2-large-upload.mjs",
+    "audit": "node audit-appwrite.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.117.3",
+    "tus-js-client": "4.3.1"
+  }
+}
