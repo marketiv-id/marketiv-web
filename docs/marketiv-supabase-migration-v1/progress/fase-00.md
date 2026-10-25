@@ -1,7 +1,7 @@
 # Fase 00 — Persiapan & spike
 
 - Tanggal: 2026-10-25
-- PR: _diisi setelah PR dibuat_
+- PR: https://github.com/marketiv-id/marketiv-web/pull/27
 - Status: sebagian (spike dan audit selesai; infrastruktur berbayar ditunda atas keputusan pemilik; validasi admin menunggu pemilik)
 
 ## Status task
