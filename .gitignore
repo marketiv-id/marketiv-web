@@ -28,6 +28,8 @@ build/
 *.p12
 *.pfx
 *-*-*.json
+# Laporan audit migrasi bertanggal (tanpa PII) wajib ikut ter-commit.
+!docs/marketiv-supabase-migration-v1/audit/*.json
 *service-account*.json
 *credentials*.json
 /marketiv-*.json
