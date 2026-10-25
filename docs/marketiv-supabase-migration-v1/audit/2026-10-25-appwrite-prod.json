@@ -1,0 +1,890 @@
+{
+  "generatedAt": "2026-10-25T07:26:57.625Z",
+  "source": {
+    "endpoint": "https://sgp.cloud.appwrite.io/v1",
+    "projectId": "6a8c45ef0023ae195594",
+    "databaseId": "6a4c8598001da3b0d7f0"
+  },
+  "counts": {
+    "users": 14,
+    "appeals": 0,
+    "otp_rate_limits": 0,
+    "umkm_profiles": 9,
+    "creator_profiles": 4,
+    "creator_social_accounts": 4,
+    "creator_portfolios": 0,
+    "user_storage_usage": 13,
+    "user_files": 0,
+    "campaigns": 6,
+    "campaign_assets": 6,
+    "fraud_checks": 0,
+    "campaign_briefs": 0,
+    "campaign_claims": 2,
+    "campaign_submissions": 0,
+    "rate_cards": 0,
+    "rate_card_packages": 0,
+    "conversations": 0,
+    "messages": 0,
+    "offers": 0,
+    "orders": 0,
+    "deliverables": 0,
+    "revisions": 0,
+    "ratecard_deliverable_validations": 0,
+    "wallets": 14,
+    "payments": 0,
+    "transactions": 0,
+    "escrows": 0,
+    "withdrawals": 0,
+    "notifications": 16,
+    "ai_requests": 1,
+    "6ab530d00018edb50097": 6
+  },
+  "storage": {
+    "avatars": {
+      "files": 1,
+      "totalBytes": 344495,
+      "maxBytes": 344495,
+      "overFreeLimit50MB": 0,
+      "bucketMaxFileSize": 5000000,
+      "fileSecurity": false,
+      "bucketPermissions": [
+        "read(\"any\")",
+        "create(\"users\")",
+        "update(\"users\")",
+        "delete(\"users\")"
+      ],
+      "mimeTypes": {
+        "image/jpeg": 1
+      }
+    },
+    "creator-banners": {
+      "files": 0,
+      "totalBytes": 0,
+      "maxBytes": 0,
+      "overFreeLimit50MB": 0,
+      "bucketMaxFileSize": 5000000,
+      "fileSecurity": false,
+      "bucketPermissions": [
+        "read(\"any\")",
+        "create(\"users\")",
+        "update(\"users\")",
+        "delete(\"users\")"
+      ],
+      "mimeTypes": {}
+    },
+    "logos": {
+      "files": 6,
+      "totalBytes": 3219648,
+      "maxBytes": 911814,
+      "overFreeLimit50MB": 0,
+      "bucketMaxFileSize": 5000000,
+      "fileSecurity": false,
+      "bucketPermissions": [
+        "read(\"any\")",
+        "create(\"users\")",
+        "update(\"users\")",
+        "delete(\"users\")"
+      ],
+      "mimeTypes": {
+        "image/png": 5,
+        "image/jpeg": 1
+      }
+    },
+    "portfolios": {
+      "files": 0,
+      "totalBytes": 0,
+      "maxBytes": 0,
+      "overFreeLimit50MB": 0,
+      "bucketMaxFileSize": 50000000,
+      "fileSecurity": false,
+      "bucketPermissions": [
+        "read(\"any\")",
+        "create(\"users\")",
+        "update(\"users\")",
+        "delete(\"users\")"
+      ],
+      "mimeTypes": {}
+    },
+    "campaign-assets": {
+      "files": 6,
+      "totalBytes": 2091653,
+      "maxBytes": 702124,
+      "overFreeLimit50MB": 0,
+      "bucketMaxFileSize": 100000000,
+      "fileSecurity": false,
+      "bucketPermissions": [
+        "read(\"any\")",
+        "create(\"users\")",
+        "update(\"users\")",
+        "delete(\"users\")"
+      ],
+      "mimeTypes": {
+        "image/jpeg": 2,
+        "image/png": 3,
+        "image/webp": 1
+      }
+    },
+    "deliverables": {
+      "files": 0,
+      "totalBytes": 0,
+      "maxBytes": 0,
+      "overFreeLimit50MB": 0,
+      "bucketMaxFileSize": 500000000,
+      "fileSecurity": true,
+      "bucketPermissions": [
+        "read(\"users\")",
+        "create(\"users\")",
+        "update(\"users\")"
+      ],
+      "mimeTypes": {}
+    },
+    "fraud-evidence": {
+      "files": 0,
+      "totalBytes": 0,
+      "maxBytes": 0,
+      "overFreeLimit50MB": 0,
+      "bucketMaxFileSize": 5000000,
+      "fileSecurity": true,
+      "bucketPermissions": [
+        "read(\"users\")"
+      ],
+      "mimeTypes": {}
+    },
+    "user-files": {
+      "files": 0,
+      "totalBytes": 0,
+      "maxBytes": 0,
+      "overFreeLimit50MB": 0,
+      "bucketMaxFileSize": 20971520,
+      "fileSecurity": true,
+      "bucketPermissions": [
+        "create(\"users\")"
+      ],
+      "mimeTypes": {}
+    }
+  },
+  "auth": {
+    "total": 15,
+    "hashAlgorithms": {
+      "argon2:m=65536,t=4,p=3": 11,
+      "argon2:m=7168,t=5,p=1": 2,
+      "(tanpa password)": 2
+    },
+    "withoutPassword": 2,
+    "emailVerified": 12,
+    "disabled": 0,
+    "withLabels": 0,
+    "prefsRole": {
+      "admin": 1,
+      "umkm": 9,
+      "creator": 5
+    },
+    "usersTableRoles": {
+      "admin": 1,
+      "umkm": 9,
+      "creator": 4
+    },
+    "usersTableStatus": {
+      "active": 14
+    },
+    "authWithoutUsersRow": [
+      "6aba8a340034686abc0f"
+    ],
+    "usersRowWithoutAuth": [],
+    "usersRowIdNeUserId": 14,
+    "duplicateUsersRowsPerAuth": [],
+    "prefsRoleNeUsersRole": []
+  },
+  "orphans": [
+    {
+      "table": "users",
+      "column": "userId",
+      "references": "auth",
+      "checked": 14,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "appeals",
+      "column": "userId",
+      "references": "auth",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "umkm_profiles",
+      "column": "userId",
+      "references": "auth",
+      "checked": 9,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "creator_profiles",
+      "column": "userId",
+      "references": "auth",
+      "checked": 4,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "creator_social_accounts",
+      "column": "creatorId",
+      "references": "auth",
+      "checked": 4,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "creator_portfolios",
+      "column": "creatorId",
+      "references": "auth",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "user_storage_usage",
+      "column": "userId",
+      "references": "auth",
+      "checked": 13,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "user_files",
+      "column": "userId",
+      "references": "auth",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "campaigns",
+      "column": "umkmId",
+      "references": "auth",
+      "checked": 6,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "campaign_assets",
+      "column": "campaignId",
+      "references": "campaigns",
+      "checked": 6,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "campaign_briefs",
+      "column": "campaignId",
+      "references": "campaigns",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "6ab530d00018edb50097",
+      "column": "campaignId",
+      "references": "campaigns",
+      "checked": 6,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "campaign_claims",
+      "column": "campaignId",
+      "references": "campaigns",
+      "checked": 2,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "campaign_claims",
+      "column": "creatorId",
+      "references": "auth",
+      "checked": 2,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "campaign_submissions",
+      "column": "claimId",
+      "references": "campaign_claims",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "campaign_submissions",
+      "column": "campaignId",
+      "references": "campaigns",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "campaign_submissions",
+      "column": "creatorId",
+      "references": "auth",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "fraud_checks",
+      "column": "submissionId",
+      "references": "campaign_submissions",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "rate_cards",
+      "column": "creatorId",
+      "references": "auth",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "rate_card_packages",
+      "column": "rateCardId",
+      "references": "rate_cards",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "conversations",
+      "column": "umkm_id",
+      "references": "auth",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "conversations",
+      "column": "creator_id",
+      "references": "auth",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "conversations",
+      "column": "offer_id",
+      "references": "offers",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "messages",
+      "column": "conversation_id",
+      "references": "conversations",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "messages",
+      "column": "sender_id",
+      "references": "auth",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "messages",
+      "column": "offer_id",
+      "references": "offers",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "offers",
+      "column": "conversationId",
+      "references": "conversations",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "offers",
+      "column": "umkmId",
+      "references": "auth",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "offers",
+      "column": "creatorId",
+      "references": "auth",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "offers",
+      "column": "packageId",
+      "references": "rate_card_packages",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "orders",
+      "column": "offerId",
+      "references": "offers",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "orders",
+      "column": "packageId",
+      "references": "rate_card_packages",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "orders",
+      "column": "creatorId",
+      "references": "auth",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "orders",
+      "column": "umkmId",
+      "references": "auth",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "deliverables",
+      "column": "orderId",
+      "references": "orders",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "revisions",
+      "column": "orderId",
+      "references": "orders",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "revisions",
+      "column": "requestedBy",
+      "references": "auth",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "ratecard_deliverable_validations",
+      "column": "deliverableId",
+      "references": "deliverables",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "ratecard_deliverable_validations",
+      "column": "orderId",
+      "references": "orders",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "ratecard_deliverable_validations",
+      "column": "reviewedBy",
+      "references": "auth",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "wallets",
+      "column": "userId",
+      "references": "auth",
+      "checked": 14,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "payments",
+      "column": "user_id",
+      "references": "auth",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "payments",
+      "column": "order_id",
+      "references": "orders",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "payments",
+      "column": "campaign_id",
+      "references": "campaigns",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "transactions",
+      "column": "userId",
+      "references": "auth",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "escrows",
+      "column": "orderId",
+      "references": "orders",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "withdrawals",
+      "column": "userId",
+      "references": "auth",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "withdrawals",
+      "column": "processed_by",
+      "references": "auth",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "notifications",
+      "column": "userId",
+      "references": "auth",
+      "checked": 16,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "ai_requests",
+      "column": "userId",
+      "references": "auth",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "user_files",
+      "column": "bucketId/storageFileId",
+      "references": "storage",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    },
+    {
+      "table": "transactions",
+      "column": "referenceType/referenceId",
+      "references": "polimorfik",
+      "checked": 0,
+      "orphans": 0,
+      "ids": []
+    }
+  ],
+  "campaignAssetsBucket": {
+    "files": 6,
+    "referencedByPrivateContext": [],
+    "unreferenced": [],
+    "withoutFileLevelReadAny": 5,
+    "note": "Bucket fileSecurity=false, jadi izin bucket read(any) berlaku untuk semua file terlepas dari izin per-file."
+  },
+  "admins": {
+    "total": 1,
+    "candidates": [
+      {
+        "id": "6a8cd8c4002ecd2aac61",
+        "label": false,
+        "prefsRole": true,
+        "usersRole": true,
+        "createdAt": "2026-08-24T23:50:29.084+00:00"
+      }
+    ],
+    "rule": "Admin sah = label Auth 'admin'. users.role/prefs.role bisa diubah user sendiri (celah #1/#5)."
+  },
+  "campaigns": {
+    "byStatus": {
+      "active": 6
+    },
+    "list": [
+      {
+        "id": "6ab65f3700119deab112",
+        "status": "active",
+        "budget": 50000,
+        "remainingBudget": 50000,
+        "spentAmount": 0,
+        "totalClaims": 0,
+        "paidAmount": 0,
+        "paymentRows": [],
+        "fundingGap": 50000,
+        "createdAt": "2026-09-25T11:40:54.137+00:00",
+        "publishedAt": "2026-09-24T17:00:00.000+00:00"
+      },
+      {
+        "id": "6ab65fdb002a05ff1d40",
+        "status": "active",
+        "budget": 50000,
+        "remainingBudget": 50000,
+        "spentAmount": 0,
+        "totalClaims": 0,
+        "paidAmount": 0,
+        "paymentRows": [],
+        "fundingGap": 50000,
+        "createdAt": "2026-09-25T11:47:03.735+00:00",
+        "publishedAt": "2026-09-24T17:00:00.000+00:00"
+      },
+      {
+        "id": "6ab6604b002ca1bc1fba",
+        "status": "active",
+        "budget": 50000,
+        "remainingBudget": 0,
+        "spentAmount": 0,
+        "totalClaims": 0,
+        "paidAmount": 0,
+        "paymentRows": [],
+        "fundingGap": 0,
+        "createdAt": "2026-09-25T11:49:55.735+00:00",
+        "publishedAt": "2026-09-24T17:00:00.000+00:00"
+      },
+      {
+        "id": "6ab660c6002587a2cd3b",
+        "status": "active",
+        "budget": 50000,
+        "remainingBudget": 50000,
+        "spentAmount": 0,
+        "totalClaims": 0,
+        "paidAmount": 0,
+        "paymentRows": [],
+        "fundingGap": 50000,
+        "createdAt": "2026-09-25T11:49:55.735+00:00",
+        "publishedAt": "2026-09-24T17:00:00.000+00:00"
+      },
+      {
+        "id": "6ab661450004452c76dd",
+        "status": "active",
+        "budget": 50000,
+        "remainingBudget": 50000,
+        "spentAmount": 0,
+        "totalClaims": 0,
+        "paidAmount": 0,
+        "paymentRows": [],
+        "fundingGap": 50000,
+        "createdAt": "2026-09-25T11:54:28.096+00:00",
+        "publishedAt": "2026-09-24T17:00:00.000+00:00"
+      },
+      {
+        "id": "6abb25050022cad016cc",
+        "status": "active",
+        "budget": 50000,
+        "remainingBudget": 0,
+        "spentAmount": 0,
+        "totalClaims": 0,
+        "paidAmount": 0,
+        "paymentRows": [],
+        "fundingGap": 0,
+        "createdAt": "2026-09-29T02:40:05.958+00:00",
+        "publishedAt": null
+      }
+    ]
+  },
+  "wallets": {
+    "total": 14,
+    "sumBalance": 0,
+    "sumPending": 0,
+    "nonZero": 0,
+    "mismatches": [],
+    "duplicateWalletsForUser": [],
+    "ledgerUsersWithoutWallet": [],
+    "formula": "balance = Σ(release.matured + mature.completed + release/escrow.completed + refund.completed + withdrawal_reversal.completed) − Σ withdrawal (semua status); pending = Σ release/campaign_submission.completed (reward lama belum matang)"
+  },
+  "ledger": {
+    "total": 0,
+    "byTypeRefStatus": {},
+    "duplicates": [],
+    "stuckPendingOrProcessing": []
+  },
+  "escrows": {
+    "byStatus": {},
+    "heldTotal": 0,
+    "refundedWithoutCredit": [],
+    "releasedAndRefunded": [],
+    "stuckReleasing": [],
+    "multiplePerOrder": []
+  },
+  "payments": {
+    "byPurposeStatus": {},
+    "paidTotal": 0,
+    "multiplePaidPerOrder": [],
+    "paidCampaignWithoutLedger": []
+  },
+  "withdrawals": {
+    "byStatus": {},
+    "openAmount": 0,
+    "withoutLedger": []
+  },
+  "urlColumns": {
+    "umkm_profiles.logoUrl": {
+      "nonEmpty": 6,
+      "appwriteStorage": 6,
+      "external": 0,
+      "otherProject": 0,
+      "missingFile": 0,
+      "missingIds": []
+    },
+    "creator_profiles.avatarUrl": {
+      "nonEmpty": 1,
+      "appwriteStorage": 1,
+      "external": 0,
+      "otherProject": 0,
+      "missingFile": 0,
+      "missingIds": []
+    },
+    "creator_profiles.bannerUrl": {
+      "nonEmpty": 0,
+      "appwriteStorage": 0,
+      "external": 0,
+      "otherProject": 0,
+      "missingFile": 0,
+      "missingIds": []
+    },
+    "creator_portfolios.thumbnailUrl": {
+      "nonEmpty": 0,
+      "appwriteStorage": 0,
+      "external": 0,
+      "otherProject": 0,
+      "missingFile": 0,
+      "missingIds": []
+    },
+    "creator_portfolios.portfolioUrl": {
+      "nonEmpty": 0,
+      "appwriteStorage": 0,
+      "external": 0,
+      "otherProject": 0,
+      "missingFile": 0,
+      "missingIds": []
+    },
+    "campaigns.thumbnailUrl": {
+      "nonEmpty": 6,
+      "appwriteStorage": 6,
+      "external": 0,
+      "otherProject": 0,
+      "missingFile": 0,
+      "missingIds": []
+    },
+    "campaign_assets.fileUrl": {
+      "nonEmpty": 6,
+      "appwriteStorage": 0,
+      "external": 6,
+      "otherProject": 0,
+      "missingFile": 0,
+      "missingIds": []
+    },
+    "deliverables.fileUrl": {
+      "nonEmpty": 0,
+      "appwriteStorage": 0,
+      "external": 0,
+      "otherProject": 0,
+      "missingFile": 0,
+      "missingIds": []
+    },
+    "ratecard_deliverable_validations.evidenceUrlSnapshot": {
+      "nonEmpty": 0,
+      "appwriteStorage": 0,
+      "external": 0,
+      "otherProject": 0,
+      "missingFile": 0,
+      "missingIds": []
+    }
+  },
+  "anomalies": [
+    {
+      "id": "admin-without-label",
+      "severity": "critical",
+      "gap": "#1/#5",
+      "summary": "Akun punya sinyal admin (users.role / prefs.role) tanpa label Auth 'admin'. Validasi manual.",
+      "count": 1,
+      "ids": [
+        "6a8cd8c4002ecd2aac61"
+      ]
+    },
+    {
+      "id": "campaign-live-without-paid-payment",
+      "severity": "critical",
+      "gap": "#2",
+      "summary": "Campaign active/paused/completed tanpa payment `paid`.",
+      "count": 6,
+      "ids": [
+        "6ab65f3700119deab112",
+        "6ab65fdb002a05ff1d40",
+        "6ab6604b002ca1bc1fba",
+        "6ab660c6002587a2cd3b",
+        "6ab661450004452c76dd",
+        "6abb25050022cad016cc"
+      ]
+    },
+    {
+      "id": "campaign-budget-exceeds-paid",
+      "severity": "critical",
+      "gap": "#2",
+      "summary": "remainingBudget + spentAmount + refund > total payment paid.",
+      "count": 4,
+      "ids": [
+        "6ab65f3700119deab112",
+        "6ab65fdb002a05ff1d40",
+        "6ab660c6002587a2cd3b",
+        "6ab661450004452c76dd"
+      ]
+    },
+    {
+      "id": "auth-without-users-row",
+      "severity": "info",
+      "gap": null,
+      "summary": "Akun Auth tanpa baris `users` (onboarding tidak selesai).",
+      "count": 1,
+      "ids": [
+        "6aba8a340034686abc0f"
+      ]
+    }
+  ],
+  "summary": {
+    "totalRows": 95,
+    "totalFiles": 13,
+    "authUsers": 15,
+    "anomalies": {
+      "critical": 3,
+      "info": 1
+    },
+    "exploitSuspected": true
+  }
+}
