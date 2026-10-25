@@ -56,6 +56,7 @@
 - **Campaign aktif tanpa dana (6):** pemilik memilih opsi (a). Saat migrasi, campaign diubah ke `draft` dengan budget 0.
 - **Admin:** pemilik mengonfirmasi `6a8cd8c4002ecd2aac61` sebagai admin sah yang ia buat sendiri. Allowlist admin migrasi = `['6a8cd8c4002ecd2aac61']`.
 - **`NO-VARS` di `audit-live`:** bukan kerusakan. Pemilik mengonfirmasi produksi memakai variabel global tingkat project, yang tidak dibaca `audit-live.mjs`.
+- **Project Appwrite `6a7c4a5d00027d86524c` diabaikan.** Project ini juga bernama "Marketiv Production" dan berisi Function `accept-tos` dan `expire-stale-claims`; ia terlihat di komentar bot Appwrite pada PR. Pemilik mengonfirmasi project ini tidak pernah dipakai dan tidak berisi data penting. Produksi saat launching adalah `6a8c45ef0023ae195594`. Project `…524c` tidak ikut diaudit maupun dimigrasi.
 - **Node `fetch` di sesi cloud** butuh `NODE_USE_ENV_PROXY=1` untuk lewat proxy.
 
 ## Hasil verifikasi
@@ -86,7 +87,6 @@
 - **Supabase prod & Vercel:** belum dibuat. Putuskan Free vs berbayar sebelum Fase 1 (Vercel) dan Fase 10 (Supabase prod).
 - **Spike 2 pada 500 MB** belum diuji. Ulangi saat ada project Pro, atau ubah batas `deliverables` di produk menjadi ≤ 50 MB.
 - **SMTP Supabase Auth** belum diatur. Staging: Mailtrap. Produksi: menyusul.
-- **Project Appwrite ketiga** bernama "Marketiv Production" (`6a7c4a5d00027d86524c`, Function `accept-tos` dan `expire-stale-claims`) terlihat di komentar bot Appwrite pada PR. Audit memakai `6a8c45ef0023ae195594` sesuai env dari pemilik, karena site "Marketiv Admin" dan "Marketiv Production" ada di project itu. Pemilik perlu memastikan project `6a7c4a5d…` tidak menyimpan data user sungguhan sebelum Fase 9.
 - **PR memicu build preview Appwrite.** Integrasi VCS Appwrite membangun Function staging dan site untuk setiap PR, dan hasilnya sering gagal atau tertunda (juga di PR sebelumnya). Function produksi tidak terhubung ke branch git mana pun. Status merah ini bukan CI repo.
 
 ## Isu untuk fase lain
