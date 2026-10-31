@@ -1,0 +1,12 @@
+{
+  "name": "marketiv-appwrite-backup",
+  "private": true,
+  "type": "module",
+  "description": "Backup lengkap Appwrite produksi ke arsip .7z terenkripsi. Kredensial hanya dari env.",
+  "scripts": {
+    "backup": "node export-appwrite-backup.mjs"
+  },
+  "dependencies": {
+    "7zip-bin": "5.2.0"
+  }
+}
