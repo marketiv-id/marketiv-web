@@ -9,7 +9,7 @@ Salin **seluruh blok di bawah** ke sesi chat baru (repo `marketiv-web`).
 ```text
 Kamu mengerjakan **Fase 5 — Jalur baca** dari migrasi Marketiv Appwrite → Supabase.
 Konteks singkat: backend pindah ke Supabase (Postgres, Auth, Storage, Realtime) dengan logika server di
-Next.js Route Handlers, hosting di Vercel, produksi pindah dengan SATU kali cutover. Data produksi
+Next.js Route Handlers, hosting di Netlify Free, produksi pindah dengan SATU kali cutover. Data produksi
 sudah ada, termasuk saldo wallet dan escrow.
 
 ## Baca dulu (wajib, berurutan, sebelum menyentuh kode)
@@ -31,8 +31,8 @@ Kalau folder docs/marketiv-supabase-migration-v1/ tidak ada di checkout: jalanka
 branch itu. Kalau branch itu juga belum ada, pakai `git fetch origin claude/zealous-knuth-n10z1y`.
 
 ## Branch
-- Basis kerja: `migrasi-supabase` (branch jangka panjang migrasi). Merge `origin/main` ke situ bila tertinggal.
-- Kerjakan di branch sesi ini yang dibuat dari `migrasi-supabase`. Buka PR ke `migrasi-supabase`, BUKAN ke `main`.
+- Basis kerja: `migrasi-supabase` (branch jangka panjang migrasi). Merge `origin/staging` (default branch repo) ke situ bila tertinggal.
+- Kerjakan di branch sesi ini yang dibuat dari `migrasi-supabase`. Buka PR ke `migrasi-supabase`, BUKAN ke `staging`.
 
 ## Aturan
 - Kerjakan hanya scope fase ini. Temuan di luar scope dicatat di log progres bagian "Isu untuk fase lain".
@@ -48,7 +48,7 @@ branch itu. Kalau branch itu juga belum ada, pakai `git fetch origin claude/zeal
   menggambarkan SISTEM LAMA. Pakai hanya untuk memahami perilaku lama, bukan sebagai pola target.
 - Untuk pekerjaan Supabase/Postgres (SQL, RLS, migration, auth, storage), load skill `supabase:supabase`
   dan `supabase:supabase-postgres-best-practices` terlebih dahulu.
-- Jika butuh keputusan, akses, atau aksi yang tidak bisa kamu lakukan (dashboard Supabase/Vercel/Midtrans,
+- Jika butuh keputusan, akses, atau aksi yang tidak bisa kamu lakukan (dashboard Supabase/Netlify/Midtrans,
   DNS, API key, secret): berhenti, lalu minta ke saya dengan langkah yang jelas dan bisa langsung diikuti.
 
 ## Cara kerja

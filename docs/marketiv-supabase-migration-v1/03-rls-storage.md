@@ -34,8 +34,9 @@
 
 ### Storage (`0012_storage.sql`)
 - [ ] Buat 8 bucket dengan `file_size_limit` dan `allowed_mime_types` yang sama dengan `BUCKET_RULES` di `src/lib/appwrite/storage.ts`.
-  - **Publik:** `avatars`, `creator-banners`, `logos` (5 MB), `portfolios` (50 MB), `campaign-assets` (100 MB)
-  - **Privat:** `deliverables` (500 MB), `fraud-evidence` (5 MB), `user-files` (20 MiB)
+  - **Publik:** `avatars`, `creator-banners`, `logos` (5 MB), `portfolios` (50 MB), `campaign-assets` (~~100 MB~~ **50 MB**)
+  - **Privat:** `deliverables` (~~500 MB~~ **50 MB**), `fraud-evidence` (5 MB), `user-files` (20 MiB)
+  - Plan Free membatasi semua file maksimal 50 MB (50.000.000 byte, MB desimal). `campaign-assets` dan `deliverables` turun ke 50 MB. Pesan error dan `BUCKET_RULES` di UI ikut disesuaikan. Data produksi saat ini tidak punya file di atas 1 MB (audit Fase 0).
 - [ ] Format path: `{user_id}/{file_id}.{ext}`
 - [ ] Policy `storage.objects`:
   - INSERT dan DELETE bucket publik hanya bila `(storage.foldername(name))[1] = auth.uid()::text`

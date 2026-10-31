@@ -7,8 +7,10 @@
 - [ ] Midtrans sandbox lulus end-to-end di staging (Fase 8)
 - [ ] `get_advisors` security dan performance di Supabase prod bersih
 - [ ] Semua migration sudah diterapkan ke Supabase prod (`supabase db push`)
-- [ ] Bucket, policy, SMTP, template email, redirect URL, dan cron sudah terpasang di prod
-- [ ] Env Vercel prod sudah diisi (Supabase prod, Midtrans production, `CRON_SECRET`, AI keys)
+- [ ] Project Supabase prod (plan Free, `ap-southeast-1`) sudah dibuat. Kuota Free mengizinkan 2 project aktif: staging dan prod.
+- [ ] Bucket, policy, SMTP, template email, redirect URL, dan job `pg_cron` sudah terpasang di prod
+- [ ] Backup harian terenkripsi lewat GitHub Actions sudah berjalan dan uji restore lulus (Fase 9)
+- [ ] Env Netlify prod sudah diisi (Supabase prod, Midtrans production, `CRON_SECRET`, AI keys)
 - [ ] Pengumuman maintenance ke user sudah dikirim, minimal H-3
 - [ ] Tidak ada withdrawal `processing` dan tidak ada escrow `releasing`. Selesaikan dulu bila ada.
 
@@ -21,7 +23,7 @@
 | 3 | `export-appwrite.ts` + `export-storage.ts` (prod) | |
 | 4 | `import-users.ts` → `transform-load.ts` → `copy-storage.ts` ke Supabase prod | |
 | 5 | `reconcile.ts`. **GO/NO-GO.** NO-GO berarti lanjut ke rollback A | |
-| 6 | Deploy branch `migrasi-supabase` (sudah di-merge ke `production`) ke Vercel prod | |
+| 6 | Deploy branch `migrasi-supabase` (sudah di-merge ke `production`) ke Netlify prod (publish manual, 15 kredit) | |
 | 7 | Ubah Payment Notification URL di dashboard Midtrans ke `https://marketiv.id/api/webhooks/midtrans` | |
 | 8 | Smoke test dengan akun internal: login UMKM/kreator/admin, dashboard, chat realtime, upload, transaksi kecil nyata (bayar lalu refund), cron dipanggil manual | |
 | 9 | Matikan maintenance. Pantau Sentry dan log Supabase selama 2 jam | |

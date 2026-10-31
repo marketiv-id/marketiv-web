@@ -39,7 +39,7 @@ Mulai fase ini:
   - Admin **hanya** dikenali dari `users.role = 'admin'`. Fallback label dan `prefs.role` dihapus.
   - Tambah `admin/src/proxy.ts`.
 - [ ] Template email Bahasa Indonesia di Supabase Auth: Confirm signup, Magic Link/OTP, Reset Password, Change Email.
-- [ ] Atur Site URL dan Redirect URLs (staging, prod, preview `*.vercel.app`).
+- [ ] Atur Site URL dan Redirect URLs (staging, prod, preview `*.netlify.app`).
 
 ## Verifikasi
 - Port test di `src/services/auth/__tests__/*` dan `admin/src/lib/admin/auth.test.ts`.

@@ -1,17 +1,29 @@
 # Marketiv Supabase Migration v1
 
-Rencana migrasi backend Marketiv dari **Appwrite** ke **Supabase**, dengan backend di **Next.js Route Handlers** dan hosting di **Vercel**.
+Rencana migrasi backend Marketiv dari **Appwrite** ke **Supabase**, dengan backend di **Next.js Route Handlers** dan hosting di **Netlify**. Seluruh stack memakai **plan gratis**, dan Appwrite dilepas total setelah cutover.
 
 ## Keputusan
 
 | Topik | Keputusan |
 |---|---|
-| BaaS | Supabase: Postgres, Auth, Storage, Realtime |
+| Biaya | **Semua layanan memakai plan gratis** (keputusan pemilik, 2026-10-31). Tidak memilih fitur berbayar tanpa persetujuan pemilik. |
+| BaaS | Supabase Free: Postgres, Auth, Storage, Realtime |
 | Pengganti 67 Appwrite Functions | Next.js Route Handlers (`src/app/api/**`). Operasi uang dan operasi multi-tabel dijalankan lewat Postgres function (RPC) |
-| Hosting | Vercel, region `sin1`. Dua project: user (root) dan admin (`admin/`) |
+| Hosting | Netlify Free. Dua site: user (root) dan admin (`admin/`). Menggantikan rencana awal Vercel, karena Vercel Hobby melarang pemakaian komersial. |
+| Tugas berkala | Supabase Cron (`pg_cron`), bukan cron hosting |
+| Backup database | GitHub Actions harian, `pg_dump` terenkripsi (plan Free tidak punya backup otomatis) |
 | Data produksi | Sudah ada, termasuk saldo dan escrow, jadi wajib dimigrasi |
 | Strategi rilis | Satu kali cutover dalam jendela maintenance |
-| Environment | Supabase staging dan prod, region Singapore |
+| Environment | Supabase staging dan prod, region Singapore (`ap-southeast-1`), 2 project aktif sesuai kuota Free |
+
+### Batasan plan gratis yang diterima pemilik
+
+- **Kuota Netlify 300 kredit/bulan tanpa overage.** Kalau habis, semua site di-pause sampai akhir bulan. Deploy produksi memakan 15 kredit, sedangkan Deploy Preview dan branch deploy gratis. Rilis produksi dikumpulkan dan dipublish manual.
+- **Function Netlify Free berjalan di US East (Ohio).** Browser membaca langsung dari Supabase Singapura, jadi baca tetap cepat. Setiap aksi tulis lewat route dirancang sebagai **satu panggilan RPC**, supaya latensi lintas benua hanya terjadi sekali per aksi.
+- **Ukuran file maksimal 50 MB** (batas global Storage Supabase Free). Batas `deliverables` 500 MB di Appwrite turun menjadi 50 MB; video besar memakai link eksternal.
+- **Tanpa backup otomatis Supabase.** Diganti backup harian terenkripsi lewat GitHub Actions (Fase 9).
+- **Project Supabase yang tidak aktif seminggu di-pause.** Produksi aman selama ada user harian; staging bisa di-restore.
+- **Tanpa SLA** di semua layanan gratis.
 
 ## Kondisi saat ini (hasil audit)
 
@@ -61,10 +73,11 @@ Browser ──(read, RLS)──────────────► Supabase 
    │                                         ▲
    ├──(signed upload URL)──────────► Supabase Storage
    │                                         │
-   └──fetch('/api/...')──► Next.js Route Handler (Vercel, Node)
+   └──fetch('/api/...')──► Next.js Route Handler (Netlify, Node)
                               │ getUser() → requireActiveRole() → logic
                               └─ service-role client / rpc('...') ┘
-Vercel Cron ──► /api/cron/*      Midtrans ──► /api/webhooks/midtrans
+Supabase Cron (pg_cron) ──► fungsi SQL (atau pg_net ──► /api/cron/*)
+Midtrans ──► /api/webhooks/midtrans
 ```
 
 **Aturan browser:**
@@ -73,7 +86,8 @@ Vercel Cron ──► /api/cron/*      Midtrans ──► /api/webhooks/midtrans
 
 **Pengganti event trigger Appwrite:**
 - Efek samping dipanggil eksplisit di dalam route atau RPC.
-- Kerja lambat dijalankan dengan `after()` dari `next/server`.
+- Kerja lambat dijalankan dengan `after()` dari `next/server`. Dukungannya di Netlify diverifikasi di Fase 1.
+- Tugas berkala dijalankan `pg_cron` di database.
 
 **Uang:**
 - Setiap perpindahan uang dijalankan oleh satu RPC `SECURITY DEFINER` dalam satu transaksi.
@@ -92,8 +106,8 @@ Vercel Cron ──► /api/cron/*      Midtrans ──► /api/webhooks/midtrans
 
 - Branch jangka panjang: `migrasi-supabase`.
 - Satu PR per fase masuk ke branch itu.
-- `main` di-merge ke branch itu secara rutin.
-- Preview Vercel dari branch ini terhubung ke Supabase **staging**.
+- `staging` (default branch repo; tidak ada `main`) di-merge ke branch itu secara rutin.
+- Branch deploy Netlify dari branch ini terhubung ke Supabase **staging**.
 - Produksi tetap memakai Appwrite sampai Fase 10 (cutover).
 
 ## Fase (mudah → rumit)
@@ -101,7 +115,7 @@ Vercel Cron ──► /api/cron/*      Midtrans ──► /api/webhooks/midtrans
 | # | Fase | Bobot | Dokumen |
 |---|---|---|---|
 | 0 | Persiapan & spike | S | [00-persiapan.md](./00-persiapan.md) |
-| 1 | Hosting ke Vercel (backend tetap Appwrite) | S | [01-hosting-vercel.md](./01-hosting-vercel.md) |
+| 1 | Hosting ke Netlify (backend tetap Appwrite) | S | [01-hosting-netlify.md](./01-hosting-netlify.md) |
 | 2 | Fondasi Supabase + skema DB | M | [02-fondasi-skema.md](./02-fondasi-skema.md) |
 | 3 | RLS, helper otorisasi, storage, realtime | M | [03-rls-storage.md](./03-rls-storage.md) |
 | 4 | Auth & guard | M | [04-auth.md](./04-auth.md) |
@@ -124,7 +138,7 @@ Vercel Cron ──► /api/cron/*      Midtrans ──► /api/webhooks/midtrans
 - `npm run lint`, `npm run typecheck`, dan `npm test` di root dan `admin/`.
 - `supabase db reset` dan `supabase test db` (pgTAP).
 
-**Fase ≥ 4:** QA manual di preview Vercel staging, memakai checklist QA dashboard yang sudah ada.
+**Fase ≥ 4:** QA manual di branch deploy Netlify `migrasi-supabase` (terhubung ke Supabase staging), memakai checklist QA dashboard yang sudah ada.
 
 **Sebelum cutover:**
 - Dua kali gladi resik dengan hasil reconcile nol selisih.

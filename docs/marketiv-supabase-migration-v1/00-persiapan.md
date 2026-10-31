@@ -12,9 +12,9 @@
 ### Infrastruktur
 - [ ] Buat project Supabase `marketiv-staging` dan `marketiv-prod` di region `ap-southeast-1`. Prod butuh plan Pro: backup, ukuran file besar, image transform.
   - [x] `marketiv-staging` (ref `zwrzwkesaetzbnajjxqc`, `ap-southeast-1`, Postgres 17, plan Free). Diverifikasi lewat Supabase MCP pada 2026-10-25.
-  - [ ] `marketiv-prod`. Ditunda. Pemilik memilih tanpa biaya untuk saat ini; keputusan Free vs Pro dibuka lagi sebelum Fase 10.
-- [ ] Buat project Vercel `marketiv-web` (root) dan `marketiv-admin` (root dir `admin`), region `sin1`. Pakai plan Pro supaya cron `*/15` dan durasi function memadai.
-  - Belum dibuat (dicek lewat Vercel MCP 2026-10-25, tim `pnjias-projects`). Plan Hobby hanya mengizinkan cron harian; alternatif gratis dibahas di Fase 1.
+  - [ ] `marketiv-prod`. Keputusan 2026-10-31: dibuat dengan plan **Free** (bukan Pro) sebelum Fase 10. Lihat `10-cutover.md`.
+- [ ] ~~Buat project Vercel `marketiv-web` (root) dan `marketiv-admin` (root dir `admin`), region `sin1`.~~
+  - **Diganti (2026-10-31):** hosting memakai **Netlify Free**. Vercel Hobby melarang pemakaian komersial, dan pemilik memilih stack tanpa biaya. Site Netlify dibuat pemilik sebagai prasyarat Fase 1 ([01-hosting-netlify.md](./01-hosting-netlify.md)). Cron pindah ke `pg_cron`.
 - [ ] Siapkan custom SMTP untuk Supabase Auth (Resend/SES), dengan domain pengirim `marketiv.id`. Atur SPF/DKIM.
   - Belum. Rencana: staging memakai Mailtrap (sudah dipakai di Appwrite). Pilihan SMTP produksi menyusul. Tidak menghalangi Fase 1–3.
 - [ ] Simpan secret di password manager tim (tanggung jawab pemilik; tidak bisa diverifikasi dari sesi):
