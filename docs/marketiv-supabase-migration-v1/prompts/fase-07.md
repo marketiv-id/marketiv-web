@@ -9,7 +9,7 @@ Salin **seluruh blok di bawah** ke sesi chat baru (repo `marketiv-web`).
 ```text
 Kamu mengerjakan **Fase 7 — Alur campaign & order rate card** dari migrasi Marketiv Appwrite → Supabase.
 Konteks singkat: backend pindah ke Supabase (Postgres, Auth, Storage, Realtime) dengan logika server di
-Next.js Route Handlers, hosting di Vercel, produksi pindah dengan SATU kali cutover. Data produksi
+Next.js Route Handlers, hosting di Netlify Free, produksi pindah dengan SATU kali cutover. Data produksi
 sudah ada, termasuk saldo wallet dan escrow.
 
 ## Baca dulu (wajib, berurutan, sebelum menyentuh kode)
@@ -29,8 +29,8 @@ Kalau folder docs/marketiv-supabase-migration-v1/ tidak ada di checkout: jalanka
 branch itu. Kalau branch itu juga belum ada, pakai `git fetch origin claude/zealous-knuth-n10z1y`.
 
 ## Branch
-- Basis kerja: `migrasi-supabase` (branch jangka panjang migrasi). Merge `origin/main` ke situ bila tertinggal.
-- Kerjakan di branch sesi ini yang dibuat dari `migrasi-supabase`. Buka PR ke `migrasi-supabase`, BUKAN ke `main`.
+- Basis kerja: `migrasi-supabase` (branch jangka panjang migrasi). Merge `origin/staging` (default branch repo) ke situ bila tertinggal.
+- Kerjakan di branch sesi ini yang dibuat dari `migrasi-supabase`. Buka PR ke `migrasi-supabase`, BUKAN ke `staging`.
 
 ## Aturan
 - Kerjakan hanya scope fase ini. Temuan di luar scope dicatat di log progres bagian "Isu untuk fase lain".
@@ -46,7 +46,7 @@ branch itu. Kalau branch itu juga belum ada, pakai `git fetch origin claude/zeal
   menggambarkan SISTEM LAMA. Pakai hanya untuk memahami perilaku lama, bukan sebagai pola target.
 - Untuk pekerjaan Supabase/Postgres (SQL, RLS, migration, auth, storage), load skill `supabase:supabase`
   dan `supabase:supabase-postgres-best-practices` terlebih dahulu.
-- Jika butuh keputusan, akses, atau aksi yang tidak bisa kamu lakukan (dashboard Supabase/Vercel/Midtrans,
+- Jika butuh keputusan, akses, atau aksi yang tidak bisa kamu lakukan (dashboard Supabase/Netlify/Midtrans,
   DNS, API key, secret): berhenti, lalu minta ke saya dengan langkah yang jelas dan bisa langsung diikuti.
 
 ## Cara kerja
@@ -56,7 +56,7 @@ branch itu. Kalau branch itu juga belum ada, pakai `git fetch origin claude/zeal
 3. Verifikasi:
    - Skrip `scripts/migration/smoke-order-flow.ts` (port dari versi Appwrite) lulus di staging untuk alur campaign (buat → publish → klaim → submit → precheck AI → review admin) dan rate card (offer → accept → order → deliverable → revisi → approve).
    - Test pgTAP untuk RPC `claim_campaign` dan `accept_offer`: klaim ganda ditolak, accept ganda tidak membuat order kedua.
-   - Cron dipanggil manual dengan `curl` + `CRON_SECRET` berhasil; tanpa secret ditolak 401.
+   - Job `pg_cron` terdaftar (`select * from cron.job`) dan fungsi SQL-nya bisa dipanggil manual di staging dengan hasil yang benar. Bila ada route `/api/cron/*`: dengan `CRON_SECRET` berhasil, tanpa secret ditolak 401.
    Bila ada kode yang berubah, jalankan juga `npm run lint`, `npm run typecheck`, `npm test` di root
    dan di `admin/`. Laporkan hasilnya apa adanya, termasuk yang gagal.
 4. Tulis docs/marketiv-supabase-migration-v1/progress/fase-07.md mengikuti template di docs/marketiv-supabase-migration-v1/progress/README.md.
@@ -68,7 +68,7 @@ branch itu. Kalau branch itu juga belum ada, pakai `git fetch origin claude/zeal
 - `ai-fraud-precheck` dijalankan dengan `after()` dari `next/server` setelah submit; hasilnya disimpan ke `fraud_checks`.
 - `ai-brief`: user dari sesi + cek kepemilikan campaign (celah #4).
 - Helper `src/server/notifications/notify.ts` dengan ID deterministik (`ntf` + sha256) supaya idempoten.
-- Cron di `vercel.json`: `expire-stale-claims` (`0 */6 * * *`), `auto-approve-orders` (`0 * * * *`), semua `/api/cron/*` cek `Authorization: Bearer ${CRON_SECRET}`.
+- Cron di Supabase Cron (`pg_cron`), BUKAN cron hosting: `expire-stale-claims` (`0 */6 * * *`) dan `auto-approve-orders` (`0 * * * *`) memanggil fungsi SQL langsung. Kalau sebuah job butuh logika Node, `pg_net` memanggil `/api/cron/*` yang mengecek `Authorization: Bearer ${CRON_SECRET}`.
 - Approve deliverable dan semua kredit/escrow/reward hanya STUB yang mengubah status. Uang dikerjakan di Fase 8; tandai `// TODO(fase-08)`.
 
 ## Selesai bila

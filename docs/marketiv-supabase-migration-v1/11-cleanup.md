@@ -10,7 +10,7 @@
 - [ ] Hapus `execute-function.ts` versi Appwrite.
 - [ ] Hapus mock `@/lib/appwrite/*` di test.
 - [ ] Ganti nama file service `*-appwrite.service.ts` menjadi `*-supabase.service.ts`, atau langsung pakai nama domain.
-- [ ] Hapus `NEXT_PUBLIC_APPWRITE_*` dari `.env.example`, Vercel, dan `next.config.ts` (`remotePatterns`).
+- [ ] Hapus `NEXT_PUBLIC_APPWRITE_*` dari `.env.example`, Netlify, dan `next.config.ts` (`remotePatterns`).
 
 ### Backend lama
 Setelah 30 hari, hapus dari `main`; history git tetap menyimpannya.

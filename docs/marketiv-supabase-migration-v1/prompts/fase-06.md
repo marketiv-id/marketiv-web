@@ -9,7 +9,7 @@ Salin **seluruh blok di bawah** ke sesi chat baru (repo `marketiv-web`).
 ```text
 Kamu mengerjakan **Fase 6 — Mutasi sederhana, chat, file, realtime** dari migrasi Marketiv Appwrite → Supabase.
 Konteks singkat: backend pindah ke Supabase (Postgres, Auth, Storage, Realtime) dengan logika server di
-Next.js Route Handlers, hosting di Vercel, produksi pindah dengan SATU kali cutover. Data produksi
+Next.js Route Handlers, hosting di Netlify Free, produksi pindah dengan SATU kali cutover. Data produksi
 sudah ada, termasuk saldo wallet dan escrow.
 
 ## Baca dulu (wajib, berurutan, sebelum menyentuh kode)
@@ -29,8 +29,8 @@ Kalau folder docs/marketiv-supabase-migration-v1/ tidak ada di checkout: jalanka
 branch itu. Kalau branch itu juga belum ada, pakai `git fetch origin claude/zealous-knuth-n10z1y`.
 
 ## Branch
-- Basis kerja: `migrasi-supabase` (branch jangka panjang migrasi). Merge `origin/main` ke situ bila tertinggal.
-- Kerjakan di branch sesi ini yang dibuat dari `migrasi-supabase`. Buka PR ke `migrasi-supabase`, BUKAN ke `main`.
+- Basis kerja: `migrasi-supabase` (branch jangka panjang migrasi). Merge `origin/staging` (default branch repo) ke situ bila tertinggal.
+- Kerjakan di branch sesi ini yang dibuat dari `migrasi-supabase`. Buka PR ke `migrasi-supabase`, BUKAN ke `staging`.
 
 ## Aturan
 - Kerjakan hanya scope fase ini. Temuan di luar scope dicatat di log progres bagian "Isu untuk fase lain".
@@ -46,7 +46,7 @@ branch itu. Kalau branch itu juga belum ada, pakai `git fetch origin claude/zeal
   menggambarkan SISTEM LAMA. Pakai hanya untuk memahami perilaku lama, bukan sebagai pola target.
 - Untuk pekerjaan Supabase/Postgres (SQL, RLS, migration, auth, storage), load skill `supabase:supabase`
   dan `supabase:supabase-postgres-best-practices` terlebih dahulu.
-- Jika butuh keputusan, akses, atau aksi yang tidak bisa kamu lakukan (dashboard Supabase/Vercel/Midtrans,
+- Jika butuh keputusan, akses, atau aksi yang tidak bisa kamu lakukan (dashboard Supabase/Netlify/Midtrans,
   DNS, API key, secret): berhenti, lalu minta ke saya dengan langkah yang jelas dan bisa langsung diikuti.
 
 ## Cara kerja
@@ -64,7 +64,7 @@ branch itu. Kalau branch itu juga belum ada, pakai `git fetch origin claude/zeal
 ## Fokus khusus fase ini
 - Setelah fase ini TIDAK BOLEH ada lagi tulis langsung dari browser (sekarang ada ~35).
 - Route campaign memaksa `status='draft'`, `remaining_budget=0`, `umkm_id = user sesi`. Menutup celah #2 di sisi API.
-- Upload: `/api/files/upload-url` (validasi bucket/MIME/ukuran/kuota → signed upload URL) → browser upload langsung → `/api/files/confirm`. Jangan lewatkan file melalui body route (batas Vercel 4,5 MB).
+- Upload: `/api/files/upload-url` (validasi bucket/MIME/ukuran/kuota → signed upload URL) → browser upload langsung → `/api/files/confirm`. Jangan lewatkan file melalui body route (batas ukuran body function di Netlify).
 - `mark-conversation-read` jadi satu `UPDATE ... WHERE`, bukan loop 200 update.
 - Realtime: hook `useRealtimeTable` di `src/lib/supabase/realtime.ts` dengan filter (`user_id=eq.`, `conversation_id=eq.`); hapus workaround dua channel.
 - Push notification Appwrite Messaging TIDAK dimigrasi di fase ini (cukup in-app); catat sebagai isu lanjutan.

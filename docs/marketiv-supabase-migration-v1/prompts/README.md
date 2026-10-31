@@ -18,7 +18,7 @@ Setiap fase migrasi dikerjakan di **sesi chat baru**. Folder ini berisi satu pro
 | 1 | [fase-01.md](./fase-01.md) | 0 | Boleh paralel dengan Fase 2 |
 | 2 | [fase-02.md](./fase-02.md) | 0 | Boleh paralel dengan Fase 1 |
 | 3 | [fase-03.md](./fase-03.md) | 2 | |
-| 4 | [fase-04.md](./fase-04.md) | 3 (dan 1 untuk preview Vercel) | |
+| 4 | [fase-04.md](./fase-04.md) | 3 (dan 1 untuk preview Netlify) | |
 | 5 | [fase-05.md](./fase-05.md) | 4 | |
 | 6 | [fase-06.md](./fase-06.md) | 5 | |
 | 7 | [fase-07.md](./fase-07.md) | 6 | |
@@ -27,14 +27,11 @@ Setiap fase migrasi dikerjakan di **sesi chat baru**. Folder ini berisi satu pro
 | 10 | [fase-10.md](./fase-10.md) | 9 | Butuh operator manusia hadir |
 | 11 | [fase-11.md](./fase-11.md) | 10 + stabil 7 hari | |
 
-## Langkah satu kali sebelum Fase 0
+## Catatan branch
 
-Folder `docs/marketiv-supabase-migration-v1/` saat ini baru ada di branch `claude/zealous-knuth-n10z1y`. Pilih salah satu:
-
-- Merge branch itu ke `main` (disarankan), **atau**
-- Biarkan Fase 0 membuat `migrasi-supabase` dari branch itu.
-
-Setiap prompt sudah berisi fallback `git fetch` bila folder docs tidak ada di checkout sesi baru.
+- Default branch repo adalah `staging`; tidak ada branch `main`.
+- `migrasi-supabase` sudah dibuat di Fase 0 dari `staging`. Semua PR fase masuk ke sana.
+- Setiap prompt sudah berisi fallback `git fetch` bila folder docs tidak ada di checkout sesi baru.
 
 ## Bila sesi menyimpang
 - Ingatkan sesi untuk kembali ke dokumen fase dan bagian **Aturan** di prompt.

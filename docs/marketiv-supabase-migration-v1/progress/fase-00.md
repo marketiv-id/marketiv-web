@@ -2,15 +2,15 @@
 
 - Tanggal: 2026-10-25
 - PR: https://github.com/marketiv-id/marketiv-web/pull/27
-- Status: sebagian. Spike, audit, dan keputusan semua anomali selesai. Infrastruktur berbayar (Supabase prod, Vercel, SMTP) ditunda atas keputusan pemilik.
+- Status: sebagian. Spike, audit, dan keputusan semua anomali selesai. Pemilik memilih seluruh stack gratis (2026-10-31): Netlify Free menggantikan Vercel, Supabase prod dibuat dengan plan Free sebelum Fase 10, SMTP menyusul.
 
 ## Status task
 
 ### Infrastruktur
 - [ ] Project Supabase `marketiv-staging` dan `marketiv-prod` di `ap-southeast-1`
   - [x] `marketiv-staging`: ref `zwrzwkesaetzbnajjxqc`, `ap-southeast-1`, Postgres 17, plan Free. Diverifikasi lewat Supabase MCP.
-  - [ ] `marketiv-prod`: ditunda (pemilik memilih tanpa biaya untuk saat ini)
-- [ ] Project Vercel `marketiv-web` dan `marketiv-admin` (`sin1`): belum dibuat. Dicek lewat Vercel MCP, tim `pnjias-projects`, 0 project.
+  - [ ] `marketiv-prod`: dibuat dengan plan Free sebelum Fase 10
+- [ ] ~~Project Vercel~~ → diganti dua site **Netlify Free** (`marketiv-web`, `marketiv-admin`), dibuat pemilik sebagai prasyarat Fase 1.
 - [ ] Custom SMTP Supabase Auth + SPF/DKIM: belum. Staging akan memakai Mailtrap.
 - [ ] Secret di password manager tim: tanggung jawab pemilik, tidak bisa diverifikasi dari sesi.
 
@@ -48,11 +48,13 @@
 - **Project ID Appwrite:** produksi = `6a8c45ef0023ae195594`, staging = `69f9d45b00315cb0ec2f`. ID database keduanya sama: `6a4c8598001da3b0d7f0`. `00_BACKEND/appwrite.config.json` dan default di `00_BACKEND/appwrite/ops/client.mjs` memakai project **staging**. Skrip ops lama tanpa env akan mengenai staging.
 - **Endpoint audit:** custom domain `api.marketiv.id` diblok proxy sesi. Audit memakai `https://sgp.cloud.appwrite.io/v1` dengan project ID produksi; backend-nya sama.
 - **Spike 1 memakai Appwrite staging**, bukan produksi, supaya akun uji tidak dibuat di produksi. Format hash produksi diverifikasi terpisah lewat audit (Argon2id PHC, dua varian parameter).
-- **Tanpa biaya (keputusan pemilik):** semua project di plan Free. Akibatnya:
-  - Spike 2 diuji di 49 MB, bukan 500 MB.
-  - Supabase prod (Pro) dan Vercel Pro ditunda.
-  - Free tidak punya backup otomatis dan project di-pause setelah tidak aktif seminggu. Untuk data uang di produksi ini risiko nyata; putuskan sebelum Fase 10.
-  - Vercel Hobby hanya mengizinkan cron harian. Fase 1/8 perlu alternatif, misalnya `pg_cron` Supabase.
+- **Seluruh stack gratis (keputusan pemilik, final 2026-10-31).** Akibatnya:
+  - **Hosting Netlify Free menggantikan Vercel.** Vercel Hobby melarang pemakaian komersial (menerima pembayaran termasuk komersial), dan cron Hobby hanya harian. Netlify Free mengizinkan proyek komersial. Opsi lain yang ditolak: Render Free (tidur setelah 15 menit), Cloudflare Workers Free (CPU 10 ms/request), Oracle Always Free (kelola server sendiri, risiko reclaim), Google Cloud Run (wajib akun billing).
+  - **Batasan Netlify Free yang diterima:** 300 kredit/bulan tanpa overage (habis berarti semua site di-pause), deploy produksi 15 kredit (preview dan branch deploy gratis), function hanya di US East (Ohio).
+  - **Tugas berkala pindah ke Supabase Cron (`pg_cron`)**, termasuk `reconcile-release-escrow` tiap 15 menit.
+  - **Supabase prod memakai plan Free.** Pengganti backup otomatis adalah backup harian terenkripsi lewat GitHub Actions (task Fase 9). Repo publik, jadi dump wajib dienkripsi.
+  - **Batas file 50 MB.** Spike 2 hanya bisa diuji sampai 49 MB. Bucket `deliverables` dan `campaign-assets` turun ke 50 MB (Fase 3).
+  - Dokumen fase yang ikut diperbarui: README, 01 (Vercel → Netlify, file di-rename menjadi `01-hosting-netlify.md`), 03, 04, 06, 07, 08, 09, 10, 11, dan semua prompt.
 - **Campaign aktif tanpa dana (6):** pemilik memilih opsi (a). Saat migrasi, campaign diubah ke `draft` dengan budget 0.
 - **Admin:** pemilik mengonfirmasi `6a8cd8c4002ecd2aac61` sebagai admin sah yang ia buat sendiri. Allowlist admin migrasi = `['6a8cd8c4002ecd2aac61']`.
 - **`NO-VARS` di `audit-live`:** bukan kerusakan. Pemilik mengonfirmasi produksi memakai variabel global tingkat project, yang tidak dibaca `audit-live.mjs`.
@@ -84,13 +86,15 @@
 - Opsional: `SPIKE_FILE_MB`, `SPIKE_BUCKET_LIMIT_MB` — ukuran uji Spike 2.
 
 ## Isu terbuka
-- **Supabase prod & Vercel:** belum dibuat. Putuskan Free vs berbayar sebelum Fase 1 (Vercel) dan Fase 10 (Supabase prod).
-- **Spike 2 pada 500 MB** belum diuji. Ulangi saat ada project Pro, atau ubah batas `deliverables` di produk menjadi ≤ 50 MB.
-- **SMTP Supabase Auth** belum diatur. Staging: Mailtrap. Produksi: menyusul.
+- **Site Netlify** belum dibuat. Prasyarat Fase 1, dikerjakan pemilik (lihat `prompts/fase-01.md`).
+- **Supabase prod (Free)** belum dibuat. Dibutuhkan sebelum Fase 10.
+- **SMTP Supabase Auth** belum diatur. Staging: Mailtrap. Produksi: penyedia dengan kuota gratis, menyusul.
+- **Izin komersial plan Free Supabase** belum terverifikasi dari ketentuan resminya. Pemilik perlu memastikan sebelum cutover.
 - **PR memicu build preview Appwrite.** Integrasi VCS Appwrite membangun Function staging dan site untuk setiap PR, dan hasilnya sering gagal atau tertunda (juga di PR sebelumnya). Function produksi tidak terhubung ke branch git mana pun. Status merah ini bukan CI repo.
 
 ## Isu untuk fase lain
-- **Fase 1:** pemilik menolak biaya. Rencanakan alternatif cron `*/15` (Vercel Hobby hanya harian), misalnya `pg_cron` + `pg_net` memanggil route, atau cron eksternal gratis. Custom domain `api.marketiv.id` / `api.marketiv-dev.my.id` adalah domain Appwrite; domain app untuk Vercel perlu ditentukan. Secret Function lama ada di variabel **global project** Appwrite, bukan per Function. Inventarisasi lewat Console saat memindahkannya ke env Vercel, karena `audit-live.mjs` tidak membacanya.
+- **Fase 1:** hosting di Netlify Free. Custom domain `api.marketiv.id` / `api.marketiv-dev.my.id` adalah domain Appwrite; domain app di Netlify harus satu domain induk dengan API supaya cookie tetap first-party. Secret Function lama ada di variabel **global project** Appwrite, bukan per Function. Inventarisasi lewat Console saat memindahkannya ke env Netlify, karena `audit-live.mjs` tidak membacanya. Verifikasi `after()` di Netlify.
+- **Fase 7/8:** tugas berkala memakai `pg_cron`, bukan cron hosting. Setiap aksi tulis dirancang sebagai satu panggilan RPC karena function Netlify Free berada di Ohio, jauh dari Supabase Singapura.
 - **Fase 2:**
   - Baris `users` punya `$id` sendiri (≠ ID Auth); relasi lewat `users.userId`. `public.users.id` = UUID dari `legacy_user_map(userId)`. `$id` lama tidak dirujuk tabel mana pun (diverifikasi: 0 referensi).
   - `export-appwrite.ts` wajib memakai env project produksi secara eksplisit, karena default repo menunjuk staging.

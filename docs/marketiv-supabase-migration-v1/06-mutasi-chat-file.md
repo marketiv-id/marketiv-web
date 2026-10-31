@@ -37,7 +37,7 @@ Polanya sama untuk semua route: `requireUser` → validasi zod → client servic
   - Validasi bucket, MIME, dan ukuran sesuai `BUCKET_RULES`.
   - Cek kuota `user_storage_usage`.
   - Kembalikan `createSignedUploadUrl(path)`.
-  - Browser upload langsung, sehingga tidak kena batas body Vercel 4,5 MB.
+  - Browser upload langsung, sehingga tidak kena batas ukuran body function di hosting (Netlify).
 - [ ] `POST /api/files/confirm`: catat ke `user_files` dan tambah `used_bytes` (port `validate-and-upload`).
 - [ ] `DELETE /api/files/[id]` ← `delete-file`.
 - [ ] Port `uploadPublicFile`, `deletePublicFile`, `publicFileUrl` (→ `getPublicUrl`), dan `campaign-thumbnail.ts` (parsing URL ke path Supabase). `compress-image.ts` tetap.

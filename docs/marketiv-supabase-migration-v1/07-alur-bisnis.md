@@ -37,11 +37,13 @@ Alur bisnis multi-langkah berjalan di route dan RPC. Event trigger Appwrite diga
   - Route ini memanggil `release_escrow` dari Fase 8. Sampai fase itu selesai, cukup stub yang menandai status.
 - [ ] Admin `POST /api/admin/ratecard-deliverables/[id]/review` ← `review-ratecard-deliverable`
 
-### Cron (Vercel)
-- [ ] `vercel.json` → `crons`:
-  - `/api/cron/expire-stale-claims` dengan jadwal `0 */6 * * *`
-  - `/api/cron/auto-approve-orders` dengan jadwal `0 * * * *`
-- [ ] Semua `/api/cron/*` mengecek `Authorization: Bearer ${CRON_SECRET}`.
+### Cron (Supabase Cron / `pg_cron`)
+Hosting gratis (Netlify Free) tidak dipakai untuk cron. Jadwal dijalankan oleh `pg_cron` di database, yang tersedia di plan gratis Supabase.
+- [ ] Fungsi SQL + job `pg_cron` (dalam migration):
+  - `expire_stale_claims()` dengan jadwal `0 */6 * * *`
+  - `auto_approve_orders()` dengan jadwal `0 * * * *`
+- [ ] Fungsi job di schema yang tidak diekspos (bukan `public`), sehingga tidak bisa dipanggil lewat Data API.
+- [ ] Hanya bila sebuah job butuh logika Node (misalnya email): `pg_net` memanggil `/api/cron/*`, dan route itu mengecek `Authorization: Bearer ${CRON_SECRET}`.
 
 ### Helper bersama
 - [ ] `src/server/notifications/notify.ts`: ID deterministik (`ntf` + sha256) supaya idempoten. Port pola dari functions yang sudah ada.
@@ -50,4 +52,4 @@ Alur bisnis multi-langkah berjalan di route dan RPC. Event trigger Appwrite diga
 - Port `00_BACKEND/appwrite/ops/smoke-order-flow.mjs` → `scripts/migration/smoke-order-flow.ts` untuk Supabase staging.
 - Alur campaign penuh: buat → top-up (stub) → publish → klaim → submit → precheck AI → review admin.
 - Alur rate card penuh: offer → accept → order → deliverable → revisi → deliverable → approve.
-- Cron dipanggil manual dengan `curl` + secret; tanpa secret harus ditolak 401.
+- Job `pg_cron` terdaftar dan fungsi SQL-nya dipanggil manual di staging dengan hasil benar. Route `/api/cron/*` (bila ada) tanpa secret ditolak 401.

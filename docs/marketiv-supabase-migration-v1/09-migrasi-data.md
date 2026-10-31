@@ -44,6 +44,11 @@
    - Jumlah file per bucket.
    - Semua URL di DB bisa di-resolve (HEAD 200).
    - **Satu selisih saja = NO-GO.**
+7. [ ] Backup harian Supabase prod (pengganti backup otomatis yang tidak ada di plan Free):
+   - Workflow GitHub Actions terjadwal: `pg_dump` lewat connection string dari secret repo.
+   - Dump **wajib dienkripsi** (misalnya `age` dengan public key) sebelum diunggah sebagai artifact, karena repo publik dan artifact bisa diunduh siapa pun.
+   - Retensi artifact dibatasi (misalnya 30 hari). Private key dekripsi hanya disimpan pemilik.
+   - Uji restore dari backup ke Supabase staging minimal sekali sebelum cutover.
 
 ## Gladi resik
 - [ ] Gladi 1 di Supabase staging dengan salinan data prod terbaru. Catat durasi tiap skrip.
