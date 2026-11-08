@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { VertexAI } from "@google-cloud/vertexai";
 import type { ChatMessage, ChatRequest } from "@/types/chat";
 import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
-import { authenticateChatRole, readBearerToken } from "@/services/chatbot/chatbot-auth";
+import { authenticateChatRole } from "@/services/chatbot/chatbot-auth";
 import {
   buildSystemPrompt,
   CHATBOT_GENERATION_CONFIG,
@@ -206,14 +206,12 @@ export async function POST(request: NextRequest) {
     if (DATA_SOURCE_CONFIG.useMockData && currentPath.startsWith("/dashboard/")) {
       authenticatedRole = currentPath.startsWith("/dashboard/kreator") ? "creator" : "umkm";
     } else {
-      const token = readBearerToken(request.headers.get("authorization"));
-      if (token) {
-        try {
-          authenticatedRole = await authenticateChatRole(token);
-        } catch (authError) {
-          console.warn("[Chat API] Appwrite JWT validation failed:", authError);
-          return NextResponse.json({ error: "Sesi Tivvy tidak valid." }, { status: 401 });
-        }
+      // Sesi dibaca dari cookie Supabase (bukan header dari browser).
+      try {
+        authenticatedRole = await authenticateChatRole();
+      } catch (authError) {
+        console.warn("[Chat API] Supabase session validation failed:", authError);
+        return NextResponse.json({ error: "Sesi Tivvy tidak valid." }, { status: 401 });
       }
     }
 

@@ -3,8 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { account } from "@/lib/appwrite/account";
-import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
 import {
   getChatbotSuggestions,
   type ChatbotAudience,
@@ -89,11 +87,8 @@ export function ChatbotPanel({ isOpen, onClose }: ChatbotPanelProps) {
     setIsLoading(true);
 
     try {
+      // Sesi dikirim otomatis lewat cookie Supabase (same-origin).
       const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (currentPath.startsWith("/dashboard/") && !DATA_SOURCE_CONFIG.useMockData) {
-        const { jwt } = await account.createJWT({ duration: 300 });
-        headers.Authorization = `Bearer ${jwt}`;
-      }
 
       const response = await fetch("/api/chat", {
         method: "POST",

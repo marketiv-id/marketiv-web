@@ -6,10 +6,7 @@ import { AuthCard } from "@/components/auth/AuthCard";
 import { AuthErrorBanner } from "@/components/auth/AuthField";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/components/providers/AuthProvider";
-import {
-  provisionUserProfile,
-  setOAuthAccountPrefs,
-} from "@/services/auth/auth.service";
+import { provisionUserProfile } from "@/services/auth/auth.service";
 import { resolveOAuthCallbackDecision } from "@/services/auth/oauth-callback.service";
 import { routes } from "@/lib/constants/routes";
 
@@ -18,7 +15,7 @@ import { routes } from "@/lib/constants/routes";
  *
  * Alur berdasarkan `role` yang diteruskan via success URL:
  *   - Akun lama (user sudah ada):    → next || dashboard sesuai role
- *   - Akun baru + role=umkm/creator: → set prefs role → provision → /onboarding
+ *   - Akun baru + role=umkm/creator: → POST /api/auth/provision {role} → /onboarding
  *   - Akun baru tanpa role:          → /register (pilih role dulu)
  *
  * UMKM & Kreator kini identik: seluruh data usaha (termasuk WhatsApp) diisi
@@ -48,8 +45,8 @@ export function OAuthCallback({
     });
 
     if (decision.action === "provision" && role) {
-      const prefs = await setOAuthAccountPrefs(role);
-      const provision = prefs.success ? await provisionUserProfile() : prefs;
+      // Role di-whitelist ulang di server (umkm/creator), tidak pernah admin.
+      const provision = await provisionUserProfile(role);
       if (!provision.success) {
         decision = resolveOAuthCallbackDecision({
           user: null,

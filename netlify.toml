@@ -40,8 +40,10 @@
 # supaya file ini tidak bisa menimpa konfigurasi produksi.
 #
 # Deploy Preview (PR) dan branch deploy (`staging`, `migrasi-supabase`) memakai
-# Appwrite STAGING (project 69f9d45b00315cb0ec2f) sampai Fase 4. Fase 4 menambah
-# [context.migrasi-supabase.environment] untuk Supabase staging.
+# Appwrite STAGING (project 69f9d45b00315cb0ec2f). Sejak Fase 4, auth di branch
+# `migrasi-supabase` (dan PR ke sana) memakai Supabase STAGING; env Supabase juga
+# ada di deploy-preview karena Netlify tidak membedakan base branch PR. Build
+# Appwrite (PR ke `staging`) mengabaikan env Supabase.
 #
 # Endpoint: api.marketiv-dev.my.id = custom domain Appwrite staging yang aktif saat
 # ini. Setelah api-staging.marketiv.id aktif dan staging.marketiv.id menjadi branch
@@ -56,6 +58,10 @@
   NEXT_PUBLIC_APPWRITE_PROJECT_ID = "69f9d45b00315cb0ec2f"
   NEXT_PUBLIC_APPWRITE_DATABASE_ID = "6a4c8598001da3b0d7f0"
   NEXT_PUBLIC_ADMIN_APP_URL = "https://staging--marketiv-admin.netlify.app"
+  # Supabase STAGING (Fase 4). Publishable key = aman untuk browser (RLS).
+  # SUPABASE_SERVICE_ROLE_KEY (secret) diisi di UI Netlify, bukan di sini.
+  NEXT_PUBLIC_SUPABASE_URL = "https://zwrzwkesaetzbnajjxqc.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_HB_a1ufWJXGy_U0jS9R-GQ_raMhMobo"
 
 [context.branch-deploy.environment]
   NEXT_PUBLIC_APP_ENV = "staging"
@@ -66,3 +72,21 @@
   NEXT_PUBLIC_APPWRITE_PROJECT_ID = "69f9d45b00315cb0ec2f"
   NEXT_PUBLIC_APPWRITE_DATABASE_ID = "6a4c8598001da3b0d7f0"
   NEXT_PUBLIC_ADMIN_APP_URL = "https://staging--marketiv-admin.netlify.app"
+
+# Branch jangka panjang migrasi: Supabase STAGING. Konteks branch spesifik
+# mengalahkan branch-deploy, jadi seluruh nilai ditulis ulang.
+[context.migrasi-supabase.environment]
+  NEXT_PUBLIC_APP_ENV = "staging"
+  NEXT_PUBLIC_USE_MOCK_DATA = "false"
+  NEXT_PUBLIC_ENABLE_GOOGLE_OAUTH = "false"
+  NEXT_PUBLIC_MIDTRANS_ENV = "sandbox"
+  NEXT_PUBLIC_APPWRITE_ENDPOINT = "https://api.marketiv-dev.my.id/v1"
+  NEXT_PUBLIC_APPWRITE_PROJECT_ID = "69f9d45b00315cb0ec2f"
+  NEXT_PUBLIC_APPWRITE_DATABASE_ID = "6a4c8598001da3b0d7f0"
+  NEXT_PUBLIC_ADMIN_APP_URL = "https://migrasi-supabase--marketiv-admin.netlify.app"
+  NODE_VERSION = "22"
+  NEXT_TELEMETRY_DISABLED = "1"
+  # Supabase STAGING (Fase 4). Publishable key = aman untuk browser (RLS).
+  # SUPABASE_SERVICE_ROLE_KEY (secret) diisi di UI Netlify, bukan di sini.
+  NEXT_PUBLIC_SUPABASE_URL = "https://zwrzwkesaetzbnajjxqc.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_HB_a1ufWJXGy_U0jS9R-GQ_raMhMobo"

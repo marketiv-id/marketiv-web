@@ -8,6 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": resolve(rootDir, "src"),
+      "server-only": resolve(rootDir, "src/test/server-only-stub.ts"),
     },
   },
   test: {
@@ -29,6 +30,8 @@ export default defineConfig({
       "src/lib/demo/__tests__/**/*.test.ts",
       "src/lib/appwrite/__tests__/**/*.test.ts",
       "src/lib/__tests__/**/*.test.ts",
+      "src/server/**/__tests__/**/*.test.ts",
+      "src/app/api/**/__tests__/**/*.test.ts",
     ],
     exclude: ["node_modules", "00_BACKEND/tests/e2e"],
     environmentMatchGlobs: [
