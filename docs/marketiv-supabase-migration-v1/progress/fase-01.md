@@ -1,7 +1,7 @@
 # Fase 01 — Hosting ke Netlify (backend tetap Appwrite)
 
 - Tanggal: 2026-11-08
-- PR: _diisi setelah PR dibuat_
+- PR: https://github.com/marketiv-id/marketiv-web/pull/32
 - Status: **sebagian**. Bagian repo selesai: `netlify.toml` kedua app, CI, probe `after()`, runbook, dan daftar env. Bagian dashboard menunggu pemilik: base directory admin, branch deploy, env non-prod yang berisi secret, domain staging/prod, Web Platform Appwrite, dan smoke test. Sesi cloud tidak bisa membuka domain Netlify atau Marketiv (proxy menolak), jadi smoke test dan verifikasi `after()` belum bisa dijalankan dari sesi.
 
 ## Status task
