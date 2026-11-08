@@ -32,6 +32,7 @@
 - `admin/netlify.toml` — sama untuk situs admin; `ignore` hanya melihat `admin/`.
 - `src/app/api/health/after/route.ts` — probe `after()`: menjadwalkan callback yang menulis satu baris log `after-probe` + `probeId`. Tidak membaca data, tanpa PII.
 - `.github/workflows/ci.yml` — trigger `staging`, `production`, `migrasi-supabase` (sebelumnya `master`, yang sudah tidak ada); job terpisah untuk root dan `admin/`; Node 22; `next typegen` sebelum typecheck; test; build dengan env publik tiruan. Lint root non-blocking sementara.
+- `admin/next.config.ts` — `turbopack.root` dan `outputFileTracingRoot` dikunci ke `admin/`. Tanpa ini Next.js memilih root repo (dua lockfile) dan ikut memuat `src/instrumentation.ts` app user (butuh `@sentry/nextjs` dari `node_modules` root). Build admin lolos di lokal, tetapi gagal di CI dan akan gagal di Netlify (base `admin` hanya meng-install `admin/node_modules`). Ditemukan oleh CI PR #32.
 - `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts` — fallback environment `NEXT_PUBLIC_VERCEL_ENV` → `NEXT_PUBLIC_APP_ENV`.
 - `docs/marketiv-supabase-migration-v1/runbook/netlify-hosting.md` — runbook baru: peta situs, aturan rilis hemat kredit, daftar env, langkah domain staging lalu prod, Web Platform, verifikasi `after()`, checklist smoke test.
 - `docs/marketiv-supabase-migration-v1/01-hosting-netlify.md` — checkbox dan catatan status.
@@ -63,6 +64,7 @@
 | `npm run typecheck` (admin, setelah `npx next typegen`) | lulus |
 | `npm test -- --run` (admin) | lulus: 8 file, 77 test |
 | `npm run build` (admin, env produksi tiruan) | lulus; semua route statis |
+| `npm run build` (admin, tanpa `node_modules` root) | gagal sebelum fix (`Can't resolve '@sentry/nextjs'`, sama dengan CI); **lulus** setelah `turbopack.root` dikunci |
 | `npm run build` (admin, tanpa env app) | gagal, sesuai desain: `NEXT_PUBLIC_APPWRITE_ENDPOINT is required` |
 | `npm run animation-audit`, `npm run validate-data-contracts` | lulus (annotate-only) |
 | Parse `netlify.toml` dan `admin/netlify.toml` (tomllib) | valid |
