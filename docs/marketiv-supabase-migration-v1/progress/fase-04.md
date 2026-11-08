@@ -1,7 +1,7 @@
 # Fase 04 — Auth & guard
 
 - Tanggal: 2026-11-08
-- PR: (diisi setelah PR dibuat)
+- PR: https://github.com/marketiv-id/marketiv-web/pull/37
 - Status: sebagian.
   - Semua kode selesai dan terverifikasi end-to-end di Supabase **lokal**: browser Chromium + Mailpit, 30/30 skenario QA lulus.
   - Migration `0014` sudah diterapkan ke Supabase staging.
