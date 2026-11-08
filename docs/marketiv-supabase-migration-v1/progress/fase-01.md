@@ -2,12 +2,12 @@
 
 - Tanggal: 2026-11-08
 - PR: https://github.com/marketiv-id/marketiv-web/pull/32
-- Status: **sebagian**. Bagian repo selesai: `netlify.toml` kedua app, CI, probe `after()`, runbook, dan daftar env. Bagian dashboard menunggu pemilik: env non-prod yang berisi secret, domain staging/prod, Web Platform Appwrite, dan smoke test. Sesi cloud tidak bisa membuka domain Netlify atau Marketiv (proxy menolak), jadi smoke test dan verifikasi `after()` belum bisa dijalankan dari sesi.
+- Status: **sebagian**. Bagian repo selesai: `netlify.toml` kedua app, CI, probe `after()`, runbook, dan daftar env. Bagian dashboard menunggu pemilik: env non-prod yang berisi secret, domain staging/prod, Web Platform Appwrite, dan smoke test. Branch deploy `migrasi-supabase` kedua situs sudah jalan dan `after()` terverifikasi (2026-11-08). Sesi cloud tidak bisa membuka domain Netlify atau Marketiv (proxy menolak), jadi pemilik membuka URL dan sesi memeriksa log lewat Netlify MCP.
 
 ## Status task
 - [x] Hubungkan repo ke dua site Netlify (dikerjakan pemilik)
   - [x] Situs user dibuat sebagai **`marketiv-production`** (nama `marketiv-web` sudah dipakai di Netlify), base `/`. Deploy produksi pertama `6aeff301b76db6e06302a304` (commit `534a9ad`, branch `production`) **ready**, adapter `@netlify/plugin-nextjs@5.16.6`, 1 Function, region `us-east-2`.
-  - [x] Situs `marketiv-admin`, base `admin` (dikonfirmasi pemilik). Deploy produksi pertama `6aeff3149ed18c1333bfd3ca` selesai **5 detik tanpa build**, tanpa plugin Next.js, dan `/` mengembalikan **404** (log request Netlify). Penyebab: di UI, build command kosong dan publish directory = base (`admin/`), jadi Netlify mempublikasikan kode sumber mentah. Sekarang `admin/netlify.toml` (merged lewat PR #32) memberi build command dan publish `.next`, yang menimpa isian UI. Build admin juga butuh fix `turbopack.root` dari PR yang sama.
+  - [x] Situs `marketiv-admin`, base `admin` (dikonfirmasi pemilik). Deploy produksi pertama `6aeff3149ed18c1333bfd3ca` selesai **5 detik tanpa build**, tanpa plugin Next.js, dan `/` mengembalikan **404** (log request Netlify). Penyebab: di UI, build command kosong dan publish directory = base (`admin/`), jadi Netlify mempublikasikan kode sumber mentah. Sekarang `admin/netlify.toml` (merged lewat PR #32) memberi build command dan publish `.next`, yang menimpa isian UI. Build admin juga butuh fix `turbopack.root` dari PR yang sama, dan **Runtime Next.js** harus dipilih di UI situs admin. Deploy Preview admin PR #34 ter-build tanpa plugin Next.js (`plugin_state: none`, halaman di `server/app/index.html`, `/` tetap 404) karena Runtime UI masih kosong. Setelah pemilik memilih Runtime = Next.js, branch deploy `migrasi-supabase` admin melayani `/` dengan **200** lewat Function Next.js.
 - [x] `netlify.toml` di root dan `admin/`
 - [x] Auto-publish produksi: pemilik memakai production branch = `production` di kedua situs (tombol "Stop auto publishing" tidak ditemukan di UI). Ditambah perintah `ignore` supaya situs yang app-nya tidak berubah tidak di-build.
 - [ ] Env
@@ -22,7 +22,7 @@
 - [ ] Domain staging → verifikasi → prod (pemilik, runbook B dan C)
 - [ ] Cookie first-party: rencana selesai (runbook §4); eksekusi butuh custom domain Appwrite staging `api-staging.marketiv.id` dan `api-admin-staging.marketiv.id` (runbook B.1)
 - [ ] Web Platform Appwrite: daftar lengkap di runbook §6 (pemilik)
-- [ ] `after()`: probe `/api/health/after` siap; menunggu deploy dan satu kali buka URL (runbook §7)
+- [x] `after()` **berjalan di Netlify** (branch deploy `migrasi-supabase`, 2026-11-08 06:06 UTC). Log Function: `{"tag":"after-probe","probeId":"79683daa-…","msAfterResponse":1521}`, durasi invocation 1705,91 ms. Function tetap hidup sampai callback selesai.
 - [ ] Ukur kredit setelah satu minggu (tertunda, 2026-11-15)
 - [x] `.github/workflows/ci.yml`
 - [ ] Matikan Appwrite Sites setelah domain prod stabil 7 hari (tertunda)
@@ -70,10 +70,14 @@
 | Parse `netlify.toml` dan `admin/netlify.toml` (tomllib) | valid |
 | Simulasi perintah `ignore` (bash lokal) | lewati untuk diff docs-only; build untuk diff yang menyentuh app, cache kosong, atau commit sama |
 | Netlify: deploy produksi situs user | ready; `/` dilindungi team login (401 sebelum login), lalu dilayani Function Next.js |
-| Netlify: deploy produksi situs admin | **rusak**: tanpa build, `/` 404 (runbook A.1) |
+| Netlify: deploy produksi situs admin `6aeff314…` | **rusak**: tanpa build, `/` 404 (runbook A.1). Belum di-deploy ulang; deploy produksi menunggu rilis ke `production` |
+| Netlify: Deploy Preview admin PR #34 (`6af00f74…`) | build lulus 25 s, tetapi tanpa plugin Next.js (Runtime UI kosong) |
+| Netlify: branch deploy `migrasi-supabase` admin, setelah Runtime = Next.js | `/` **200** lewat Function Next.js |
+| Netlify: branch deploy `migrasi-supabase` user | `/` tampil (landing), `/api/health/after` **200** lewat `___netlify-server-handler` (`us-east-2`) |
 | Smoke test staging | **belum**: domain staging belum dipasang; sesi tidak bisa membuka domain Netlify/Marketiv |
 | Smoke test produksi | **belum** |
-| `after()` di Netlify | **belum**: probe siap, menunggu deploy |
+| `after()` di Netlify | **lulus**: `after-probe` muncul 1521 ms setelah respons; invocation 1705,91 ms. Baris ini **tidak** terlihat di log request Netlify MCP (`get-request-logs`, termasuk filter `LogText`); hanya terlihat di UI Logs → Functions |
+| Admin di branch deploy `migrasi-supabase` | tampil "Verifikasi Admin gagal": wajar, host `*.netlify.app` belum terdaftar di Web Platform Appwrite staging (runbook §6) |
 | `supabase db reset` / `supabase test db` | tidak relevan (fase hosting) |
 
 ## Env / secret baru (nama saja)
@@ -82,7 +86,8 @@
 - Nama env lain sudah ada; daftar lengkap per situs dan konteks ada di runbook §3.
 
 ## Isu terbuka
-- **Situs admin Netlify belum pernah ter-build dengan benar** (deploy 5 detik, 404; penyebab di atas). Verifikasi lewat branch deploy `migrasi-supabase`, yang sudah berisi `netlify.toml` dan fix `turbopack.root`. Branch `staging` belum berisi keduanya sampai `migrasi-supabase` di-merge ke `staging`.
+- **Deploy produksi admin masih yang rusak** (`6aeff314…`, 404). Branch deploy `migrasi-supabase` sudah benar. Produksi baru ikut benar setelah rilis yang membawa `admin/netlify.toml` dan fix `turbopack.root` ke `production`. Branch `staging` juga belum berisi keduanya sampai `migrasi-supabase` di-merge ke `staging`.
+- **Web Platform Appwrite staging** belum berisi `*.netlify.app`, jadi admin di branch deploy berhenti di "Verifikasi Admin gagal" (runbook §6).
 - **Isian UI Netlify:** kolom *Package directory*, *Publish directory*, dan *Functions directory* menampilkan prefix base directory (`admin/`) yang tidak bisa dihapus. Prefix itu bukan isian; nilai efektifnya = base directory. Isian `netlify.toml` tetap menimpa UI.
 - **Env non-produksi yang berisi secret belum ada.** Tanpa `VERTEX_AI_*`/`OPENROUTER_*` di konteks non-prod, `/api/chat` di staging gagal. Tanpa `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` non-prod, Snap sandbox di staging gagal.
 - **`NEXT_PUBLIC_SENTRY_DSN` belum ada di semua konteks**, jadi Sentry tidak mengirim event.
@@ -97,7 +102,7 @@
 ## Isu untuk fase lain
 - **Fase 4:** tambahkan `[context.migrasi-supabase.environment]` di `netlify.toml` dan `admin/netlify.toml` untuk env publik Supabase staging (URL, anon key). Konteks branch spesifik mengalahkan `branch-deploy`. Secret (service role) tetap di UI dengan konteks branch `migrasi-supabase`. Tambahkan host `migrasi-supabase.marketiv.id` sebagai branch subdomain bila perlu (runbook B.9).
 - **Fase 6–8:** pindahkan variabel global project Appwrite yang masih dipakai (Midtrans server key, dan sebagainya) ke env Netlify **UI** dengan scope Functions, saat Route Handler pengganti dibuat.
-- **Fase 7:** baca hasil verifikasi `after()` di log ini sebelum mendesain kerja lambat. Bila belum terisi, jalankan runbook §7 dulu.
+- **Fase 7:** `after()` dari `next/server` **berjalan di Netlify** (OpenNext), jadi boleh dipakai untuk kerja lambat setelah respons. Batasnya tetap batas Function Netlify (timeout sinkron), jadi kerja yang lama atau harus terjamin selesai tetap lewat antrean Postgres + `pg_cron`. Log `console.*` dari callback `after()` hanya terlihat di UI Logs → Functions, tidak lewat log request MCP.
 - **Fase 10/11:** DNS `marketiv.id` ada di Appwrite (nameserver `appwrite.zone`). Sebelum Appwrite dilepas total, salin semua record dan pindahkan nameserver di registrar Hostinger (ke Netlify DNS atau DNS Hostinger). Kalau tidak, domain mati bersama Appwrite. Masukkan ke checklist cutover dan cleanup.
 - **Fase 11:** hapus situs Node.js lama di Hostinger (`marketiv.id`, `staging.marketiv.id`, `finance.marketiv.id`) bila tidak dipakai, dan bersihkan zona DNS hPanel yang basi.
 - **Repo (Sentry):** `sentry.client.config.ts` hanya di-import oleh `/sentry-example-page`. Tidak ada `instrumentation-client.ts`, jadi Sentry browser tidak aktif di halaman lain. Perlu diperbaiki di luar jalur migrasi.

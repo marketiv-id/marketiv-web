@@ -130,7 +130,8 @@ Tanda 🧑 = dikerjakan pemilik di dashboard. Tanda 🤖 = bisa dikerjakan sesi 
    - **Build command:** kosong. Nilainya dibaca dari `admin/netlify.toml` (`npm run build`).
    - **Publish directory:** biarkan prefix `admin/` saja, atau ketik `.next` setelah prefix. `admin/netlify.toml` (`publish = ".next"`) menimpa isian UI.
    > Deploy produksi admin pertama (`6aeff3149ed18c1333bfd3ca`) selesai dalam 5 detik tanpa build dan tanpa plugin Next.js, lalu `/` mengembalikan **404**. Penyebabnya: build command kosong dan publish directory = `admin/`, sehingga Netlify mempublikasikan kode sumber mentah. `admin/netlify.toml` sekarang mengisi keduanya.
-2. 🧑 **Situs user:** base directory `/` (atau kosong). Build command dan publish kosong (dibaca dari `netlify.toml`).
+   - **Runtime = Next.js** (dropdown *Runtime* di atas Build settings). Tanpa ini build tetap jalan, tetapi plugin Next.js tidak dipasang dan `/` tetap 404. ✅ dipilih pemilik 2026-11-08.
+2. 🧑 **Situs user:** base directory `/` (atau kosong). Runtime = Next.js (sudah terpasang sejak situs dibuat). Build command dan publish kosong (dibaca dari `netlify.toml`).
 3. 🧑 **Branch deploys** di kedua situs → *Let me add individual branches*: `staging`, `migrasi-supabase`. Production branch tetap `production`; jangan diganti ke `staging`, karena setiap push ke `staging` akan menjadi deploy produksi (15 kredit). ✅ diatur pemilik 2026-11-08.
 4. 🧑 **Deploy Previews** di kedua situs: *Any pull request against your production branch / branch deploy branches* aktif.
 5. 🧑 **Env yang masih kosong** (§3, baris bertanda ❌): `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ENVIRONMENT=staging` (non-prod), `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` sandbox (non-prod), `VERTEX_AI_*` dan `OPENROUTER_*` (non-prod). Simpan secret dengan opsi *Contains secret values*.
@@ -214,7 +215,7 @@ Route probe: [`src/app/api/health/after/route.ts`](../../../src/app/api/health/a
 
 1. Buka `https://<deploy>/api/health/after` (Deploy Preview, branch `staging`, atau produksi). Login tim Netlify dulu bila diminta. Respons berisi `probeId`.
 2. Tunggu ±5 detik, lalu buka Netlify → situs → Logs → Functions → *Next.js Server Handler*. Cari `after-probe` dengan `probeId` tadi.
-   - Sesi Claude juga bisa memeriksanya lewat Netlify MCP: `get-request-logs` dengan filter `LogText = <probeId>`. Log Netlify Free hanya disimpan sekitar 24 jam.
+   - Baris yang ditulis callback `after()` (setelah respons terkirim) **tidak** muncul di log request yang dibaca Netlify MCP (`get-request-logs`), jadi harus dicek di UI. MCP tetap berguna untuk memastikan request-nya 200 dan dilayani Function. Log Netlify Free hanya disimpan sekitar 24 jam.
 3. Hasil:
    - Baris muncul dengan `msAfterResponse` ≈ 1500: **`after()` jalan**. Catat di log fase.
    - Baris tidak muncul: `after()` tidak jalan. Catat di log fase, supaya Fase 7 memakai alternatif (antrean di Postgres + `pg_cron`, atau mengerjakan sebelum respons).
@@ -236,7 +237,7 @@ Isi untuk staging lalu produksi. Simpan hasil di `progress/fase-01.md`.
 | 7 | Login admin dan antrean admin (submissions, withdrawals, rate card validations) | | |
 | 8 | Login admin **tidak** mengeluarkan sesi app user di browser yang sama | | |
 | 9 | Chatbot `/api/chat` menjawab | | |
-| 10 | `/api/health/after` + baris `after-probe` di log | | |
+| 10 | `/api/health/after` + baris `after-probe` di log | ✅ branch `migrasi-supabase`, 1521 ms | |
 | 11 | Sertifikat HTTPS valid, `www` → apex | — | |
 
 > Catatan: org Appwrite turun ke plan Free pada 2026-11-08 dan, menurut catatan pemilik, hanya tersisa 1 bucket (`campaign-assets`) dan 2 Function (`create-user-profile`, `create-user-wallet`) per project. Bila skenario 5 (avatar) atau fitur yang bergantung pada Function lain gagal, cek dulu apakah penyebabnya batas plan Appwrite, bukan hosting Netlify.
