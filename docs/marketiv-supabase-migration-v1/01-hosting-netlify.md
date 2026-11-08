@@ -45,7 +45,7 @@ Alasan dipisah dari fase lain:
   - prod: `api.marketiv.id` dan `api-admin.marketiv.id` dengan app di `marketiv.id` (tidak berubah)
   - staging: ~~`api.marketiv-dev.my.id` dan `api-admin.marketiv-dev.my.id` dengan app di `marketiv-dev.my.id`~~ → `api-staging.marketiv.id` dan `api-admin-staging.marketiv.id` dengan app di `staging.marketiv.id` / `staging.admin.marketiv.id`
 - [ ] Tambahkan domain Netlify (`*.netlify.app` dan domain resmi) ke daftar Web Platform / allowed origin di Appwrite Console. Daftar lengkap di runbook §6 (pemilik).
-- [ ] Verifikasi bahwa `after()` dari `next/server` berjalan di Netlify. Fase 7 bergantung padanya untuk kerja lambat. Kalau tidak jalan, catat di log supaya Fase 7 memakai alternatif. Route probe `/api/health/after` sudah ada; menunggu deploy (runbook §7).
+- [x] Verifikasi bahwa `after()` dari `next/server` berjalan di Netlify. Fase 7 bergantung padanya untuk kerja lambat. Kalau tidak jalan, catat di log supaya Fase 7 memakai alternatif. **Jalan** (2026-11-08, branch deploy `migrasi-supabase`): callback berjalan 1521 ms setelah respons.
 - [ ] Ukur pemakaian kredit setelah satu minggu dan tulis perkiraan bulanan di log. (tertunda, 2026-11-15)
 - [x] Perbarui `.github/workflows/ci.yml` bila perlu. Deploy dijalankan oleh Netlify, CI tetap menjalankan lint, typecheck, dan build.
 - [ ] Matikan Appwrite Sites setelah domain prod stabil 7 hari. (tertunda)
