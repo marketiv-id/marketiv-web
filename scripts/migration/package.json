@@ -1,0 +1,25 @@
+{
+  "name": "marketiv-migration-tools",
+  "private": true,
+  "type": "module",
+  "description": "Tooling migrasi Appwrite -> Supabase (export Appwrite, loader staging). Kredensial hanya dari env. Butuh Node >= 22.18 (type stripping bawaan).",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "export": "node export-appwrite.ts",
+    "load": "node load-staging.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.119.0",
+    "node-appwrite": "31.1.0",
+    "pg": "8.23.1",
+    "undici": "6.29.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "@types/pg": "8.23.1",
+    "typescript": "5.9.3"
+  }
+}
