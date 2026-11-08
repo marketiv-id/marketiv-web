@@ -9,8 +9,9 @@
  * Upload helper Sprint 3: bucket avatars/logos/portfolios/campaign-assets bersifat
  * client-writable langsung (create("users"), fileSecurity:false), jadi tidak lewat
  * Function validate-and-upload. Aturan ukuran/ekstensi divalidasi di klien karena
- * beda per bucket (5MB avatars/logos, 50MB portfolios, 100MB campaign-assets) dan
- * pesan error SDK tidak informatif.
+ * beda per bucket (5MB avatars/logos, 50MB portfolios, 50MB campaign-assets) dan
+ * pesan error SDK tidak informatif. campaign-assets turun dari 100MB ke 50MB
+ * mengikuti batas file plan Free Supabase (migrasi Fase 3, 0012_storage.sql).
  */
 import { Storage, ID, Permission, Role } from "appwrite";
 import { client } from "./client";
@@ -30,7 +31,7 @@ export const BUCKET_RULES: Record<
   creatorBanners: { maxBytes: 5_000_000, extensions: ["jpg", "jpeg", "png", "webp"] },
   logos: { maxBytes: 5_000_000, extensions: ["jpg", "jpeg", "png", "webp"] },
   portfolios: { maxBytes: 50_000_000, extensions: ["jpg", "jpeg", "png", "webp", "pdf", "mp4"] },
-  campaignAssets: { maxBytes: 100_000_000, extensions: [] },
+  campaignAssets: { maxBytes: 50_000_000, extensions: [] },
 };
 
 export type UploadedFile = {

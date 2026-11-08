@@ -4,7 +4,8 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(29);
 
--- 1. 32 tabel di schema public, semuanya dengan RLS aktif dan belum ada policy.
+-- 1. 32 tabel di schema public, semuanya dengan RLS aktif.
+--    (Sejak Fase 3 tiap tabel punya policy SELECT; detail di rls.test.sql.)
 select is(
   (select count(*)::int from pg_tables where schemaname = 'public'),
   32,
@@ -16,9 +17,9 @@ select is(
   'RLS aktif di semua tabel public'
 );
 select is(
-  (select count(*)::int from pg_policies where schemaname = 'public'),
+  (select count(*)::int from pg_policies where schemaname = 'public' and cmd <> 'SELECT'),
   0,
-  'belum ada policy (dibuat di Fase 3)'
+  'tidak ada policy tulis (INSERT/UPDATE/DELETE) untuk client'
 );
 
 -- 2. Semua tabel (kecuali legacy_user_map) punya trigger set_updated_at.
