@@ -1,7 +1,7 @@
 # Fase 02 — Fondasi Supabase + skema database
 
 - Tanggal: 2026-11-08
-- PR: PR_LINK
+- PR: https://github.com/marketiv-id/marketiv-web/pull/33
 - Status: sebagian. Semua task kode selesai dan terverifikasi; skema sudah diterapkan ke Supabase staging. Satu verifikasi diblokir: export data **asli** Appwrite staging gagal karena kuota billing project Appwrite staging habis (`402 billing_limit_exceeded`). Loader sudah diuji dengan fixture sintetis.
 
 ## Status task
