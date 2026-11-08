@@ -1,7 +1,7 @@
 # Fase 03 — RLS, helper otorisasi, storage, realtime
 
 - Tanggal: 2026-11-08
-- PR: (diisi setelah PR dibuat)
+- PR: https://github.com/marketiv-id/marketiv-web/pull/36
 - Status: selesai. Migration 0010–0013 lulus lokal (pgTAP 100/100, advisor lokal bersih) dan sudah diterapkan ke Supabase staging. Satu WARN advisor staging tersisa dan bukan dari skema: `auth_leaked_password_protection` (setelan Auth, lihat Isu terbuka).
 
 ## Status task
