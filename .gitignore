@@ -64,3 +64,6 @@ appwrite.config.json
 .mcp.json
 .antigravity/
 *.pdf
+
+# Tooling migrasi: hasil export Appwrite (PII + hash password) — JANGAN di-commit
+scripts/migration/.data/

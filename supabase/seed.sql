@@ -1,0 +1,4 @@
+-- Seed lokal untuk `supabase db reset`.
+-- Sengaja kosong: data uji dimuat dari export Appwrite lewat
+-- scripts/migration/load-staging.ts (lihat scripts/migration/README.md),
+-- bukan di-commit ke repo (berisi PII).
