@@ -25,7 +25,7 @@ Alasan dipisah dari fase lain:
 
 - [x] Hubungkan repo ke dua site Netlify (dibuat pemilik):
   - `marketiv-web`: base directory `/` → dibuat sebagai **`marketiv-production`** (nama `marketiv-web` sudah dipakai di Netlify)
-  - `marketiv-admin`: base directory `admin` → ⚠️ deploy pertama tidak menjalankan build dan `/` 404; pemilik perlu memastikan base directory = `admin` (runbook A.1)
+  - `marketiv-admin`: base directory `admin` → deploy pertama tidak menjalankan build dan `/` 404, karena build command UI kosong dan publish = `admin/`; diperbaiki oleh `admin/netlify.toml` (runbook A.1)
 - [x] Tambah `netlify.toml` di root dan di `admin/`: perintah build, versi Node, dan `publish` sesuai adapter Next.js Netlify.
 - [x] **Matikan auto-publish produksi** di kedua site. Tombol "Stop auto publishing" tidak dipakai; production branch kedua site = `production`, jadi deploy produksi hanya terjadi saat merge sengaja ke `production`. Ditambah perintah `ignore` yang melewati build bila app tidak berubah.
 - [ ] Salin env `NEXT_PUBLIC_APPWRITE_*`, `VERTEX_AI_*`, `OPENROUTER_*`, dan `SENTRY_*` ke Netlify, dengan scope Deploy Preview, Branch deploy, dan Production sesuai kebutuhan.
@@ -33,10 +33,10 @@ Alasan dipisah dari fase lain:
   - [x] Deploy Preview + Branch deploy, env publik: di `netlify.toml` dan `admin/netlify.toml`
   - [ ] Deploy Preview + Branch deploy, secret dan runtime (`VERTEX_AI_*`, `OPENROUTER_*`, `SENTRY_ENVIRONMENT`, `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` sandbox) dan `NEXT_PUBLIC_SENTRY_DSN` di semua konteks: pemilik (runbook A.5)
 - [x] Cek `next.config.ts` dan `admin/next.config.ts`: wrapper Sentry dan `images.remotePatterns`. Pastikan `sgp.cloud.appwrite.io` dan `api.marketiv.id` tetap ada.
-- [ ] Map branch:
+- [x] Map branch:
   - [x] `production` → Production (production branch kedua site)
-  - [ ] `staging` → branch deploy staging (pemilik, runbook A.3)
-  - [ ] `migrasi-supabase` → branch deploy, dipakai QA migrasi mulai Fase 4 dengan env Supabase staging (pemilik, runbook A.3)
+  - [x] `staging` → branch deploy staging (diatur pemilik)
+  - [x] `migrasi-supabase` → branch deploy, dipakai QA migrasi mulai Fase 4 dengan env Supabase staging (diatur pemilik)
 - [ ] Pindahkan domain dengan urutan (runbook B dan C):
   1. Domain staging: **`staging.marketiv.id` dan `staging.admin.marketiv.id`** (keputusan pemilik 2026-11-08, menggantikan `marketiv-dev.my.id`; branch subdomain Netlify)
   2. Verifikasi

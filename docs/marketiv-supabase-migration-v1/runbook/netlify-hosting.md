@@ -124,14 +124,18 @@ Tanda 🧑 = dikerjakan pemilik di dashboard. Tanda 🤖 = bisa dikerjakan sesi 
 
 ### A. Pengaturan situs Netlify (sekali)
 
-1. 🧑 **Situs admin: base directory.** Buka `marketiv-admin` → Project configuration → Build & deploy → Build settings. Pastikan **Base directory = `admin`**, build command dan publish directory kosong (dibaca dari `admin/netlify.toml`).
-   > Deploy produksi admin pertama (`6aeff3149ed18c1333bfd3ca`) selesai dalam 5 detik tanpa build dan tanpa plugin Next.js, lalu `/` mengembalikan **404**. Kemungkinan besar base directory atau build command belum benar.
+1. 🧑 **Situs admin: build settings.** Buka `marketiv-admin` → Project configuration → Build & deploy → Build settings:
+   - **Base directory = `admin`** (sudah benar sejak awal).
+   - **Package directory:** biarkan hanya berisi prefix `admin/`. Prefix itu tampilan base directory dan tidak bisa dihapus; artinya kolom kosong.
+   - **Build command:** kosong. Nilainya dibaca dari `admin/netlify.toml` (`npm run build`).
+   - **Publish directory:** biarkan prefix `admin/` saja, atau ketik `.next` setelah prefix. `admin/netlify.toml` (`publish = ".next"`) menimpa isian UI.
+   > Deploy produksi admin pertama (`6aeff3149ed18c1333bfd3ca`) selesai dalam 5 detik tanpa build dan tanpa plugin Next.js, lalu `/` mengembalikan **404**. Penyebabnya: build command kosong dan publish directory = `admin/`, sehingga Netlify mempublikasikan kode sumber mentah. `admin/netlify.toml` sekarang mengisi keduanya.
 2. 🧑 **Situs user:** base directory `/` (atau kosong). Build command dan publish kosong (dibaca dari `netlify.toml`).
-3. 🧑 **Branch deploys** di kedua situs → *Let me add individual branches*: `staging`, `migrasi-supabase`.
+3. 🧑 **Branch deploys** di kedua situs → *Let me add individual branches*: `staging`, `migrasi-supabase`. Production branch tetap `production`; jangan diganti ke `staging`, karena setiap push ke `staging` akan menjadi deploy produksi (15 kredit). ✅ diatur pemilik 2026-11-08.
 4. 🧑 **Deploy Previews** di kedua situs: *Any pull request against your production branch / branch deploy branches* aktif.
 5. 🧑 **Env yang masih kosong** (§3, baris bertanda ❌): `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ENVIRONMENT=staging` (non-prod), `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` sandbox (non-prod), `VERTEX_AI_*` dan `OPENROUTER_*` (non-prod). Simpan secret dengan opsi *Contains secret values*.
 6. 🧑 **Visitor access.** Saat ini kedua situs memakai *Netlify team login* untuk **semua** deploy, termasuk produksi (pengunjung melihat 401). Biarkan dulu sampai langkah C.3.
-7. 🧑 Setelah langkah 1–5, Trigger deploy `staging` di kedua situs (gratis, branch deploy) dan cek build log.
+7. 🧑 Setelah langkah 1–5, Trigger deploy branch `migrasi-supabase` di kedua situs (gratis, branch deploy) dan cek build log. Branch ini sudah berisi `netlify.toml` dan fix build admin. `staging` baru bisa di-build dengan benar setelah `migrasi-supabase` di-merge ke `staging`.
 
 ### B. Domain staging
 

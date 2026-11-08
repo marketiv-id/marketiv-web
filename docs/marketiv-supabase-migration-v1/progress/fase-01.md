@@ -2,12 +2,12 @@
 
 - Tanggal: 2026-11-08
 - PR: https://github.com/marketiv-id/marketiv-web/pull/32
-- Status: **sebagian**. Bagian repo selesai: `netlify.toml` kedua app, CI, probe `after()`, runbook, dan daftar env. Bagian dashboard menunggu pemilik: base directory admin, branch deploy, env non-prod yang berisi secret, domain staging/prod, Web Platform Appwrite, dan smoke test. Sesi cloud tidak bisa membuka domain Netlify atau Marketiv (proxy menolak), jadi smoke test dan verifikasi `after()` belum bisa dijalankan dari sesi.
+- Status: **sebagian**. Bagian repo selesai: `netlify.toml` kedua app, CI, probe `after()`, runbook, dan daftar env. Bagian dashboard menunggu pemilik: env non-prod yang berisi secret, domain staging/prod, Web Platform Appwrite, dan smoke test. Sesi cloud tidak bisa membuka domain Netlify atau Marketiv (proxy menolak), jadi smoke test dan verifikasi `after()` belum bisa dijalankan dari sesi.
 
 ## Status task
 - [x] Hubungkan repo ke dua site Netlify (dikerjakan pemilik)
   - [x] Situs user dibuat sebagai **`marketiv-production`** (nama `marketiv-web` sudah dipakai di Netlify), base `/`. Deploy produksi pertama `6aeff301b76db6e06302a304` (commit `534a9ad`, branch `production`) **ready**, adapter `@netlify/plugin-nextjs@5.16.6`, 1 Function, region `us-east-2`.
-  - [ ] Situs `marketiv-admin`: deploy produksi pertama `6aeff3149ed18c1333bfd3ca` selesai **5 detik tanpa build**, tanpa plugin Next.js, dan `/` mengembalikan **404** (log request Netlify). Base directory atau build command kemungkinan belum benar → runbook A.1.
+  - [x] Situs `marketiv-admin`, base `admin` (dikonfirmasi pemilik). Deploy produksi pertama `6aeff3149ed18c1333bfd3ca` selesai **5 detik tanpa build**, tanpa plugin Next.js, dan `/` mengembalikan **404** (log request Netlify). Penyebab: di UI, build command kosong dan publish directory = base (`admin/`), jadi Netlify mempublikasikan kode sumber mentah. Sekarang `admin/netlify.toml` (merged lewat PR #32) memberi build command dan publish `.next`, yang menimpa isian UI. Build admin juga butuh fix `turbopack.root` dari PR yang sama.
 - [x] `netlify.toml` di root dan `admin/`
 - [x] Auto-publish produksi: pemilik memakai production branch = `production` di kedua situs (tombol "Stop auto publishing" tidak ditemukan di UI). Ditambah perintah `ignore` supaya situs yang app-nya tidak berubah tidak di-build.
 - [ ] Env
@@ -18,7 +18,7 @@
 - [x] Cek `next.config.ts` dan `admin/next.config.ts`: `sgp.cloud.appwrite.io` dan `api.marketiv.id` ada di kedua file. Root memakai `images.unoptimized: true`, jadi tidak memakai Netlify Image CDN (hemat kredit). Wrapper Sentry tetap; fallback environment yang spesifik Vercel diganti (lihat Keputusan).
 - [ ] Map branch
   - [x] `production` → Production
-  - [ ] `staging` dan `migrasi-supabase` → branch deploy (pemilik, runbook A.3; Netlify MCP tidak punya operasi pengaturan build)
+  - [x] `staging` dan `migrasi-supabase` → branch deploy (diatur pemilik 2026-11-08: *Let me add individual branches*)
 - [ ] Domain staging → verifikasi → prod (pemilik, runbook B dan C)
 - [ ] Cookie first-party: rencana selesai (runbook §4); eksekusi butuh custom domain Appwrite staging `api-staging.marketiv.id` dan `api-admin-staging.marketiv.id` (runbook B.1)
 - [ ] Web Platform Appwrite: daftar lengkap di runbook §6 (pemilik)
@@ -82,8 +82,8 @@
 - Nama env lain sudah ada; daftar lengkap per situs dan konteks ada di runbook §3.
 
 ## Isu terbuka
-- **Situs admin Netlify belum ter-build** (deploy 5 detik, 404). Pemilik cek base directory = `admin` (runbook A.1), lalu Trigger deploy `staging`.
-- **Branch deploy `staging` dan `migrasi-supabase` belum bisa diverifikasi** dari sesi (Netlify MCP tidak punya operasi build settings). Pemilik mengaktifkannya (runbook A.3).
+- **Situs admin Netlify belum pernah ter-build dengan benar** (deploy 5 detik, 404; penyebab di atas). Verifikasi lewat branch deploy `migrasi-supabase`, yang sudah berisi `netlify.toml` dan fix `turbopack.root`. Branch `staging` belum berisi keduanya sampai `migrasi-supabase` di-merge ke `staging`.
+- **Isian UI Netlify:** kolom *Package directory*, *Publish directory*, dan *Functions directory* menampilkan prefix base directory (`admin/`) yang tidak bisa dihapus. Prefix itu bukan isian; nilai efektifnya = base directory. Isian `netlify.toml` tetap menimpa UI.
 - **Env non-produksi yang berisi secret belum ada.** Tanpa `VERTEX_AI_*`/`OPENROUTER_*` di konteks non-prod, `/api/chat` di staging gagal. Tanpa `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` non-prod, Snap sandbox di staging gagal.
 - **`NEXT_PUBLIC_SENTRY_DSN` belum ada di semua konteks**, jadi Sentry tidak mengirim event.
 - **`NEXT_PUBLIC_MIDTRANS_ENV` produksi = `sandbox`.** Pemilik perlu memastikan ini disengaja.
