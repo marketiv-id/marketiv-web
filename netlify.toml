@@ -1,0 +1,68 @@
+# Netlify config — situs user (Netlify project "marketiv-production", base directory "/").
+# Situs admin punya file sendiri di admin/netlify.toml (base directory "admin").
+# Runbook: docs/marketiv-supabase-migration-v1/runbook/netlify-hosting.md
+#
+# Aturan kredit (Netlify Free, 300 kredit/bulan, tanpa overage):
+# - Deploy produksi = 15 kredit. Production branch = `production`; deploy produksi
+#   hanya terjadi saat merge sengaja ke `production`.
+# - Deploy Preview (PR) dan branch deploy (`staging`, `migrasi-supabase`) gratis.
+#
+# PENTING: nilai di file ini hanya dibaca saat BUILD. Variabel yang dibaca Route
+# Handler saat runtime (secret, SENTRY_ENVIRONMENT, dll.) wajib diisi di UI Netlify.
+# Jangan pernah menaruh secret di sini: repo ini publik.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+  # Lewati build bila commit tidak menyentuh kode situs user (hemat kredit di
+  # produksi dan antrean build). Exit 0 = lewati, exit 1 = build.
+  # - Build pertama branch / tanpa cache: selalu build.
+  # - NETLIFY_FORCE_BUILD=true (env UI): selalu build.
+  # - git diff gagal (commit cache hilang dari clone): build (fail-open).
+  ignore = """
+    if [ "$NETLIFY_FORCE_BUILD" = "true" ] || [ -z "$CACHED_COMMIT_REF" ] || [ "$CACHED_COMMIT_REF" = "$COMMIT_REF" ]; then exit 1; fi;
+    git diff --quiet "$CACHED_COMMIT_REF" "$COMMIT_REF" -- . \
+      ':(exclude)admin' ':(exclude)docs' ':(exclude)00_BACKEND' ':(exclude)prompts' \
+      ':(exclude).github' ':(exclude)scripts/migration'
+  """
+
+[build.environment]
+  # Next.js 16 butuh Node >= 20.9. Disamakan dengan CI (.github/workflows/ci.yml).
+  NODE_VERSION = "22"
+  NEXT_TELEMETRY_DISABLED = "1"
+
+# Next.js dijalankan oleh adapter OpenNext Netlify (@netlify/plugin-nextjs),
+# dipasang otomatis oleh Netlify. Sengaja tidak di-pin.
+
+# ---------------------------------------------------------------------------
+# Env PUBLIK untuk konteks non-produksi (build-time, diinline ke bundle browser).
+# Produksi TIDAK diatur di sini: nilainya ada di UI Netlify (konteks Production)
+# supaya file ini tidak bisa menimpa konfigurasi produksi.
+#
+# Deploy Preview (PR) dan branch deploy (`staging`, `migrasi-supabase`) memakai
+# Appwrite STAGING (project 69f9d45b00315cb0ec2f) sampai Fase 4. Fase 4 menambah
+# [context.migrasi-supabase.environment] untuk Supabase staging.
+#
+# Endpoint: api.marketiv-dev.my.id = custom domain Appwrite staging yang aktif saat
+# ini. Setelah api-staging.marketiv.id aktif dan staging.marketiv.id menjadi branch
+# subdomain (runbook langkah B), ganti endpoint dan URL di bawah.
+# ---------------------------------------------------------------------------
+[context.deploy-preview.environment]
+  NEXT_PUBLIC_APP_ENV = "staging"
+  NEXT_PUBLIC_USE_MOCK_DATA = "false"
+  NEXT_PUBLIC_ENABLE_GOOGLE_OAUTH = "false"
+  NEXT_PUBLIC_MIDTRANS_ENV = "sandbox"
+  NEXT_PUBLIC_APPWRITE_ENDPOINT = "https://api.marketiv-dev.my.id/v1"
+  NEXT_PUBLIC_APPWRITE_PROJECT_ID = "69f9d45b00315cb0ec2f"
+  NEXT_PUBLIC_APPWRITE_DATABASE_ID = "6a4c8598001da3b0d7f0"
+  NEXT_PUBLIC_ADMIN_APP_URL = "https://staging--marketiv-admin.netlify.app"
+
+[context.branch-deploy.environment]
+  NEXT_PUBLIC_APP_ENV = "staging"
+  NEXT_PUBLIC_USE_MOCK_DATA = "false"
+  NEXT_PUBLIC_ENABLE_GOOGLE_OAUTH = "false"
+  NEXT_PUBLIC_MIDTRANS_ENV = "sandbox"
+  NEXT_PUBLIC_APPWRITE_ENDPOINT = "https://api.marketiv-dev.my.id/v1"
+  NEXT_PUBLIC_APPWRITE_PROJECT_ID = "69f9d45b00315cb0ec2f"
+  NEXT_PUBLIC_APPWRITE_DATABASE_ID = "6a4c8598001da3b0d7f0"
+  NEXT_PUBLIC_ADMIN_APP_URL = "https://staging--marketiv-admin.netlify.app"

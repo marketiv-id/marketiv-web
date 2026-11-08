@@ -1,0 +1,42 @@
+# Netlify config — situs admin (Netlify project "marketiv-admin").
+# Base directory situs WAJIB "admin" di UI Netlify, supaya file ini yang dibaca
+# (bukan netlify.toml di root, yang membangun app user).
+# Runbook: docs/marketiv-supabase-migration-v1/runbook/netlify-hosting.md
+#
+# Aturan kredit: lihat netlify.toml di root. Production branch = `production`.
+# Nilai di file ini hanya dibaca saat BUILD. Jangan menaruh secret di sini.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+  # Lewati build bila commit tidak menyentuh admin/. Exit 0 = lewati, exit 1 = build.
+  # Build pertama / tanpa cache / NETLIFY_FORCE_BUILD=true / diff gagal: build.
+  ignore = """
+    if [ "$NETLIFY_FORCE_BUILD" = "true" ] || [ -z "$CACHED_COMMIT_REF" ] || [ "$CACHED_COMMIT_REF" = "$COMMIT_REF" ]; then exit 1; fi;
+    git diff --quiet "$CACHED_COMMIT_REF" "$COMMIT_REF" -- .
+  """
+
+[build.environment]
+  NODE_VERSION = "22"
+  NEXT_TELEMETRY_DISABLED = "1"
+
+# ---------------------------------------------------------------------------
+# Env PUBLIK untuk konteks non-produksi. Produksi diatur di UI Netlify.
+# Admin memakai hostname API terpisah dari app user (isolasi cookie sesi,
+# lihat docs/marketiv-appwrite-session-isolation-spec/), project/database sama.
+# Setelah api-admin-staging.marketiv.id aktif dan staging.admin.marketiv.id menjadi
+# branch subdomain (runbook langkah B), ganti endpoint dan URL di bawah.
+# ---------------------------------------------------------------------------
+[context.deploy-preview.environment]
+  NEXT_PUBLIC_APP_ENV = "staging"
+  NEXT_PUBLIC_APPWRITE_ENDPOINT = "https://api-admin.marketiv-dev.my.id/v1"
+  NEXT_PUBLIC_APPWRITE_PROJECT_ID = "69f9d45b00315cb0ec2f"
+  NEXT_PUBLIC_APPWRITE_DATABASE_ID = "6a4c8598001da3b0d7f0"
+  NEXT_PUBLIC_USER_APP_URL = "https://staging--marketiv-production.netlify.app"
+
+[context.branch-deploy.environment]
+  NEXT_PUBLIC_APP_ENV = "staging"
+  NEXT_PUBLIC_APPWRITE_ENDPOINT = "https://api-admin.marketiv-dev.my.id/v1"
+  NEXT_PUBLIC_APPWRITE_PROJECT_ID = "69f9d45b00315cb0ec2f"
+  NEXT_PUBLIC_APPWRITE_DATABASE_ID = "6a4c8598001da3b0d7f0"
+  NEXT_PUBLIC_USER_APP_URL = "https://staging--marketiv-production.netlify.app"
