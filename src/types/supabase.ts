@@ -1728,7 +1728,51 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      hit_otp_rate_limit: {
+        Args: {
+          p_email: string;
+          p_ip: string;
+          p_key: string;
+          p_max: number;
+          p_window_seconds: number;
+        };
+        Returns: {
+          blocked: boolean;
+          retry_after_seconds: number;
+        }[];
+      };
+      provision_user: {
+        Args: {
+          p_display_name?: string;
+          p_email: string;
+          p_email_verified?: boolean;
+          p_phone?: string;
+          p_role: string;
+          p_user_id: string;
+        };
+        Returns: {
+          address: string | null;
+          created_at: string;
+          email: string;
+          email_verified_at: string | null;
+          id: string;
+          kyc_status: string;
+          kyc_verified_at: string | null;
+          phone: string | null;
+          role: string;
+          status: string;
+          suspended_at: string | null;
+          tos_accepted_at: string | null;
+          tos_version: string | null;
+          updated_at: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "users";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
     };
     Enums: {
       [_ in never]: never;

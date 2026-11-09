@@ -1,9 +1,8 @@
-import { ID, OAuthProvider } from "appwrite";
 import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
 import { AUTH_CONFIG } from "@/config/auth.config";
 import { mockDelay } from "@/lib/mock-delay";
-import { account } from "@/lib/appwrite/account";
-import { executeFunction, FUNCTION_IDS, FunctionExecutionError } from "@/lib/appwrite/functions";
+import { createClient } from "@/lib/supabase/client";
+import { authErrorCode, authErrorMessage } from "@/lib/auth/auth-error";
 import { parseOrErrors } from "@/lib/validations/to-field-errors";
 import {
   loginSchema,
@@ -21,7 +20,6 @@ import {
   ok,
   fail,
   failValidation,
-  mapWriteErrorCode,
   noData,
 } from "@/services/shared/service-result";
 import {
@@ -30,6 +28,7 @@ import {
   setMockRole,
   type SessionUser,
 } from "./session.service";
+import { postAuthApi } from "./auth-api";
 import { clearOnboardingSkip } from "@/lib/onboarding-skip";
 import type { ServiceResult, ServiceErrorCode, UserRole } from "@/types/domain";
 
@@ -40,125 +39,27 @@ import type { ServiceResult, ServiceErrorCode, UserRole } from "@/types/domain";
  * Arah import satu arah (auth → session), jadi tidak ada siklus lewat
  * service-result.ts:requireUserId yang mengimpor session.service.
  *
- * Komponen TIDAK boleh memanggil `account` langsung (R1).
+ * Fase 4 migrasi Supabase:
+ *   - login / logout / OAuth  → Supabase Auth langsung dari browser (cookie @supabase/ssr)
+ *   - register, provisioning, OTP, reset password → Route Handler `/api/auth/*`
+ *     (role di-whitelist & semua tulis DB di server, service role)
+ *
+ * Komponen TIDAK boleh memanggil client Supabase langsung (R1).
  */
-
-/** Prefs yang dibaca `create-user-profile` untuk membentuk baris users + profil. */
-interface ProfilePrefs {
-  role: UserRole;
-  phone?: string;
-  displayName?: string;
-}
 
 export interface RegisterOutcome {
   user: SessionUser;
   /**
-   * false ⇒ akun Auth dan sesi SUDAH terbentuk, tapi baris `users`/profil belum.
-   * Ini state normal hari ini: `create-user-profile` belum punya `execute` untuk
-   * role `users` (handoff-auth-sprint6.md §A-1).
+   * false ⇒ akun Auth dan sesi SUDAH terbentuk, tapi baris `users`/profil belum
+   * (RPC provision_user gagal). UI menawarkan "coba lagi" (provisionUserProfile).
    */
   profileProvisioned: boolean;
   provisionErrorCode?: ServiceErrorCode;
 }
 
 export interface PasswordOtpRequestOutcome {
-  /** Auth user id returned by Appwrite Email OTP. Required to verify OTP later. */
+  /** Dipertahankan demi kompatibilitas tipe; Supabase tidak butuh userId untuk OTP. */
   userId: string | null;
-}
-
-interface AppwriteErrorLike {
-  code?: number;
-  type?: string;
-  message?: string;
-}
-
-function getAppwriteError(err: unknown): AppwriteErrorLike {
-  if (typeof err !== "object" || err === null) {
-    return typeof err === "string" ? { message: err } : {};
-  }
-
-  const e = err as Record<string, unknown>;
-  const res = (e.response && typeof e.response === "object" ? e.response : {}) as Record<string, unknown>;
-
-  const code =
-    typeof e.code === "number"
-      ? e.code
-      : typeof e.status === "number"
-      ? e.status
-      : typeof res.code === "number"
-      ? res.code
-      : typeof res.status === "number"
-      ? res.status
-      : undefined;
-
-  const type =
-    typeof e.type === "string" && e.type !== ""
-      ? e.type
-      : typeof res.type === "string" && res.type !== ""
-      ? res.type
-      : typeof e.name === "string" && e.name !== ""
-      ? e.name
-      : undefined;
-
-  const message =
-    typeof e.message === "string" && e.message !== ""
-      ? e.message
-      : typeof res.message === "string" && res.message !== ""
-      ? res.message
-      : undefined;
-
-  return { code, type, message };
-}
-
-/**
- * Pesan yang bisa dibaca manusia untuk kegagalan Appwrite Auth.
- *
- * Yang dispesialisasi HANYA teks. `code` selalu datang dari mapWriteErrorCode —
- * kontrak repo: UI bercabang di `code`, tidak pernah mem-parse `error`.
- */
-function authMessage(err: unknown, fallback: string, scope?: string): string {
-  const { type, code, message } = getAppwriteError(err);
-
-  if (process.env.NODE_ENV !== "production") {
-    const logDetails: Record<string, unknown> = {};
-    if (code !== undefined) logDetails.code = code;
-    if (type !== undefined) logDetails.type = type;
-    if (message !== undefined) logDetails.message = message;
-    if (Object.keys(logDetails).length === 0 && err) {
-      logDetails.raw = String(err);
-    }
-
-    console.warn(`[auth${scope ? `.${scope}` : ""}]`, logDetails);
-  }
-
-  if (code === 0 || (message && message.toLowerCase().includes("network"))) {
-    return "Tidak dapat terhubung ke server. Periksa koneksi internet lalu coba lagi.";
-  }
-
-  switch (type) {
-    case "user_already_exists":
-    case "user_email_already_exists":
-      return "Email ini sudah terdaftar. Silakan masuk atau gunakan email lain.";
-    case "user_invalid_credentials":
-      return "Email atau password yang kamu masukkan tidak cocok.";
-    case "user_blocked":
-      return "Akun kamu sedang ditangguhkan. Hubungi admin Marketiv.";
-    case "user_password_mismatch":
-      return "Konfirmasi password tidak sama.";
-    case "password_recently_used":
-    case "user_password_recently_used":
-      return "Password ini pernah kamu pakai. Gunakan password lain.";
-    case "user_invalid_token":
-      return "Kode OTP salah atau kedaluwarsa. Minta kode baru.";
-    case "general_rate_limit_exceeded":
-      return "Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.";
-    case "user_password_reset_required":
-      return "Password akun perlu diperbarui. Silakan reset password terlebih dahulu.";
-    case "general_unknown_origin":
-      return "Aplikasi belum diizinkan terhubung ke server. Hubungi admin Marketiv.";
-    default:
-      return fallback;
-  }
 }
 
 const mockRoleFromEmail = (email: string): UserRole => {
@@ -173,115 +74,86 @@ const mockRoleFromEmail = (email: string): UserRole => {
 // ---------------------------------------------------------------------------
 
 /**
- * Jalankan `create-user-profile` untuk akun yang sedang login.
+ * Buat (atau lengkapi) users + profil + wallet + kuota untuk akun yang login,
+ * lewat `POST /api/auth/provision` (RPC `provision_user`, idempoten).
  *
- * Tanpa argumen dengan sengaja: ia membaca `$id` dan `prefs` dari akun Auth
- * sendiri, sehingga satu implementasi melayani tiga pemanggil — akhir register,
- * tombol "coba lagi" di UI, dan self-heal saat login berikutnya.
- *
- * Function-nya idempoten (ensureUserMirror/ensureUmkmProfile/ensureCreatorProfile/
- * ensureStorageUsage semuanya cek-dulu-baru-tulis), jadi memanggilnya berkali-kali
- * aman.
+ * Satu implementasi melayani: akhir register, tombol "coba lagi" di UI,
+ * self-heal saat login, dan akun baru dari Google OAuth (dengan `role`).
+ * Tanpa `role`, server memakai role yang tercatat saat register.
  */
-export async function provisionUserProfile(): Promise<ServiceResult<null>> {
+export async function provisionUserProfile(
+  role?: "umkm" | "creator"
+): Promise<ServiceResult<null>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(200);
     return ok(null);
   }
 
-  try {
-    const authUser = await account.get();
-    const prefs = authUser.prefs as Record<string, unknown> | undefined;
-    // Bentuk payload meniru objek user event Appwrite, karena Function membaca
-    // keduanya lewat jalur yang sama (`getEventUser`):
-    //   - `role` di level atas DAN di prefs — `user.role || user.prefs?.role`
-    //   - `email` → ditulis apa adanya ke kolom `users.email`
-    //   - `name`  → fallback `displayName` creator_profiles saat prefs kosong
-    // Tanpa email & name, kedua kolom itu tersimpan sebagai string kosong.
-    await executeFunction(FUNCTION_IDS.createUserProfile, {
-      $id: authUser.$id,
-      role: prefs?.role,
-      email: authUser.email,
-      name: authUser.name,
-      phone: authUser.phone,
-      prefs,
-    });
-    return ok(null);
-  } catch (err) {
-    const code = mapWriteErrorCode(err);
-    return fail(
-      code === "auth" || code === "forbidden"
-        ? "Profil belum bisa dibuat otomatis — izin Function create-user-profile belum aktif. Hubungi admin Marketiv."
-        : "Gagal membuat profil pengguna. Coba lagi.",
-      code,
-      noData<null>()
-    );
-  }
+  const res = await postAuthApi<unknown>(
+    "/api/auth/provision",
+    role ? { role } : {},
+    "Gagal membuat profil pengguna. Coba lagi."
+  );
+  return res.success ? ok(null) : fail(res.error ?? "Gagal membuat profil pengguna. Coba lagi.", res.code ?? "unknown", noData<null>());
 }
 
 // ---------------------------------------------------------------------------
 // Register
 // ---------------------------------------------------------------------------
 
+interface RegisterApiResponse {
+  userId: string;
+  sessionCreated: boolean;
+  profileProvisioned: boolean;
+  provisionErrorCode?: ServiceErrorCode;
+  provisionError?: string;
+}
+
 /**
- * Urutan register (rencana Sprint 6 §A-2), dua fase:
+ * Register lewat `POST /api/auth/register`: server me-whitelist role, membuat
+ * akun (sesi langsung di cookie), lalu RPC `provision_user`.
  *
- *   fase 1 (harus sukses): account.create → createEmailPasswordSession → updatePrefs
- *   fase 2 (boleh gagal):  executeFunction(create-user-profile)
- *
- * prefs hanya bisa ditulis dengan sesi aktif, jadi urutan ini tidak bisa dibalik —
- * itulah sebabnya trigger event users.*.create tidak akan pernah menemukan role.
- *
- * Kegagalan fase 2 dikembalikan sebagai SUKSES dengan profileProvisioned:false,
- * bukan sebagai fail. Akun dan sesi sudah nyata ada; melaporkannya sebagai gagal
- * membuat user mencoba ulang dengan email yang sama lalu kena 409
- * user_already_exists — jalan buntu tanpa pemulihan.
+ * Kegagalan provisioning dikembalikan sebagai SUKSES dengan
+ * profileProvisioned:false, bukan sebagai fail. Akun dan sesi sudah nyata ada;
+ * melaporkannya sebagai gagal membuat user mencoba ulang dengan email yang sama
+ * lalu kena "email sudah terdaftar" — jalan buntu tanpa pemulihan.
  */
-async function registerWithPrefs(
+async function registerViaApi(
+  role: "umkm" | "creator",
+  payload: Record<string, string>,
   email: string,
-  password: string,
-  name: string | undefined,
-  prefs: ProfilePrefs
+  name: string | undefined
 ): Promise<ServiceResult<RegisterOutcome>> {
-  let authId: string;
-  try {
-    const created = await account.create({ userId: ID.unique(), email, password, ...(name ? { name } : {}) });
-    authId = created.$id;
-    await account.createEmailPasswordSession({ email, password });
-    await account.updatePrefs({ prefs });
-  } catch (err) {
-    return fail(
-      authMessage(err, "Gagal membuat akun. Coba lagi.", "register"),
-      mapWriteErrorCode(err),
-      noData<RegisterOutcome>()
-    );
+  const res = await postAuthApi<RegisterApiResponse>(
+    "/api/auth/register",
+    { role, ...payload },
+    "Gagal membuat akun. Coba lagi."
+  );
+  if (!res.success || !res.data) {
+    return fail(res.error ?? "Gagal membuat akun. Coba lagi.", res.code ?? "unknown", noData<RegisterOutcome>());
   }
+  const created = res.data;
 
-  const provision = await provisionUserProfile();
-
-  // Sesi sudah hidup, jadi getSession() adalah sumber kebenaran untuk identitas.
-  // Kalau baris `users` belum ada (persis kasus A-1), susun SessionUser dari
-  // prefs supaya UI tetap punya nama & role untuk ditampilkan.
-  // authId ditangkap langsung dari account.create() — tidak pernah kosong.
+  // Sesi sudah hidup (cookie dari respons route), jadi getSession() adalah
+  // sumber kebenaran. Kalau baris `users` belum ada, susun SessionUser minimal
+  // supaya UI tetap punya identitas untuk ditampilkan.
   const session = await getSession();
   const user: SessionUser = session.success && session.data
     ? session.data
     : {
-        userId: authId,
+        userId: created.userId,
         email,
-        role: prefs.role,
+        role,
         status: "active",
         ...(name ? { name } : {}),
         emailVerified: false,
-        // Akun yang baru dibuat belum pernah melewati onboarding, dan di cabang
-        // ini baris profilnya bahkan belum terbentuk.
         isProfileCompleted: false,
       };
 
   return ok({
     user,
-    profileProvisioned: provision.success,
-    provisionErrorCode: provision.success ? undefined : provision.code,
+    profileProvisioned: created.profileProvisioned,
+    provisionErrorCode: created.profileProvisioned ? undefined : created.provisionErrorCode ?? "server",
   });
 }
 
@@ -303,10 +175,7 @@ export async function registerUmkm(
     return ok({ user: getMockSessionUser("umkm"), profileProvisioned: true });
   }
 
-  return registerWithPrefs(email, password, undefined, {
-    role: "umkm",
-    phone,
-  });
+  return registerViaApi("umkm", { email, phone, password }, email, undefined);
 }
 
 export async function registerCreator(
@@ -327,22 +196,14 @@ export async function registerCreator(
     return ok({ user: getMockSessionUser("creator"), profileProvisioned: true });
   }
 
-  return registerWithPrefs(email, password, displayName, {
-    role: "creator",
-    displayName,
-  });
+  return registerViaApi("creator", { displayName, email, password }, email, displayName);
 }
 
 // ---------------------------------------------------------------------------
 // Login
 // ---------------------------------------------------------------------------
 
-/**
- * Login email + password.
- *
- * Tidak butuh aksi tim backend — inilah bagian Sprint 6 yang sudah bisa dipakai
- * melawan project Appwrite live hari ini.
- */
+/** Login email + password (Supabase Auth, sesi di cookie). */
 export async function login(
   input: LoginInput
 ): Promise<ServiceResult<SessionUser>> {
@@ -367,12 +228,12 @@ export async function login(
     return ok(getMockSessionUser(role));
   }
 
-  try {
-    await account.createEmailPasswordSession({ email, password });
-  } catch (err) {
+  const supabase = createClient();
+  const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+  if (signInError) {
     return fail(
-      authMessage(err, "Gagal masuk. Coba lagi.", "login"),
-      mapWriteErrorCode(err),
+      authErrorMessage(signInError, "Gagal masuk. Coba lagi."),
+      authErrorCode(signInError),
       noData<SessionUser>()
     );
   }
@@ -380,8 +241,8 @@ export async function login(
   let session = await getSession();
 
   // Self-heal: akun ada tapi baris `users` belum terbentuk — sisa register yang
-  // terputus di fase 2, atau akun yang dibuat lewat konsol. Function-nya
-  // idempoten, jadi mencoba sekali di sini tidak pernah merugikan.
+  // provisioning-nya gagal. RPC-nya idempoten, jadi mencoba sekali di sini
+  // tidak pernah merugikan.
   if (!session.success && session.code === "not_found") {
     const provision = await provisionUserProfile();
     if (provision.success) session = await getSession();
@@ -400,7 +261,7 @@ export async function login(
     // Sesi harus benar-benar diakhiri. Membiarkannya hidup berarti kartu
     // "Akun Ditangguhkan" di RoleGuard jadi satu-satunya penghalang ke dashboard.
     try {
-      await account.deleteSession({ sessionId: "current" });
+      await supabase.auth.signOut({ scope: "local" });
     } catch {
       // Sesi gagal dihapus tidak boleh mengubah keputusan menolak login.
     }
@@ -419,13 +280,10 @@ export async function login(
 // ---------------------------------------------------------------------------
 
 /**
- * Kirim email pemulihan.
+ * Kirim kode OTP pemulihan (`POST /api/auth/password-otp`, rate limit 3×/10
+ * menit per email+IP).
  *
- * Appwrite menolak URL yang host-nya belum terdaftar sebagai platform Web di
- * project — belum dilakukan (handoff-auth-sprint6.md §A-4), jadi ini akan gagal
- * sampai tim backend mendaftarkannya.
- *
- * Catatan privasi: Appwrite sengaja tidak membedakan email terdaftar dan tidak,
+ * Catatan privasi: server sengaja tidak membedakan email terdaftar dan tidak,
  * jadi pemanggil HARUS menampilkan layar "cek email" pada setiap sukses.
  */
 export async function requestPasswordRecovery(
@@ -444,29 +302,21 @@ export async function requestPasswordRecovery(
     return ok(null);
   }
 
-  try {
-    await executeFunction(
-      FUNCTION_IDS.requestPasswordOtp,
-      { email: parsed.data.email }
-    );
-    return ok(null);
-  } catch (err) {
-    if (err instanceof FunctionExecutionError) {
-      return fail(err.message, err.code, noData<null>());
-    }
-    return fail(
-      authMessage(
-        err,
-        "Email pemulihan belum bisa dikirim. Tunggu beberapa menit lalu coba lagi.",
-        "requestPasswordReset"
-      ),
-      mapWriteErrorCode(err),
-      noData<null>()
-    );
-  }
+  const res = await postAuthApi<unknown>(
+    "/api/auth/password-otp",
+    { email: parsed.data.email },
+    "Email pemulihan belum bisa dikirim. Tunggu beberapa menit lalu coba lagi."
+  );
+  return res.success
+    ? ok(null)
+    : fail(res.error ?? "Email pemulihan belum bisa dikirim.", res.code ?? "unknown", noData<null>());
 }
 
-/** Selesaikan pemulihan dengan userId & secret dari tautan email. */
+/**
+ * Tautan pemulihan lama (Appwrite `userId` + `secret`) tidak berlaku lagi
+ * setelah pindah ke Supabase. Dipertahankan supaya halaman lama tetap
+ * memberi arahan, bukan error mentah.
+ */
 export async function completePasswordRecovery(
   args: { userId: string; secret: string } & ResetPasswordInput
 ): Promise<ServiceResult<null>> {
@@ -481,32 +331,15 @@ export async function completePasswordRecovery(
     );
   }
 
-  if (!args.userId || !args.secret) {
-    return failValidation(
-      "Tautan pemulihan tidak lengkap. Minta tautan baru dari halaman lupa password.",
-      noData<null>()
-    );
-  }
-
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(400);
     return ok(null);
   }
 
-  try {
-    await account.updateRecovery({
-      userId: args.userId,
-      secret: args.secret,
-      password: parsed.data.password,
-    });
-    return ok(null);
-  } catch (err) {
-    return fail(
-      authMessage(err, "Gagal mengatur ulang password. Coba lagi.", "resetPassword"),
-      mapWriteErrorCode(err),
-      noData<null>()
-    );
-  }
+  return failValidation(
+    "Tautan pemulihan ini sudah tidak berlaku. Minta kode OTP baru dari halaman lupa password.",
+    noData<null>()
+  );
 }
 
 /** Selesaikan pemulihan password dengan email & kode OTP 6-digit. */
@@ -538,71 +371,56 @@ export async function completePasswordRecoveryWithOtp(
     return ok(null);
   }
 
-  try {
-    await executeFunction(FUNCTION_IDS.resetPasswordWithOtp, {
-      email,
-      otpCode,
-      password: parsed.data.password,
-    });
-    return ok(null);
-  } catch (err) {
-    if (err instanceof FunctionExecutionError) {
-      return fail(err.message, err.code, noData<null>());
-    }
-    return fail(
-      authMessage(err, "Kode OTP salah atau kedaluwarsa. Minta kode baru.", "resetPasswordOtp"),
-      mapWriteErrorCode(err),
-      noData<null>()
-    );
-  }
+  const res = await postAuthApi<unknown>(
+    "/api/auth/password-reset",
+    { email, otpCode, ...parsed.data },
+    "Kode OTP salah atau kedaluwarsa. Minta kode baru."
+  );
+  return res.success
+    ? ok(null)
+    : fail(res.error ?? "Gagal mengatur ulang password. Coba lagi.", res.code ?? "unknown", noData<null>());
 }
 
 // ---------------------------------------------------------------------------
-// Verifikasi email lewat OTP (Email Token)
+// Verifikasi email lewat OTP
 // ---------------------------------------------------------------------------
 //
-// Verifikasi native Appwrite (createVerification/updateVerification) hanya
-// tautan — secret-nya token panjang, tak bisa diketik sebagai kode 6 digit.
-// Satu-satunya jalur OTP email di Appwrite adalah Email Token: createEmailToken
-// mengirim kode ke email, lalu createSession menukar kode itu jadi sesi DAN
-// menandai email terverifikasi (memicu event emailVerification → Function
-// user-email-verified mengisi users.email_verified_at).
+// Supabase mengirim kode 6 digit (template Magic Link, {{ .Token }}).
+// Verifikasinya di server (`/api/auth/verify-email`) dengan client tanpa
+// cookie, jadi sesi login di browser tidak pernah dihapus/dibuat ulang, lalu
+// server mencatat `users.email_verified_at`.
 
 /**
- * Kirim kode OTP verifikasi ke email akun.
+ * Kirim kode OTP verifikasi ke email akun yang sedang login.
  *
- * Dipakai setelah register berhasil dan dari tombol "kirim ulang" di
- * EmailVerificationPending. `userId` boleh diabaikan Appwrite bila email sudah
- * terpaut akun (kasus kita) — tetap dikirim demi kelengkapan payload.
+ * `userId`/`email` dipertahankan di signature demi kompatibilitas pemanggil;
+ * server memakai email dari sesi, bukan dari argumen.
  */
 export async function requestEmailOtp(args: {
   userId: string;
   email: string;
 }): Promise<ServiceResult<null>> {
+  void args;
   if (DATA_SOURCE_CONFIG.useMockData) {
     await mockDelay(300);
     return ok(null);
   }
 
-  try {
-    await account.createEmailToken({ userId: args.userId, email: args.email });
-    return ok(null);
-  } catch (err) {
-    return fail(
-      authMessage(err, "Gagal mengirim kode verifikasi. Coba lagi.", "requestEmailOtp"),
-      mapWriteErrorCode(err),
-      noData<null>()
-    );
-  }
+  const res = await postAuthApi<unknown>(
+    "/api/auth/email-otp",
+    {},
+    "Gagal mengirim kode verifikasi. Coba lagi."
+  );
+  return res.success
+    ? ok(null)
+    : fail(res.error ?? "Gagal mengirim kode verifikasi. Coba lagi.", res.code ?? "unknown", noData<null>());
 }
 
 /**
- * Tukar kode OTP jadi sesi terverifikasi.
+ * Verifikasi kode OTP email untuk akun yang sedang login.
  *
- * createSession diblokir Appwrite bila sesi lain masih aktif, jadi sesi login
- * password dari register dihapus lebih dulu. Bila kodenya salah/kedaluwarsa,
- * sesi login dipulihkan via password supaya user TIDAK ter-logout hanya karena
- * salah ketik OTP — itu sebabnya email+password ikut diminta di sini.
+ * `password` tidak lagi dipakai (dulu untuk memulihkan sesi Appwrite yang
+ * terpaksa dihapus); tetap di signature supaya form tidak berubah.
  */
 export async function confirmEmailOtp(args: {
   userId: string;
@@ -620,30 +438,18 @@ export async function confirmEmailOtp(args: {
     return ok(null);
   }
 
-  try {
-    await account.deleteSession({ sessionId: "current" });
-    await account.createSession({ userId: args.userId, secret: code });
-    return ok(null);
-  } catch (err) {
-    // Pulihkan sesi login agar user tetap masuk meski OTP gagal.
-    try {
-      await account.createEmailPasswordSession({
-        email: args.email,
-        password: args.password,
-      });
-    } catch {
-      // Sesi lama mungkin belum terhapus; abaikan — user tetap punya sesi.
-    }
-    return fail(
-      authMessage(err, "Kode OTP salah atau kedaluwarsa. Minta kode baru.", "confirmEmailOtp"),
-      mapWriteErrorCode(err),
-      noData<null>()
-    );
-  }
+  const res = await postAuthApi<unknown>(
+    "/api/auth/verify-email",
+    { code },
+    "Kode OTP salah atau kedaluwarsa. Minta kode baru."
+  );
+  return res.success
+    ? ok(null)
+    : fail(res.error ?? "Kode OTP salah atau kedaluwarsa. Minta kode baru.", res.code ?? "unknown", noData<null>());
 }
 
 // ---------------------------------------------------------------------------
-// Google OAuth (di balik flag — provider belum dikonfigurasi, §A-3)
+// Google OAuth (di balik flag NEXT_PUBLIC_ENABLE_GOOGLE_OAUTH)
 // ---------------------------------------------------------------------------
 
 export function isGoogleOAuthEnabled(): boolean {
@@ -651,18 +457,18 @@ export function isGoogleOAuthEnabled(): boolean {
 }
 
 /**
- * Mulai alur OAuth Google. Sinkron: memanggilnya meninggalkan halaman ini.
+ * Mulai alur OAuth Google. Memanggilnya meninggalkan halaman ini.
  *
- * `role` diteruskan via query string ke success URL supaya OAuthCallback tahu
- * apakah ini pendaftaran baru UMKM (→ form data tambahan) atau Kreator (→
- * langsung provision).
+ * `role` & `next` diteruskan via query string ke /auth/callback (Route
+ * Handler yang menukar `code` jadi sesi), lalu ke /auth/complete supaya
+ * OAuthCallback tahu apakah ini pendaftaran baru UMKM/Kreator.
  *
  * Gagal tertutup — kalau flag mati, tidak melakukan apa pun.
  */
 export function startGoogleOAuth(role?: string, next?: string): void {
   if (!AUTH_CONFIG.googleOAuthEnabled) {
     console.warn(
-      "[auth] Google OAuth dimatikan (NEXT_PUBLIC_ENABLE_GOOGLE_OAUTH). Provider belum dikonfigurasi di konsol Appwrite."
+      "[auth] Google OAuth dimatikan (NEXT_PUBLIC_ENABLE_GOOGLE_OAUTH). Provider belum dikonfigurasi di Supabase."
     );
     return;
   }
@@ -673,37 +479,14 @@ export function startGoogleOAuth(role?: string, next?: string): void {
   if (next) params.set("next", next);
   if (role) params.set("role", role);
   const qs = params.toString();
-  const success = `${origin}${AUTH_CONFIG.oauthSuccessPath}${qs ? `?${qs}` : ""}`;
+  const redirectTo = `${origin}${AUTH_CONFIG.oauthSuccessPath}${qs ? `?${qs}` : ""}`;
 
-  account.createOAuth2Session({
-    provider: OAuthProvider.Google,
-    success,
-    failure: `${origin}${AUTH_CONFIG.oauthFailurePath}`,
-  });
-}
-
-/**
- * Tulis prefs role+opsional data profil UMKM ke akun yang sedang login.
- * Dipakai setelah Google OAuth saat akun baru belum punya prefs role.
- */
-export async function setOAuthAccountPrefs(
-  role: "umkm" | "creator",
-  extra?: { phone?: string; displayName?: string }
-): Promise<ServiceResult<null>> {
-  if (DATA_SOURCE_CONFIG.useMockData) {
-    await mockDelay(200);
-    return ok(null);
-  }
-  try {
-    await account.updatePrefs({
-      prefs: { role, ...(extra ?? {}) },
+  void createClient()
+    .auth.signInWithOAuth({ provider: "google", options: { redirectTo } })
+    .then(({ error }) => {
+      if (error) {
+        console.warn("[auth.oauth]", error.code ?? error.status);
+        window.location.assign(`${origin}${AUTH_CONFIG.oauthFailurePath}`);
+      }
     });
-    return ok(null);
-  } catch (err) {
-    return fail(
-      "Gagal menyimpan role akun. Coba lagi.",
-      mapWriteErrorCode(err),
-      noData<null>()
-    );
-  }
 }

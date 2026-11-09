@@ -147,9 +147,12 @@ select is(
 select is(
   (select count(*)::int
      from pg_proc p
-    where p.pronamespace = 'public'::regnamespace and p.prosecdef),
+    where p.pronamespace = 'public'::regnamespace
+      and p.prosecdef
+      and (has_function_privilege('anon', p.oid, 'execute')
+           or has_function_privilege('authenticated', p.oid, 'execute'))),
   0,
-  'tidak ada fungsi SECURITY DEFINER di schema public (terekspos Data API)'
+  'tidak ada fungsi SECURITY DEFINER di public yang bisa dipanggil anon/authenticated (Data API)'
 );
 select ok(
   not exists (

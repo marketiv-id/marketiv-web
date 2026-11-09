@@ -9,7 +9,7 @@ import {
   resolveChatAudience,
   validateChatMessages,
 } from "@/services/chatbot/chatbot-guardrails";
-import { readBearerToken } from "@/services/chatbot/chatbot-auth";
+import { parseChatRole } from "@/services/chatbot/chatbot-auth";
 
 describe("Tivvy role guardrails", () => {
   it("uses a focused generation budget for concise dashboard answers", () => {
@@ -82,11 +82,12 @@ describe("Tivvy role guardrails", () => {
     expect(suggestions.join(" ")).not.toContain("penarikan penghasilan Kreator");
   });
 
-  it("accepts only a non-empty Bearer authorization token", () => {
-    expect(readBearerToken("Bearer valid.jwt.token")).toBe("valid.jwt.token");
-    expect(readBearerToken("Basic abc")).toBeNull();
-    expect(readBearerToken("Bearer ")).toBeNull();
-    expect(readBearerToken(null)).toBeNull();
+  it("accepts only known roles from the session's users row", () => {
+    expect(parseChatRole("umkm")).toBe("umkm");
+    expect(parseChatRole("creator")).toBe("creator");
+    expect(parseChatRole("admin")).toBe("admin");
+    expect(() => parseChatRole("Admin")).toThrow();
+    expect(() => parseChatRole(undefined)).toThrow();
   });
 
   it("derives dashboard audience from authenticated role, not client path", () => {

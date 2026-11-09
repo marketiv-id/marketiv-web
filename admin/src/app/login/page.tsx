@@ -40,7 +40,7 @@ export default function AdminLoginPage() {
     return (
       <AdminAccessState
         title="Akses Admin ditolak"
-        detail="Akun ini bukan Admin Marketiv. Pastikan label 'admin' atau role 'admin' terpasang di Appwrite."
+        detail="Akun ini bukan Admin Marketiv. Admin harus terdaftar di allowlist Marketiv (role admin di profil dan di app_metadata Supabase)."
         actionLabel="Ganti Akun"
         onAction={() => void logout()}
       />

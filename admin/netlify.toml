@@ -33,6 +33,10 @@
   NEXT_PUBLIC_APPWRITE_PROJECT_ID = "69f9d45b00315cb0ec2f"
   NEXT_PUBLIC_APPWRITE_DATABASE_ID = "6a4c8598001da3b0d7f0"
   NEXT_PUBLIC_USER_APP_URL = "https://staging--marketiv-production.netlify.app"
+  # Supabase STAGING (Fase 4). Publishable key = aman untuk browser (RLS).
+  # SUPABASE_SERVICE_ROLE_KEY (secret) diisi di UI Netlify, bukan di sini.
+  NEXT_PUBLIC_SUPABASE_URL = "https://zwrzwkesaetzbnajjxqc.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_HB_a1ufWJXGy_U0jS9R-GQ_raMhMobo"
 
 [context.branch-deploy.environment]
   NEXT_PUBLIC_APP_ENV = "staging"
@@ -40,3 +44,15 @@
   NEXT_PUBLIC_APPWRITE_PROJECT_ID = "69f9d45b00315cb0ec2f"
   NEXT_PUBLIC_APPWRITE_DATABASE_ID = "6a4c8598001da3b0d7f0"
   NEXT_PUBLIC_USER_APP_URL = "https://staging--marketiv-production.netlify.app"
+
+# Branch jangka panjang migrasi: Supabase STAGING (Fase 4).
+[context.migrasi-supabase.environment]
+  NEXT_PUBLIC_APP_ENV = "staging"
+  NEXT_PUBLIC_APPWRITE_ENDPOINT = "https://api-admin.marketiv-dev.my.id/v1"
+  NEXT_PUBLIC_APPWRITE_PROJECT_ID = "69f9d45b00315cb0ec2f"
+  NEXT_PUBLIC_APPWRITE_DATABASE_ID = "6a4c8598001da3b0d7f0"
+  NEXT_PUBLIC_USER_APP_URL = "https://migrasi-supabase--marketiv-production.netlify.app"
+  # Supabase STAGING (Fase 4). Publishable key = aman untuk browser (RLS).
+  # SUPABASE_SERVICE_ROLE_KEY (secret) diisi di UI Netlify, bukan di sini.
+  NEXT_PUBLIC_SUPABASE_URL = "https://zwrzwkesaetzbnajjxqc.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_HB_a1ufWJXGy_U0jS9R-GQ_raMhMobo"

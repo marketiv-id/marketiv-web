@@ -1,9 +1,6 @@
-import { Query } from "appwrite";
 import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
 import { mockDelay } from "@/lib/mock-delay";
-import { account } from "@/lib/appwrite/account";
-import { databases } from "@/lib/appwrite/databases";
-import { appwriteConfig } from "@/lib/appwrite/config";
+import { createClient } from "@/lib/supabase/client";
 import type {
   ServiceResult,
   ServiceErrorCode,
@@ -15,7 +12,13 @@ import type {
  * Session facade — satu-satunya jalur frontend untuk mengetahui siapa yang login.
  *
  * Pola sama dengan service lain: branch DATA_SOURCE_CONFIG.useMockData.
- * Komponen TIDAK boleh memanggil `account`/`databases` langsung (R1).
+ * Komponen TIDAK boleh memanggil client Supabase langsung (R1).
+ *
+ * Sumber identitas (Fase 4 migrasi Supabase):
+ *   - akun  : `supabase.auth.getUser()` (JWT diverifikasi ke Supabase Auth)
+ *   - role, status, phone, T&C, verifikasi email : baris `public.users`
+ *     (RLS: hanya baris milik sendiri yang terbaca)
+ *   - isProfileCompleted : `umkm_profiles` / `creator_profiles`
  */
 
 export interface SessionUser {
@@ -31,7 +34,8 @@ export interface SessionUser {
   /**
    * Email terverifikasi via OTP atau OAuth.
    *
-   * Dibaca dari `authUser.emailVerification` (Appwrite Auth). Digunakan oleh
+   * Dibaca dari `users.email_verified_at` (diisi /api/auth/verify-email atau
+   * provisioning akun Google). Digunakan oleh
    * RedirectIfAuthenticated untuk menahan user di layar OTP sampai email
    * terkonfirmasi, dan oleh RoleGuard sebagai precedence guard sebelum
    * onboarding.
@@ -55,22 +59,12 @@ export interface SessionUser {
   isProfileCompleted: boolean;
 }
 
-/** Koleksi profil per role — sumber `isProfileCompleted`. */
-const PROFILE_COLLECTION: Record<UserRole, string | null> = {
+/** Tabel profil per role — sumber `isProfileCompleted`. */
+const PROFILE_TABLE: Record<UserRole, "umkm_profiles" | "creator_profiles" | null> = {
   umkm: "umkm_profiles",
   creator: "creator_profiles",
   admin: null,
 };
-
-/**
- * Collection `users` — mirror Appwrite Auth, berisi role & status.
- *
- * Barisnya di-key `ID.unique()`, BUKAN id akun Auth: `create-user-profile`
- * menyimpan id Auth di kolom `userId` dan mencarinya lewat kolom itu juga
- * (`findByUserId`). Mencari lewat `$id` tidak akan pernah cocok, dan gejalanya
- * menyesatkan — login berhasil tapi berakhir `not_found` lalu ditendang guard.
- */
-const USERS_COLLECTION = "users";
 
 /** Identitas sintetis untuk mode mock. Role ditentukan oleh RoleGuard terdekat. */
 const MOCK_USERS: Record<UserRole, SessionUser> = {
@@ -161,49 +155,65 @@ export function clearMockRole(): void {
   window.localStorage.removeItem(MOCK_ROLE_KEY);
 }
 
+/**
+ * Status DB → status UI. `terminated` (dan nilai tak dikenal) diperlakukan
+ * seperti `suspended` supaya guard UI tetap memblokir.
+ */
+const toUserStatus = (status: unknown): UserStatus => (status === "active" ? "active" : "suspended");
+
+const metaString = (meta: Record<string, unknown> | undefined, key: string): string | undefined => {
+  const value = meta?.[key];
+  return typeof value === "string" && value.trim() !== "" ? value.trim() : undefined;
+};
+
+/** Error Supabase Auth/PostgREST → ServiceErrorCode. */
 const mapErrorCode = (err: unknown): ServiceErrorCode => {
-  const code = (err as { code?: number })?.code;
-  if (code === 401) return "auth";
-  if (code === 403) return "forbidden";
-  if (code === 404) return "not_found";
-  if (typeof code === "number" && code >= 500) return "server";
+  const e = err as { status?: number; name?: string } | null;
+  if (e?.name === "AuthSessionMissingError") return "auth";
+  if (e?.name === "AuthRetryableFetchError") return "server";
+  const status = e?.status;
+  if (status === 400 || status === 401) return "auth";
+  if (status === 403) return "forbidden";
+  if (status === 404) return "not_found";
+  if (typeof status === "number" && status >= 500) return "server";
   return "unknown";
 };
 
+const SESSION_MISSING_MESSAGE = "Sesi tidak ditemukan. Silakan login.";
+
 /**
- * Baca `isProfileCompleted` dari koleksi profil sesuai role.
+ * Baca `is_profile_completed` dari tabel profil sesuai role.
  *
  * Gagal-terbuka dengan sengaja: kalau bacaannya error, kembalikan `true` supaya
  * gangguan sesaat tidak mengurung pengguna yang profilnya sudah lengkap di
- * halaman onboarding. Gerbang yang sesungguhnya tetap dijaga server —
- * `get-creator-directory` dan klaim campaign memeriksa kolom yang sama.
+ * halaman onboarding. Gerbang yang sesungguhnya tetap dijaga server.
  *
- * `admin` tidak punya koleksi profil, jadi selalu dianggap lengkap.
+ * `admin` tidak punya tabel profil, jadi selalu dianggap lengkap.
  */
-async function readProfileCompleted(userId: string, role: UserRole): Promise<boolean> {
-  const collection = PROFILE_COLLECTION[role];
-  if (!collection) return true;
+async function readProfileCompleted(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  role: UserRole
+): Promise<boolean> {
+  const table = PROFILE_TABLE[role];
+  if (!table) return true;
 
-  try {
-    const res = await databases.listDocuments(appwriteConfig.databaseId, collection, [
-      Query.equal("userId", userId),
-      Query.limit(1),
-    ]);
-    const profile = res.documents[0] as Record<string, unknown> | undefined;
-    // Profil belum ada = jelas belum lengkap; jangan gagal-terbuka di sini,
-    // karena onboarding-lah yang akan membuat kolomnya terisi.
-    if (!profile) return false;
-    return profile.isProfileCompleted === true;
-  } catch {
-    return true;
-  }
+  const { data, error } = await supabase
+    .from(table)
+    .select("is_profile_completed")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) return true;
+  // Profil belum ada = jelas belum lengkap; onboarding yang akan mengisinya.
+  if (!data) return false;
+  return data.is_profile_completed === true;
 }
 
 /**
  * Mengambil sesi aktif.
  *
  * Mock ON  → identitas sintetis sesuai getMockRole().
- * Mock OFF → account.get() lalu baca dokumen `users` untuk role & status.
+ * Mock OFF → auth.getUser() lalu baca baris `users` untuk role & status.
  */
 export async function getSession(): Promise<ServiceResult<SessionUser>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
@@ -212,16 +222,27 @@ export async function getSession(): Promise<ServiceResult<SessionUser>> {
   }
 
   try {
-    const authUser = await account.get();
+    const supabase = createClient();
+    const { data: auth, error: authError } = await supabase.auth.getUser();
+    if (authError || !auth.user) {
+      const code = authError ? mapErrorCode(authError) : "auth";
+      return {
+        success: false,
+        data: null,
+        error: code === "server" ? "Gagal memuat sesi. Coba lagi." : SESSION_MISSING_MESSAGE,
+        code: code === "server" ? "server" : "auth",
+      };
+    }
+    const authUser = auth.user;
 
-    const userDocs = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      USERS_COLLECTION,
-      [Query.equal("userId", authUser.$id), Query.limit(1)]
-    );
+    const { data: row, error: rowError } = await supabase
+      .from("users")
+      .select("role, status, phone, email_verified_at, tos_version, tos_accepted_at")
+      .eq("id", authUser.id)
+      .maybeSingle();
+    if (rowError) throw rowError;
 
-    const doc = userDocs.documents[0] as Record<string, unknown> | undefined;
-    if (!doc) {
+    if (!row || !isRole(row.role)) {
       return {
         success: false,
         data: null,
@@ -230,26 +251,25 @@ export async function getSession(): Promise<ServiceResult<SessionUser>> {
       };
     }
 
-    const role = doc.role as UserRole;
-    const tosVersion = doc.tos_version ? String(doc.tos_version) : undefined;
-    const tosAcceptedAt = doc.tos_accepted_at ? String(doc.tos_accepted_at) : undefined;
+    const role = row.role;
+    const meta = authUser.user_metadata as Record<string, unknown> | undefined;
+    const name = metaString(meta, "display_name") ?? metaString(meta, "full_name") ?? metaString(meta, "name");
+    const tosVersion = row.tos_version ? String(row.tos_version) : undefined;
+    const tosAcceptedAt = row.tos_accepted_at ? String(row.tos_accepted_at) : undefined;
 
-    // `users` hanya menyimpan userId/role/status/email/phone/createdAt — tidak
-    // ada `name` maupun `avatarUrl` di sana. Nama tampilan datang dari akun Auth;
-    // avatar tinggal di umkm_profiles/creator_profiles dan dibaca service profil.
     return {
       success: true,
       data: {
-        userId: authUser.$id,
-        email: authUser.email,
+        userId: authUser.id,
+        email: authUser.email ?? "",
         role,
-        status: doc.status as UserStatus,
-        name: authUser.name || undefined,
-        phone: (doc.phone as string) || undefined,
-        emailVerified: authUser.emailVerification,
+        status: toUserStatus(row.status),
+        ...(name ? { name } : {}),
+        phone: row.phone || undefined,
+        emailVerified: row.email_verified_at != null,
         ...(tosVersion ? { tosVersion } : {}),
         ...(tosAcceptedAt ? { tosAcceptedAt } : {}),
-        isProfileCompleted: await readProfileCompleted(authUser.$id, role),
+        isProfileCompleted: await readProfileCompleted(supabase, authUser.id, role),
       },
     };
   } catch (err) {
@@ -257,16 +277,13 @@ export async function getSession(): Promise<ServiceResult<SessionUser>> {
     return {
       success: false,
       data: null,
-      error:
-        code === "auth"
-          ? "Sesi tidak ditemukan. Silakan login."
-          : "Gagal memuat sesi. Coba lagi.",
+      error: code === "auth" ? SESSION_MISSING_MESSAGE : "Gagal memuat sesi. Coba lagi.",
       code,
     };
   }
 }
 
-/** Mengakhiri sesi Appwrite. No-op di mode mock. */
+/** Mengakhiri sesi di perangkat ini (scope local). No-op di mode mock. */
 export async function logout(): Promise<ServiceResult<null>> {
   if (DATA_SOURCE_CONFIG.useMockData) {
     clearMockRole();
@@ -274,7 +291,8 @@ export async function logout(): Promise<ServiceResult<null>> {
   }
 
   try {
-    await account.deleteSession({ sessionId: "current" });
+    const { error } = await createClient().auth.signOut({ scope: "local" });
+    if (error) throw error;
     return { success: true, data: null };
   } catch (err) {
     return {

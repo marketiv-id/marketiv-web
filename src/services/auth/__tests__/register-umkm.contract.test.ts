@@ -1,26 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({
-  create: vi.fn(),
-  createEmailPasswordSession: vi.fn(),
-  updatePrefs: vi.fn(),
-  get: vi.fn(),
-  executeFunction: vi.fn(),
+vi.mock("@/config/data-source.config", () => ({
+  DATA_SOURCE_CONFIG: { useMockData: false },
 }));
 
-vi.mock("@/lib/appwrite/account", () => ({
-  account: {
-    create: mocks.create,
-    createEmailPasswordSession: mocks.createEmailPasswordSession,
-    updatePrefs: mocks.updatePrefs,
-    get: mocks.get,
-  },
-}));
-
-vi.mock("@/lib/appwrite/functions", () => ({
-  FUNCTION_IDS: { createUserProfile: "create-user-profile" },
-  FunctionExecutionError: class FunctionExecutionError extends Error {},
-  executeFunction: mocks.executeFunction,
+vi.mock("@/lib/supabase/client", () => ({
+  createClient: vi.fn(),
 }));
 
 vi.mock("@/services/auth/session.service", () => ({
@@ -29,20 +14,18 @@ vi.mock("@/services/auth/session.service", () => ({
   setMockRole: vi.fn(),
 }));
 
-describe("registerUmkm contract", () => {
+const fetchMock = vi.fn();
+
+describe("registerUmkm contract (Supabase)", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
-    mocks.create.mockResolvedValue({ $id: "user-1" });
-    mocks.createEmailPasswordSession.mockResolvedValue({ $id: "session-1" });
-    mocks.updatePrefs.mockResolvedValue({});
-    mocks.get.mockResolvedValue({
-      $id: "user-1",
-      email: "owner@usaha.id",
-      name: "",
-      phone: "",
-      prefs: { role: "umkm", phone: "08123456789" },
-    });
-    mocks.executeFunction.mockResolvedValue({});
+    vi.stubGlobal("fetch", fetchMock);
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({ userId: "user-1", sessionCreated: true, profileProvisioned: true }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
     const session = await import("@/services/auth/session.service");
     vi.mocked(session.getSession).mockResolvedValue({
       success: true,
@@ -57,7 +40,9 @@ describe("registerUmkm contract", () => {
     });
   });
 
-  it("accepts account-only UMKM input and never writes business placeholders", async () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("posts account-only UMKM input with a server-whitelisted role and never business placeholders", async () => {
     const { registerUmkm } = await import("@/services/auth/auth.service");
 
     const result = await registerUmkm({
@@ -67,15 +52,59 @@ describe("registerUmkm contract", () => {
     });
 
     expect(result.success).toBe(true);
-    expect(mocks.create).toHaveBeenCalledWith({
-      userId: expect.any(String),
+    expect(result.data.profileProvisioned).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/auth/register");
+    expect(JSON.parse(init.body)).toEqual({
+      role: "umkm",
       email: "owner@usaha.id",
+      phone: "08123456789",
       password: "rahasia-aman",
     });
-    expect(mocks.updatePrefs).toHaveBeenCalledWith({
-      prefs: { role: "umkm", phone: "08123456789" },
-    });
   }, 15000);
+
+  it("reports provisioning failure as success with profileProvisioned:false", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          userId: "user-1",
+          sessionCreated: true,
+          profileProvisioned: false,
+          provisionErrorCode: "server",
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    const { registerUmkm } = await import("@/services/auth/auth.service");
+
+    const result = await registerUmkm({
+      email: "owner@usaha.id",
+      phone: "08123456789",
+      password: "rahasia-aman",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data).toMatchObject({ profileProvisioned: false, provisionErrorCode: "server" });
+  });
+
+  it("passes server error message and code through", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({ error: "Email ini sudah terdaftar.", code: "validation" }),
+        { status: 409, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    const { registerUmkm } = await import("@/services/auth/auth.service");
+
+    const result = await registerUmkm({
+      email: "owner@usaha.id",
+      phone: "08123456789",
+      password: "rahasia-aman",
+    });
+
+    expect(result).toMatchObject({ success: false, code: "validation", error: "Email ini sudah terdaftar." });
+  });
 
   it("does not require businessName or category", async () => {
     const { registerUmkmSchema } = await import("@/lib/validations/auth.schema");

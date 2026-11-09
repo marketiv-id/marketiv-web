@@ -1,5 +1,5 @@
-import { account, databases, databaseId, COLLECTIONS } from "./appwrite";
-import { Query } from "appwrite";
+import type { BrowserSupabaseClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 
 export interface AdminUserSession {
   userId: string;
@@ -25,143 +25,131 @@ export class AdminAuthError extends Error {
   }
 }
 
+/** Bagian client Supabase yang dipakai modul ini (bisa di-mock di test). */
 type AdminAuthDependencies = {
-  account: Pick<typeof account, "createEmailPasswordSession" | "get" | "deleteSession">;
-  databases: Pick<typeof databases, "listDocuments"> & Partial<Pick<typeof databases, "getDocument">>;
+  supabase: {
+    auth: Pick<BrowserSupabaseClient["auth"], "getUser" | "signInWithPassword" | "signOut">;
+    from: BrowserSupabaseClient["from"];
+  };
 };
 
-function failureFrom(error: unknown): AdminAuthError {
-  const code = (error as { code?: number })?.code;
-  if (code === 401) return new AdminAuthError("unauthenticated", "Sesi Admin tidak ditemukan atau sudah berakhir.");
-  return new AdminAuthError("error", "Gagal memverifikasi sesi Admin. Coba lagi.");
-}
+const defaultDependencies = (): AdminAuthDependencies => ({ supabase: createClient() });
 
-function signInFailureFrom(error: unknown): AdminAuthError {
-  const code = (error as { code?: number })?.code;
-  if (code === 401 || code === 403) {
-    return new AdminAuthError("unauthenticated", "Email atau kata sandi salah, atau akun tidak dapat masuk.");
-  }
-  return new AdminAuthError("error", "Masuk Admin gagal. Coba lagi.");
+const NO_SESSION = "Sesi Admin tidak ditemukan atau sudah berakhir.";
+
+function isSessionMissing(error: { name?: string; status?: number } | null | undefined): boolean {
+  return error?.name === "AuthSessionMissingError" || error?.status === 400 || error?.status === 401;
 }
 
 /**
- * Checks Appwrite session and verifies Marketiv Admin role (role === "admin").
- * Note: Real security boundary is enforced server-side inside Appwrite Function.
+ * Verifikasi sesi Supabase sebagai Admin Marketiv yang aktif.
+ *
+ * Admin hanya dikenali dari data yang TIDAK bisa diubah pemilik akun:
+ *   - `public.users.role = 'admin'` (browser tidak punya hak tulis sejak Fase 3)
+ *   - `app_metadata.role = 'admin'` (hanya service role yang bisa menulis)
+ * Keduanya wajib, sama dengan `private.is_admin()` di RLS. Fallback lama
+ * (label Appwrite, `prefs.role`) dihapus — celah #5.
+ *
+ * Ini guard UX. Batas keamanan sebenarnya: RLS + Route Handler.
  */
 export async function resolveAdminSession(
-  dependencies: AdminAuthDependencies = { account, databases },
+  dependencies: AdminAuthDependencies = defaultDependencies(),
 ): Promise<AdminUserSession> {
   try {
-    const session = (await dependencies.account.get()) as {
-      $id: string;
-      email: string;
-      status?: boolean;
-      labels?: string[];
-      prefs?: Record<string, unknown>;
-    };
-    if (!session || !session.$id) {
-      throw new AdminAuthError("unauthenticated", "Sesi Admin tidak ditemukan atau sudah berakhir.");
-    }
-
-    if (session.status === false) {
-      throw new AdminAuthError("suspended", "Akun Admin ini tidak aktif. Hubungi Marketiv untuk bantuan.");
-    }
-
-    let userDoc: Record<string, unknown> | undefined;
-    try {
-      const userRes = await dependencies.databases.listDocuments(databaseId, COLLECTIONS.users, [
-        Query.equal("userId", session.$id),
-        Query.limit(1),
-      ]);
-      userDoc = userRes.documents[0];
-    } catch {
-      if (typeof dependencies.databases.getDocument === "function") {
-        try {
-          userDoc = (await dependencies.databases.getDocument(
-            databaseId,
-            COLLECTIONS.users,
-            session.$id,
-          )) as Record<string, unknown>;
-        } catch {
-          // Allow fallback to Appwrite Auth session labels/prefs
-        }
+    const { data, error } = await dependencies.supabase.auth.getUser();
+    if (error || !data?.user) {
+      if (!error || isSessionMissing(error)) {
+        throw new AdminAuthError("unauthenticated", NO_SESSION);
       }
+      throw new AdminAuthError("error", "Gagal memverifikasi sesi Admin. Coba lagi.");
+    }
+    const user = data.user;
+
+    const { data: row, error: rowError } = await dependencies.supabase
+      .from("users")
+      .select("role, status")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (rowError) {
+      throw new AdminAuthError("error", "Gagal memverifikasi sesi Admin. Coba lagi.");
     }
 
-    const hasAdminLabel =
-      Array.isArray(session.labels) &&
-      session.labels.some((l) => typeof l === "string" && l.toLowerCase() === "admin");
-    const hasAdminPref =
-      typeof session.prefs?.role === "string" &&
-      session.prefs.role.toLowerCase() === "admin";
-    const dbRole = typeof userDoc?.role === "string" ? userDoc.role.toLowerCase() : undefined;
-
-    const isAdmin = dbRole === "admin" || hasAdminLabel || hasAdminPref;
-    if (!isAdmin) {
+    const dbRole = typeof row?.role === "string" ? row.role.toLowerCase() : undefined;
+    const metaRole =
+      typeof user.app_metadata?.role === "string" ? user.app_metadata.role.toLowerCase() : undefined;
+    if (dbRole !== "admin" || metaRole !== "admin") {
       throw new AdminAuthError("forbidden", "Akun ini tidak memiliki akses Admin Marketiv.");
     }
 
-    const dbStatus = typeof userDoc?.status === "string" ? userDoc.status.toLowerCase() : undefined;
-    if (dbStatus && dbStatus !== "active") {
+    const dbStatus = typeof row?.status === "string" ? row.status.toLowerCase() : undefined;
+    if (dbStatus !== "active") {
       throw new AdminAuthError("suspended", "Akun Admin ini tidak aktif. Hubungi Marketiv untuk bantuan.");
     }
 
     return {
-      userId: session.$id,
-      email: session.email,
+      userId: user.id,
+      email: user.email ?? "",
       role: "admin",
       isAdmin: true,
-      status: dbStatus || "active",
+      status: dbStatus,
     };
   } catch (error) {
     if (error instanceof AdminAuthError) throw error;
-    throw failureFrom(error);
+    throw new AdminAuthError("error", "Gagal memverifikasi sesi Admin. Coba lagi.");
   }
 }
 
 export const getCurrentAdminSession = resolveAdminSession;
 
 /**
- * Creates an Appwrite email/password session, then validates its Marketiv
- * admin record. Any non-admin or inactive session created here is deleted.
+ * Masuk dengan email/password Supabase, lalu validasi sebagai Admin aktif.
+ * Sesi non-admin / nonaktif yang baru dibuat langsung diakhiri.
  */
 export async function signInAdminSession(
   email: string,
   password: string,
-  dependencies: AdminAuthDependencies = { account, databases },
+  dependencies: AdminAuthDependencies = defaultDependencies(),
 ): Promise<AdminUserSession> {
   const normalizedEmail = email.trim();
   if (!normalizedEmail || !password) {
     throw new AdminAuthError("error", "Email dan kata sandi wajib diisi.");
   }
 
+  let signInError: { status?: number } | null = null;
   try {
-    await dependencies.account.createEmailPasswordSession({
+    const { error } = await dependencies.supabase.auth.signInWithPassword({
       email: normalizedEmail,
       password,
     });
-  } catch (error) {
-    throw signInFailureFrom(error);
+    signInError = error;
+  } catch {
+    throw new AdminAuthError("error", "Masuk Admin gagal. Coba lagi.");
+  }
+  if (signInError) {
+    const status = signInError.status;
+    if (status === 400 || status === 401 || status === 403 || status === 422) {
+      throw new AdminAuthError("unauthenticated", "Email atau kata sandi salah, atau akun tidak dapat masuk.");
+    }
+    throw new AdminAuthError("error", "Masuk Admin gagal. Coba lagi.");
   }
 
   try {
     return await resolveAdminSession(dependencies);
   } catch (error) {
     try {
-      await dependencies.account.deleteSession("current");
+      await dependencies.supabase.auth.signOut({ scope: "local" });
     } catch {
-      // Keep original authorization error. A future bootstrap remains fail-closed.
+      // Pertahankan error otorisasi aslinya. Bootstrap berikutnya tetap fail-closed.
     }
     throw error;
   }
 }
 
 export async function logoutAdminSession(
-  dependencies: Pick<AdminAuthDependencies, "account"> = { account },
+  dependencies: Pick<AdminAuthDependencies, "supabase"> = defaultDependencies(),
 ): Promise<void> {
-  try {
-    await dependencies.account.deleteSession("current");
-  } catch (error) {
-    throw failureFrom(error);
+  const { error } = await dependencies.supabase.auth.signOut({ scope: "local" });
+  if (error) {
+    throw new AdminAuthError("error", "Gagal keluar dari sesi Admin. Coba lagi.");
   }
 }

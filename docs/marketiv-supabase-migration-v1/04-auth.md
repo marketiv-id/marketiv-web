@@ -26,20 +26,24 @@ Mulai fase ini:
 | `account.deleteSession('current')` | `signOut()` |
 
 ## Task
-- [ ] Port `src/services/auth/auth.service.ts` dan `session.service.ts`. **Bentuk return tetap sama**, sehingga form dan `AuthProvider` tidak berubah.
-- [ ] `src/server/auth/require-user.ts`: port `00_BACKEND/functions/_shared/require-active-role.js`, mengembalikan `{ user, userRow }` atau melempar 401/403.
-- [ ] `src/proxy.ts` (Next 16):
+- [x] Port `src/services/auth/auth.service.ts` dan `session.service.ts`. **Bentuk return tetap sama**, sehingga form dan `AuthProvider` tidak berubah.
+- [x] `src/server/auth/require-user.ts`: port `00_BACKEND/functions/_shared/require-active-role.js`, mengembalikan `{ user, userRow }` atau melempar 401/403.
+- [x] `src/proxy.ts` (Next 16):
   - Refresh sesi lewat `@supabase/ssr`.
   - Redirect `/dashboard/*` dan `/onboarding` ke `/login?next=` bila tidak ada sesi.
-- [ ] `RoleGuard` tetap dipakai untuk UX (role salah, suspended, profil belum lengkap).
-- [ ] Ganti `src/services/chatbot/chatbot-auth.ts` agar memakai `createServerClient` dari cookie. Hapus `createJWT` di `ChatbotPanel.tsx`.
-- [ ] `oauth-callback.service.ts` (logika keputusan) dipakai ulang. Ganti `setOAuthAccountPrefs` dengan `POST /api/auth/provision`.
-- [ ] Admin app:
+- [x] `RoleGuard` tetap dipakai untuk UX (role salah, suspended, profil belum lengkap).
+- [x] Ganti `src/services/chatbot/chatbot-auth.ts` agar memakai `createServerClient` dari cookie. Hapus `createJWT` di `ChatbotPanel.tsx`.
+- [x] `oauth-callback.service.ts` (logika keputusan) dipakai ulang. Ganti `setOAuthAccountPrefs` dengan `POST /api/auth/provision`.
+- [x] Admin app:
   - Port `admin/src/lib/admin/auth.ts`.
-  - Admin **hanya** dikenali dari `users.role = 'admin'`. Fallback label dan `prefs.role` dihapus.
+  - Admin **hanya** dikenali dari `users.role = 'admin'` (+ `app_metadata.role = 'admin'`, sama dengan `private.is_admin()` Fase 3). Fallback label dan `prefs.role` dihapus.
   - Tambah `admin/src/proxy.ts`.
 - [ ] Template email Bahasa Indonesia di Supabase Auth: Confirm signup, Magic Link/OTP, Reset Password, Change Email.
+  - [x] File template di `supabase/templates/*.html` + `config.toml` (lokal)
+  - [ ] Dipasang di Dashboard staging (aksi pemilik, lihat `progress/fase-04.md`)
 - [ ] Atur Site URL dan Redirect URLs (staging, prod, preview `*.netlify.app`).
+  - [x] Lokal (`config.toml`)
+  - [ ] Dashboard staging/prod (aksi pemilik, lihat `progress/fase-04.md`)
 
 ## Verifikasi
 - Port test di `src/services/auth/__tests__/*` dan `admin/src/lib/admin/auth.test.ts`.

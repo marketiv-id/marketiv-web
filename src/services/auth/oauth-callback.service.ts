@@ -36,7 +36,7 @@ export function resolveOAuthCallbackDecision(
     return { action: "redirect", href: "/login?error=oauth" };
   }
 
-  // UMKM & Kreator kini simetris: set prefs role → provision → satu wizard
+  // UMKM & Kreator kini simetris: provision (role di-whitelist server) → satu wizard
   // /onboarding. Form perantara /auth/oauth-complete dihapus supaya UMKM tidak
   // mengisi Nama Usaha & Kategori dua kali berturut-turut.
   if (input.role === "umkm" || input.role === "creator") {
