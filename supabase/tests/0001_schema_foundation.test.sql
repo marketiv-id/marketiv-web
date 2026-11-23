@@ -4,12 +4,12 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(29);
 
--- 1. 33 tabel di schema public (32 Fase 2 + admin_actions Fase 8), semuanya RLS aktif.
+-- 1. 34 tabel di schema public (32 Fase 2 + admin_actions + payment_events Fase 8), semuanya RLS aktif.
 --    (Sejak Fase 3 tiap tabel punya policy SELECT; detail di rls.test.sql.)
 select is(
   (select count(*)::int from pg_tables where schemaname = 'public'),
-  33,
-  'public punya 33 tabel'
+  34,
+  'public punya 34 tabel'
 );
 select is(
   (select count(*)::int from pg_tables where schemaname = 'public' and not rowsecurity),
@@ -22,13 +22,13 @@ select is(
   'tidak ada policy tulis (INSERT/UPDATE/DELETE) untuk client'
 );
 
--- 2. Semua tabel (kecuali legacy_user_map dan admin_actions yang append-only)
+-- 2. Semua tabel (kecuali legacy_user_map dan admin_actions/payment_events yang append-only)
 --    punya trigger set_updated_at.
 select is(
   (select count(*)::int
      from pg_tables t
     where t.schemaname = 'public'
-      and t.tablename not in ('legacy_user_map', 'admin_actions')
+      and t.tablename not in ('legacy_user_map', 'admin_actions', 'payment_events')
       and not exists (
         select 1 from pg_trigger g
          where g.tgrelid = format('public.%I', t.tablename)::regclass

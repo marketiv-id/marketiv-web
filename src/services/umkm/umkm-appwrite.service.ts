@@ -1,7 +1,5 @@
-// TODO(fase-07|08): import Appwrite di bawah hanya untuk jalur TULIS Fase 7/8
-// (offer, order, review submission, AI brief, pembayaran). Jalur baca sudah
-// Supabase (Fase 5); tulis campaign/profil/file sudah Route Handler (Fase 6).
-import { executeFunction, FUNCTION_IDS } from "@/lib/appwrite/functions";
+// Semua jalur sudah Supabase: baca (Fase 5), tulis sederhana (Fase 6), alur
+// bisnis (Fase 7), pembayaran (Fase 8) — tidak ada lagi import Appwrite.
 import { callApi, FunctionExecutionError } from "@/lib/api/call-api";
 import { createClient } from "@/lib/supabase/client";
 import { rowToDoc, rowsToDocs } from "@/services/shared/legacy-doc";
@@ -1261,11 +1259,10 @@ export type PaymentIntent = {
 };
 
 /**
- * Buat payment untuk top-up escrow campaign lewat Function `create-payment`.
- * `amount` = budget DASAR; Function yang menurunkan fee 2% dan total_amount.
- * `payments` read-only dari klien, jadi jalur ini wajib lewat Function.
+ * Buat payment untuk top-up escrow campaign lewat `POST /api/payments`
+ * (RPC `create_payment` + Snap). `amount` = budget DASAR; server yang
+ * menurunkan fee (FEE_RATE, default 2%) dan total_amount.
  */
-// TODO(fase-08): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function createCampaignPaymentInAppwrite(input: {
   campaignId: string;
   budget: number;
@@ -1274,7 +1271,7 @@ export async function createCampaignPaymentInAppwrite(input: {
   const auth = await requireUserId<PaymentIntent>(empty);
   if (!auth.ok) return auth.result;
   try {
-    const res = await executeFunction<PaymentIntent>(FUNCTION_IDS.createPayment, {
+    const res = await callApi<PaymentIntent>("createPayment", {
       purpose: "campaign",
       amount: input.budget,
       campaignId: input.campaignId,
@@ -1286,7 +1283,7 @@ export async function createCampaignPaymentInAppwrite(input: {
 }
 
 /**
- * Buat payment untuk satu order Rate Card lewat Function `create-payment`.
+ * Buat payment untuk satu order Rate Card lewat `POST /api/payments`.
  *
  * `amount` HARUS persis `order.amount` — Rate Card Order adalah seller-side
  * (ADR-008), jadi UMKM membayar harga rate card tanpa tambahan apa pun. Function
@@ -1297,7 +1294,6 @@ export async function createCampaignPaymentInAppwrite(input: {
  * di sini, karena versi klien tidak bisa dipercaya dan akan menjadi sumber drift
  * kedua. Yang dikerjakan di sini hanya memetakan errornya ke pesan yang terbaca.
  */
-// TODO(fase-08): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function createOrderPaymentInAppwrite(input: {
   orderId: string;
   amount: number;
@@ -1307,7 +1303,7 @@ export async function createOrderPaymentInAppwrite(input: {
   const auth = await requireUserId<PaymentIntent>(empty);
   if (!auth.ok) return auth.result;
   try {
-    const res = await executeFunction<PaymentIntent>(FUNCTION_IDS.createPayment, {
+    const res = await callApi<PaymentIntent>("createPayment", {
       purpose: "order",
       amount: input.amount,
       orderId: input.orderId,
@@ -1515,17 +1511,15 @@ export async function cancelOrderInAppwrite(orderId: string): Promise<ServiceRes
 }
 
 /**
- * Batalkan payment yang belum dibayar lewat Function `cancel-payment`.
- * `payments` hanya punya `read("users")` — tidak ada jalur update dari browser,
- * jadi ini satu-satunya fitur di sprint ini yang wajib lewat Function.
- * Function menegakkan ownership + status `pending` sendiri.
+ * Batalkan payment yang belum dibayar lewat `POST /api/payments/[id]/cancel`.
+ * Server menegakkan ownership + status `pending`; payment ORDER baru batal
+ * setelah Midtrans mengonfirmasi cancel (409 `gateway_cancellation_required`).
  */
-// TODO(fase-08): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function cancelPaymentInAppwrite(paymentId: string): Promise<ServiceResult<null>> {
   const auth = await requireUserId<null>(null);
   if (!auth.ok) return auth.result;
   try {
-    await executeFunction(FUNCTION_IDS.cancelPayment, { paymentId });
+    await callApi("cancelPayment", { paymentId });
     return ok(null);
   } catch (err) {
     return failFromWriteError<null>(err, null);
