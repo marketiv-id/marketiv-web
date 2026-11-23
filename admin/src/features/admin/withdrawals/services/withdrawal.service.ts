@@ -1,6 +1,4 @@
 import { AdminFunctionExecutionError, callAdminApi } from "@/lib/api/call-api";
-import { executeAdminFunction } from "@/lib/admin/execute-function";
-import { FUNCTION_IDS } from "@/lib/admin/appwrite";
 import {
   AdminWithdrawal,
   AdminWithdrawalQueue,
@@ -157,10 +155,9 @@ async function reviewAndRefresh(
 ): Promise<WithdrawalMutationResult> {
   let response: ReviewWithdrawalResponse;
   try {
-    // TODO(fase-08): tulis masih lewat Function Appwrite `review-withdrawal`;
-    // pindah ke POST /api/admin/withdrawals/[id]/review (RPC transition_withdrawal).
-    response = await executeAdminFunction(
-      FUNCTION_IDS.reviewWithdrawal,
+    // POST /api/admin/withdrawals/[id]/review → RPC transition_withdrawal (0028).
+    response = await callAdminApi(
+      "reviewWithdrawal",
       payload,
       isReviewWithdrawalResponse,
       "Gagal memperbarui penarikan.",
@@ -175,7 +172,7 @@ async function reviewAndRefresh(
   if (response.status !== expectedStatus) {
     throw new AdminFunctionExecutionError(
       502,
-      "Status respons Function withdrawal tidak sesuai action.",
+      "Status respons withdrawal tidak sesuai action.",
     );
   }
 

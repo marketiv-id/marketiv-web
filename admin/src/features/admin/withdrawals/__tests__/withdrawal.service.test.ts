@@ -2,14 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { stubFetch } from "@/test/fetch-mock";
 
-// Tulis (review-withdrawal) masih Function Appwrite sampai Fase 8; baca antrean
-// lewat GET /api/admin/withdrawal-queue (fetch).
+// Fase 8: baca antrean (GET /api/admin/withdrawal-queue) dan tulis review
+// (POST /api/admin/withdrawals/[id]/review) sama-sama lewat fetch ke route admin.
+// Appwrite tidak boleh dipanggil lagi.
 const createExecution = vi.fn();
 vi.mock("@/lib/admin/appwrite", () => ({
   functions: { createExecution },
-  FUNCTION_IDS: {
-    reviewWithdrawal: "review-withdrawal",
-  },
+  FUNCTION_IDS: {},
 }));
 
 const {
@@ -44,14 +43,6 @@ const queueItem = {
   processedBy: null,
 };
 
-function execution(statusCode: number, body: unknown, status = "completed") {
-  return {
-    status,
-    responseStatusCode: statusCode,
-    responseBody: JSON.stringify(body),
-  };
-}
-
 let api: ReturnType<typeof stubFetch>;
 
 const queueSuccess = (items: unknown[] = [queueItem]) => api.respond(200, {
@@ -69,11 +60,13 @@ const queuePage = (items: unknown[], total: number, offset: number) => api.respo
 });
 
 const reviewSuccess = (status: "processing" | "succeeded" | "reversed") =>
-  execution(200, {
+  api.respond(200, {
     success: true,
     withdrawalId: "withdrawal-1",
     status,
   });
+
+const REVIEW_URL = "/api/admin/withdrawals/withdrawal-1/review";
 
 describe("Admin withdrawal service", () => {
   beforeEach(() => {
@@ -137,7 +130,7 @@ describe("Admin withdrawal service", () => {
   });
 
   it("starts processing then re-fetches authoritative queue", async () => {
-    createExecution.mockResolvedValueOnce(reviewSuccess("processing"));
+    reviewSuccess("processing");
     queueSuccess([
       { ...queueItem, status: "processing", processingAt: "2026-08-25T02:00:00.000Z" },
     ]);
@@ -145,25 +138,23 @@ describe("Admin withdrawal service", () => {
     const result = await startWithdrawalProcessing("withdrawal-1");
 
     expect(result.refresh).toMatchObject({ status: "refreshed" });
-    expect(createExecution).toHaveBeenCalledTimes(1);
-    expect(api.calls).toHaveLength(1);
-    expect(JSON.parse(createExecution.mock.calls[0][1])).toEqual({
-      withdrawalId: "withdrawal-1",
-      action: "start_processing",
-    });
+    expect(api.calls).toHaveLength(2);
+    expect(api.calls[0]).toEqual({ url: REVIEW_URL, method: "POST" });
+    expect(api.bodies[0]).toEqual({ action: "start_processing" });
+    expect(createExecution).not.toHaveBeenCalled();
   });
 
-  it("requires transfer reference before success Function call", async () => {
+  it("requires transfer reference before success review call", async () => {
     await expect(markWithdrawalSucceeded({
       withdrawalId: "withdrawal-1",
       transferReference: "  ",
       adminNote: "",
     })).rejects.toThrow("Referensi transfer wajib diisi");
-    expect(createExecution).not.toHaveBeenCalled();
+    expect(api.calls).toHaveLength(0);
   });
 
-  it("marks success through Function with normalized input and refreshes queue", async () => {
-    createExecution.mockResolvedValueOnce(reviewSuccess("succeeded"));
+  it("marks success through route with normalized input and refreshes queue", async () => {
+    reviewSuccess("succeeded");
     queueSuccess([{ ...queueItem, status: "succeeded" }]);
 
     await markWithdrawalSucceeded({
@@ -172,27 +163,26 @@ describe("Admin withdrawal service", () => {
       adminNote: " Sudah cocok ",
     });
 
-    expect(JSON.parse(createExecution.mock.calls[0][1])).toEqual({
-      withdrawalId: "withdrawal-1",
+    expect(api.calls[0]).toMatchObject({ url: REVIEW_URL, method: "POST" });
+    expect(api.bodies[0]).toEqual({
       action: "mark_succeeded",
       transferReference: "TRX-2026-001",
       adminNote: "Sudah cocok",
     });
-    expect(createExecution).toHaveBeenCalledTimes(1);
-    expect(api.calls).toHaveLength(1);
+    expect(api.calls).toHaveLength(2);
   });
 
-  it("requires failure reason before reversal Function call", async () => {
+  it("requires failure reason before reversal review call", async () => {
     await expect(failWithdrawal({
       withdrawalId: "withdrawal-1",
       failureReason: " ",
       adminNote: "",
     })).rejects.toThrow("Alasan kegagalan wajib diisi");
-    expect(createExecution).not.toHaveBeenCalled();
+    expect(api.calls).toHaveLength(0);
   });
 
-  it("fails withdrawal through Function and refreshes queue", async () => {
-    createExecution.mockResolvedValueOnce(reviewSuccess("reversed"));
+  it("fails withdrawal through route and refreshes queue", async () => {
+    reviewSuccess("reversed");
     queueSuccess([{ ...queueItem, status: "reversed" }]);
 
     await failWithdrawal({
@@ -201,8 +191,8 @@ describe("Admin withdrawal service", () => {
       adminNote: " Hubungi kreator ",
     });
 
-    expect(JSON.parse(createExecution.mock.calls[0][1])).toEqual({
-      withdrawalId: "withdrawal-1",
+    expect(api.calls[0]).toMatchObject({ url: REVIEW_URL, method: "POST" });
+    expect(api.bodies[0]).toEqual({
       action: "fail",
       failureReason: "Rekening tidak valid",
       adminNote: "Hubungi kreator",
@@ -210,22 +200,18 @@ describe("Admin withdrawal service", () => {
   });
 
   it("keeps successful mutation final and reports failed authoritative refresh", async () => {
-    createExecution.mockResolvedValueOnce(reviewSuccess("processing"));
+    reviewSuccess("processing");
     api.respond(500, { error: "read failed" });
 
     await expect(startWithdrawalProcessing("withdrawal-1")).resolves.toMatchObject({
       success: true,
       refresh: { status: "failed" },
     });
-    expect(
-      createExecution.mock.calls.filter(([id]) => id === "review-withdrawal"),
-    ).toHaveLength(1);
+    expect(api.calls.filter((c) => c.url === REVIEW_URL)).toHaveLength(1);
   });
 
   it("turns HTTP 409 into actionable conflict after authoritative re-fetch", async () => {
-    createExecution.mockResolvedValueOnce(execution(409, {
-      error: "Withdrawal sudah berubah. Muat ulang antrean.",
-    }, "failed"));
+    api.respond(409, { error: "Withdrawal sudah berubah. Muat ulang antrean." });
     queueSuccess([{ ...queueItem, status: "processing" }]);
 
     const error = await startWithdrawalProcessing("withdrawal-1").catch((value) => value);
@@ -236,7 +222,7 @@ describe("Admin withdrawal service", () => {
       message: "Withdrawal sudah berubah. Muat ulang antrean.",
       refresh: { status: "refreshed" },
     });
-    expect(createExecution).toHaveBeenCalledTimes(1);
-    expect(api.calls).toHaveLength(1);
+    expect(api.calls).toHaveLength(2);
+    expect(createExecution).not.toHaveBeenCalled();
   });
 });

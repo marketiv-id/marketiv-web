@@ -16,8 +16,19 @@ export interface FetchCall {
 export function stubFetch() {
   const queue: (() => Response | Promise<Response>)[] = [];
   const calls: FetchCall[] = [];
+  /** Body JSON per panggilan (sejajar `calls`; sudah di-parse, `undefined` bila tanpa body). */
+  const bodies: unknown[] = [];
   const fn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    let body: unknown;
+    if (typeof init?.body === "string") {
+      try {
+        body = JSON.parse(init.body);
+      } catch {
+        body = init.body;
+      }
+    }
     calls.push({ url: String(input), method: init?.method ?? "GET" });
+    bodies.push(body);
     const next = queue.shift();
     if (!next) throw new Error(`fetch-mock: tidak ada respons untuk ${String(input)}`);
     return next();
@@ -26,6 +37,7 @@ export function stubFetch() {
   return {
     fn,
     calls,
+    bodies,
     respond(status: number, body: unknown) {
       queue.push(() => new Response(typeof body === "string" ? body : JSON.stringify(body), { status }));
       return this;
@@ -39,6 +51,7 @@ export function stubFetch() {
     reset() {
       queue.length = 0;
       calls.length = 0;
+      bodies.length = 0;
       fn.mockClear();
     },
   };

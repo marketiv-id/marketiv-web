@@ -22,6 +22,12 @@ export const ADMIN_API_ROUTES = {
   // Fase 7 — tulis review
   reviewSubmission: { method: "POST", path: "/api/admin/submissions/:submissionId/review" },
   reviewRatecardDeliverable: { method: "POST", path: "/api/admin/ratecard-deliverables/:deliverableId/review" },
+  // Fase 8 — withdrawal + aksi admin terhadap user (audit `admin_actions`)
+  reviewWithdrawal: { method: "POST", path: "/api/admin/withdrawals/:withdrawalId/review" },
+  suspendUser: { method: "POST", path: "/api/admin/users/:userId/suspend" },
+  unsuspendUser: { method: "POST", path: "/api/admin/users/:userId/unsuspend" },
+  verifyUserKyc: { method: "POST", path: "/api/admin/users/:userId/verify-kyc" },
+  reviewAppeal: { method: "POST", path: "/api/admin/appeals/:appealId/review" },
 } as const satisfies Record<string, { method: "GET" | "POST"; path: string }>;
 
 export type AdminApiName = keyof typeof ADMIN_API_ROUTES;
