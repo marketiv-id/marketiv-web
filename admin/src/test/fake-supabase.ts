@@ -250,7 +250,12 @@ export function createFakeSupabase(seed: Record<string, Row[]> = {}): FakeSupaba
   const rpcs = new Map<string, (args: Record<string, unknown>) => unknown>();
   let authUser: Record<string, unknown> | null = null;
 
-  const rpc = vi.fn(async (name: string, args: Record<string, unknown> = {}) => {
+  // `function` (bukan arrow) supaya pemanggilan tanpa receiver ketahuan: supabase-js
+  // asli butuh `this` di rpc(), jadi `const rpc = db.rpc; rpc(...)` crash di runtime.
+  const rpc = vi.fn(async function (this: unknown, name: string, args: Record<string, unknown> = {}) {
+    if (this !== fake) {
+      throw new TypeError("fake-supabase: rpc() dipanggil tanpa receiver (lupa .bind(db)?)");
+    }
     const impl = rpcs.get(name);
     if (!impl) return { data: null, error: { code: "PGRST202", message: `fake-supabase: rpc ${name} tidak terdaftar` } };
     try {
@@ -261,7 +266,7 @@ export function createFakeSupabase(seed: Record<string, Row[]> = {}): FakeSupaba
     }
   });
 
-  return {
+  const fake: FakeSupabase = {
     tables,
     calls,
     failTable(table, error) {
@@ -286,4 +291,5 @@ export function createFakeSupabase(seed: Record<string, Row[]> = {}): FakeSupaba
       authUser = user ? { app_metadata: {}, user_metadata: {}, ...user } : null;
     },
   };
+  return fake;
 }

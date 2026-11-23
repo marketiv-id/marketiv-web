@@ -48,7 +48,8 @@ export async function callReadRpc<T>(
   name: string,
   args: Record<string, unknown>,
 ): Promise<T> {
-  const rpc = db.rpc as unknown as (
+  // `.bind(db)`: rpc() memakai `this` (PostgrestClient); tanpa bind → TypeError di runtime.
+  const rpc = db.rpc.bind(db) as unknown as (
     fn: string,
     params: Record<string, unknown>,
   ) => PromiseLike<{ data: unknown; error: { code?: string; message?: string } | null }>;
