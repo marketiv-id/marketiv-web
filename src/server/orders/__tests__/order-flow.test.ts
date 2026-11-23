@@ -259,9 +259,15 @@ describe("requestRevision & approveDeliverable", () => {
     expect(db.rpc).not.toHaveBeenCalled();
   });
 
-  it("approve (stub): UMKM dari sesi, orderId opsional dicocokkan", async () => {
-    db.setRpc("approve_deliverable", () => ({ ok: true, deliverableId: "dlv-1", orderId: "ord-1", status: "approved" }));
-    await approveDeliverable({ db: db as never, userId: UMKM }, "dlv-1", { orderId: "ord-1" });
+  it("approve: UMKM dari sesi, orderId opsional dicocokkan, hasil release diteruskan", async () => {
+    db.setRpc("approve_deliverable", () => ({ ok: true, deliverableId: "dlv-1", orderId: "ord-1", status: "approved", release: "released" }));
+    expect(await approveDeliverable({ db: db as never, userId: UMKM }, "dlv-1", { orderId: "ord-1" })).toEqual({
+      ok: true,
+      deliverableId: "dlv-1",
+      orderId: "ord-1",
+      status: "approved",
+      release: "released",
+    });
     await approveDeliverable({ db: db as never, userId: UMKM }, "dlv-1", {});
     expect(db.rpc).toHaveBeenNthCalledWith(1, "approve_deliverable", { p_deliverable_id: "dlv-1", p_umkm_id: UMKM, p_order_id: "ord-1" });
     expect(db.rpc).toHaveBeenNthCalledWith(2, "approve_deliverable", { p_deliverable_id: "dlv-1", p_umkm_id: UMKM, p_order_id: null });

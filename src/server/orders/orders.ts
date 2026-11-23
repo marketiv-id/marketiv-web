@@ -15,7 +15,8 @@ import { HttpError, parseBody } from "@/server/http";
  * Event trigger Appwrite diganti pemanggilan eksplisit: semuanya terjadi di
  * satu RPC 0023 (row lock order) sehingga urutannya jelas dan bisa dites.
  *
- * UANG: approve hanya STUB status. TODO(fase-08): release_escrow.
+ * UANG (Fase 8): approve memanggil `release_escrow` di dalam RPC yang sama
+ * (0026) — dana cair bila validasi Admin `valid` sudah ada.
  */
 
 export interface OrderWriteContext {
@@ -164,14 +165,23 @@ const approveBodySchema = z.object({
 
 /**
  * POST /api/deliverables/[deliverableId]/approve — UMKM pemilik order.
- * STUB Fase 7: hanya menandai deliverable `approved`.
- * TODO(fase-08): release_escrow (dana ke wallet kreator, order `completed`).
+ * Menandai deliverable `approved` lalu `release_escrow` (0026): bila validasi
+ * Admin `valid` sudah ada, dana cair ke wallet kreator dan order `completed`
+ * dalam transaksi yang sama; bila belum, `release` = `not_releasable` dan job
+ * `reconcile-release-escrow` mencoba lagi setelah validasi masuk.
  */
 export async function approveDeliverable(
   ctx: OrderWriteContext,
   rawDeliverableId: string,
   body: unknown,
-): Promise<{ ok: true; deliverableId: string; orderId: string; status: "approved" }> {
+): Promise<{
+  ok: true;
+  deliverableId: string;
+  orderId: string;
+  status: "approved";
+  /** Hasil `release_escrow`: `released`, `already_released`, atau `not_releasable`. */
+  release: string;
+}> {
   const deliverableId = routeId(rawDeliverableId, "Deliverable tidak ditemukan.");
   const { orderId } = parseBody(approveBodySchema, body ?? {}, "Data tidak valid.");
   return callWriteRpc(ctx.db, "approve_deliverable", {
