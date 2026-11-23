@@ -1,7 +1,7 @@
 # Fase 05 — Jalur baca
 
 - Tanggal: 2026-11-23
-- PR: (diisi setelah PR dibuat)
+- PR: https://github.com/marketiv-id/marketiv-web/pull/40
 - Status: selesai. Semua baca jalan dari Supabase, 13 route GET aktif, migration 0015–0017 sudah di staging. Satu deviasi verifikasi: snapshot dibandingkan dengan aturan `main.js`, bukan output Appwrite langsung (lihat "Keputusan & deviasi").
 
 ## Status task
