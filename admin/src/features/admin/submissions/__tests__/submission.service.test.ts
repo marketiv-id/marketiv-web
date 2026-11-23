@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { stubFetch } from "@/test/fetch-mock";
 
-// Tulis (review-submission) masih Function Appwrite sampai Fase 7; baca antrean
-// lewat GET /api/admin/submission-queue (fetch).
+// Fase 7: review lewat POST /api/admin/submissions/[id]/review, antrean lewat
+// GET /api/admin/submission-queue — keduanya `fetch` (callAdminApi).
 const createExecution = vi.fn();
 vi.mock("@/lib/admin/appwrite", () => ({
   functions: { createExecution },
@@ -17,73 +17,71 @@ const queueItem = {
   campaign: { id: "campaign-1", title: "Campaign", rewardPer1000Views: 10000, platform: "tiktok" },
   umkm: { id: "umkm-1", name: "UMKM" }, platform: "tiktok", postUrl: "https://example.test/post",
 };
-const reviewSuccess = (status: "approved" | "rejected") => ({ status: "completed", responseStatusCode: 200, responseBody: JSON.stringify({ success: true, campaignId: "campaign-1", status }) });
+const reviewSuccess = (status: "approved" | "rejected") => ({ success: true, campaignId: "campaign-1", status });
 const queueBody = { items: [queueItem], total: 1 };
 let api: ReturnType<typeof stubFetch>;
 
-describe("P4 authoritative Admin submission review", () => {
+function reviewBody(index = 0) {
+  const init = api.fn.mock.calls[index]?.[1] as RequestInit | undefined;
+  return JSON.parse(String(init?.body));
+}
+
+describe("Admin submission review (route)", () => {
   beforeEach(() => {
     createExecution.mockReset();
     api = stubFetch();
   });
   afterEach(() => vi.unstubAllGlobals());
 
-  it("approves only after Function success and refreshes authoritative queue", async () => {
-    createExecution.mockResolvedValueOnce(reviewSuccess("approved"));
-    api.respond(200, queueBody);
+  it("approve → POST route lalu muat ulang antrean; Appwrite tidak dipanggil", async () => {
+    api.respond(200, reviewSuccess("approved")).respond(200, queueBody);
     const result = await approveCampaignSubmission({ submissionId: "submission-1", verifiedViews: 20000 });
     expect(result.refresh).toMatchObject({ status: "refreshed", submissions: [queueItem] });
-    expect(createExecution).toHaveBeenCalledTimes(1);
-    expect(api.calls).toEqual([{ url: "/api/admin/submission-queue?status=all&limit=50", method: "GET" }]);
-    expect(JSON.parse(createExecution.mock.calls[0][1])).toEqual({ submissionId: "submission-1", status: "approved", views: 20000 });
+    expect(api.calls).toEqual([
+      { url: "/api/admin/submissions/submission-1/review", method: "POST" },
+      { url: "/api/admin/submission-queue?status=all&limit=50", method: "GET" },
+    ]);
+    expect(reviewBody()).toEqual({ status: "approved", views: 20000 });
+    expect(createExecution).not.toHaveBeenCalled();
   });
 
-  it("rejects through Function and refreshes authoritative queue", async () => {
-    createExecution.mockResolvedValueOnce(reviewSuccess("rejected"));
-    api.respond(200, queueBody);
-    await expect(rejectCampaignSubmission({ submissionId: "submission-1", rejectionReason: "Konten tidak sesuai brief" })).resolves.toMatchObject({ success: true, refresh: { status: "refreshed" } });
-    expect(JSON.parse(createExecution.mock.calls[0][1])).toEqual({ submissionId: "submission-1", status: "rejected", notes: "Konten tidak sesuai brief" });
+  it("reject → body berisi notes", async () => {
+    api.respond(200, reviewSuccess("rejected")).respond(200, queueBody);
+    await expect(rejectCampaignSubmission({ submissionId: "submission-1", rejectionReason: "Konten tidak sesuai brief" }))
+      .resolves.toMatchObject({ success: true, refresh: { status: "refreshed" } });
+    expect(reviewBody()).toEqual({ status: "rejected", notes: "Konten tidak sesuai brief" });
   });
 
-  it("rejects invalid views without Function call", async () => {
+  it("views tidak valid ditolak tanpa request", async () => {
     await expect(approveCampaignSubmission({ submissionId: "submission-1", verifiedViews: 1.5 })).rejects.toThrow("bilangan bulat");
-    expect(createExecution).not.toHaveBeenCalled();
-  });
-
-  it("rejects unsafe views without Function call", async () => {
     await expect(approveCampaignSubmission({ submissionId: "submission-1", verifiedViews: Number.MAX_SAFE_INTEGER + 1 })).rejects.toThrow("bilangan bulat");
-    expect(createExecution).not.toHaveBeenCalled();
-  });
-
-  it("rejects empty rejection reason without Function call", async () => {
-    await expect(rejectCampaignSubmission({ submissionId: "submission-1", rejectionReason: "  " })).rejects.toThrow("wajib");
-    expect(createExecution).not.toHaveBeenCalled();
-  });
-
-  it.each([401, 403, 409, 500])("propagates Function HTTP %i without false success", async (statusCode) => {
-    createExecution.mockResolvedValueOnce({ status: "completed", responseStatusCode: statusCode, responseBody: JSON.stringify({ error: "backend denied" }) });
-    await expect(approveCampaignSubmission({ submissionId: "submission-1", verifiedViews: 0 })).rejects.toMatchObject({ statusCode, message: "backend denied" });
-    expect(createExecution).toHaveBeenCalledTimes(1);
     expect(api.calls).toHaveLength(0);
   });
 
-  it("propagates failed execution", async () => {
-    createExecution.mockResolvedValueOnce({ status: "failed", responseStatusCode: 200, responseBody: JSON.stringify({ error: "execution failed" }) });
-    await expect(rejectCampaignSubmission({ submissionId: "submission-1", rejectionReason: "invalid" })).rejects.toMatchObject({ statusCode: 200 });
+  it("alasan penolakan kosong ditolak tanpa request", async () => {
+    await expect(rejectCampaignSubmission({ submissionId: "submission-1", rejectionReason: "  " })).rejects.toThrow("wajib");
+    expect(api.calls).toHaveLength(0);
   });
 
-  it("fails closed on malformed Function response", async () => {
-    createExecution.mockResolvedValueOnce({ status: "completed", responseStatusCode: 200, responseBody: "not-json" });
+  it.each([400, 401, 403, 404, 409, 500])("HTTP %i diteruskan tanpa sukses palsu", async (statusCode) => {
+    api.respond(statusCode, { error: "backend denied" });
+    await expect(approveCampaignSubmission({ submissionId: "submission-1", verifiedViews: 0 }))
+      .rejects.toMatchObject({ statusCode, message: "backend denied" });
+    expect(api.calls).toHaveLength(1);
+  });
+
+  it("respons review tidak valid → gagal tertutup", async () => {
+    api.respond(200, "not-json");
     await expect(approveCampaignSubmission({ submissionId: "submission-1", verifiedViews: 0 })).rejects.toMatchObject({ statusCode: 200 });
+    api.reset();
+    api.respond(200, { success: true });
+    await expect(approveCampaignSubmission({ submissionId: "submission-1", verifiedViews: 0 })).rejects.toMatchObject({ statusCode: 502 });
   });
 
-  it("keeps successful mutation successful when read refresh fails and does not retry it", async () => {
-    createExecution.mockResolvedValueOnce(reviewSuccess("approved"));
-    api.respond(500, { error: "read failed" });
+  it("review sukses tetap sukses walau muat ulang antrean gagal (tanpa retry review)", async () => {
+    api.respond(200, reviewSuccess("approved")).respond(500, { error: "read failed" });
     const result = await approveCampaignSubmission({ submissionId: "submission-1", verifiedViews: 0 });
     expect(result).toMatchObject({ success: true, refresh: { status: "failed", error: { statusCode: 500, message: "read failed" } } });
-    expect(createExecution).toHaveBeenCalledTimes(1);
-    expect(createExecution.mock.calls.filter(([id]) => id === "review-submission")).toHaveLength(1);
-    expect(api.calls).toHaveLength(1);
+    expect(api.calls.filter((c) => c.method === "POST")).toHaveLength(1);
   });
 });

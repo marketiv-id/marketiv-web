@@ -3,6 +3,7 @@ import "server-only";
 import type { AdminSupabaseClient } from "@/lib/supabase/admin";
 
 import { throwIfDbError } from "../http";
+import { toAdminFileUrl } from "./file-url";
 
 /**
  * Port `get-admin-ratecard-deliverable-queue`.
@@ -70,7 +71,8 @@ export function toQueueItem(row: RatecardDeliverableQueueRow): RatecardDeliverab
     orderId: str(row.order_id),
     version: Number(row.version) || 0,
     source: str(row.source),
-    evidenceUrl: str(row.file_url),
+    // URL file privat app user → route admin (same-origin); URL lain apa adanya.
+    evidenceUrl: toAdminFileUrl(str(row.file_url)),
     notes: str(row.notes) || undefined,
     submittedAt: str(row.submitted_at),
     status: "pending",

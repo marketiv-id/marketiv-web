@@ -10,13 +10,18 @@ export { AdminFunctionExecutionError } from "./errors";
  *   - body bukan JSON   → AdminFunctionExecutionError(status || 502, …)
  *   - body tidak valid  → AdminFunctionExecutionError(502, "Respons … tidak valid.")
  *   - gagal jaringan    → AdminFunctionExecutionError(0, …)
- * Route GET menerima `payload` sebagai query string (nilai primitif saja).
+ * Route GET menerima `payload` sebagai query string (nilai primitif saja);
+ * POST mengirim JSON. `:param` di path diisi dari key `payload` yang sama lalu
+ * dihapus dari body.
  */
 export const ADMIN_API_ROUTES = {
   getAdminDashboardSummary: { method: "GET", path: "/api/admin/dashboard-summary" },
   getAdminSubmissionQueue: { method: "GET", path: "/api/admin/submission-queue" },
   getAdminWithdrawalQueue: { method: "GET", path: "/api/admin/withdrawal-queue" },
   getAdminRatecardDeliverableQueue: { method: "GET", path: "/api/admin/ratecard-deliverable-queue" },
+  // Fase 7 — tulis review
+  reviewSubmission: { method: "POST", path: "/api/admin/submissions/:submissionId/review" },
+  reviewRatecardDeliverable: { method: "POST", path: "/api/admin/ratecard-deliverables/:deliverableId/review" },
 } as const satisfies Record<string, { method: "GET" | "POST"; path: string }>;
 
 export type AdminApiName = keyof typeof ADMIN_API_ROUTES;
@@ -34,15 +39,32 @@ function toQuery(payload: unknown): string {
   return query ? `?${query}` : "";
 }
 
+/** Isi `:param` dari payload; key yang dipakai dihapus dari body. */
+function resolvePath(template: string, payload: unknown): { path: string; rest: unknown } {
+  if (!template.includes(":")) return { path: template, rest: payload };
+  const rest: Record<string, unknown> =
+    payload && typeof payload === "object" && !Array.isArray(payload) ? { ...(payload as Record<string, unknown>) } : {};
+  const path = template.replace(/:([A-Za-z0-9_]+)/g, (_, key: string) => {
+    const value = rest[key];
+    if ((typeof value !== "string" && typeof value !== "number") || String(value) === "") {
+      throw new AdminFunctionExecutionError(400, `Parameter "${key}" wajib diisi.`);
+    }
+    delete rest[key];
+    return encodeURIComponent(String(value));
+  });
+  return { path, rest };
+}
+
 export async function callAdminApi<T>(
   name: AdminApiName,
   payload: unknown,
   isValid: (value: unknown) => value is T,
   fallbackMessage: string,
 ): Promise<T> {
-  const route = ADMIN_API_ROUTES[name];
+  const route: { method: "GET" | "POST"; path: string } = ADMIN_API_ROUTES[name];
   const isGet = route.method === "GET";
-  const url = isGet ? `${route.path}${toQuery(payload)}` : route.path;
+  const { path, rest } = resolvePath(route.path, payload);
+  const url = isGet ? `${path}${toQuery(rest)}` : path;
 
   let response: Response;
   try {
@@ -51,7 +73,7 @@ export async function callAdminApi<T>(
       credentials: "same-origin",
       cache: "no-store",
       headers: isGet ? { Accept: "application/json" } : { "Content-Type": "application/json", Accept: "application/json" },
-      ...(isGet ? {} : { body: JSON.stringify(payload ?? {}) }),
+      ...(isGet ? {} : { body: JSON.stringify(rest ?? {}) }),
     });
   } catch {
     throw new AdminFunctionExecutionError(0, "Tidak dapat terhubung ke server. Periksa koneksi lalu coba lagi.");
