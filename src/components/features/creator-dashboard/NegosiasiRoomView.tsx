@@ -30,6 +30,7 @@ import { PLATFORM_FEE_RATE, calculatePlatformFee } from "@/types/domain";
 import { getEscrowStatusLabel, resolveStatusLabel } from "@/lib/dashboard-labels";
 import { cn } from "@/lib/utils";
 import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
+// TODO(fase-06): realtime → Supabase Realtime (`useRealtimeTable`, 06-mutasi-chat-file.md).
 import { realtimeClient, tableChannels } from "@/lib/appwrite/realtime";
 import { useNegotiationRoomSync } from "@/lib/negotiation/use-negotiation-room-sync";
 import { useTosConsent } from "@/components/providers/TosConsentProvider";

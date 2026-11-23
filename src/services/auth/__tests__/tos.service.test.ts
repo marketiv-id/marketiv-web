@@ -1,9 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createFakeSupabase, type FakeSupabase } from "@/test/fake-supabase";
+
 const mocks = vi.hoisted(() => ({
   executeFunction: vi.fn(),
   mockDelay: vi.fn(),
   useMockData: false,
+  db: null as unknown as FakeSupabase,
+  userId: "user-1" as string | null,
+}));
+
+vi.mock("@/lib/supabase/client", () => ({ createClient: () => mocks.db }));
+vi.mock("@/services/auth/session.service", () => ({
+  getSession: vi.fn(),
+  getCurrentUserId: async () => mocks.userId,
 }));
 
 vi.mock("@/lib/appwrite/functions", () => ({
@@ -25,21 +35,52 @@ describe("T&C service", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mocks.useMockData = false;
+    mocks.userId = "user-1";
   });
 
-  it("requests status from accept-tos", async () => {
-    mocks.executeFunction.mockResolvedValue({
-      currentVersion: "v3.1",
-      acceptedVersion: null,
-      acceptedAt: null,
-      needsConsent: true,
+  it("reads status from own users row (port accept-tos action status)", async () => {
+    mocks.db = createFakeSupabase({
+      users: [
+        { id: "user-1", tos_version: null, tos_accepted_at: null },
+        { id: "user-2", tos_version: "v3.1", tos_accepted_at: "2026-09-01T00:00:00+00:00" },
+      ],
     });
     const { getTosStatus } = await import("../tos.service");
 
     const result = await getTosStatus();
 
-    expect(mocks.executeFunction).toHaveBeenCalledWith("accept-tos", { action: "status" });
-    expect(result.data?.needsConsent).toBe(true);
+    expect(result).toEqual({
+      success: true,
+      data: { currentVersion: "v3.1", acceptedVersion: null, acceptedAt: null, needsConsent: true },
+    });
+    expect(mocks.db.calls).toEqual([{ table: "users", filters: ["id.eq.user-1"], count: undefined }]);
+    expect(mocks.executeFunction).not.toHaveBeenCalled();
+  });
+
+  it("needsConsent false only when current version AND acceptedAt are set", async () => {
+    mocks.db = createFakeSupabase({
+      users: [{ id: "user-1", tos_version: "v3.1", tos_accepted_at: "2026-09-01T00:00:00+00:00" }],
+    });
+    const { getTosStatus } = await import("../tos.service");
+    expect((await getTosStatus()).data).toEqual({
+      currentVersion: "v3.1",
+      acceptedVersion: "v3.1",
+      acceptedAt: "2026-09-01T00:00:00+00:00",
+      needsConsent: false,
+    });
+
+    mocks.db = createFakeSupabase({
+      users: [{ id: "user-1", tos_version: "v2.0", tos_accepted_at: "2026-01-01T00:00:00+00:00" }],
+    });
+    expect((await getTosStatus()).data?.needsConsent).toBe(true);
+  });
+
+  it("missing users row → not_found; no session → auth", async () => {
+    mocks.db = createFakeSupabase({ users: [] });
+    const { getTosStatus } = await import("../tos.service");
+    expect(await getTosStatus()).toMatchObject({ success: false, code: "not_found" });
+    mocks.userId = null;
+    expect(await getTosStatus()).toMatchObject({ success: false, code: "auth" });
   });
 
   it("accepts backend-returned version", async () => {

@@ -10,7 +10,14 @@ vi.mock("@/lib/appwrite/functions", async () => {
   const actual = await vi.importActual<typeof import("@/lib/appwrite/functions")>("@/lib/appwrite/functions");
   return { ...actual, executeFunction: mocks.executeFunction, FUNCTION_IDS: { ...actual.FUNCTION_IDS, unclaimCampaign: "unclaim-campaign" } };
 });
-vi.mock("@/services/auth/session.service", () => ({ getSession: mocks.getSession }));
+vi.mock("@/services/auth/session.service", () => ({
+  getSession: mocks.getSession,
+  // requireUserId (Fase 5) membaca userId lewat getCurrentUserId.
+  getCurrentUserId: async () => {
+    const session = await mocks.getSession();
+    return session?.success ? session.data.userId : null;
+  },
+}));
 
 import { claimCampaignInAppwrite, unclaimCampaignInAppwrite } from "../creator-appwrite.service";
 import { FunctionExecutionError } from "@/lib/appwrite/functions";

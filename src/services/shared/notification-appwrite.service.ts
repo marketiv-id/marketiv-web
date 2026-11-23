@@ -1,10 +1,11 @@
-import { Query } from "appwrite";
 import { databases } from "@/lib/appwrite/databases";
 import { appwriteConfig } from "@/lib/appwrite/config";
 import type { ServiceResult } from "@/types/domain";
 import type { AppNotification, NotifType } from "@/types/notification.types";
 import type { UserRole } from "@/types/domain";
 import { executeFunction, FUNCTION_IDS } from "@/lib/appwrite/functions";
+import { createClient } from "@/lib/supabase/client";
+import { rowsToDocs } from "./legacy-doc";
 import {
   type Doc,
   str,
@@ -28,6 +29,9 @@ import {
  * Sampai perbaikan permission baris di 4 Function penulis notifikasi dideploy
  * (§B handoff Alur B), daftar ini bisa pulang kosong meski barisnya ada. Kosong
  * ditampilkan sebagai empty state, bukan error.
+ *
+ * Fase 5 (migrasi Supabase): BACA lewat supabase-js + RLS (pemilik saja).
+ * TULIS (tandai dibaca, hapus) masih Appwrite — TODO(fase-06).
  */
 
 const DB = appwriteConfig.databaseId;
@@ -109,30 +113,24 @@ export async function getNotificationsFromAppwrite(
   if (!auth.ok) return auth.result;
 
   try {
+    const supabase = createClient();
     const notifications: AppNotification[] = [];
-    let cursor: string | null = null;
-    let hasMore = true;
-
-    while (hasMore) {
-      const queries = [
-        Query.equal("userId", auth.userId),
-        Query.orderDesc("$createdAt"),
-        Query.limit(PAGE_LIMIT),
-      ];
-      if (cursor) queries.push(Query.cursorAfter(cursor));
-
-      const res = await databases.listDocuments(DB, COLLECTION, queries);
-      const docs = res.documents as unknown as Doc[];
-      
-      for (const d of docs) {
-        notifications.push(mapNotification(d, role));
-      }
-
-      if (docs.length < PAGE_LIMIT) {
-        hasMore = false;
-      } else {
-        cursor = str(docs[docs.length - 1].$id);
-      }
+    // Padanan cursorAfter Appwrite: halaman berurutan stabil (created_at, id)
+    // turun. Offset dipakai, bukan keyset `.lt("created_at")`, karena beberapa
+    // notifikasi bisa berbagi created_at yang sama (ditulis satu transaksi) dan
+    // keyset tunggal akan melompati sebagian.
+    for (let offset = 0; ; offset += PAGE_LIMIT) {
+      const { data, error } = await supabase
+        .from(COLLECTION)
+        .select("*")
+        .eq("user_id", auth.userId)
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .range(offset, offset + PAGE_LIMIT - 1);
+      if (error) throw error;
+      const docs = rowsToDocs(COLLECTION, data);
+      for (const d of docs) notifications.push(mapNotification(d, role));
+      if (docs.length < PAGE_LIMIT) break;
     }
 
     return ok(notifications);
@@ -141,6 +139,7 @@ export async function getNotificationsFromAppwrite(
   }
 }
 
+// TODO(fase-06): tandai dibaca → Route Handler.
 export async function markNotificationReadInAppwrite(
   id: string
 ): Promise<ServiceResult<null>> {
@@ -157,6 +156,7 @@ export async function markNotificationReadInAppwrite(
  * N update paralel. Kegagalan sebagian dilaporkan sebagai gagal — pemanggil
  * memuat ulang daftar supaya layar tidak mengklaim lebih dari yang terjadi.
  */
+// TODO(fase-06): tandai semua dibaca → Route Handler.
 export async function markAllNotificationsReadInAppwrite(
   ids: string[]
 ): Promise<ServiceResult<null>> {
@@ -170,6 +170,7 @@ export async function markAllNotificationsReadInAppwrite(
   }
 }
 
+// TODO(fase-06): hapus notifikasi → Route Handler.
 export async function deleteNotificationInAppwrite(
   id: string
 ): Promise<ServiceResult<null>> {
