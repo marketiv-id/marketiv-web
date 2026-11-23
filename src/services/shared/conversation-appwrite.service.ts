@@ -1,7 +1,4 @@
-import { Query } from "appwrite";
-import { databases } from "@/lib/appwrite/databases";
-import { appwriteConfig } from "@/lib/appwrite/config";
-import { executeFunction, FUNCTION_IDS } from "@/lib/appwrite/functions";
+import { callApi } from "@/lib/api/call-api";
 import { createClient } from "@/lib/supabase/client";
 import { rowToDoc, rowsToDocs } from "@/services/shared/legacy-doc";
 import type { ServiceResult } from "@/types/domain";
@@ -31,45 +28,23 @@ import {
  * `last_message`, `conversation_id`, `sender_id`, `message_type`, `read_at`).
  * Jangan menyalin pola camelCase dari service lain ke sini.
  *
- * ⚠️ PERMISSION — dan kenapa jalur tulisnya ada di Function.
- * Sejak pengetatan gelombang 2, `conversations` dan `messages` hanya punya
- * `create("users")` di level koleksi, tanpa `read`. Artinya setiap baris WAJIB
- * memasang permission untuk kedua pihak saat dibuat, kalau tidak lawan bicara
- * tidak akan pernah bisa membacanya.
- *
- * Tapi Appwrite MELARANG klien memasang permission untuk user lain: dari sesi
- * browser, `permissions` hanya boleh menyebut `any`, `users`, dan role diri
- * sendiri. Percobaannya berbalas
- *
- *   AppwriteException: Permissions must be one of: (any, users, user:<diri
- *   sendiri>, user:<diri sendiri>/unverified, users/unverified)
- *
- * yang di UI tampil sebagai "Gagal menyimpan data. Coba lagi." Karena itu SEMUA
- * tulis di file ini lewat Function (`create-conversation`, `send-message`,
- * `create-offer`) yang berjalan dengan API key. Yang tersisa di klien hanya
- * baca, dan update pesan yang pemiliknya memang sudah punya izin lewat
- * `markConversationRead`. Arsip percakapan tetap lewat Function tepercaya.
- *
- * Jangan mengembalikan `databases.createDocument` ke sini.
- *
- * Fase 5 (migrasi Supabase): BACA (`getMyConversations…`, riwayat pesan) lewat
- * supabase-js + RLS (`private.is_conversation_participant`). Kolom Postgres
- * `conversations`/`messages` tetap snake_case, jadi `rowToDoc()` hanya
- * menambah `$id`/`$createdAt`. TULIS (buat percakapan, kirim pesan, tandai
- * dibaca, arsip) masih Appwrite — TODO(fase-06).
+ * TULIS lewat Route Handler (Fase 6): buat percakapan, kirim pesan, tandai
+ * dibaca, arsip → `callApi(...)` → RPC Postgres yang memeriksa peserta di
+ * server. Browser tidak pernah menulis `conversations`/`messages` langsung
+ * (RLS hanya memberi SELECT). BACA lewat supabase-js + RLS
+ * (`private.is_conversation_participant`).
  */
 
-const DB = appwriteConfig.databaseId;
 const CONVERSATIONS = "conversations";
 const MESSAGES = "messages";
 const OFFERS = "offers";
 
 /**
- * Batas kolom `messages.content` di appwrite.config.json.
+ * Batas kolom `messages.content` (0005_ratecards_chat.sql).
  *
- * Dipakai untuk menolak lebih awal supaya pengguna tidak menunggu satu eksekusi
- * Function hanya untuk ditolak. Batas yang MENGIKAT tetap ada di Function
- * `send-message` — pemeriksaan di klien tidak pernah jadi pengaman.
+ * Dipakai untuk menolak lebih awal supaya pengguna tidak menunggu satu request
+ * hanya untuk ditolak. Batas yang MENGIKAT ada di route + RPC `send_message` —
+ * pemeriksaan di klien tidak pernah jadi pengaman.
  */
 const MAX_MESSAGE_LENGTH = 2000;
 
@@ -98,16 +73,8 @@ const mapConversation = (d: Doc): ConversationFlag => ({
 export const conversationPairKey = (umkmId: string, creatorId: string): string =>
   `${umkmId}:${creatorId}`;
 
-/**
- * Bentuk user ID yang diterima Appwrite: maksimal 36 karakter, huruf/angka/
- * titik/strip/garis bawah, dan tidak boleh diawali karakter selain alfanumerik.
- *
- * Dipakai untuk memeriksa `creatorId` SEBELUM dijadikan `Role.user(...)`. Kolom
- * `creator_id` sendiri menerima string 255 karakter apa pun, jadi nilai yang
- * tidak sah lolos ke Appwrite dan baru ditolak di sana sebagai 400 "invalid
- * permissions" — pesan yang tidak pernah sampai ke pengguna.
- */
-const APPWRITE_USER_ID = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,35}$/;
+/** ID akun Supabase (UUID). Profil kreator lama tanpa akun tertaut ditolak lebih awal. */
+const USER_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Percakapan milik sesi aktif, apa pun perannya.
@@ -143,20 +110,11 @@ export async function getMyConversationsFromAppwrite(): Promise<
 
 /**
  * Mulai (atau lanjutkan) percakapan dengan seorang kreator. UMKM-only —
- * pemanggilnya selalu menjadi `umkm_id`.
+ * pemanggilnya selalu menjadi `umkm_id` (ditegakkan route).
  *
- * Lewat Function, bukan `databases.createDocument`. Barisnya wajib membawa
- * permission untuk KEDUA peserta (`conversations` tidak punya `read` di level
- * koleksi), dan klien Appwrite dilarang memasang permission untuk user lain —
- * lihat catatan di FUNCTION_IDS. Validasi di sini hanya menyaring lebih awal;
- * yang menegakkan aturannya tetap Function.
- *
- * Percakapan yang sudah ada dikembalikan apa adanya, bukan dianggap error —
- * termasuk saat unique index `umkm_id + creator_id` menolak baris kedua.
- * Idempotensinya sekarang dipegang penuh Function, yang membaca dengan API key
- * sehingga tidak pernah buta terhadap baris ber-permission rusak.
+ * Idempoten: percakapan yang sudah ada untuk pasangan ini dikembalikan apa
+ * adanya (unique `umkm_id, creator_id` + `on conflict do nothing` di RPC).
  */
-// TODO(fase-06): buat percakapan → Route Handler.
 export async function createConversationInAppwrite(
   creatorId: string
 ): Promise<ServiceResult<string>> {
@@ -166,15 +124,12 @@ export async function createConversationInAppwrite(
   if (creatorId === auth.userId) {
     return fail("Tidak bisa memulai percakapan dengan diri sendiri.", "validation", "");
   }
-  if (!APPWRITE_USER_ID.test(creatorId)) {
+  if (!USER_UUID.test(creatorId)) {
     return fail("Profil kreator ini belum tertaut ke akun yang sah.", "validation", "");
   }
 
   try {
-    const data = await executeFunction<{ conversationId?: string }>(
-      FUNCTION_IDS.createConversation,
-      { creatorId }
-    );
+    const data = await callApi<{ conversationId?: string }>("createConversation", { creatorId });
     const conversationId = str(data?.conversationId);
     if (!conversationId) return fail("Ruang negosiasi gagal dibuka.", "server", "");
     return ok(conversationId);
@@ -212,41 +167,11 @@ async function loadParticipationFromSupabase(
 }
 
 /**
- * Peserta percakapan + peran pemanggil (Appwrite), dipakai jalur TULIS
- * `markConversationReadInAppwrite`.
- * TODO(fase-06): hapus bersama jalur tulisnya.
- */
-async function loadParticipation(conversationId: string, userId: string) {
-  const doc = (await databases.getDocument(
-    DB,
-    CONVERSATIONS,
-    conversationId
-  )) as unknown as Doc;
-
-  const umkmId = str(doc.umkm_id);
-  const creatorId = str(doc.creator_id);
-  if (umkmId !== userId && creatorId !== userId) return null;
-
-  return {
-    umkmId,
-    creatorId,
-    role: umkmId === userId ? ("umkm" as const) : ("creator" as const),
-  };
-}
-
-/**
- * Kirim pesan teks.
+ * Kirim pesan teks → `POST /api/conversations/[id]/messages`.
  *
- * Lewat Function karena baris `messages` harus terbaca lawan bicara, dan klien
- * tidak boleh memasang permission untuk user lain. Tanpa permission per-baris,
- * pesan tidak akan sampai — termasuk lewat realtime, yang hanya mengirim event
- * untuk baris yang boleh dibaca penerimanya.
- *
- * Function juga yang memperbarui `conversations.last_message`, SETELAH pesannya
- * tersimpan. Urutan sebaliknya bisa meninggalkan ringkasan percakapan yang
- * menjanjikan pesan yang tidak pernah ada.
+ * RPC `send_message` menyimpan pesan, memperbarui `conversations.last_message`,
+ * dan membuat notifikasi in-app untuk lawan bicara dalam SATU transaksi.
  */
-// TODO(fase-06): kirim pesan → Route Handler.
 export async function sendMessageInAppwrite(
   conversationId: string,
   content: string
@@ -262,10 +187,7 @@ export async function sendMessageInAppwrite(
   }
 
   try {
-    const message = await executeFunction<ChatMessage>(FUNCTION_IDS.sendMessage, {
-      conversationId,
-      content: text,
-    });
+    const message = await callApi<ChatMessage>("sendMessage", { conversationId, content: text });
     if (!message?.id) return fail("Pesan gagal terkirim.", "server", empty);
     return ok(message);
   } catch (err) {
@@ -364,39 +286,21 @@ export async function getMessagesByConversationIdInAppwrite(
  * Hanya pesan LAWAN BICARA yang ditandai — pesan sendiri tidak pernah dihitung
  * unread oleh kedua Function, jadi menandainya hanya menambah tulisan sia-sia.
  *
- * Kegagalan sebagian tidak dinaikkan sebagai error: badge yang telat turun jauh
- * lebih ringan daripada ruang chat yang menolak terbuka. Pemanggil boleh
- * mengabaikan hasilnya.
+ * Server menjalankan SATU `UPDATE … WHERE read_at IS NULL` (RPC
+ * `mark_conversation_read`), bukan loop per pesan. Pemanggil boleh mengabaikan
+ * hasilnya: badge yang telat turun jauh lebih ringan daripada ruang chat yang
+ * menolak terbuka.
  */
-// TODO(fase-06): tandai dibaca → Route Handler (satu UPDATE … WHERE read_at IS NULL).
 export async function markConversationReadInAppwrite(
   conversationId: string
 ): Promise<ServiceResult<number>> {
   const auth = await requireUserId<number>(0);
   if (!auth.ok) return auth.result;
   try {
-    const participation = await loadParticipation(conversationId, auth.userId);
-    if (!participation) return fail("Percakapan tidak ditemukan.", "not_found", 0);
-
-    const unread = await databases.listDocuments(DB, MESSAGES, [
-      Query.equal("conversation_id", conversationId),
-      Query.notEqual("sender_id", auth.userId),
-      Query.isNull("read_at"),
-      Query.limit(200),
-    ]);
-    if (unread.documents.length === 0) return ok(0);
-
-    const readAt = new Date().toISOString();
-    const results = await Promise.allSettled(
-      unread.documents.map((m) =>
-        databases.updateDocument(DB, MESSAGES, str((m as unknown as Doc).$id), {
-          read_at: readAt,
-        })
-      )
-    );
-    return ok(results.filter((r) => r.status === "fulfilled").length);
+    const res = await callApi<{ updated?: number }>("markConversationRead", { conversationId });
+    return ok(num(res?.updated));
   } catch (err) {
-    return failFromError<number>(err, 0);
+    return failFromError<number>(err, 0, "markConversationRead");
   }
 }
 
@@ -404,7 +308,6 @@ export async function markConversationReadInAppwrite(
  * Arsipkan / batal arsip. BUKAN hapus — pesan di dalamnya tetap utuh sebagai
  * riwayat negosiasi; yang berubah hanya visibilitas di inbox.
  */
-// TODO(fase-06): arsip percakapan → Route Handler.
 export async function setConversationArchivedInAppwrite(
   conversationId: string,
   archived: boolean
@@ -412,10 +315,7 @@ export async function setConversationArchivedInAppwrite(
   const auth = await requireUserId<null>(null);
   if (!auth.ok) return auth.result;
   try {
-    await executeFunction(FUNCTION_IDS.patchConversationArchive, {
-      conversationId,
-      isArchived: archived,
-    });
+    await callApi("patchConversationArchive", { conversationId, isArchived: archived });
     return ok(null);
   } catch (err) {
     return failFromWriteError<null>(err, null);

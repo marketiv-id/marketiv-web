@@ -1,5 +1,5 @@
 import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
-import { executeFunction, FUNCTION_IDS } from "@/lib/appwrite/functions";
+import { callApi } from "@/lib/api/call-api";
 import { mockDelay } from "@/lib/mock-delay";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -30,7 +30,7 @@ export interface TosAcceptResult {
  * `CURRENT_TOS_VERSION` (default "v3.1"). Status kini dibaca langsung dari
  * baris `users` milik sendiri (RLS), jadi versinya harus diketahui browser:
  * `NEXT_PUBLIC_CURRENT_TOS_VERSION`, default sama dengan Function lama.
- * Route accept (Fase 6) wajib memakai konstanta yang sama.
+ * Route `POST /api/tos` (src/server/tos/accept-tos.ts) memakai konstanta ini.
  */
 export const CURRENT_TOS_VERSION = process.env.NEXT_PUBLIC_CURRENT_TOS_VERSION || "v3.1";
 
@@ -75,7 +75,7 @@ export async function getTosStatus(): Promise<ServiceResult<TosStatus>> {
   }
 }
 
-// TODO(fase-06): terima T&C → Route Handler (pakai CURRENT_TOS_VERSION).
+/** Terima T&C versi aktif → `POST /api/tos` (idempoten). */
 export async function acceptCurrentTos(
   version: string
 ): Promise<ServiceResult<TosAcceptResult>> {
@@ -85,7 +85,7 @@ export async function acceptCurrentTos(
   }
 
   try {
-    return ok(await executeFunction<TosAcceptResult>(FUNCTION_IDS.acceptTos, {
+    return ok(await callApi<TosAcceptResult>("acceptTos", {
       action: "accept",
       tos_version: version,
     }));
