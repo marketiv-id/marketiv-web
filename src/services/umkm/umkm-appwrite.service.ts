@@ -1,9 +1,6 @@
 // TODO(fase-07|08): import Appwrite di bawah hanya untuk jalur TULIS Fase 7/8
 // (offer, order, review submission, AI brief, pembayaran). Jalur baca sudah
 // Supabase (Fase 5); tulis campaign/profil/file sudah Route Handler (Fase 6).
-import { Query } from "appwrite";
-import { databases } from "@/lib/appwrite/databases";
-import { appwriteConfig } from "@/lib/appwrite/config";
 import { executeFunction, FUNCTION_IDS } from "@/lib/appwrite/functions";
 import { callApi, FunctionExecutionError } from "@/lib/api/call-api";
 import { createClient } from "@/lib/supabase/client";
@@ -91,27 +88,6 @@ import {
  *   di-push dan di-backfill; sebelum itu Function mengembalikan "lainnya".
  */
 
-const DB = appwriteConfig.databaseId;
-
-const COLLECTIONS = {
-  campaigns: "campaigns",
-  campaignBriefs: "6ab530d00018edb50097",
-  campaignAssets: "campaign_assets",
-  umkmProfiles: "umkm_profiles",
-  creatorProfiles: "creator_profiles",
-  submissions: "campaign_submissions",
-  rateCards: "rate_cards",
-  rateCardPackages: "rate_card_packages",
-  creatorPortfolios: "creator_portfolios",
-  creatorSocialAccounts: "creator_social_accounts",
-  claims: "campaign_claims",
-  orders: "orders",
-  offers: "offers",
-  conversations: "conversations",
-  messages: "messages",
-  payments: "payments",
-  users: "users",
-} as const;
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -790,7 +766,8 @@ export async function getNegotiationByIdFromAppwrite(
  *
  * Mirror 00_BACKEND/src/services/offer.service.ts:147-150.
  */
-// TODO(fase-07): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
+// Route `POST /api/offers` + RPC `create_offer` (0023): peserta percakapan,
+// offer pending ganda, deal paralel, dan paket acuan ditegakkan di server.
 export async function createOfferInAppwrite(
   input: CreateOfferInput
 ): Promise<ServiceResult<string>> {
@@ -804,12 +781,9 @@ export async function createOfferInAppwrite(
   const offer = parsed.data;
 
   try {
-    // Lewat Function: baris `offers` harus terbaca kreator dan di-update kreator
-    // (dia yang accept/reject), sementara klien Appwrite tidak boleh memasang
-    // permission untuk user lain. Peserta percakapan, pembagian permission, dan
-    // kartu offer di chat semuanya ditentukan di sisi server — `creatorId` yang
-    // dikirim di sini cuma dicocokkan, tidak dipercaya.
-    const data = await executeFunction<{ offerId?: string }>(FUNCTION_IDS.createOffer, {
+    // Peserta percakapan dan kartu offer di chat ditentukan server — `creatorId`
+    // yang dikirim di sini cuma dicocokkan, tidak dipercaya.
+    const data = await callApi<{ offerId?: string }>("createOffer", {
       conversationId: offer.conversationId,
       creatorId: offer.creatorId,
       ...(offer.packageId ? { packageId: offer.packageId } : {}),
@@ -1243,17 +1217,14 @@ export type AiBrief = {
 };
 
 /**
- * Panggil Function `ai-brief`.
+ * Brief campaign dari AI.
  *
- * Dua penghilangan sengaja dari body:
- * - TANPA `campaignId`: campaign belum ada di langkah 2, dan bila dikirim
- *   ai-brief menulis baris campaign_briefs sendiri yang bersaing dengan tulisan
- *   createCampaignDraft dan gagal senyap di batas kolom doAndDont (400 char).
- * - TANPA `userId`: ai-brief menerima userId dari klien (spoofable). Dikirim
- *   kosong: baris audit ai_requests terdegradasi, bukan dipalsukan. Handoff
- *   meminta backend membaca header x-appwrite-user-id seperti 10 Function lain.
+ * TANPA `campaignId`: campaign belum ada di langkah 2, dan bila dikirim server
+ * menyimpan brief sendiri yang bersaing dengan tulisan createCampaignDraft.
+ * userId tidak dikirim — server mengambilnya dari sesi.
  */
-// TODO(fase-07): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
+// Fase 7: Route Handler `/api/ai/brief` — user dari sesi (celah #4), Vertex AI
+// → Gemini → OpenRouter. Tanpa kredensial AI server membalas 503.
 export async function generateCampaignBriefFromAppwrite(
   input: AiBriefInput
 ): Promise<ServiceResult<AiBrief>> {
@@ -1261,19 +1232,16 @@ export async function generateCampaignBriefFromAppwrite(
   const auth = await requireUserId<AiBrief>(empty);
   if (!auth.ok) return auth.result;
   try {
-    const res = await executeFunction<{ success: boolean; brief?: AiBrief; error?: string }>(
-      FUNCTION_IDS.aiBrief,
-      {
-        description: input.description,
-        type: input.type,
-        productName: input.productName || "Not specified",
-        targetMarket: input.targetMarket || "General",
-        goal: input.goal || "Brand awareness",
-        materials: input.materials ?? [],
-      }
-    );
-    if (!res.success || !res.brief) {
-      return fail(res.error ?? "Gagal menghasilkan brief AI. Coba lagi.", "server", empty);
+    const res = await callApi<{ success?: boolean; brief?: AiBrief; error?: string }>("generateCampaignBrief", {
+      description: input.description,
+      type: input.type,
+      productName: input.productName || "Not specified",
+      targetMarket: input.targetMarket || "General",
+      goal: input.goal || "Brand awareness",
+      materials: input.materials ?? [],
+    });
+    if (!res?.success || !res.brief) {
+      return fail(res?.error ?? "Gagal menghasilkan brief AI. Coba lagi.", "server", empty);
     }
     return ok(res.brief);
   } catch (err) {
@@ -1407,40 +1375,24 @@ export type ReviewSubmissionInput = {
 };
 
 /**
- * Setujui / tolak submission kreator.
- *
- * `views` ditulis BERSAMAAN dengan `status` dalam satu updateDocument, bukan
- * dua panggilan terpisah: `calculate-campaign-reward` menyala pada update dan
- * langsung membaca `doc.views`. Kalau views ditulis belakangan, Function sudah
- * terlanjur menghitung reward dari angka lama.
+ * Setujui / tolak submission kreator. `views` dikirim bersama `status` (satu
+ * transaksi di RPC); approve wajib menyertakan views.
  */
-// TODO(fase-07): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
+// Fase 7: Route Handler `/api/submissions/[id]/review` + RPC `review_submission`
+// (status submission + klaim + kuota + notifikasi dalam satu transaksi; hanya
+// Admin Marketiv, sama dengan Function lama). Reward kreator: Fase 8.
 export async function reviewSubmissionInAppwrite(
   input: ReviewSubmissionInput
 ): Promise<ServiceResult<null>> {
   const auth = await requireUserId<null>(null);
   if (!auth.ok) return auth.result;
   try {
-    // `campaign_submissions` dan `campaign_claims` tidak punya update di level
-    // koleksi (dicabut Sprint 8 — update("users") berarti siapa pun bisa
-    // menyetujui bukti kerja siapa pun lalu mencairkan dananya), dan permission
-    // barisnya tidak bisa dipasang kreator untuk UMKM. Jadi kedua update itu
-    // dikerjakan Function; kepemilikan lewat campaign induk juga diperiksa
-    // di sana, bukan di sini.
-    const reviewed = await executeFunction<{ campaignId?: string }>(
-      FUNCTION_IDS.reviewSubmission,
-      {
-        submissionId: input.submissionId,
-        status: input.status,
-        views: input.status === "approved" ? input.views : undefined,
-        ...(input.notes ? { notes: input.notes } : {}),
-      }
-    );
-    const campaignId = str(reviewed?.campaignId);
-
-    // Penghapusan kuota (totalClaims) dipindah ke backend (review-submission)
-    // agar atomic dan idempotent.
-
+    await callApi("reviewSubmission", {
+      submissionId: input.submissionId,
+      status: input.status,
+      ...(input.status === "approved" ? { views: input.views } : {}),
+      ...(input.notes ? { notes: input.notes } : {}),
+    });
     return ok(null);
   } catch (err) {
     return failFromWriteError<null>(err, null, undefined, "reviewSubmission");
@@ -1532,30 +1484,16 @@ export async function removeCampaignAssetInAppwrite(
  * Hapus custom offer yang masih `pending`. Setelah `accepted` sudah ada order
  * yang terbentuk darinya, dan `rejected` adalah jejak negosiasi yang berguna.
  */
-// TODO(fase-07): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function deleteOfferInAppwrite(offerId: string): Promise<ServiceResult<null>> {
   const auth = await requireUserId<null>(null);
   if (!auth.ok) return auth.result;
   try {
-    const res = await databases.listDocuments(DB, COLLECTIONS.offers, [
-      Query.equal("$id", offerId),
-      Query.equal("umkmId", auth.userId),
-      Query.limit(1),
-    ]);
-    const doc = res.documents[0] as unknown as Doc | undefined;
-    if (!doc) return fail("Penawaran tidak ditemukan.", "not_found", null);
-
-    if (str(doc.status) !== "pending") {
-      return failValidation(
-        "Hanya penawaran yang belum direspons yang bisa dihapus.",
-        null
-      );
-    }
-
-    await databases.deleteDocument(DB, COLLECTIONS.offers, offerId);
+    // Route `DELETE /api/offers/[offerId]` + RPC `delete_offer`: hanya offer
+    // pending milik UMKM ini (404 bila bukan miliknya, 409 bila sudah dijawab).
+    await callApi("deleteOffer", { offerId });
     return ok(null);
   } catch (err) {
-    return failDelete(err, "Penawaran");
+    return failFromWriteError<null>(err, null);
   }
 }
 
@@ -1563,12 +1501,13 @@ export async function deleteOfferInAppwrite(offerId: string): Promise<ServiceRes
  * Batalkan order yang belum dibayar. BUKAN hapus — barisnya tetap ada dengan
  * status `cancelled` supaya riwayat pesanan tetap utuh.
  */
-// TODO(fase-07): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
+// Route `POST /api/orders/[orderId]/cancel` + RPC `cancel_order` (hanya
+// `pending_payment`, belum ada uang bergerak).
 export async function cancelOrderInAppwrite(orderId: string): Promise<ServiceResult<null>> {
   const auth = await requireUserId<null>(null);
   if (!auth.ok) return auth.result;
   try {
-    await executeFunction(FUNCTION_IDS.cancelOrder, { orderId });
+    await callApi("cancelOrder", { orderId });
     return ok(null);
   } catch (err) {
     return failFromWriteError<null>(err, null);

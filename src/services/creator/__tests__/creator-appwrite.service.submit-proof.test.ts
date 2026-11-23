@@ -1,52 +1,31 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const {
-  listDocumentsMock,
-  createDocumentMock,
-  updateDocumentMock,
-  executeFunctionMock,
-  getSessionMock,
-} = vi.hoisted(() => ({
-  listDocumentsMock: vi.fn(),
-  createDocumentMock: vi.fn(),
-  updateDocumentMock: vi.fn(),
-  executeFunctionMock: vi.fn(),
-  getSessionMock: vi.fn(),
+const mocks = vi.hoisted(() => ({
+  callApi: vi.fn(),
+  userId: "user_1" as string | null,
+  appwrite: { listDocuments: vi.fn(), createDocument: vi.fn(), updateDocument: vi.fn() },
+  executeFunction: vi.fn(),
 }));
 
-vi.mock("@/lib/appwrite/databases", () => ({
-  databases: {
-    listDocuments: listDocumentsMock,
-    createDocument: createDocumentMock,
-    updateDocument: updateDocumentMock,
-  },
+vi.mock("@/lib/api/call-api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/api/call-api")>()),
+  callApi: mocks.callApi,
 }));
-
-vi.mock("@/lib/appwrite/functions", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/appwrite/functions")>(
-    "@/lib/appwrite/functions"
-  );
-  return {
-    ...actual,
-    executeFunction: executeFunctionMock,
-    FUNCTION_IDS: {
-      ...actual.FUNCTION_IDS,
-      submitCampaignProof: "submit-campaign-proof",
-    },
-  };
-});
-
+vi.mock("@/lib/appwrite/databases", () => ({ databases: mocks.appwrite }));
+vi.mock("@/lib/appwrite/functions", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/appwrite/functions")>()),
+  executeFunction: mocks.executeFunction,
+}));
 vi.mock("@/services/auth/session.service", () => ({
-  getSession: getSessionMock,
-  getCurrentUserId: async () => {
-    const session = await getSessionMock();
-    return session?.success ? session.data.userId : null;
-  },
+  getSession: vi.fn(),
+  getCurrentUserId: async () => mocks.userId,
 }));
+
+import { FunctionExecutionError } from "@/lib/api/call-api";
 
 import { submitProofInAppwrite, type SubmitProofInput } from "../creator-appwrite.service";
 
-describe("submitProofInAppwrite", () => {
+describe("submitProofInAppwrite (Fase 7 — Route Handler)", () => {
   const validInput: SubmitProofInput = {
     claimId: "claim_1",
     campaignId: "campaign_1",
@@ -57,37 +36,36 @@ describe("submitProofInAppwrite", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    getSessionMock.mockResolvedValue({
-      success: true,
-      data: { userId: "user_1" },
+    mocks.userId = "user_1";
+  });
+
+  it("kirim lewat callApi submitCampaignProof, tanpa Appwrite", async () => {
+    mocks.callApi.mockResolvedValueOnce({ success: true, submissionId: "s1", status: "pending" });
+    await expect(submitProofInAppwrite(validInput)).resolves.toEqual({ success: true, data: null });
+    expect(mocks.callApi).toHaveBeenCalledWith("submitCampaignProof", validInput);
+    expect(mocks.executeFunction).not.toHaveBeenCalled();
+    for (const fn of Object.values(mocks.appwrite)) expect(fn).not.toHaveBeenCalled();
+  });
+
+  it("caption kosong tidak dikirim", async () => {
+    mocks.callApi.mockResolvedValueOnce({ success: true });
+    await submitProofInAppwrite({ ...validInput, caption: "" });
+    expect(mocks.callApi.mock.calls[0][1]).not.toHaveProperty("caption");
+  });
+
+  it("409 (bukti sudah dikirim) → validation dengan pesan route", async () => {
+    mocks.callApi.mockRejectedValueOnce(
+      new FunctionExecutionError("Bukti untuk pekerjaan ini sudah pernah dikirim.", 409, "validation"),
+    );
+    await expect(submitProofInAppwrite(validInput)).resolves.toMatchObject({
+      success: false,
+      code: "validation",
+      error: "Bukti untuk pekerjaan ini sudah pernah dikirim.",
     });
   });
 
-  it("calls submit-campaign-proof for valid owned claim", async () => {
-    listDocumentsMock.mockResolvedValueOnce({
-      documents: [{ $id: "claim_1", campaignId: "campaign_1", creatorId: "user_1", status: "claimed" }],
-    });
-    executeFunctionMock.mockResolvedValueOnce({ success: true });
-
-    const result = await submitProofInAppwrite(validInput);
-
-    expect(result.success).toBe(true);
-    expect(executeFunctionMock).toHaveBeenCalledWith("submit-campaign-proof", validInput);
-    expect(createDocumentMock).not.toHaveBeenCalled();
-    expect(updateDocumentMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects when claim campaign does not match payload", async () => {
-    listDocumentsMock.mockResolvedValueOnce({
-      documents: [{ $id: "claim_1", campaignId: "campaign_other", creatorId: "user_1", status: "claimed" }],
-    });
-
-    const result = await submitProofInAppwrite(validInput);
-
-    expect(result.success).toBe(false);
-    expect(result.code).toBe("validation");
-    expect(result.error).toMatch(/campaign/i);
-    expect(executeFunctionMock).not.toHaveBeenCalled();
-    expect(createDocumentMock).not.toHaveBeenCalled();
+  it("404 pekerjaan tidak ditemukan → not_found", async () => {
+    mocks.callApi.mockRejectedValueOnce(new FunctionExecutionError("Pekerjaan tidak ditemukan.", 404, "not_found"));
+    await expect(submitProofInAppwrite(validInput)).resolves.toMatchObject({ success: false, code: "not_found" });
   });
 });

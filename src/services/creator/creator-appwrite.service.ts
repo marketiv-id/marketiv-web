@@ -1,8 +1,5 @@
-// TODO(fase-07|08): import Appwrite di bawah hanya untuk tulis Fase 7/8
-// (offer, klaim, bukti, withdrawal). Tulis Fase 6 sudah lewat Route Handler.
-import { Query, ID, Permission, Role } from "appwrite";
-import { databases } from "@/lib/appwrite/databases";
-import { appwriteConfig } from "@/lib/appwrite/config";
+// TODO(fase-08): import Appwrite di bawah hanya untuk tulis Fase 8
+// (withdrawal). Klaim/bukti (Fase 7) dan tulis Fase 6 sudah lewat Route Handler.
 import { uploadPublicFile, FileRuleError, type PublicBucket } from "@/lib/supabase/storage";
 import { executeFunction, FUNCTION_IDS } from "@/lib/appwrite/functions";
 import { callApi, FunctionExecutionError } from "@/lib/api/call-api";
@@ -76,25 +73,6 @@ import {
  *   perbaikan permission baris di 4 Function penulis notifikasi dideploy.
  */
 
-const DB = appwriteConfig.databaseId;
-
-const COLLECTIONS = {
-  campaigns: "campaigns",
-  campaignBriefs: "6ab530d00018edb50097",
-  campaignAssets: "campaign_assets",
-  claims: "campaign_claims",
-  submissions: "campaign_submissions",
-  rateCards: "rate_cards",
-  rateCardPackages: "rate_card_packages",
-  creatorProfiles: "creator_profiles",
-  creatorSocialAccounts: "creator_social_accounts",
-  creatorPortfolios: "creator_portfolios",
-  umkmProfiles: "umkm_profiles",
-  transactions: "transactions",
-  notifications: "notifications",
-  orders: "orders",
-  offers: "offers",
-} as const;
 
 const PAGE_LIMIT = 100;
 
@@ -358,16 +336,13 @@ export async function getCreatorNegotiationByIdFromAppwrite(
 
 /**
  * Terima / tolak Custom Offer. Ini SATU-SATUNYA aksi kreator terhadap offer —
- * membuat offer adalah hak UMKM (docs/02_Modules/Offers/30_Business_Rules.md:13),
- * dan permission baris offer memang hanya memberi kreator `update`.
+ * membuat offer adalah hak UMKM (docs/02_Modules/Offers/30_Business_Rules.md:13).
  *
- * ⚠️ ORDER TIDAK DIBUAT DI SINI. `create-order` dipicu event
- * `offers.rows.*.update` dan berjalan ASINKRON — beberapa detik setelah tulisan
- * ini masuk. Pemanggil harus mem-poll, bukan menganggap ordernya langsung ada.
- * Membuat order dari klien juga akan ditolak: `orders` punya `$permissions`
- * kosong, hanya Function yang bisa menulis ke sana.
+ * Route + RPC `accept_offer` / `reject_offer` (0023). Menerima offer membuat
+ * order `pending_payment`, pesan sistem, dan notifikasi UMKM dalam SATU
+ * transaksi — tidak ada lagi jeda asinkron event `create-order`. Menerima
+ * ulang offer yang sudah diterima mengembalikan order yang sama (idempoten).
  */
-// TODO(fase-07): terima/tolak offer → Route Handler + RPC (offer → order).
 async function setOfferStatusInAppwrite(
   offerId: string,
   status: "accepted" | "rejected"
@@ -375,16 +350,7 @@ async function setOfferStatusInAppwrite(
   const auth = await requireUserId<null>(null);
   if (!auth.ok) return auth.result;
   try {
-    const offer = (await databases.getDocument(DB, COLLECTIONS.offers, offerId)) as unknown as Doc;
-
-    if (str(offer.creatorId) !== auth.userId) {
-      return fail("Hanya kreator penerima yang dapat menjawab penawaran ini.", "forbidden", null);
-    }
-    if (str(offer.status) !== "pending") {
-      return fail("Penawaran ini sudah dijawab sebelumnya.", "validation", null);
-    }
-
-    await databases.updateDocument(DB, COLLECTIONS.offers, offerId, { status });
+    await callApi(status === "accepted" ? "acceptOffer" : "rejectOffer", { offerId });
     return ok(null);
   } catch (err) {
     return failFromWriteError<null>(err, null);
@@ -1018,111 +984,28 @@ export async function requestWithdrawalInAppwrite(
   }
 }
 
-// ── Alur A: klaim campaign & kirim bukti (Sprint 4) ──────────────────────────
+// ── Alur A: klaim campaign & kirim bukti ─────────────────────────────────────
 //
-// `claimCampaign` masih membuat baris claim langsung dari klien; event
-// `campaign-claimed` menangani counter/notifikasi setelahnya.
-//
-// `campaign-claimed` SEKARANG menambah `totalClaims` secara atomik. Klien hanya
-// membuat baris claim — counter adalah tanggung jawab Function. Sweep basi
-// sisi klien juga dihapus: slot dikembalikan oleh `expire-stale-claims` (cron
-// per jam) dan oleh `campaign-claimed` sendiri saat kuota terlampaui.
+// Fase 7: klaim, kirim bukti, dan batal klaim lewat Route Handler + RPC
+// (0022_campaign_flow.sql). Server yang mengecek status/dana/kuota/profil dan
+// mengubah `total_claims` dalam satu transaksi — event `campaign-claimed` dan
+// sweep klien sudah tidak ada. Slot basi dikembalikan job pg_cron
+// `expire-stale-claims`.
 
-/**
- * Klaim campaign aktif.
- *
- * Mirror 00_BACKEND/src/services/claim.service.ts:83-160 dengan dua
- * penyimpangan yang disengaja:
- *
- * 1. **`isProfileCompleted` dibaca dari `creator_profiles`, bukan `users`.**
- *    Backend membacanya dari `users` (claim.service.ts:91) padahal koleksi itu
- *    hanya punya kolom userId/role/status/email/phone/createdAt — `users` tidak
- *    pernah punya `isProfileCompleted`. Kolomnya ada di `creator_profiles`.
- *    Sudah dilaporkan ke backend.
- * 2. **Permission.delete tetap dipasang untuk kompatibilitas baris lama/UI.**
- *    Unclaim runtime sekarang lewat Function trusted; browser tidak lagi
- *    menghapus claim atau memutasi totalClaims.
- */
-// TODO(fase-07): klaim campaign (termasuk pra-cek baca) → Route Handler + RPC.
+/** Klaim campaign aktif. Profil kreator wajib lengkap (dicek di RPC). */
+// Fase 7: klaim lewat Route Handler + RPC `claim_campaign` (lock campaign, cek
+// status/dana/kuota/profil, +total_claims, notifikasi UMKM — satu transaksi).
 export async function claimCampaignInAppwrite(
   campaignId: string
 ): Promise<ServiceResult<string>> {
   const auth = await requireUserId<string>("");
   if (!auth.ok) return auth.result;
   try {
-    const campaign = (await databases.getDocument(
-      DB,
-      COLLECTIONS.campaigns,
-      campaignId
-    )) as unknown as Doc;
-
-    if (str(campaign.status) !== "active") {
-      return failValidation("Campaign ini sudah tidak aktif.", "");
+    const res = await callApi<{ claimId?: unknown }>("claimCampaign", { campaignId });
+    if (typeof res?.claimId !== "string" || !res.claimId) {
+      return fail("Respons klaim campaign tidak valid.", "server", "");
     }
-
-    const profileRes = await databases.listDocuments(DB, COLLECTIONS.creatorProfiles, [
-      Query.equal("userId", auth.userId),
-      Query.limit(1),
-    ]);
-    const profile = profileRes.documents[0] as unknown as Doc | undefined;
-    if (!profile || !profile.isProfileCompleted) {
-      return failValidation(
-        "Lengkapi profil kreator dulu sebelum mengambil pekerjaan.",
-        ""
-      );
-    }
-
-    // Guard cepat berbasis bacaan — mungkin basi (counter diperbarui oleh
-    // `campaign-claimed` async, ~0,5–3 detik setelah createDocument). Tetap
-    // berguna sebagai penolakan dini untuk kasus yang jelas-jelas penuh.
-    // Penegakan final ada di `campaign-claimed` yang memakai incrementColumn
-    // dengan `max: claimLimit` — server yang benar-benar menolak bila sudah penuh.
-    if (num(campaign.totalClaims) >= num(campaign.claimLimit)) {
-      return failValidation("Kuota kreator untuk campaign ini sudah penuh.", "");
-    }
-
-    // Claim expired adalah riwayat, bukan claim aktif. Selaras dengan backend
-    // claim.service.ts: klaim non-expired tetap menghalangi duplikasi.
-    const existing = await databases.listDocuments(DB, COLLECTIONS.claims, [
-      Query.equal("campaignId", campaignId),
-      Query.equal("creatorId", auth.userId),
-      Query.notEqual("status", "expired"),
-      Query.limit(1),
-    ]);
-    if (existing.documents.length > 0) {
-      return failValidation("Kamu sudah pernah mengambil campaign ini.", "");
-    }
-
-    const claim = await databases.createDocument(
-      DB,
-      COLLECTIONS.claims,
-      ID.unique(),
-      {
-        campaignId,
-        creatorId: auth.userId,
-        status: "claimed",
-        claimedAt: new Date().toISOString(),
-      },
-      // HANYA role diri sendiri. Appwrite menolak klien yang memasang permission
-      // untuk user lain ("Permissions must be one of: (any, users, user:<diri
-      // sendiri>, ...)"), jadi dua baris untuk UMKM yang sempat ada di sini
-      // membuat klaim campaign gagal total — bukan sekadar tidak berefek.
-      //
-      // UMKM tetap bisa membaca klaim ini lewat `read("any")` yang masih
-      // terpasang di level koleksi `campaign_claims`, dan update statusnya
-      // dikerjakan Function `review-submission` dengan API key.
-      [
-        Permission.read(Role.user(auth.userId)),
-        Permission.update(Role.user(auth.userId)),
-        Permission.delete(Role.user(auth.userId)),
-      ]
-    );
-
-    // `campaign-claimed` event Function adalah satu-satunya authority +1.
-    // createDocument sukses belum berarti claim permanen: event asinkron dapat
-    // mengubahnya menjadi expired bila kuota ternyata sudah penuh.
-
-    return ok(claim.$id);
+    return ok(res.claimId);
   } catch (err) {
     return failFromWriteError<string>(err, "");
   }
@@ -1133,47 +1016,27 @@ export type SubmitProofInput = {
   campaignId: string;
   postUrl: string;
   caption?: string;
-  /** Platform konten — diteruskan ke Appwrite supaya ai-fraud-precheck
-   *  membandingkan hostname URL dengan platform yang benar, bukan selalu "tiktok". */
+  /** Platform konten — fraud precheck membandingkan hostname URL dengan
+   *  platform ini, bukan selalu "tiktok". */
   platform: "tiktok" | "instagram";
 };
 
-/**
- * Kirim bukti konten untuk claim yang sedang dikerjakan.
- *
- * Jalur ini sekarang lewat Function `submit-campaign-proof`, bukan direct
- * `createDocument`, agar browser tidak lagi tergantung shape schema Appwrite
- * live (`creatorId` vs `creator_id`, dst.) dan backend menjadi satu-satunya
- * titik translasi kontrak.
- */
-// TODO(fase-07): kirim bukti (termasuk pra-cek baca claim) → Route Handler.
+/** Kirim bukti konten untuk claim yang sedang dikerjakan. */
+// Fase 7: kirim bukti lewat Route Handler + RPC `submit_campaign_proof`
+// (kepemilikan & status klaim dicek server; fraud precheck jalan via after()).
 export async function submitProofInAppwrite(
   input: SubmitProofInput
 ): Promise<ServiceResult<null>> {
   const auth = await requireUserId<null>(null);
   if (!auth.ok) return auth.result;
   try {
-    const res = await databases.listDocuments(DB, COLLECTIONS.claims, [
-      Query.equal("$id", input.claimId),
-      Query.equal("creatorId", auth.userId),
-      Query.limit(1),
-    ]);
-    const claim = res.documents[0] as unknown as Doc | undefined;
-    if (!claim) return fail("Pekerjaan tidak ditemukan.", "not_found", null);
-
-    if (str(claim.status) !== "claimed") {
-      return failValidation(
-        "Bukti untuk pekerjaan ini sudah pernah dikirim.",
-        null
-      );
-    }
-
-    if (str(claim.campaignId) !== input.campaignId) {
-      return failValidation("Claim tidak cocok dengan campaign yang dipilih.", null);
-    }
-
-    await executeFunction(FUNCTION_IDS.submitCampaignProof, input);
-
+    await callApi("submitCampaignProof", {
+      campaignId: input.campaignId,
+      claimId: input.claimId,
+      platform: input.platform,
+      postUrl: input.postUrl,
+      ...(input.caption ? { caption: input.caption } : {}),
+    });
     return ok(null);
   } catch (err) {
     return failFromWriteError<null>(err, null);
@@ -1191,19 +1054,30 @@ export async function submitProofInAppwrite(
  * mengambil campaign yang sama lagi, karena cek duplikat di `claimCampaign`
  * menolak berdasarkan keberadaan baris tanpa memfilter status.
  *
- * Runtime unclaim dikerjakan `unclaim-campaign` Function. Function memverifikasi
- * caller/owner/status, menghapus baris, lalu menurunkan counter atomik. Bila
- * counter gagal, Function berusaha memulihkan claim dan tidak membalas sukses.
+ * Fase 7: RPC `unclaim_campaign` memverifikasi pemilik/status, menghapus baris,
+ * dan mengembalikan slot dalam satu transaksi.
  */
-// TODO(fase-07): batalkan claim → Route Handler + RPC.
+// Fase 7: batal klaim lewat Route Handler + RPC `unclaim_campaign` (hapus +
+// kembalikan slot dalam satu transaksi). campaignId dibaca dulu lewat RLS
+// (kreator boleh membaca klaim miliknya) karena path route memerlukannya.
 export async function unclaimCampaignInAppwrite(claimId: string): Promise<ServiceResult<null>> {
   const auth = await requireUserId<null>(null);
   if (!auth.ok) return auth.result;
   try {
-    const result = await executeFunction<{ success?: unknown; claimId?: unknown }>(
-      FUNCTION_IDS.unclaimCampaign,
-      { claimId },
-    );
+    const { data, error } = await createClient()
+      .from("campaign_claims")
+      .select("campaign_id")
+      .eq("id", claimId)
+      .eq("creator_id", auth.userId)
+      .maybeSingle();
+    if (error) throw error;
+    const campaignId = typeof data?.campaign_id === "string" ? data.campaign_id : "";
+    if (!campaignId) return fail("Claim tidak ditemukan.", "not_found", null);
+
+    const result = await callApi<{ success?: unknown; claimId?: unknown }>("unclaimCampaign", {
+      campaignId,
+      claimId,
+    });
     if (result?.success !== true || typeof result.claimId !== "string") {
       return fail("Respons pembatalan claim tidak valid.", "server", null);
     }
