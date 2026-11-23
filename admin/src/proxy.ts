@@ -7,6 +7,8 @@ import { redirectWithCookies, updateSession } from "@/lib/supabase/proxy";
  *
  * - Refresh sesi Supabase.
  * - Tanpa sesi: semua halaman kecuali /login → /login?next=<path>.
+ * - `/api/**` TIDAK di-redirect: Route Handler menjawab 401 JSON sendiri
+ *   (`requireAdmin()`), supaya `fetch` di browser tidak menerima HTML login.
  *
  * Pemeriksaan role admin (users.role + app_metadata.role, status aktif)
  * tetap di AdminAuthBoundary untuk UX; data admin dijaga RLS
@@ -14,7 +16,8 @@ import { redirectWithCookies, updateSession } from "@/lib/supabase/proxy";
  */
 export async function proxy(request: NextRequest) {
   const { response, hasSession } = await updateSession(request);
-  if (hasSession === false && request.nextUrl.pathname !== "/login") {
+  const isApi = request.nextUrl.pathname.startsWith("/api/");
+  if (hasSession === false && request.nextUrl.pathname !== "/login" && !isApi) {
     const { pathname, search } = request.nextUrl;
     const login = new URL("/login", request.url);
     if (pathname !== "/") login.searchParams.set("next", `${pathname}${search}`);

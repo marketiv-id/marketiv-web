@@ -4,8 +4,8 @@ import {
   ReviewRejectPayload,
   SubmissionStatus,
 } from "../types";
-import { ExecutionMethod } from "appwrite";
-import { functions, FUNCTION_IDS } from "@/lib/admin/appwrite";
+import { FUNCTION_IDS } from "@/lib/admin/appwrite";
+import { AdminFunctionExecutionError, callAdminApi } from "@/lib/api/call-api";
 import { executeAdminFunction } from "@/lib/admin/execute-function";
 
 export class AdminSubmissionReadError extends Error {
@@ -28,15 +28,18 @@ interface ReviewFunctionResponse {
 }
 
 export async function getCampaignSubmissions(statusFilter?: SubmissionStatus | "all", searchQuery?: string): Promise<CampaignSubmissionDomain[]> {
-  const execution = await functions.createExecution(
-    FUNCTION_IDS.getAdminSubmissionQueue, JSON.stringify({ status: statusFilter || "pending", limit: 50 }), false,
-    "/", ExecutionMethod.POST, { "content-type": "application/json" },
-  );
-  const body = parseQueueBody(execution.responseBody, execution.responseStatusCode);
-  if (execution.status === "failed" || execution.responseStatusCode >= 400) {
-    throw new AdminSubmissionReadError(execution.responseStatusCode || 500, responseError(body) || "Gagal memuat antrean submission.");
+  let body: { items: CampaignSubmissionDomain[]; total: number };
+  try {
+    body = await callAdminApi(
+      "getAdminSubmissionQueue", { status: statusFilter || "pending", limit: 50 },
+      isQueueResponse, "Gagal memuat antrean submission.",
+    );
+  } catch (error) {
+    if (error instanceof AdminFunctionExecutionError) {
+      throw new AdminSubmissionReadError(error.statusCode || 500, error.message);
+    }
+    throw new AdminSubmissionReadError(500, error instanceof Error ? error.message : "Gagal memuat antrean submission.");
   }
-  if (!isQueueResponse(body)) throw new AdminSubmissionReadError(502, "Respons antrean submission tidak valid.");
   return filterSubmissions(body.items, searchQuery);
 }
 
@@ -59,6 +62,8 @@ export async function rejectCampaignSubmission(payload: ReviewRejectPayload): Pr
 }
 
 async function reviewAndRefresh(payload: Record<string, unknown>): Promise<ReviewMutationResult> {
+  // TODO(fase-07): tulis masih lewat Function Appwrite `review-submission`;
+  // pindah ke POST /api/admin/submissions/[id]/review.
   const response = await executeAdminFunction(
     FUNCTION_IDS.reviewSubmission, payload, isReviewFunctionResponse, "Gagal menyimpan review submission.",
   );
@@ -83,12 +88,6 @@ function reviewMessage(status: ReviewFunctionResponse["status"]): string {
   return status === "approved" ? "Submission berhasil disetujui." : "Submission berhasil ditolak.";
 }
 
-function parseQueueBody(responseBody: string, statusCode: number): unknown {
-  try { return responseBody ? JSON.parse(responseBody) : {}; } catch {
-    throw new AdminSubmissionReadError(statusCode || 502, "Respons antrean submission bukan JSON valid.");
-  }
-}
-
 function isQueueResponse(value: unknown): value is { items: CampaignSubmissionDomain[]; total: number } {
   if (!value || typeof value !== "object") return false;
   const body = value as Record<string, unknown>;
@@ -103,7 +102,6 @@ function isSubmission(value: unknown): value is CampaignSubmissionDomain {
 }
 
 function isObject(value: unknown): value is Record<string, unknown> { return Boolean(value) && typeof value === "object"; }
-function responseError(value: unknown): string | undefined { return isObject(value) && typeof value.error === "string" ? value.error : undefined; }
 
 function filterSubmissions(items: CampaignSubmissionDomain[], searchQuery?: string): CampaignSubmissionDomain[] {
   if (!searchQuery?.trim()) return items;
