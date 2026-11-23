@@ -1,7 +1,7 @@
 # Fase 06 — Mutasi sederhana, chat, file, realtime
 
 - Tanggal: 2026-11-23
-- PR: (diisi setelah PR dibuat)
+- PR: https://github.com/marketiv-id/marketiv-web/pull/41
 - Status: selesai. Semua tulis non-bisnis/non-uang lewat Route Handler, realtime Supabase jalan, grep bersih, migration 0018–0021 sudah di staging, E2E staging dua akun lulus.
 
 ## Status task
