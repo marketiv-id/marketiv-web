@@ -34,6 +34,7 @@ import { NegotiationRoomSkeleton } from "./NegotiationRoomSkeleton";
 import { NegotiationNotFoundState } from "./NegotiationNotFoundState";
 import { NegotiationErrorState } from "../NegotiationErrorState";
 import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
+// TODO(fase-06): realtime chat masih Appwrite → useRealtimeTable (Supabase Realtime).
 import { realtimeClient, tableChannels } from "@/lib/appwrite/realtime";
 import {
   buildPaymentReturnUrl,

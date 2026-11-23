@@ -4,11 +4,11 @@ import { FunctionExecutionError } from "@/lib/appwrite/functions";
 const {
   listDocumentsMock,
   executeFunctionMock,
-  getSessionMock,
+  getCurrentUserIdMock,
 } = vi.hoisted(() => ({
   listDocumentsMock: vi.fn(),
   executeFunctionMock: vi.fn(),
-  getSessionMock: vi.fn(),
+  getCurrentUserIdMock: vi.fn(),
 }));
 
 vi.mock("@/lib/appwrite/databases", () => ({
@@ -32,7 +32,7 @@ vi.mock("@/lib/appwrite/functions", async () => {
 });
 
 vi.mock("@/services/auth/session.service", () => ({
-  getSession: getSessionMock,
+  getCurrentUserId: getCurrentUserIdMock,
 }));
 
 import { updateCampaignStatusInAppwrite } from "../umkm-appwrite.service";
@@ -40,10 +40,7 @@ import { updateCampaignStatusInAppwrite } from "../umkm-appwrite.service";
 describe("updateCampaignStatusInAppwrite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getSessionMock.mockResolvedValue({
-      success: true,
-      data: { userId: "umkm-1" },
-    });
+    getCurrentUserIdMock.mockResolvedValue("umkm-1");
   });
 
   it("preserves backend FunctionExecutionError message for mutation failure", async () => {
