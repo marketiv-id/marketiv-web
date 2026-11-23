@@ -55,12 +55,20 @@ export type ConversationFlag = {
   isArchived: boolean;
 };
 
-const mapConversation = (d: Doc): ConversationFlag => ({
-  id: str(d.$id),
-  umkmId: str(d.umkm_id),
-  creatorId: str(d.creator_id),
-  isArchived: Boolean(d.is_archived),
-});
+/**
+ * `isArchived` = arsip milik PEMANGGIL (`umkm_archived` / `creator_archived`),
+ * kolom yang ditulis route arsip — sama dengan DTO negosiasi. `is_archived`
+ * lama tidak pernah ditulis jalur arsip mana pun.
+ */
+const mapConversation = (d: Doc, userId: string): ConversationFlag => {
+  const umkmId = str(d.umkm_id);
+  return {
+    id: str(d.$id),
+    umkmId,
+    creatorId: str(d.creator_id),
+    isArchived: Boolean(umkmId === userId ? d.umkm_archived : d.creator_archived),
+  };
+};
 
 /**
  * Kunci gabung daftar negosiasi ↔ percakapan. Satu percakapan per pasangan
@@ -99,7 +107,7 @@ export async function getMyConversationsFromAppwrite(): Promise<
 
     const byId = new Map<string, ConversationFlag>();
     for (const doc of rowsToDocs(CONVERSATIONS, [...(asUmkm.data ?? []), ...(asCreator.data ?? [])])) {
-      const mapped = mapConversation(doc);
+      const mapped = mapConversation(doc, auth.userId);
       byId.set(mapped.id, mapped);
     }
     return ok([...byId.values()]);
