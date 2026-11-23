@@ -1,4 +1,10 @@
 import { FunctionExecutionError, statusToCode } from "./errors";
+import { ACCOUNT_ROUTES } from "./routes/account";
+import { CAMPAIGN_ROUTES } from "./routes/campaign";
+import { CREATOR_ROUTES } from "./routes/creator";
+import { FILE_ROUTES } from "./routes/files";
+import { READ_ROUTES } from "./routes/read";
+import type { ApiRoute } from "./routes/types";
 
 export { FunctionExecutionError } from "./errors";
 
@@ -9,28 +15,50 @@ export { FunctionExecutionError } from "./errors";
  * `FunctionExecutionError` (statusCode, code, responseCode). Service cukup
  * mengganti import + nama endpoint; logika pemanggil tidak berubah.
  *
- * Route GET menerima `body` sebagai query string (hanya nilai primitif;
- * `undefined`/`null`/string kosong dilewati). Route POST menerima JSON.
+ * `:param` di path diisi dari key `body` yang sama (lalu dihapus dari body).
+ * GET/DELETE mengirim sisa body sebagai query string (hanya nilai primitif;
+ * `undefined`/`null`/string kosong dilewati); POST/PATCH/PUT sebagai JSON.
  *
  * Route selalu membalas error sebagai `{ error, code? }` — lihat
  * `src/server/http.ts`.
  */
+/**
+ * Peta nama → endpoint. Satu file per domain di `routes/` supaya tiap pemilik
+ * domain menambah entri tanpa menyentuh file lain.
+ */
 export const API_ROUTES = {
-  // ── Fase 5: 13 function baca-saja (9 di app user) ────────────────────────
-  umkmDashboardSummary: { method: "GET", path: "/api/umkm/dashboard-summary" },
-  umkmFinanceSummary: { method: "GET", path: "/api/umkm/finance-summary" },
-  umkmProfile: { method: "GET", path: "/api/umkm/profile" },
-  umkmNegotiations: { method: "GET", path: "/api/umkm/negotiations" },
-  umkmRatecardReviews: { method: "GET", path: "/api/umkm/ratecard-reviews" },
-  creatorDashboardSummary: { method: "GET", path: "/api/creator/dashboard-summary" },
-  creatorProfile: { method: "GET", path: "/api/creator/profile" },
-  creatorNegotiations: { method: "GET", path: "/api/creator/negotiations" },
-  creatorDirectory: { method: "GET", path: "/api/creator/directory" },
-} as const satisfies Record<string, { method: "GET" | "POST"; path: string }>;
+  ...READ_ROUTES,
+  ...ACCOUNT_ROUTES,
+  ...CAMPAIGN_ROUTES,
+  ...CREATOR_ROUTES,
+  ...FILE_ROUTES,
+} as const satisfies Record<string, ApiRoute>;
 
 export type ApiName = keyof typeof API_ROUTES;
 
 type Primitive = string | number | boolean;
+
+/** Isi `:param` dari body; key yang dipakai dihapus dari body. */
+export function resolvePath(
+  template: string,
+  body: unknown,
+): { path: string; rest: Record<string, unknown> | undefined } {
+  const rest =
+    body && typeof body === "object" && !Array.isArray(body)
+      ? { ...(body as Record<string, unknown>) }
+      : undefined;
+  const path = template.replace(/:([A-Za-z0-9_]+)/g, (_, key: string) => {
+    const value = rest?.[key];
+    if (typeof value !== "string" && typeof value !== "number") {
+      throw new FunctionExecutionError(`Parameter "${key}" wajib diisi.`, 400, "validation");
+    }
+    const text = String(value);
+    if (!text) throw new FunctionExecutionError(`Parameter "${key}" wajib diisi.`, 400, "validation");
+    if (rest) delete rest[key];
+    return encodeURIComponent(text);
+  });
+  return { path, rest: rest ?? (body as Record<string, unknown> | undefined) };
+}
 
 function toQuery(body: unknown): string {
   if (!body || typeof body !== "object") return "";
@@ -46,9 +74,10 @@ function toQuery(body: unknown): string {
 }
 
 export async function callApi<T>(name: ApiName, body?: unknown): Promise<T> {
-  const route = API_ROUTES[name];
-  const isGet = route.method === "GET";
-  const url = isGet ? `${route.path}${toQuery(body)}` : route.path;
+  const route: ApiRoute = API_ROUTES[name];
+  const { path, rest } = resolvePath(route.path, body);
+  const inQuery = route.method === "GET" || route.method === "DELETE";
+  const url = inQuery ? `${path}${toQuery(rest)}` : path;
 
   let response: Response;
   try {
@@ -56,8 +85,10 @@ export async function callApi<T>(name: ApiName, body?: unknown): Promise<T> {
       method: route.method,
       credentials: "same-origin",
       cache: "no-store",
-      headers: isGet ? { Accept: "application/json" } : { "Content-Type": "application/json", Accept: "application/json" },
-      ...(isGet ? {} : { body: JSON.stringify(body ?? {}) }),
+      headers: inQuery
+        ? { Accept: "application/json" }
+        : { "Content-Type": "application/json", Accept: "application/json" },
+      ...(inQuery ? {} : { body: JSON.stringify(rest ?? {}) }),
     });
   } catch {
     throw new FunctionExecutionError(

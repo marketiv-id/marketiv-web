@@ -36,8 +36,7 @@ import {
   uploadCampaignThumbnail,
   deleteCampaignThumbnail,
 } from "@/services/umkm/umkm-dashboard.service";
-// TODO(fase-06): validasi file thumbnail ikut pindah bersama port campaign-thumbnail.ts.
-import { assertCampaignThumbnailFile } from "@/lib/appwrite/campaign-thumbnail";
+import { assertCampaignThumbnailFile } from "@/lib/supabase/campaign-thumbnail";
 import { compressImageToWebP } from "@/lib/compress-image";
 import type { RehydratedWizard } from "./create-campaign.rehydrate";
 import { loadSnap } from "@/lib/midtrans/snap";

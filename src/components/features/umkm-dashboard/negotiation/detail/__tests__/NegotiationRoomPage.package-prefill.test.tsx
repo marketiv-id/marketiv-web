@@ -44,10 +44,7 @@ vi.mock("@/services/shared/conversation.service", () => ({
   markConversationRead: mocks.markConversationRead,
 }));
 vi.mock("@/config/data-source.config", () => ({ DATA_SOURCE_CONFIG: { useMockData: false } }));
-vi.mock("@/lib/appwrite/realtime", () => ({
-  realtimeClient: { subscribe: vi.fn() },
-  tableChannels: () => [],
-}));
+vi.mock("@/lib/supabase/realtime", () => ({ useRealtimeTable: vi.fn() }));
 vi.mock("@/lib/negotiation/use-negotiation-room-sync", () => ({
   useNegotiationRoomSync: vi.fn(),
 }));

@@ -30,8 +30,7 @@ import { PLATFORM_FEE_RATE, calculatePlatformFee } from "@/types/domain";
 import { getEscrowStatusLabel, resolveStatusLabel } from "@/lib/dashboard-labels";
 import { cn } from "@/lib/utils";
 import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
-// TODO(fase-06): realtime → Supabase Realtime (`useRealtimeTable`, 06-mutasi-chat-file.md).
-import { realtimeClient, tableChannels } from "@/lib/appwrite/realtime";
+import { useRealtimeTable } from "@/lib/supabase/realtime";
 import { useNegotiationRoomSync } from "@/lib/negotiation/use-negotiation-room-sync";
 import { useTosConsent } from "@/components/providers/TosConsentProvider";
 import {
@@ -219,16 +218,15 @@ export function NegosiasiRoomView({ conversationId }: NegosiasiRoomViewProps) {
     reload: loadRoom,
   });
 
-  useEffect(() => {
-    if (DATA_SOURCE_CONFIG.useMockData) return;
-    const channels = tableChannels("messages");
-    if (channels.length === 0) return;
-
-    return realtimeClient.subscribe(channels, (event) => {
-      const payload = event.payload as { conversation_id?: string };
-      if (payload.conversation_id === conversationId) void loadRoom();
-    });
-  }, [conversationId, loadRoom]);
+  // Pesan baru/berubah di percakapan ini → baca ulang ruang (RLS: hanya peserta).
+  useRealtimeTable(
+    "messages",
+    conversationId ? `conversation_id=eq.${conversationId}` : null,
+    () => {
+      void loadRoom();
+    },
+    { enabled: !DATA_SOURCE_CONFIG.useMockData },
+  );
 
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });

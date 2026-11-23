@@ -15,10 +15,6 @@ vi.mock("@/lib/appwrite/functions", async () => {
   );
   return { ...actual, executeFunction: vi.fn() };
 });
-vi.mock("@/lib/appwrite/storage", () => ({
-  uploadPublicFile: vi.fn(),
-  FileRuleError: class FileRuleError extends Error {},
-}));
 vi.mock("@/services/shared/conversation-appwrite.service", () => ({
   sendMessageInAppwrite: vi.fn(),
   getMessagesByConversationIdInAppwrite: vi.fn(),

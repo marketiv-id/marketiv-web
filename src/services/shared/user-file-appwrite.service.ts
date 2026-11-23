@@ -1,63 +1,55 @@
-import { executeFunction, FUNCTION_IDS } from "@/lib/appwrite/functions";
-import { appwriteConfig } from "@/lib/appwrite/config";
+import { callApi } from "@/lib/api/call-api";
+import { createClient } from "@/lib/supabase/client";
 import type { ServiceResult } from "@/types/domain";
 import { ok, fail, failFromWriteError, requireUserId } from "@/services/shared/service-result";
 
 /**
- * Unggah berkas ke File Manager lewat Function `validate-and-upload`.
+ * Unggah berkas ke File Manager (bucket privat `user-files`) — Fase 6.
  *
- * WAJIB lewat Function, bukan `storage.createFile` langsung: kuota per pengguna
- * disimpan di `user_storage_usage`, yang `$permissions`-nya kosong. Klien tidak
- * bisa mendebit kuotanya sendiri, jadi unggahan langsung akan lolos batas.
+ * Tiga langkah, berkas TIDAK pernah lewat body route (batas function Netlify):
+ *   1. `POST /api/files/upload-url` — validasi tipe/ukuran + pra-cek kuota →
+ *      `{ bucketId, path, token }`.
+ *   2. `storage.uploadToSignedUrl(path, token, file)` — langsung ke Storage.
+ *   3. `POST /api/files/confirm` — catat `user_files` + debit kuota dalam satu
+ *      transaksi (ukuran diambil dari objek yang tersimpan, bukan dari klien).
  *
- * Berkasnya dikirim sebagai base64 di body JSON. Itu memang boros — 20 MB jadi
- * ~27 MB payload — tapi ini kontrak Function yang sudah ada, dan mengubahnya ke
- * multipart berarti mengubah Function plus semua pemanggilnya. Batas ukuran di
- * bawah sengaja lebih ketat dari batas bucket supaya penolakannya terjadi di
- * klien dengan pesan yang jelas, bukan sebagai 413 dari server.
+ * Kuota tetap ditegakkan server: `user_storage_usage` tidak bisa ditulis
+ * browser (RLS SELECT-only).
+ *
+ * Nama `uploadUserFileInAppwrite` dipertahankan supaya facade
+ * `user-file.service.ts` tidak perlu berubah; implementasinya Supabase.
  */
 
-/** Sejajar MAX_FILE_SIZE_BYTES di validate-and-upload:3. */
+/** Sejajar `MAX_USER_FILE_BYTES` di `src/server/files/shared.ts` (20 MiB). */
 export const MAX_USER_FILE_BYTES = 20 * 1024 * 1024;
 
 type UploadedUserFile = {
-  /** `$id` baris `user_files` — inilah yang disimpan `deliverables.fileId`. */
+  /** `id` baris `user_files` — inilah yang disimpan `deliverables.file_id`. */
   fileId: string;
-  /** URL unduh; hanya bisa dibuka pihak yang punya permission baca berkas. */
+  /**
+   * URL STABIL `/api/files/<id>/url?redirect=1`: setiap dibuka, server mengecek
+   * hak akses (pemilik / pihak order yang dibagikan / admin) lalu mengalihkan ke
+   * signed URL baru (5 menit). Aman disimpan di `deliverables.file_url`.
+   */
   fileUrl: string;
   fileName: string;
 };
 
-type ValidateAndUploadResponse = {
-  status: string;
-  file: { $id: string; fileName: string; bucketId: string; storageFileId: string };
-  storageFile: { $id: string; bucketId: string };
-};
+type UploadUrlResponse = { bucketId: string; path: string; token: string };
+type ConfirmResponse = { status: string; file: { $id: string; fileName: string } };
 
-/** File → base64 tanpa prefix data URL. */
-async function toBase64(file: File): Promise<string> {
-  const buffer = await file.arrayBuffer();
-  const bytes = new Uint8Array(buffer);
-  let binary = "";
-  // Dicicil per potongan: `String.fromCharCode(...bytes)` pada berkas belasan
-  // MB melampaui batas jumlah argumen dan melempar RangeError.
-  const CHUNK = 0x8000;
-  for (let i = 0; i < bytes.length; i += CHUNK) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
-  }
-  return btoa(binary);
+/** URL stabil (absolut bila di browser) untuk membuka file privat. */
+export function userFileUrl(fileId: string): string {
+  const path = `/api/files/${encodeURIComponent(fileId)}/url?redirect=1`;
+  return typeof window !== "undefined" && window.location?.origin ? `${window.location.origin}${path}` : path;
 }
 
-// TODO(fase-06): unggah berkas → Route Handler + Supabase Storage (bucket user-files).
 export async function uploadUserFileInAppwrite(input: {
   file: File;
   /**
-   * Bila diisi, pihak lawan pada order itu ikut diberi izin baca berkasnya.
-   *
-   * Yang dikirim adalah orderId, BUKAN userId — Function yang menurunkan siapa
-   * pihak lawannya setelah memastikan pengunggah memang peserta order tersebut.
-   * Tanpa ini, deliverable yang diunggah kreator tidak akan bisa dibuka UMKM
-   * yang harus mereviewnya.
+   * Bila diisi, pihak lawan pada order itu ikut boleh membaca berkasnya.
+   * Yang dikirim orderId, BUKAN userId — server memverifikasi pengunggah
+   * peserta order dan menurunkan pihak lawan dari baris `orders`.
    */
   shareWithOrderId?: string;
 }): Promise<ServiceResult<UploadedUserFile>> {
@@ -77,21 +69,31 @@ export async function uploadUserFileInAppwrite(input: {
   }
 
   try {
-    const res = await executeFunction<ValidateAndUploadResponse>(FUNCTION_IDS.validateAndUpload, {
+    const target = await callApi<UploadUrlResponse>("createUploadUrl", {
       fileName: file.name,
       mimeType: file.type,
       sizeBytes: file.size,
-      contentBase64: await toBase64(file),
+    });
+
+    const { error: uploadError } = await createClient()
+      .storage.from(target.bucketId)
+      .uploadToSignedUrl(target.path, target.token, file, { contentType: file.type || undefined });
+    if (uploadError) {
+      // Storage menolak (mis. MIME/ukuran di luar aturan bucket) — sebelum ada
+      // baris user_files, jadi kuota tidak terdebit.
+      return fail("Gagal mengunggah berkas. Coba lagi.", "server", empty);
+    }
+
+    const confirmed = await callApi<ConfirmResponse>("confirmUpload", {
+      path: target.path,
+      fileName: file.name,
       ...(shareWithOrderId ? { shareWithOrderId } : {}),
     });
 
-    const bucketId = res.storageFile?.bucketId ?? res.file?.bucketId;
-    const storageFileId = res.storageFile?.$id ?? res.file?.storageFileId;
-
     return ok({
-      fileId: res.file.$id,
-      fileUrl: `${appwriteConfig.endpoint}/storage/buckets/${bucketId}/files/${storageFileId}/view?project=${appwriteConfig.projectId}`,
-      fileName: res.file.fileName,
+      fileId: confirmed.file.$id,
+      fileUrl: userFileUrl(confirmed.file.$id),
+      fileName: confirmed.file.fileName,
     });
   } catch (err) {
     return failFromWriteError<UploadedUserFile>(err, empty);

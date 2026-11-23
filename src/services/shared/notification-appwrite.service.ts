@@ -1,9 +1,7 @@
-import { databases } from "@/lib/appwrite/databases";
-import { appwriteConfig } from "@/lib/appwrite/config";
 import type { ServiceResult } from "@/types/domain";
 import type { AppNotification, NotifType } from "@/types/notification.types";
 import type { UserRole } from "@/types/domain";
-import { executeFunction, FUNCTION_IDS } from "@/lib/appwrite/functions";
+import { callApi } from "@/lib/api/call-api";
 import { createClient } from "@/lib/supabase/client";
 import { rowsToDocs } from "./legacy-doc";
 import {
@@ -17,24 +15,14 @@ import {
 } from "./service-result";
 
 /**
- * Lapisan Appwrite notifikasi — satu untuk UMKM dan Kreator.
+ * Notifikasi — satu untuk UMKM dan Kreator.
  *
- * Baris `notifications` ditulis Function dengan
- * `[Permission.read(Role.user(userId)), Permission.update(Role.user(userId))]`.
- * Konsekuensinya:
- * - Baca & tandai-sudah-dibaca BISA dari klien.
- * - Hapus TIDAK bisa — tidak ada `Permission.delete`. UI-nya karena itu tidak
- *   menawarkan hapus; lihat catatan di NotificationView.
- *
- * Sampai perbaikan permission baris di 4 Function penulis notifikasi dideploy
- * (§B handoff Alur B), daftar ini bisa pulang kosong meski barisnya ada. Kosong
- * ditampilkan sebagai empty state, bukan error.
- *
- * Fase 5 (migrasi Supabase): BACA lewat supabase-js + RLS (pemilik saja).
- * TULIS (tandai dibaca, hapus) masih Appwrite — TODO(fase-06).
+ * BACA lewat supabase-js + RLS (pemilik saja). TULIS (tandai dibaca, tandai
+ * semua, hapus) lewat Route Handler `/api/notifications/*` → RPC yang memfilter
+ * `user_id` = sesi; browser tidak pernah menulis `notifications` langsung.
+ * Daftar kosong ditampilkan sebagai empty state, bukan error.
  */
 
-const DB = appwriteConfig.databaseId;
 const COLLECTION = "notifications";
 const PAGE_LIMIT = 100;
 
@@ -139,12 +127,11 @@ export async function getNotificationsFromAppwrite(
   }
 }
 
-// TODO(fase-06): tandai dibaca → Route Handler.
 export async function markNotificationReadInAppwrite(
   id: string
 ): Promise<ServiceResult<null>> {
   try {
-    await databases.updateDocument(DB, COLLECTION, id, { isRead: true });
+    await callApi("updateNotification", { id, isRead: true });
     return ok(null);
   } catch (err) {
     return failFromWriteError<null>(err, noData<null>());
@@ -152,30 +139,27 @@ export async function markNotificationReadInAppwrite(
 }
 
 /**
- * Tandai semua sebagai dibaca. Tidak ada operasi batch di Appwrite, jadi ini
- * N update paralel. Kegagalan sebagian dilaporkan sebagai gagal — pemanggil
- * memuat ulang daftar supaya layar tidak mengklaim lebih dari yang terjadi.
+ * Tandai semua sebagai dibaca — satu request, satu UPDATE di server (hanya
+ * notifikasi milik sendiri yang belum dibaca).
  */
-// TODO(fase-06): tandai semua dibaca → Route Handler.
 export async function markAllNotificationsReadInAppwrite(
   ids: string[]
 ): Promise<ServiceResult<null>> {
   if (ids.length === 0) return ok(null);
 
   try {
-    await executeFunction(FUNCTION_IDS.markNotificationsRead, { ids });
+    await callApi("markNotificationsRead", { ids });
     return ok(null);
   } catch (err) {
     return failFromWriteError<null>(err, noData<null>());
   }
 }
 
-// TODO(fase-06): hapus notifikasi → Route Handler.
 export async function deleteNotificationInAppwrite(
   id: string
 ): Promise<ServiceResult<null>> {
   try {
-    await databases.deleteDocument(DB, COLLECTION, id);
+    await callApi("deleteNotification", { id });
     return ok(null);
   } catch (err) {
     return failFromWriteError<null>(err, noData<null>());

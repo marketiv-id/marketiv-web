@@ -199,9 +199,10 @@ describe("getMyConversationsFromAppwrite — Supabase", () => {
     mocks.userId = "u-1";
     mocks.db = createFakeSupabase({
       conversations: [
-        { id: "c1", umkm_id: "u-1", creator_id: "k-1", is_archived: true },
-        { id: "c2", umkm_id: "u-9", creator_id: "u-1", is_archived: false },
-        { id: "c3", umkm_id: "u-9", creator_id: "k-2", is_archived: false },
+        // isArchived = arsip milik pemanggil, bukan `is_archived` lama.
+        { id: "c1", umkm_id: "u-1", creator_id: "k-1", umkm_archived: true, creator_archived: false, is_archived: false },
+        { id: "c2", umkm_id: "u-9", creator_id: "u-1", umkm_archived: true, creator_archived: false, is_archived: true },
+        { id: "c3", umkm_id: "u-9", creator_id: "k-2", umkm_archived: false, creator_archived: false },
       ],
     });
     const result = await getMyConversationsFromAppwrite();

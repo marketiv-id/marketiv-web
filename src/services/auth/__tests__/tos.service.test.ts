@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createFakeSupabase, type FakeSupabase } from "@/test/fake-supabase";
 
 const mocks = vi.hoisted(() => ({
-  executeFunction: vi.fn(),
+  callApi: vi.fn(),
   mockDelay: vi.fn(),
   useMockData: false,
   db: null as unknown as FakeSupabase,
@@ -16,10 +16,7 @@ vi.mock("@/services/auth/session.service", () => ({
   getCurrentUserId: async () => mocks.userId,
 }));
 
-vi.mock("@/lib/appwrite/functions", () => ({
-  FUNCTION_IDS: { acceptTos: "accept-tos" },
-  executeFunction: mocks.executeFunction,
-}));
+vi.mock("@/lib/api/call-api", () => ({ callApi: mocks.callApi }));
 
 vi.mock("@/config/data-source.config", () => ({
   DATA_SOURCE_CONFIG: {
@@ -54,7 +51,7 @@ describe("T&C service", () => {
       data: { currentVersion: "v3.1", acceptedVersion: null, acceptedAt: null, needsConsent: true },
     });
     expect(mocks.db.calls).toEqual([{ table: "users", filters: ["id.eq.user-1"], count: undefined }]);
-    expect(mocks.executeFunction).not.toHaveBeenCalled();
+    expect(mocks.callApi).not.toHaveBeenCalled();
   });
 
   it("needsConsent false only when current version AND acceptedAt are set", async () => {
@@ -84,7 +81,7 @@ describe("T&C service", () => {
   });
 
   it("accepts backend-returned version", async () => {
-    mocks.executeFunction.mockResolvedValue({
+    mocks.callApi.mockResolvedValue({
       success: true,
       alreadyAccepted: false,
       tos_version: "v3.1",
@@ -93,7 +90,7 @@ describe("T&C service", () => {
 
     await acceptCurrentTos("v3.1");
 
-    expect(mocks.executeFunction).toHaveBeenCalledWith("accept-tos", {
+    expect(mocks.callApi).toHaveBeenCalledWith("acceptTos", {
       action: "accept",
       tos_version: "v3.1",
     });
@@ -113,7 +110,7 @@ describe("T&C service", () => {
         needsConsent: false,
       },
     });
-    expect(mocks.executeFunction).not.toHaveBeenCalled();
+    expect(mocks.callApi).not.toHaveBeenCalled();
   });
 
   it("accepts current mock T&C without calling Function", async () => {
@@ -127,6 +124,6 @@ describe("T&C service", () => {
       success: true,
       data: { alreadyAccepted: true, tos_version: status.data?.currentVersion },
     });
-    expect(mocks.executeFunction).not.toHaveBeenCalled();
+    expect(mocks.callApi).not.toHaveBeenCalled();
   });
 });

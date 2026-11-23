@@ -9,7 +9,8 @@ const mocks = vi.hoisted(() => ({
   markNotificationRead: vi.fn(),
   markAllNotificationsRead: vi.fn(),
   deleteNotification: vi.fn(),
-  subscribe: vi.fn(() => () => {}),
+  useRealtimeTable: vi.fn(),
+  getCurrentUserId: vi.fn(async () => "user-1"),
 }));
 
 vi.mock("@/services/shared/notification.service", () => ({
@@ -19,9 +20,12 @@ vi.mock("@/services/shared/notification.service", () => ({
   deleteNotification: mocks.deleteNotification,
 }));
 
-vi.mock("@/lib/appwrite/realtime", () => ({
-  realtimeClient: { subscribe: mocks.subscribe },
-  tableChannels: (table: string) => [`databases.db.tables.${table}.rows`],
+vi.mock("@/lib/supabase/realtime", () => ({
+  useRealtimeTable: mocks.useRealtimeTable,
+}));
+
+vi.mock("@/services/auth/session.service", () => ({
+  getCurrentUserId: mocks.getCurrentUserId,
 }));
 
 vi.mock("@/config/data-source.config", () => ({
@@ -119,7 +123,7 @@ describe("NotificationProvider", () => {
     mocks.markNotificationRead.mockReset();
     mocks.markAllNotificationsRead.mockReset();
     mocks.deleteNotification.mockReset();
-    mocks.subscribe.mockClear();
+    mocks.useRealtimeTable.mockClear();
     mocks.getNotifications.mockResolvedValue({
       success: true,
       data: [notif("n1", false), notif("n2", false), notif("n3", true)],
@@ -152,7 +156,25 @@ describe("NotificationProvider", () => {
     expect(mocks.getNotifications).toHaveBeenCalledWith("umkm");
     expect(container.querySelector('[data-testid="count"]')?.textContent).toBe("2");
     expect(container.querySelector('[data-testid="loading"]')?.textContent).toBe("false");
-    expect(mocks.subscribe).toHaveBeenCalledTimes(1);
+    // Realtime: tabel notifications, difilter ke userId sesi, aktif (bukan mock).
+    const calls = mocks.useRealtimeTable.mock.calls as unknown as [string, string | null, () => void, { enabled: boolean }][];
+    const last = calls.at(-1)!;
+    expect(last[0]).toBe("notifications");
+    expect(last[1]).toBe("user_id=eq.user-1");
+    expect(last[3]).toEqual({ enabled: true });
+    // Event realtime memicu baca ulang.
+    const before = mocks.getNotifications.mock.calls.length;
+    await act(async () => {
+      last[2]();
+    });
+    expect(mocks.getNotifications.mock.calls.length).toBe(before + 1);
+  });
+
+  it("tidak berlangganan sebelum userId diketahui", async () => {
+    mocks.getCurrentUserId.mockResolvedValueOnce(null);
+    await renderProvider();
+    const calls = mocks.useRealtimeTable.mock.calls as unknown as [string, string | null][];
+    expect(calls.every(([, filter]) => filter === null)).toBe(true);
   });
 
   it("optimistically marks one read and updates count", async () => {

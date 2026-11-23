@@ -28,7 +28,7 @@ vi.mock("@/lib/api/call-api", async () => {
 // Jalur tulis masih Appwrite — dibuat inert supaya test baca tidak menyentuhnya.
 vi.mock("@/lib/appwrite/databases", () => ({ databases: mocks.databases }));
 vi.mock("@/lib/appwrite/config", () => ({ appwriteConfig: { databaseId: "db" } }));
-vi.mock("@/lib/appwrite/storage", () => ({ uploadPublicFile: vi.fn(), FileRuleError: class extends Error {} }));
+vi.mock("@/lib/supabase/storage", () => ({ uploadPublicFile: vi.fn(), FileRuleError: class extends Error {} }));
 vi.mock("@/lib/appwrite/functions", () => ({ executeFunction: vi.fn(), FUNCTION_IDS: {} }));
 
 import { FunctionExecutionError } from "@/lib/api/errors";

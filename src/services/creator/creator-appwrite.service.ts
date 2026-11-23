@@ -1,7 +1,9 @@
+// TODO(fase-07|08): import Appwrite di bawah hanya untuk tulis Fase 7/8
+// (offer, klaim, bukti, withdrawal). Tulis Fase 6 sudah lewat Route Handler.
 import { Query, ID, Permission, Role } from "appwrite";
 import { databases } from "@/lib/appwrite/databases";
 import { appwriteConfig } from "@/lib/appwrite/config";
-import { uploadPublicFile, FileRuleError } from "@/lib/appwrite/storage";
+import { uploadPublicFile, FileRuleError, type PublicBucket } from "@/lib/supabase/storage";
 import { executeFunction, FUNCTION_IDS } from "@/lib/appwrite/functions";
 import { callApi, FunctionExecutionError } from "@/lib/api/call-api";
 import { createClient } from "@/lib/supabase/client";
@@ -48,8 +50,9 @@ import {
  * KECUALI `conversations` & `messages` yang snake_case).
  * Fase 5 (migrasi Supabase): semua BACA lewat Supabase — query langsung
  * supabase-js + RLS (→ `rowToDoc` → mapper lama) atau Route Handler
- * `/api/creator/*` lewat `callApi`. Semua TULIS masih Appwrite sampai Fase 6–8
- * (ditandai `TODO(fase-0x)`).
+ * `/api/creator/*` lewat `callApi`. Fase 6: tulis rate card, profil, akun
+ * sosial, portofolio, dan upload publik lewat Route Handler / Supabase Storage.
+ * Tulis alur bisnis & uang masih Appwrite sampai Fase 7–8 (`TODO(fase-0x)`).
  *
  * Tiga jenis baca WAJIB lewat Function DTO, bukan query klien:
  * - Profil ....... join creator_profiles + creator_social_accounts + akun Auth.
@@ -732,23 +735,13 @@ export async function getCreatorActivitiesFromAppwrite(): Promise<ServiceResult<
   }
 }
 
-// ── rate card CRUD (Sprint 3) ─────────────────────────────────────────────────
-//
-// TODO(fase-06): CRUD rate card (termasuk baca pra-cek di dalamnya) masih
-// Appwrite; pindah ke Route Handler di Fase 6.
+// ── rate card CRUD (Sprint 3 → Fase 6: Route Handler) ────────────────────────
 //
 // Model 1 rate_cards per paket UI (1:1): status ada di parent, toggle per paket
 // jalan tanpa restrukturisasi, dan update TIDAK pernah delete-recreate sibling
-// (menghindari bug creator.service.ts yang mengorphankan orders.packageId).
-
-const RC_MAX_PACKAGES = 3;
-const RC_ACTIVE_ORDER_STATUSES = [
-  "pending_payment",
-  "escrow",
-  "in_progress",
-  "revision",
-  "approved",
-];
+// (orders.package_id stabil). Semua tulis lewat `/api/rate-cards/**`; parent +
+// paket dibuat/diubah/dihapus atomik di RPC 0020 (batas 3 paket, tolak hapus
+// bila ada order berjalan — dulu dicek dari browser).
 
 export type RateCardPackageWriteInput = {
   name: string;
@@ -761,103 +754,14 @@ export type RateCardPackageWriteInput = {
   published: boolean;
 };
 
-const mapRcPackage = (child: Doc, status: RateCardStatus): CreatorRateCardPackage => ({
-  id: str(child.$id),
-  rateCardId: str(child.rateCardId),
-  name: str(child.name),
-  description: str(child.description),
-  price: num(child.price),
-  deliverable: str(child.output),
-  estimatedDays: num(child.deliveryDays),
-  status,
-  revisionCount: num(child.revisionLimit),
-});
-
-/** Baca parent rate_cards milik user; forbidden bila bukan miliknya. */
-async function requireOwnedRateCard(
-  rateCardId: string,
-  userId: string
-): Promise<{ ok: true; doc: Doc } | { ok: false; result: ServiceResult<never> }> {
-  const res = await databases.listDocuments(DB, COLLECTIONS.rateCards, [
-    Query.equal("$id", rateCardId),
-    Query.equal("creatorId", userId),
-    Query.limit(1),
-  ]);
-  const doc = res.documents[0] as unknown as Doc | undefined;
-  if (!doc) {
-    return {
-      ok: false,
-      result: fail("Paket tidak ditemukan atau bukan milik Anda.", "forbidden", null as never),
-    };
-  }
-  return { ok: true, doc };
-}
-
 export async function createCreatorRateCardPackageInAppwrite(
   input: RateCardPackageWriteInput
 ): Promise<ServiceResult<CreatorRateCardPackage>> {
   const empty = null as unknown as CreatorRateCardPackage;
   const auth = await requireUserId<CreatorRateCardPackage>(empty);
   if (!auth.ok) return auth.result;
-  const uid = auth.userId;
-  const perms = [
-    Permission.read(Role.any()),
-    Permission.update(Role.user(uid)),
-    Permission.delete(Role.user(uid)),
-  ];
-  const status: RateCardStatus = input.published ? "published" : "draft";
-
   try {
-    const existing = await databases.listDocuments(DB, COLLECTIONS.rateCards, [
-      Query.equal("creatorId", uid),
-      Query.limit(RC_MAX_PACKAGES + 1),
-    ]);
-    if (existing.total >= RC_MAX_PACKAGES) {
-      return failValidation("Maksimal 3 paket. Hapus satu paket dulu.", empty);
-    }
-
-    const parent = (await databases.createDocument(
-      DB,
-      COLLECTIONS.rateCards,
-      ID.unique(),
-      {
-        creatorId: uid,
-        title: input.name.trim(),
-        description: input.description.trim(),
-        status,
-        createdAt: new Date().toISOString(),
-      },
-      perms
-    )) as unknown as Doc;
-
-    let child: Doc;
-    try {
-      child = (await databases.createDocument(
-        DB,
-        COLLECTIONS.rateCardPackages,
-        ID.unique(),
-        {
-          rateCardId: str(parent.$id),
-          name: input.name.trim(),
-          description: input.description.trim(),
-          output: input.output.trim(),
-          deliveryDays: input.deliveryDays,
-          price: input.price,
-          revisionLimit: input.revisionLimit,
-        },
-        perms
-      )) as unknown as Doc;
-    } catch (childErr) {
-      // Rate card tanpa paket akan jadi hantu di direktori UMKM — buang parent.
-      try {
-        await databases.deleteDocument(DB, COLLECTIONS.rateCards, str(parent.$id));
-      } catch {
-        /* biarkan — sudah dilaporkan lewat error di bawah */
-      }
-      return failFromWriteError<CreatorRateCardPackage>(childErr, empty);
-    }
-
-    return ok(mapRcPackage(child, status));
+    return ok(await callApi<CreatorRateCardPackage>("createRateCard", input));
   } catch (err) {
     return failFromWriteError<CreatorRateCardPackage>(err, empty);
   }
@@ -870,35 +774,14 @@ export async function updateCreatorRateCardPackageInAppwrite(
   const empty = null as unknown as CreatorRateCardPackage;
   const auth = await requireUserId<CreatorRateCardPackage>(empty);
   if (!auth.ok) return auth.result;
-
   try {
-    const owned = await requireOwnedRateCard(pkg.rateCardId, auth.userId);
-    if (!owned.ok) return owned.result as ServiceResult<CreatorRateCardPackage>;
-
-    const status: RateCardStatus = input.published ? "published" : "draft";
-
-    // Update baris anak in-place (JANGAN delete-recreate — orders.packageId stabil).
-    const child = (await databases.updateDocument(
-      DB,
-      COLLECTIONS.rateCardPackages,
-      pkg.id,
-      {
-        name: input.name.trim(),
-        description: input.description.trim(),
-        output: input.output.trim(),
-        deliveryDays: input.deliveryDays,
-        price: input.price,
-        revisionLimit: input.revisionLimit,
-      }
-    )) as unknown as Doc;
-
-    // Mirror title + status ke parent.
-    await databases.updateDocument(DB, COLLECTIONS.rateCards, pkg.rateCardId, {
-      title: input.name.trim(),
-      status,
-    });
-
-    return ok(mapRcPackage(child, status));
+    return ok(
+      await callApi<CreatorRateCardPackage>("updateRateCardPackage", {
+        ...input,
+        rateCardId: pkg.rateCardId,
+        packageId: pkg.id,
+      })
+    );
   } catch (err) {
     return failFromWriteError<CreatorRateCardPackage>(err, empty);
   }
@@ -911,18 +794,14 @@ export async function setCreatorRateCardPackageStatusInAppwrite(
   const empty = null as unknown as CreatorRateCardPackage;
   const auth = await requireUserId<CreatorRateCardPackage>(empty);
   if (!auth.ok) return auth.result;
-
   try {
-    const owned = await requireOwnedRateCard(pkg.rateCardId, auth.userId);
-    if (!owned.ok) return owned.result as ServiceResult<CreatorRateCardPackage>;
-
-    await databases.updateDocument(DB, COLLECTIONS.rateCards, pkg.rateCardId, { status });
-    const child = (await databases.getDocument(
-      DB,
-      COLLECTIONS.rateCardPackages,
-      pkg.id
-    )) as unknown as Doc;
-    return ok(mapRcPackage(child, status));
+    return ok(
+      await callApi<CreatorRateCardPackage>("updateRateCard", {
+        rateCardId: pkg.rateCardId,
+        packageId: pkg.id,
+        status,
+      })
+    );
   } catch (err) {
     return failFromWriteError<CreatorRateCardPackage>(err, empty);
   }
@@ -934,49 +813,20 @@ export async function deleteCreatorRateCardPackageInAppwrite(pkg: {
 }): Promise<ServiceResult<null>> {
   const auth = await requireUserId<null>(null);
   if (!auth.ok) return auth.result;
-
   try {
-    const owned = await requireOwnedRateCard(pkg.rateCardId, auth.userId);
-    if (!owned.ok) return owned.result as ServiceResult<null>;
-
-    // Tolak hapus bila paket terpakai order berjalan.
-    const orders = await databases.listDocuments(DB, COLLECTIONS.orders, [
-      Query.equal("packageId", pkg.id),
-      Query.equal("status", RC_ACTIVE_ORDER_STATUSES),
-      Query.limit(1),
-    ]);
-    if (orders.total > 0) {
-      return failValidation(
-        "Paket tidak bisa dihapus karena masih ada order berjalan. Jadikan Draft saja.",
-        null
-      );
-    }
-
-    await databases.deleteDocument(DB, COLLECTIONS.rateCardPackages, pkg.id);
-    await databases.deleteDocument(DB, COLLECTIONS.rateCards, pkg.rateCardId);
+    // Model 1:1 — hapus seluruh rate card (paket ikut). 409 bila ada order berjalan.
+    await callApi("deleteRateCard", { rateCardId: pkg.rateCardId });
     return ok(null);
   } catch (err) {
-    // Baris yang dibuat sebelum fitur ini aktif tidak punya row-perm delete.
-    const code = (err as { code?: number })?.code;
-    if (code === 401 || code === 403) {
-      return fail(
-        "Paket ini tidak bisa dihapus dari aplikasi karena dibuat sebelum fitur ini aktif. Jadikan Draft saja agar tidak tampil di marketplace.",
-        "forbidden",
-        null
-      );
-    }
     return failFromWriteError<null>(err, null);
   }
 }
 
-// ── profil kreator (Sprint 3) ────────────────────────────────────────────────
+// ── profil kreator (Sprint 3 → Fase 6: PATCH /api/profile) ───────────────────
 
 /**
- * Kolom `creator_profiles` yang boleh dikirim ke Function `update-profile`.
- * Menambah `niche` dibanding allow-list user.service.ts:270 — kolomnya ada dan
- * UI mengeditnya (temuan handoff Sprint 3).
- * `isProfileCompleted` TIDAK ada — flag hanya dihitung server-side
- * (evaluasi baca profil + `creator_social_accounts` TikTok).
+ * Kolom `creator_profiles` yang boleh dikirim ke `PATCH /api/profile`.
+ * `isProfileCompleted` TIDAK ada — flag hanya dihitung server-side.
  */
 const CREATOR_PROFILE_WRITABLE = [
   "displayName",
@@ -992,11 +842,9 @@ export type CreatorProfileWriteInput = Partial<
 >;
 
 /**
- * Update profil kreator lewat Function `update-profile` lalu baca ulang DTO
+ * Update profil kreator lewat `PATCH /api/profile` lalu baca ulang DTO
  * gabungan agar UI mendapat bentuk CreatorProfile yang sama seperti saat load.
- * Flag `isProfileCompleted` dihitung server-side (never downgrade).
  */
-// TODO(fase-06): update profil → Route Handler (baca ulang sudah lewat callApi).
 export async function updateCreatorProfileInAppwrite(
   input: CreatorProfileWriteInput
 ): Promise<ServiceResult<CreatorProfile>> {
@@ -1014,54 +862,43 @@ export async function updateCreatorProfileInAppwrite(
   }
 
   try {
-    await executeFunction(FUNCTION_IDS.updateProfile, payload);
+    await callApi("updateProfile", payload);
     return getCreatorProfileFromAppwrite();
   } catch (err) {
     return failFromWriteError<CreatorProfile>(err, empty);
   }
 }
 
-/** Unggah avatar ke bucket `avatars` (client-writable) dan kembalikan URL-nya. */
-// TODO(fase-06): upload ke Supabase Storage.
+/** Unggah ke bucket publik Supabase (folder milik sendiri) dan kembalikan URL publiknya. */
+async function uploadToPublicBucket(target: PublicBucket, file: File): Promise<ServiceResult<string>> {
+  const auth = await requireUserId<string>("");
+  if (!auth.ok) return auth.result;
+  try {
+    const uploaded = await uploadPublicFile(target, file, auth.userId);
+    return ok(uploaded.url);
+  } catch (err) {
+    if (err instanceof FileRuleError) return failValidation(err.message, "");
+    return failFromWriteError<string>(err, "");
+  }
+}
+
+/** Unggah avatar ke bucket `avatars` dan kembalikan URL-nya. */
 export async function uploadCreatorAvatarInAppwrite(file: File): Promise<ServiceResult<string>> {
-  const auth = await requireUserId<string>("");
-  if (!auth.ok) return auth.result;
-  try {
-    const uploaded = await uploadPublicFile("avatars", file, auth.userId);
-    return ok(uploaded.url);
-  } catch (err) {
-    if (err instanceof FileRuleError) return failValidation(err.message, "");
-    return failFromWriteError<string>(err, "");
-  }
+  return uploadToPublicBucket("avatars", file);
 }
 
-/** Unggah banner ke bucket `creatorBanners` (client-writable) dan kembalikan URL-nya. */
-// TODO(fase-06): upload ke Supabase Storage.
+/** Unggah banner ke bucket `creator-banners` dan kembalikan URL-nya. */
 export async function uploadCreatorBannerInAppwrite(file: File): Promise<ServiceResult<string>> {
-  const auth = await requireUserId<string>("");
-  if (!auth.ok) return auth.result;
-  try {
-    const uploaded = await uploadPublicFile("creatorBanners", file, auth.userId);
-    return ok(uploaded.url);
-  } catch (err) {
-    if (err instanceof FileRuleError) return failValidation(err.message, "");
-    return failFromWriteError<string>(err, "");
-  }
+  return uploadToPublicBucket("creatorBanners", file);
 }
 
-// ── akun sosial kreator (Sprint 3) ───────────────────────────────────────────
+// ── akun sosial kreator (Sprint 3 → Fase 6: PUT /api/creator/social-accounts) ─
 
 /**
- * Upsert akun sosial. `creatorId` ditulis = userId (BUKAN $id dokumen profil):
- * get-creator-profile query Query.equal("creatorId", userId), sedangkan
- * user.service.ts:306 menulis $id profil sehingga barisnya tak pernah terbaca.
- * Kami standardisasi ke userId — backend harus pilih satu & backfill (handoff).
- * Tak ada unique index, jadi list dulu supaya tidak duplikat.
- *
- * `followers` adalah input manual kreator (tidak ada API platform yang dipakai).
- * Opsional: kalau tidak dikirim, nilai lama di dokumen dibiarkan apa adanya.
+ * Upsert akun sosial pada unique `(creator_id, platform)` di server.
+ * `followers` adalah input manual kreator. Opsional: kalau tidak dikirim, nilai
+ * lama dibiarkan apa adanya.
  */
-// TODO(fase-06): upsert akun sosial → Route Handler.
 export async function upsertCreatorSocialAccountInAppwrite(input: {
   platform: "tiktok";
   username: string;
@@ -1069,47 +906,24 @@ export async function upsertCreatorSocialAccountInAppwrite(input: {
 }): Promise<ServiceResult<null>> {
   const auth = await requireUserId<null>(null);
   if (!auth.ok) return auth.result;
-  const uid = auth.userId;
 
   if (input.followers !== undefined && (!Number.isInteger(input.followers) || input.followers < 0)) {
     return failValidation("Jumlah followers harus angka bulat 0 atau lebih.", null);
   }
 
-  const followersPatch = input.followers !== undefined ? { followers: input.followers } : {};
-
   try {
-    const existing = await databases.listDocuments(DB, COLLECTIONS.creatorSocialAccounts, [
-      Query.equal("creatorId", uid),
-      Query.equal("platform", input.platform),
-      Query.limit(1),
-    ]);
-    const doc = existing.documents[0] as unknown as Doc | undefined;
-    if (doc) {
-      await databases.updateDocument(DB, COLLECTIONS.creatorSocialAccounts, str(doc.$id), {
-        username: input.username,
-        ...followersPatch,
-      });
-    } else {
-      await databases.createDocument(
-        DB,
-        COLLECTIONS.creatorSocialAccounts,
-        ID.unique(),
-        { creatorId: uid, platform: input.platform, username: input.username, ...followersPatch },
-        [
-          Permission.read(Role.any()),
-          Permission.update(Role.user(uid)),
-          Permission.delete(Role.user(uid)),
-        ]
-      );
-    }
+    await callApi("upsertSocialAccount", {
+      platform: input.platform,
+      username: input.username,
+      ...(input.followers !== undefined ? { followers: input.followers } : {}),
+    });
     return ok(null);
   } catch (err) {
     return failFromWriteError<null>(err, null);
   }
 }
 
-// ── portofolio kreator (Sprint 3) ────────────────────────────────────────────
-// TODO(fase-06): CRUD portofolio + upload thumbnail → Route Handler / Storage.
+// ── portofolio kreator (Sprint 3 → Fase 6: /api/creator/portfolios) ─────────
 
 export type CreatorPortfolioWriteInput = {
   title: string;
@@ -1118,41 +932,14 @@ export type CreatorPortfolioWriteInput = {
   thumbnailUrl?: string;
 };
 
-/** Sama seperti mapper baca di getCreatorPortfolioFromAppwrite (view-model `url`). */
-const mapPortfolioDoc = (d: Doc): CreatorPortfolioItem => ({
-  id: str(d.$id),
-  title: str(d.title),
-  url: str(d.portfolioUrl),
-  description: str(d.description),
-  thumbnailUrl: orUndefined(str(d.thumbnailUrl)),
-});
-
 export async function createCreatorPortfolioInAppwrite(
   input: CreatorPortfolioWriteInput
 ): Promise<ServiceResult<CreatorPortfolioItem>> {
   const empty = null as unknown as CreatorPortfolioItem;
   const auth = await requireUserId<CreatorPortfolioItem>(empty);
   if (!auth.ok) return auth.result;
-  const uid = auth.userId;
   try {
-    const doc = await databases.createDocument(
-      DB,
-      COLLECTIONS.creatorPortfolios,
-      ID.unique(),
-      {
-        creatorId: uid,
-        title: input.title.trim(),
-        description: input.description?.trim() ?? "",
-        thumbnailUrl: input.thumbnailUrl ?? "",
-        portfolioUrl: input.portfolioUrl.trim(),
-      },
-      [
-        Permission.read(Role.any()),
-        Permission.update(Role.user(uid)),
-        Permission.delete(Role.user(uid)),
-      ]
-    );
-    return ok(mapPortfolioDoc(doc as unknown as Doc));
+    return ok(await callApi<CreatorPortfolioItem>("createPortfolio", input));
   } catch (err) {
     return failFromWriteError<CreatorPortfolioItem>(err, empty);
   }
@@ -1166,13 +953,7 @@ export async function updateCreatorPortfolioInAppwrite(
   const auth = await requireUserId<CreatorPortfolioItem>(empty);
   if (!auth.ok) return auth.result;
   try {
-    const doc = await databases.updateDocument(DB, COLLECTIONS.creatorPortfolios, id, {
-      title: input.title.trim(),
-      description: input.description?.trim() ?? "",
-      thumbnailUrl: input.thumbnailUrl ?? "",
-      portfolioUrl: input.portfolioUrl.trim(),
-    });
-    return ok(mapPortfolioDoc(doc as unknown as Doc));
+    return ok(await callApi<CreatorPortfolioItem>("updatePortfolio", { ...input, portfolioId: id }));
   } catch (err) {
     return failFromWriteError<CreatorPortfolioItem>(err, empty);
   }
@@ -1182,17 +963,9 @@ export async function deleteCreatorPortfolioInAppwrite(id: string): Promise<Serv
   const auth = await requireUserId<null>(null);
   if (!auth.ok) return auth.result;
   try {
-    await databases.deleteDocument(DB, COLLECTIONS.creatorPortfolios, id);
+    await callApi("deletePortfolio", { portfolioId: id });
     return ok(null);
   } catch (err) {
-    const code = (err as { code?: number })?.code;
-    if (code === 401 || code === 403) {
-      return fail(
-        "Item ini tidak bisa dihapus dari aplikasi karena dibuat sebelum fitur ini aktif; hubungi support.",
-        "forbidden",
-        null
-      );
-    }
     return failFromWriteError<null>(err, null);
   }
 }
@@ -1201,15 +974,7 @@ export async function deleteCreatorPortfolioInAppwrite(id: string): Promise<Serv
 export async function uploadCreatorPortfolioThumbnailInAppwrite(
   file: File
 ): Promise<ServiceResult<string>> {
-  const auth = await requireUserId<string>("");
-  if (!auth.ok) return auth.result;
-  try {
-    const uploaded = await uploadPublicFile("portfolios", file, auth.userId);
-    return ok(uploaded.url);
-  } catch (err) {
-    if (err instanceof FileRuleError) return failValidation(err.message, "");
-    return failFromWriteError<string>(err, "");
-  }
+  return uploadToPublicBucket("portfolios", file);
 }
 
 // ── penarikan saldo (Sprint 3) ───────────────────────────────────────────────

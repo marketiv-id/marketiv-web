@@ -63,3 +63,29 @@ describe("callApi", () => {
     await expect(callApi("umkmProfile")).rejects.toMatchObject({ code: "server", statusCode: 0 });
   });
 });
+
+describe("callApi — mutasi & :param", () => {
+  it("POST: :param diisi dari body lalu dihapus, sisa body jadi JSON", async () => {
+    const fetchFn = mockFetch(201, { id: "m1" });
+    await callApi("sendMessage", { conversationId: "conv 1", content: "halo" });
+    const [url, init] = fetchFn.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("/api/conversations/conv%201/messages");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(String(init.body))).toEqual({ content: "halo" });
+  });
+
+  it("DELETE: param di path, sisa body di query", async () => {
+    const fetchFn = mockFetch(200, { ok: true });
+    await callApi("deleteCampaignAsset", { campaignId: "c1", assetId: "a1", force: true });
+    const [url, init] = fetchFn.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("/api/campaigns/c1/assets/a1?force=true");
+    expect(init.method).toBe("DELETE");
+    expect(init.body).toBeUndefined();
+  });
+
+  it("param hilang → validation error tanpa fetch", async () => {
+    const fetchFn = mockFetch(200, {});
+    await expect(callApi("sendMessage", { content: "x" })).rejects.toMatchObject({ code: "validation" });
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+});

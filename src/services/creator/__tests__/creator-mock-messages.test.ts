@@ -15,7 +15,7 @@ vi.mock("@/lib/appwrite/functions", async () => {
   );
   return { ...actual, executeFunction: vi.fn() };
 });
-vi.mock("@/lib/appwrite/storage", () => ({
+vi.mock("@/lib/supabase/storage", () => ({
   uploadPublicFile: vi.fn(),
   FileRuleError: class FileRuleError extends Error {},
 }));

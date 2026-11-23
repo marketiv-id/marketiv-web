@@ -1,41 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { FunctionExecutionError } from "@/lib/appwrite/functions";
+import { FunctionExecutionError } from "@/lib/api/errors";
 
-const {
-  listDocumentsMock,
-  executeFunctionMock,
-  getCurrentUserIdMock,
-} = vi.hoisted(() => ({
-  listDocumentsMock: vi.fn(),
-  executeFunctionMock: vi.fn(),
+const { callApiMock, getCurrentUserIdMock } = vi.hoisted(() => ({
+  callApiMock: vi.fn(),
   getCurrentUserIdMock: vi.fn(),
 }));
 
-vi.mock("@/lib/appwrite/databases", () => ({
-  databases: {
-    listDocuments: listDocumentsMock,
-  },
-}));
-
-vi.mock("@/lib/appwrite/functions", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/appwrite/functions")>(
-    "@/lib/appwrite/functions"
-  );
-  return {
-    ...actual,
-    executeFunction: executeFunctionMock,
-    FUNCTION_IDS: {
-      ...actual.FUNCTION_IDS,
-      patchCampaignStatus: "patch-campaign-status",
-    },
-  };
+vi.mock("@/lib/api/call-api", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/api/call-api")>("@/lib/api/call-api");
+  return { ...actual, callApi: callApiMock };
 });
 
 vi.mock("@/services/auth/session.service", () => ({
   getCurrentUserId: getCurrentUserIdMock,
 }));
 
-import { updateCampaignStatusInAppwrite } from "../umkm-appwrite.service";
+import { publishCampaignInAppwrite, updateCampaignStatusInAppwrite } from "../umkm-appwrite.service";
 
 describe("updateCampaignStatusInAppwrite", () => {
   beforeEach(() => {
@@ -43,20 +23,42 @@ describe("updateCampaignStatusInAppwrite", () => {
     getCurrentUserIdMock.mockResolvedValue("umkm-1");
   });
 
-  it("preserves backend FunctionExecutionError message for mutation failure", async () => {
-    executeFunctionMock.mockRejectedValueOnce(
-      new FunctionExecutionError(
-        "Transisi status active -> paused saja yang diizinkan.",
-        422,
-        "validation"
-      )
+  it("preserves route error message for mutation failure", async () => {
+    callApiMock.mockRejectedValueOnce(
+      new FunctionExecutionError("Hanya campaign aktif yang bisa dijeda.", 409, "validation")
     );
 
     const result = await updateCampaignStatusInAppwrite("campaign-1", "paused");
 
+    expect(callApiMock).toHaveBeenCalledWith("patchCampaignStatus", { campaignId: "campaign-1", action: "pause" });
     expect(result.success).toBe(false);
     expect(result.code).toBe("validation");
-    expect(result.error).toBe("Transisi status active -> paused saja yang diizinkan.");
-    expect(listDocumentsMock).not.toHaveBeenCalled();
+    expect(result.error).toBe("Hanya campaign aktif yang bisa dijeda.");
+  });
+
+  it("maps the returned campaign row without a second read", async () => {
+    callApiMock.mockResolvedValueOnce({
+      campaign: { id: "campaign-1", umkm_id: "umkm-1", title: "Promo", status: "active", thumbnail_url: "" },
+    });
+
+    const result = await updateCampaignStatusInAppwrite("campaign-1", "active");
+
+    expect(callApiMock).toHaveBeenCalledWith("patchCampaignStatus", { campaignId: "campaign-1", action: "resume" });
+    expect(result.success).toBe(true);
+    expect(result.data).toMatchObject({ id: "campaign-1", status: "active" });
+  });
+
+  it("publish surfaces the underfunded message", async () => {
+    callApiMock.mockRejectedValueOnce(
+      new FunctionExecutionError(
+        "Dana campaign belum mencukupi target budget. Lakukan pembayaran/top-up terlebih dahulu.",
+        409,
+        "validation"
+      )
+    );
+    const result = await publishCampaignInAppwrite("campaign-1");
+    expect(callApiMock).toHaveBeenCalledWith("patchCampaignStatus", { campaignId: "campaign-1", action: "publish" });
+    expect(result).toMatchObject({ success: false, code: "validation" });
+    expect(result.error).toContain("Dana campaign belum mencukupi");
   });
 });
