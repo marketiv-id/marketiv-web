@@ -37,8 +37,8 @@ Semua perpindahan uang menjadi atomik dan idempoten. Fase ini menutup celah #3:
 | `mature-pending-balance`, `withdrawal-callback` | **Tidak dimigrasi** (nonaktif). Pastikan di audit Fase 0 tidak ada `pending_balance` yang tersisa |
 
 Route admin lain:
-- [ ] `suspend-user`, `unsuspend-user`, `verify-kyc`, `review-appeal` → `admin/src/app/api/admin/users/[id]/*`
-- [ ] Setiap aksi admin dicatat ke tabel audit `admin_actions`, yang dibuat baru di fase ini.
+- [x] `suspend-user`, `unsuspend-user`, `verify-kyc`, `review-appeal` → `admin/src/app/api/admin/users/[id]/*`
+- [x] Setiap aksi admin dicatat ke tabel audit `admin_actions`, yang dibuat baru di fase ini.
 
 ## Verifikasi
 - Setiap RPC punya test pgTAP (`supabase/tests/finance/*.sql`) yang membuktikan:

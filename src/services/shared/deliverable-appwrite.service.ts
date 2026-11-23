@@ -43,8 +43,8 @@ import {
  *
  * - kirim deliverable  → `POST /api/orders/[orderId]/deliverables` (kreator)
  * - minta revisi       → `POST /api/orders/[orderId]/revisions` (UMKM)
- * - setujui deliverable→ `POST /api/deliverables/[id]/approve` (UMKM; STUB
- *   status sampai Fase 8 — TODO(fase-08): release_escrow)
+ * - setujui deliverable→ `POST /api/deliverables/[id]/approve` (UMKM; RPC
+ *   `approve_deliverable` memanggil `release_escrow` bila validasi Admin `valid`)
  *
  * BACA (riwayat deliverable & revisi) lewat supabase-js + RLS
  * (`private.is_order_party`).
@@ -176,9 +176,9 @@ export async function uploadDeliverableInAppwrite(
 /**
  * Setujui deliverable. UMKM-ONLY (ditegakkan route + RPC `approve_deliverable`).
  *
- * ⚠️ Di Fase 8 ini yang MENCAIRKAN DANA (escrow → wallet kreator dikurangi fee,
- * order `completed`). Sampai saat itu route hanya menandai status.
- * TODO(fase-08): release_escrow di dalam route/RPC yang sama.
+ * ⚠️ Ini MENCAIRKAN DANA bila validasi Admin sudah `valid` (escrow → wallet
+ * kreator dikurangi fee, order `completed`) lewat `release_escrow` di RPC yang
+ * sama. Bila Admin belum memvalidasi, escrow cair saat validasi (0029).
  */
 export async function approveDeliverableInAppwrite(
   orderId: string,
