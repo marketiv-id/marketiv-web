@@ -1738,6 +1738,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      accept_offer: {
+        Args: { p_creator_id: string; p_offer_id: string; p_tos_version: string };
+        Returns: Json;
+      };
       accept_tos: { Args: { p_user_id: string; p_version: string }; Returns: Json };
       admin_ratecard_deliverable_queue: {
         Args: { p_limit?: number };
@@ -1757,6 +1761,12 @@ export type Database = {
           version: number;
         }[];
       };
+      approve_deliverable: {
+        Args: { p_deliverable_id: string; p_order_id?: string; p_umkm_id: string };
+        Returns: Json;
+      };
+      cancel_order: { Args: { p_order_id: string; p_umkm_id: string }; Returns: Json };
+      claim_campaign: { Args: { p_campaign_id: string; p_creator_id: string }; Returns: Json };
       confirm_user_file: {
         Args: {
           p_file_name: string;
@@ -1820,6 +1830,20 @@ export type Database = {
         };
       };
       create_conversation: { Args: { p_creator_id: string; p_umkm_id: string }; Returns: string };
+      create_offer: {
+        Args: {
+          p_conversation_id: string;
+          p_creator_id?: string;
+          p_deadline: string;
+          p_description: string;
+          p_package_id?: string;
+          p_price: number;
+          p_revision_limit: number;
+          p_title: string;
+          p_umkm_id: string;
+        };
+        Returns: Json;
+      };
       creator_create_rate_card: {
         Args: {
           p_creator_id: string;
@@ -1876,6 +1900,7 @@ export type Database = {
         Returns: Json;
       };
       delete_notification: { Args: { p_id: string; p_user_id: string }; Returns: boolean };
+      delete_offer: { Args: { p_offer_id: string; p_umkm_id: string }; Returns: boolean };
       delete_user_file: {
         Args: { p_file_id: string; p_user_id: string };
         Returns: {
@@ -1950,6 +1975,36 @@ export type Database = {
         };
       };
       publish_campaign: { Args: { p_campaign_id: string; p_umkm_id: string }; Returns: string };
+      record_fraud_check: {
+        Args: { p_reason: string; p_result: string; p_score: number; p_submission_id: string };
+        Returns: undefined;
+      };
+      reject_offer: { Args: { p_creator_id: string; p_offer_id: string }; Returns: Json };
+      request_revision: {
+        Args: { p_message: string; p_order_id: string; p_umkm_id: string };
+        Returns: Json;
+      };
+      review_ratecard_deliverable: {
+        Args: {
+          p_admin_id: string;
+          p_decision: string;
+          p_deliverable_id: string;
+          p_notes?: string;
+        };
+        Returns: Json;
+      };
+      review_submission: {
+        Args: {
+          p_as_admin?: boolean;
+          p_decision: string;
+          p_note?: string;
+          p_observation_hours?: number;
+          p_reviewer_id: string;
+          p_submission_id: string;
+          p_views?: number;
+        };
+        Returns: Json;
+      };
       send_message: {
         Args: { p_content: string; p_conversation_id: string; p_sender_id: string };
         Returns: Json;
@@ -1962,6 +2017,28 @@ export type Database = {
         Args: { p_id: string; p_is_read: boolean; p_user_id: string };
         Returns: boolean;
       };
+      submit_campaign_proof: {
+        Args: {
+          p_campaign_id: string;
+          p_caption?: string;
+          p_claim_id: string;
+          p_creator_id: string;
+          p_platform: string;
+          p_post_url: string;
+        };
+        Returns: Json;
+      };
+      submit_deliverable: {
+        Args: {
+          p_creator_id: string;
+          p_file_id?: string;
+          p_file_url: string;
+          p_notes?: string;
+          p_order_id: string;
+          p_source: string;
+        };
+        Returns: Json;
+      };
       umkm_dashboard_summary: { Args: { p_umkm_id: string }; Returns: Json };
       umkm_finance_summary: { Args: { p_umkm_id: string }; Returns: Json };
       umkm_negotiation_context: {
@@ -1970,6 +2047,10 @@ export type Database = {
       };
       umkm_ratecard_review_context: {
         Args: { p_order_id?: string; p_umkm_id: string };
+        Returns: Json;
+      };
+      unclaim_campaign: {
+        Args: { p_campaign_id?: string; p_claim_id: string; p_creator_id: string };
         Returns: Json;
       };
       update_profile: { Args: { p_patch: Json; p_user_id: string }; Returns: Json };
