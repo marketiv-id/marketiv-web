@@ -1,88 +1,101 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createFakeSupabase, type FakeSupabase } from "@/test/fake-supabase";
+
 const mocks = vi.hoisted(() => ({
-  getDocument: vi.fn(), listDocuments: vi.fn(), createDocument: vi.fn(), deleteDocument: vi.fn(),
-  incrementDocumentAttribute: vi.fn(), decrementDocumentAttribute: vi.fn(), executeFunction: vi.fn(), getSession: vi.fn(),
+  callApi: vi.fn(),
+  userId: "creator-1" as string | null,
+  db: null as unknown as FakeSupabase,
+  appwrite: { getDocument: vi.fn(), listDocuments: vi.fn(), createDocument: vi.fn(), deleteDocument: vi.fn() },
+  executeFunction: vi.fn(),
 }));
 
-vi.mock("@/lib/appwrite/databases", () => ({ databases: mocks }));
-vi.mock("@/lib/appwrite/functions", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/appwrite/functions")>("@/lib/appwrite/functions");
-  return { ...actual, executeFunction: mocks.executeFunction, FUNCTION_IDS: { ...actual.FUNCTION_IDS, unclaimCampaign: "unclaim-campaign" } };
-});
-vi.mock("@/services/auth/session.service", () => ({
-  getSession: mocks.getSession,
-  // requireUserId (Fase 5) membaca userId lewat getCurrentUserId.
-  getCurrentUserId: async () => {
-    const session = await mocks.getSession();
-    return session?.success ? session.data.userId : null;
-  },
+vi.mock("@/lib/api/call-api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/api/call-api")>()),
+  callApi: mocks.callApi,
 }));
+vi.mock("@/lib/supabase/client", () => ({ createClient: () => mocks.db }));
+vi.mock("@/lib/appwrite/databases", () => ({ databases: mocks.appwrite }));
+vi.mock("@/lib/appwrite/functions", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/appwrite/functions")>()),
+  executeFunction: mocks.executeFunction,
+}));
+vi.mock("@/services/auth/session.service", () => ({
+  getSession: vi.fn(),
+  getCurrentUserId: async () => mocks.userId,
+}));
+
+import { FunctionExecutionError } from "@/lib/api/call-api";
 
 import { claimCampaignInAppwrite, unclaimCampaignInAppwrite } from "../creator-appwrite.service";
-import { FunctionExecutionError } from "@/lib/appwrite/functions";
 
-const campaign = { $id: "campaign-1", status: "active", totalClaims: 0, claimLimit: 2, submissionDays: 7 };
-const profile = { $id: "profile-1", userId: "creator-1", isProfileCompleted: true };
+const noAppwrite = () => {
+  for (const fn of Object.values(mocks.appwrite)) expect(fn).not.toHaveBeenCalled();
+  expect(mocks.executeFunction).not.toHaveBeenCalled();
+};
 
-describe("P5 creator claim/unclaim Appwrite service", () => {
+describe("klaim / batal klaim (Fase 7 — Route Handler + RPC)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.getSession.mockResolvedValue({ success: true, data: { userId: "creator-1" } });
-    mocks.getDocument.mockResolvedValue(campaign);
-    mocks.createDocument.mockResolvedValue({ $id: "claim-1" });
+    mocks.userId = "creator-1";
+    mocks.db = createFakeSupabase({
+      campaign_claims: [
+        { id: "claim-1", campaign_id: "campaign-1", creator_id: "creator-1", status: "claimed" },
+        { id: "claim-x", campaign_id: "campaign-1", creator_id: "creator-9", status: "claimed" },
+      ],
+    });
   });
 
-  it("creates valid claim without browser counter increment", async () => {
-    mocks.listDocuments.mockResolvedValueOnce({ documents: [profile] }).mockResolvedValueOnce({ documents: [] });
-    const result = await claimCampaignInAppwrite("campaign-1");
-    expect(result).toMatchObject({ success: true, data: "claim-1" });
-    expect(mocks.createDocument).toHaveBeenCalledTimes(1);
-    expect(mocks.incrementDocumentAttribute).not.toHaveBeenCalled();
+  it("klaim → callApi claimCampaign, kembalikan claimId", async () => {
+    mocks.callApi.mockResolvedValueOnce({ claimId: "claim-9", campaignId: "campaign-1", status: "claimed" });
+    await expect(claimCampaignInAppwrite("campaign-1")).resolves.toEqual({ success: true, data: "claim-9" });
+    expect(mocks.callApi).toHaveBeenCalledWith("claimCampaign", { campaignId: "campaign-1" });
+    noAppwrite();
   });
 
-  it("blocks non-expired duplicate but allows expired history query", async () => {
-    mocks.listDocuments.mockResolvedValueOnce({ documents: [profile] }).mockResolvedValueOnce({ documents: [{ status: "claimed" }] });
-    await expect(claimCampaignInAppwrite("campaign-1")).resolves.toMatchObject({ success: false, code: "validation" });
-    mocks.listDocuments.mockReset();
-    mocks.listDocuments.mockResolvedValueOnce({ documents: [profile] }).mockResolvedValueOnce({ documents: [] });
-    await expect(claimCampaignInAppwrite("campaign-1")).resolves.toMatchObject({ success: true });
-    expect(mocks.listDocuments.mock.calls[1][2]).toContainEqual(expect.stringContaining("notEqual"));
+  it("respons klaim tanpa claimId → server error", async () => {
+    mocks.callApi.mockResolvedValueOnce({});
+    await expect(claimCampaignInAppwrite("campaign-1")).resolves.toMatchObject({ success: false, code: "server" });
   });
 
-  it("blocks inactive campaign, incomplete profile, and obvious full quota", async () => {
-    mocks.getDocument.mockResolvedValueOnce({ ...campaign, status: "paused" });
-    await expect(claimCampaignInAppwrite("campaign-1")).resolves.toMatchObject({ success: false });
-    mocks.getDocument.mockResolvedValueOnce(campaign);
-    mocks.listDocuments.mockResolvedValueOnce({ documents: [{ ...profile, isProfileCompleted: false }] });
-    await expect(claimCampaignInAppwrite("campaign-1")).resolves.toMatchObject({ success: false });
-    mocks.getDocument.mockResolvedValueOnce({ ...campaign, totalClaims: 2 });
-    await expect(claimCampaignInAppwrite("campaign-1")).resolves.toMatchObject({ success: false });
+  it.each([
+    [409, "validation", "Kuota kreator untuk campaign ini sudah penuh."],
+    [403, "forbidden", "Akses kreator aktif diperlukan."],
+    [404, "not_found", "Campaign tidak ditemukan."],
+  ] as const)("klaim gagal %i → %s dengan pesan route", async (status, code, message) => {
+    mocks.callApi.mockRejectedValueOnce(new FunctionExecutionError(message, status, code));
+    await expect(claimCampaignInAppwrite("campaign-1")).resolves.toMatchObject({ success: false, code, error: message });
   });
 
-  it("uses trusted unclaim Function and rejects malformed response without browser deletion", async () => {
-    mocks.executeFunction.mockResolvedValueOnce({ success: true, claimId: "claim-1" });
-    await expect(unclaimCampaignInAppwrite("claim-1")).resolves.toMatchObject({ success: true });
-    expect(mocks.executeFunction).toHaveBeenCalledWith("unclaim-campaign", { claimId: "claim-1" });
-    expect(mocks.deleteDocument).not.toHaveBeenCalled();
-    expect(mocks.decrementDocumentAttribute).not.toHaveBeenCalled();
-    mocks.executeFunction.mockResolvedValueOnce({ success: true });
+  it("tanpa sesi → auth, tanpa request", async () => {
+    mocks.userId = null;
+    await expect(claimCampaignInAppwrite("campaign-1")).resolves.toMatchObject({ success: false, code: "auth" });
+    expect(mocks.callApi).not.toHaveBeenCalled();
+  });
+
+  it("batal klaim: baca campaign_id lewat RLS (filter creator_id) lalu callApi unclaimCampaign", async () => {
+    mocks.callApi.mockResolvedValueOnce({ success: true, claimId: "claim-1" });
+    await expect(unclaimCampaignInAppwrite("claim-1")).resolves.toEqual({ success: true, data: null });
+    expect(mocks.db.calls[0]).toMatchObject({ table: "campaign_claims", filters: ["id.eq.claim-1", "creator_id.eq.creator-1"] });
+    expect(mocks.callApi).toHaveBeenCalledWith("unclaimCampaign", { campaignId: "campaign-1", claimId: "claim-1" });
+    noAppwrite();
+  });
+
+  it("batal klaim milik orang lain / tidak ada → not_found tanpa request", async () => {
+    await expect(unclaimCampaignInAppwrite("claim-x")).resolves.toMatchObject({ success: false, code: "not_found" });
+    expect(mocks.callApi).not.toHaveBeenCalled();
+  });
+
+  it("respons batal klaim tidak valid → server", async () => {
+    mocks.callApi.mockResolvedValueOnce({ success: true });
     await expect(unclaimCampaignInAppwrite("claim-1")).resolves.toMatchObject({ success: false, code: "server" });
   });
 
   it.each([[401, "auth"], [403, "forbidden"], [404, "not_found"], [409, "validation"], [500, "server"]] as const)(
-    "propagates unclaim Function HTTP %i as %s",
-    async (statusCode, code) => {
-      mocks.executeFunction.mockRejectedValueOnce(new FunctionExecutionError("backend error", statusCode, code));
+    "batal klaim HTTP %i → %s",
+    async (status, code) => {
+      mocks.callApi.mockRejectedValueOnce(new FunctionExecutionError("backend error", status, code));
       await expect(unclaimCampaignInAppwrite("claim-1")).resolves.toMatchObject({ success: false, code, error: "backend error" });
-      expect(mocks.deleteDocument).not.toHaveBeenCalled();
-      expect(mocks.decrementDocumentAttribute).not.toHaveBeenCalled();
     },
   );
-
-  it("propagates failed Function execution without browser mutation", async () => {
-    mocks.executeFunction.mockRejectedValueOnce(new FunctionExecutionError("execution failed", 500, "server"));
-    await expect(unclaimCampaignInAppwrite("claim-1")).resolves.toMatchObject({ success: false, code: "server" });
-    expect(mocks.deleteDocument).not.toHaveBeenCalled();
-  });
 });

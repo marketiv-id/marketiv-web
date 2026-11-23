@@ -4,9 +4,7 @@ import {
   ReviewRejectPayload,
   SubmissionStatus,
 } from "../types";
-import { FUNCTION_IDS } from "@/lib/admin/appwrite";
 import { AdminFunctionExecutionError, callAdminApi } from "@/lib/api/call-api";
-import { executeAdminFunction } from "@/lib/admin/execute-function";
 
 export class AdminSubmissionReadError extends Error {
   constructor(public readonly statusCode: number, message: string) {
@@ -62,10 +60,9 @@ export async function rejectCampaignSubmission(payload: ReviewRejectPayload): Pr
 }
 
 async function reviewAndRefresh(payload: Record<string, unknown>): Promise<ReviewMutationResult> {
-  // TODO(fase-07): tulis masih lewat Function Appwrite `review-submission`;
-  // pindah ke POST /api/admin/submissions/[id]/review.
-  const response = await executeAdminFunction(
-    FUNCTION_IDS.reviewSubmission, payload, isReviewFunctionResponse, "Gagal menyimpan review submission.",
+  // POST /api/admin/submissions/[submissionId]/review (RPC review_submission).
+  const response = await callAdminApi(
+    "reviewSubmission", payload, isReviewFunctionResponse, "Gagal menyimpan review submission.",
   );
   try {
     const submissions = await getCampaignSubmissions("all");

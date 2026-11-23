@@ -3,6 +3,7 @@ import { ACCOUNT_ROUTES } from "./routes/account";
 import { CAMPAIGN_ROUTES } from "./routes/campaign";
 import { CREATOR_ROUTES } from "./routes/creator";
 import { FILE_ROUTES } from "./routes/files";
+import { FLOW_ROUTES } from "./routes/flow";
 import { READ_ROUTES } from "./routes/read";
 import type { ApiRoute } from "./routes/types";
 
@@ -32,6 +33,7 @@ export const API_ROUTES = {
   ...CAMPAIGN_ROUTES,
   ...CREATOR_ROUTES,
   ...FILE_ROUTES,
+  ...FLOW_ROUTES,
 } as const satisfies Record<string, ApiRoute>;
 
 export type ApiName = keyof typeof API_ROUTES;

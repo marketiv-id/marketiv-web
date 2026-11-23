@@ -1,41 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const {
-  createDocumentMock,
-  executeFunctionMock,
-  getDocumentMock,
-  getSessionMock,
-  listDocumentsMock,
-} = vi.hoisted(() => ({
-  createDocumentMock: vi.fn(),
-  executeFunctionMock: vi.fn(),
-  getDocumentMock: vi.fn(),
+const { callApiMock, getSessionMock } = vi.hoisted(() => ({
+  callApiMock: vi.fn(),
   getSessionMock: vi.fn(),
-  listDocumentsMock: vi.fn(),
 }));
 
-vi.mock("@/lib/appwrite/databases", () => ({
-  databases: {
-    createDocument: createDocumentMock,
-    getDocument: getDocumentMock,
-    listDocuments: listDocumentsMock,
-    updateDocument: vi.fn(),
-  },
-}));
-
-vi.mock("@/lib/appwrite/functions", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/appwrite/functions")>(
-    "@/lib/appwrite/functions"
-  );
-  return {
-    ...actual,
-    executeFunction: executeFunctionMock,
-    FUNCTION_IDS: {
-      ...actual.FUNCTION_IDS,
-      submitRatecardDeliverable: "submit-ratecard-deliverable",
-      requestRatecardRevision: "request-ratecard-revision",
-    },
-  };
+vi.mock("@/lib/api/call-api", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/api/call-api")>("@/lib/api/call-api");
+  return { ...actual, callApi: callApiMock };
 });
 
 vi.mock("@/services/auth/session.service", () => ({
@@ -46,8 +18,9 @@ vi.mock("@/services/auth/session.service", () => ({
   },
 }));
 
-import { FunctionExecutionError } from "@/lib/appwrite/functions";
+import { FunctionExecutionError } from "@/lib/api/errors";
 import {
+  approveDeliverableInAppwrite,
   requestRevisionInAppwrite,
   uploadDeliverableInAppwrite,
 } from "../deliverable-appwrite.service";
@@ -70,31 +43,30 @@ const response = {
   createdAt: "2026-09-02T03:00:00.000Z",
 };
 
-describe("uploadDeliverableInAppwrite", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    getSessionMock.mockResolvedValue({ success: true, data: { userId: "creator_1" } });
-  });
+beforeEach(() => {
+  vi.clearAllMocks();
+  getSessionMock.mockResolvedValue({ success: true, data: { userId: "creator_1" } });
+});
 
-  it("submits through trusted Function without browser database writes", async () => {
-    executeFunctionMock.mockResolvedValue(response);
+describe("uploadDeliverableInAppwrite", () => {
+  it("mengirim lewat route (orderId → path), tanpa tulis dari browser", async () => {
+    callApiMock.mockResolvedValue(response);
 
     const result = await uploadDeliverableInAppwrite(input);
 
     expect(result).toEqual({ success: true, data: response });
-    expect(executeFunctionMock).toHaveBeenCalledWith("submit-ratecard-deliverable", input);
-    expect(getDocumentMock).not.toHaveBeenCalled();
-    expect(listDocumentsMock).not.toHaveBeenCalled();
-    expect(createDocumentMock).not.toHaveBeenCalled();
+    expect(callApiMock).toHaveBeenCalledWith("submitDeliverable", input);
   });
 
-  it("preserves Function authorization errors in ServiceResult", async () => {
-    executeFunctionMock.mockRejectedValue(
-      new FunctionExecutionError(
-        "Hanya kreator pengerja yang dapat mengirim deliverable.",
-        403,
-        "forbidden"
-      )
+  it("validasi klien: storage tanpa fileId tidak memanggil route", async () => {
+    const result = await uploadDeliverableInAppwrite({ orderId: "order_1", source: "storage", fileUrl: "x" });
+    expect(result).toMatchObject({ success: false, code: "validation", error: "Berkas belum terunggah." });
+    expect(callApiMock).not.toHaveBeenCalled();
+  });
+
+  it("meneruskan pesan error route ke ServiceResult", async () => {
+    callApiMock.mockRejectedValue(
+      new FunctionExecutionError("Hanya kreator pengerja yang dapat mengirim deliverable.", 403, "forbidden"),
     );
 
     const result = await uploadDeliverableInAppwrite(input);
@@ -104,15 +76,18 @@ describe("uploadDeliverableInAppwrite", () => {
       code: "forbidden",
       error: "Hanya kreator pengerja yang dapat mengirim deliverable.",
     });
-    expect(createDocumentMock).not.toHaveBeenCalled();
+  });
+
+  it("tanpa sesi → auth, route tidak dipanggil", async () => {
+    getSessionMock.mockResolvedValue({ success: false });
+    const result = await uploadDeliverableInAppwrite(input);
+    expect(result).toMatchObject({ success: false, code: "auth" });
+    expect(callApiMock).not.toHaveBeenCalled();
   });
 });
 
 describe("requestRevisionInAppwrite", () => {
-  const revisionInput = {
-    orderId: "order_1",
-    message: "Perbaiki hook pembuka.",
-  };
+  const revisionInput = { orderId: "order_1", message: "Perbaiki hook pembuka." };
   const revisionResponse = {
     id: "revision_1",
     orderId: "order_1",
@@ -122,8 +97,8 @@ describe("requestRevisionInAppwrite", () => {
     createdAt: "2026-09-04T03:00:00.000Z",
   };
 
-  it("delegates complete mutation to trusted Function", async () => {
-    executeFunctionMock.mockResolvedValue(revisionResponse);
+  it("hanya mengirim orderId + message (field palsu dibuang zod)", async () => {
+    callApiMock.mockResolvedValue(revisionResponse);
 
     const result = await requestRevisionInAppwrite({
       ...revisionInput,
@@ -133,33 +108,33 @@ describe("requestRevisionInAppwrite", () => {
     } as typeof revisionInput);
 
     expect(result).toEqual({ success: true, data: revisionResponse });
-    expect(executeFunctionMock).toHaveBeenCalledWith(
-      "request-ratecard-revision",
-      revisionInput
-    );
-    expect(getDocumentMock).not.toHaveBeenCalled();
-    expect(listDocumentsMock).not.toHaveBeenCalled();
-    expect(createDocumentMock).not.toHaveBeenCalled();
+    expect(callApiMock).toHaveBeenCalledWith("requestRevision", revisionInput);
   });
 
-  it("preserves Function authorization errors and performs no browser writes", async () => {
-    executeFunctionMock.mockRejectedValue(
-      new FunctionExecutionError(
-        "Pesanan tidak ditemukan.",
-        404,
-        "not_found"
-      )
+  it("batas revisi (409) diteruskan sebagai validation dengan pesan route", async () => {
+    callApiMock.mockRejectedValue(
+      new FunctionExecutionError("Batas revisi (2) sudah tercapai. Setujui apa adanya atau buka sengketa.", 409, "validation"),
     );
-
     const result = await requestRevisionInAppwrite(revisionInput);
-
     expect(result).toMatchObject({
       success: false,
-      code: "not_found",
-      error: "Pesanan tidak ditemukan.",
+      code: "validation",
+      error: "Batas revisi (2) sudah tercapai. Setujui apa adanya atau buka sengketa.",
     });
-    expect(createDocumentMock).not.toHaveBeenCalled();
-    expect(getDocumentMock).not.toHaveBeenCalled();
-    expect(listDocumentsMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("approveDeliverableInAppwrite", () => {
+  it("deliverableId → path, orderId dicocokkan server", async () => {
+    callApiMock.mockResolvedValue({ ok: true });
+    const result = await approveDeliverableInAppwrite("order_1", "dlv_1");
+    expect(result).toEqual({ success: true, data: null });
+    expect(callApiMock).toHaveBeenCalledWith("approveDeliverable", { deliverableId: "dlv_1", orderId: "order_1" });
+  });
+
+  it("pesan route diteruskan (mis. sudah disetujui)", async () => {
+    callApiMock.mockRejectedValue(new FunctionExecutionError("Deliverable ini sudah disetujui.", 409, "validation"));
+    const result = await approveDeliverableInAppwrite("order_1", "dlv_1");
+    expect(result).toMatchObject({ success: false, error: "Deliverable ini sudah disetujui." });
   });
 });
