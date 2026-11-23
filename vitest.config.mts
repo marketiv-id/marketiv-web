@@ -30,6 +30,8 @@ export default defineConfig({
       "src/lib/demo/__tests__/**/*.test.ts",
       "src/lib/appwrite/__tests__/**/*.test.ts",
       "src/lib/__tests__/**/*.test.ts",
+      "src/lib/api/__tests__/**/*.test.ts",
+      "src/test/__tests__/**/*.test.ts",
       "src/server/**/__tests__/**/*.test.ts",
       "src/app/api/**/__tests__/**/*.test.ts",
     ],

@@ -1,6 +1,7 @@
 import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
 import { mockDelay } from "@/lib/mock-delay";
 import { createClient } from "@/lib/supabase/client";
+import { getCachedSessionUserId, setCachedSessionUserId } from "./session-cache";
 import type {
   ServiceResult,
   ServiceErrorCode,
@@ -283,8 +284,32 @@ export async function getSession(): Promise<ServiceResult<SessionUser>> {
   }
 }
 
+/**
+ * userId sesi aktif TANPA membaca baris `users`/profil (lihat `session-cache.ts`).
+ *
+ * Urutan: cache AuthProvider → (mock) getSession() → `auth.getSession()`
+ * supabase-js (dibaca dari cookie; jaringan hanya bila token perlu di-refresh).
+ * `null` = tidak ada sesi.
+ */
+export async function getCurrentUserId(): Promise<string | null> {
+  const cached = getCachedSessionUserId();
+  if (cached) return cached;
+
+  if (DATA_SOURCE_CONFIG.useMockData) {
+    const session = await getSession();
+    return session.success && session.data ? session.data.userId : null;
+  }
+
+  const { data, error } = await createClient().auth.getSession();
+  if (error) throw error;
+  const userId = data.session?.user.id ?? null;
+  if (userId) setCachedSessionUserId(userId);
+  return userId;
+}
+
 /** Mengakhiri sesi di perangkat ini (scope local). No-op di mode mock. */
 export async function logout(): Promise<ServiceResult<null>> {
+  setCachedSessionUserId(null);
   if (DATA_SOURCE_CONFIG.useMockData) {
     clearMockRole();
     return { success: true, data: null };
