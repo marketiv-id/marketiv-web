@@ -38,12 +38,12 @@ Mulai fase ini:
   - Port `admin/src/lib/admin/auth.ts`.
   - Admin **hanya** dikenali dari `users.role = 'admin'` (+ `app_metadata.role = 'admin'`, sama dengan `private.is_admin()` Fase 3). Fallback label dan `prefs.role` dihapus.
   - Tambah `admin/src/proxy.ts`.
-- [ ] Template email Bahasa Indonesia di Supabase Auth: Confirm signup, Magic Link/OTP, Reset Password, Change Email.
+- [x] Template email Bahasa Indonesia di Supabase Auth: Confirm signup, Magic Link/OTP, Reset Password, Change Email.
   - [x] File template di `supabase/templates/*.html` + `config.toml` (lokal)
-  - [ ] Dipasang di Dashboard staging (aksi pemilik, lihat `progress/fase-04.md`)
-- [ ] Atur Site URL dan Redirect URLs (staging, prod, preview `*.netlify.app`).
+  - [x] Dipasang di Dashboard staging (2026-11-18)
+- [x] Atur Site URL dan Redirect URLs (staging, prod, preview `*.netlify.app`).
   - [x] Lokal (`config.toml`)
-  - [ ] Dashboard staging/prod (aksi pemilik, lihat `progress/fase-04.md`)
+  - [x] Dashboard staging (2026-11-18); prod menyusul di Fase 10
 
 ## Verifikasi
 - Port test di `src/services/auth/__tests__/*` dan `admin/src/lib/admin/auth.test.ts`.
