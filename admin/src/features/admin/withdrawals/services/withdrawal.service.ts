@@ -1,7 +1,5 @@
-import {
-  AdminFunctionExecutionError,
-  executeAdminFunction,
-} from "@/lib/admin/execute-function";
+import { AdminFunctionExecutionError, callAdminApi } from "@/lib/api/call-api";
+import { executeAdminFunction } from "@/lib/admin/execute-function";
 import { FUNCTION_IDS } from "@/lib/admin/appwrite";
 import {
   AdminWithdrawal,
@@ -87,8 +85,8 @@ async function getAdminWithdrawalPage(
   offset: number,
 ): Promise<AdminWithdrawalQueue> {
   try {
-    return await executeAdminFunction(
-      FUNCTION_IDS.getAdminWithdrawalQueue,
+    return await callAdminApi(
+      "getAdminWithdrawalQueue",
       { status, limit: QUEUE_LIMIT, offset },
       isAdminWithdrawalQueue,
       "Gagal memuat antrean penarikan.",
@@ -159,6 +157,8 @@ async function reviewAndRefresh(
 ): Promise<WithdrawalMutationResult> {
   let response: ReviewWithdrawalResponse;
   try {
+    // TODO(fase-08): tulis masih lewat Function Appwrite `review-withdrawal`;
+    // pindah ke POST /api/admin/withdrawals/[id]/review (RPC transition_withdrawal).
     response = await executeAdminFunction(
       FUNCTION_IDS.reviewWithdrawal,
       payload,

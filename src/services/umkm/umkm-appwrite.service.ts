@@ -1,11 +1,12 @@
+// TODO(fase-06|07|08): import Appwrite di bawah hanya untuk jalur TULIS
+// (dan baca-ulang di dalam fungsi tulis). Jalur baca sudah Supabase (Fase 5).
 import { Query, ID, Permission, Role } from "appwrite";
 import { databases } from "@/lib/appwrite/databases";
 import { appwriteConfig } from "@/lib/appwrite/config";
-import {
-  executeFunction,
-  FunctionExecutionError,
-  FUNCTION_IDS,
-} from "@/lib/appwrite/functions";
+import { executeFunction, FUNCTION_IDS } from "@/lib/appwrite/functions";
+import { callApi, FunctionExecutionError } from "@/lib/api/call-api";
+import { createClient } from "@/lib/supabase/client";
+import { rowToDoc, rowsToDocs } from "@/services/shared/legacy-doc";
 import { uploadPublicFile, FileRuleError } from "@/lib/appwrite/storage";
 import {
   uploadCampaignThumbnail,
@@ -58,8 +59,15 @@ import {
 } from "@/types/umkm-dashboard.types";
 
 /**
- * Lapisan Appwrite dashboard UMKM (s1-appwrite-read).
+ * Lapisan data dashboard UMKM.
  *
+ * FASE 5 (migrasi Supabase): semua BACA lewat supabase-js (browser, dibatasi
+ * RLS — supabase/migrations/0011_rls_select.sql) atau Route Handler `/api/umkm/*`
+ * via `callApi()`. Row Postgres → `rowToDoc()` → mapper lama di bawah, jadi DTO
+ * tidak berubah. Semua TULIS masih Appwrite dan ditandai `TODO(fase-06|07|08)`.
+ * Nama fungsi `*FromAppwrite` dipertahankan supaya pemanggil tidak berubah.
+ *
+ * (Catatan lama, sistem Appwrite:)
  * Sumber kebenaran skema: 00_BACKEND/appwrite.config.json (tables camelCase).
  * Pola: getSession() untuk kepemilikan → databases.listDocuments → mapper $id→id.
  * Semua nilai status di DB adalah string bebas; backend Function menulis nilai
@@ -103,23 +111,50 @@ const COLLECTIONS = {
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
+/** `{ data, error }` supabase-js → `data`, atau lempar (dipetakan failFromError). */
+function must<T>(res: { data: T; error: unknown }): T {
+  if (res.error) throw res.error;
+  return res.data;
+}
+
+/**
+ * PostgREST memotong hasil di `max_rows` (default 1000) TANPA error. Appwrite
+ * lama memakai `Query.limit(5000)` untuk agregasi; untuk menjaga hasil tetap
+ * utuh, halaman diambil berurutan sampai habis (atau `max` tercapai).
+ */
+const PAGE_SIZE = 1000;
+async function fetchAllPages<T>(
+  page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
+  max: number
+): Promise<T[]> {
+  const out: T[] = [];
+  for (let from = 0; from < max; from += PAGE_SIZE) {
+    const to = Math.min(from + PAGE_SIZE, max) - 1;
+    const rows = must(await page(from, to)) ?? [];
+    out.push(...rows);
+    if (rows.length < to - from + 1) break;
+  }
+  return out;
+}
+
 /**
  * Peta userId kreator → profil (displayName, avatarUrl).
  *
- * `creator_profiles` memakai `read("any")` di level koleksi (sama dengan
- * `umkm_profiles`) jadi join ini sah dari browser. `harden-permissions.mjs:25-28`
- * menyatakan `read("any")` ini disengaja dan tidak akan dicabut.
+ * `creator_profiles` publik di RLS (dulu `read("any")`), jadi join ini sah
+ * dari browser.
  */
 async function loadCreatorProfiles(creatorIds: string[]): Promise<Map<string, Doc>> {
   const unique = Array.from(new Set(creatorIds.filter(Boolean)));
   if (unique.length === 0) return new Map();
-  const res = await databases.listDocuments(DB, COLLECTIONS.creatorProfiles, [
-    Query.equal("userId", unique.slice(0, 100)),
-    Query.limit(100),
-  ]);
-  return new Map(
-    (res.documents as unknown as Doc[]).map((p) => [str(p.userId), p])
+  // `creator_profiles` publik (RLS select true), sama seperti read("any") lama.
+  const rows = must(
+    await createClient()
+      .from("creator_profiles")
+      .select("*")
+      .in("user_id", unique.slice(0, 100))
+      .limit(100)
   );
+  return new Map(rowsToDocs("creator_profiles", rows).map((p) => [str(p.userId), p]));
 }
 
 // ── mappers ──────────────────────────────────────────────────────────────────
@@ -228,13 +263,13 @@ const mapTransaction = (d: Doc): Transaction => {
 
 // ── KOMPOSIT via Function DTO ────────────────────────────────────────────────
 //
-// Function menegakkan kepemilikan sendiri lewat header `x-appwrite-user-id`
-// (sesi aktif), jadi userId TIDAK pernah dikirim dari klien — tidak bisa dipalsukan.
+// Route Handler `/api/umkm/*` menegakkan kepemilikan dari sesi cookie
+// (`requireUser`), jadi userId TIDAK pernah dikirim dari klien — tidak bisa dipalsukan.
 
 /** Join `users` + `umkm_profiles` + akun Auth → Function `get-umkm-profile`. */
 export async function getUmkmProfileFromAppwrite(): Promise<ServiceResult<UmkmProfile>> {
   try {
-    const data = await executeFunction<UmkmProfile>(FUNCTION_IDS.umkmProfile);
+    const data = await callApi<UmkmProfile>("umkmProfile");
     return { success: true, data };
   } catch (err) {
     return failFromError<UmkmProfile>(err, null as unknown as UmkmProfile);
@@ -244,7 +279,7 @@ export async function getUmkmProfileFromAppwrite(): Promise<ServiceResult<UmkmPr
 /** Agregasi campaigns + campaign_submissions + orders + escrows. */
 export async function getDashboardSummaryFromAppwrite(): Promise<ServiceResult<UmkmDashboardSummary>> {
   try {
-    const data = await executeFunction<UmkmDashboardSummary>(FUNCTION_IDS.umkmDashboardSummary);
+    const data = await callApi<UmkmDashboardSummary>("umkmDashboardSummary");
     return { success: true, data };
   } catch (err) {
     return failFromError<UmkmDashboardSummary>(err, null as unknown as UmkmDashboardSummary);
@@ -354,7 +389,7 @@ export type UmkmFinanceOverview = {
  */
 export async function getFinanceOverviewFromAppwrite(): Promise<ServiceResult<UmkmFinanceOverview>> {
   try {
-    const data = await executeFunction<UmkmFinanceOverview>(FUNCTION_IDS.umkmFinanceSummary);
+    const data = await callApi<UmkmFinanceOverview>("umkmFinanceSummary");
     return { success: true, data };
   } catch (err) {
     return failFromError<UmkmFinanceOverview>(err, null as unknown as UmkmFinanceOverview);
@@ -364,7 +399,7 @@ export async function getFinanceOverviewFromAppwrite(): Promise<ServiceResult<Um
 /** Dipakai bila hanya ringkasan finance yang dibutuhkan (tanpa escrow). */
 export async function getFinanceSummaryFromAppwrite(): Promise<ServiceResult<UmkmFinanceSummary>> {
   try {
-    const data = await executeFunction<UmkmFinanceOverview>(FUNCTION_IDS.umkmFinanceSummary);
+    const data = await callApi<UmkmFinanceOverview>("umkmFinanceSummary");
     return { success: true, data: data.finance };
   } catch (err) {
     return failFromError<UmkmFinanceSummary>(err, null as unknown as UmkmFinanceSummary);
@@ -374,7 +409,7 @@ export async function getFinanceSummaryFromAppwrite(): Promise<ServiceResult<Umk
 /** Dipakai bila hanya escrow yang dibutuhkan (tanpa ringkasan finance). */
 export async function getEscrowOverviewFromAppwrite(): Promise<ServiceResult<EscrowOverview>> {
   try {
-    const data = await executeFunction<UmkmFinanceOverview>(FUNCTION_IDS.umkmFinanceSummary);
+    const data = await callApi<UmkmFinanceOverview>("umkmFinanceSummary");
     return { success: true, data: data.escrow };
   } catch (err) {
     return failFromError<EscrowOverview>(err, null as unknown as EscrowOverview);
@@ -387,12 +422,15 @@ export async function getCampaignsFromAppwrite(): Promise<ServiceResult<Campaign
   const auth = await requireUserId<Campaign[]>([]);
   if (!auth.ok) return auth.result;
   try {
-    const res = await databases.listDocuments(DB, COLLECTIONS.campaigns, [
-      Query.equal("umkmId", auth.userId),
-      Query.orderDesc("$updatedAt"),
-      Query.limit(100),
-    ]);
-    return { success: true, data: res.documents.map((d) => mapCampaign(d as unknown as Doc)) };
+    const rows = must(
+      await createClient()
+        .from("campaigns")
+        .select("*")
+        .eq("umkm_id", auth.userId)
+        .order("updated_at", { ascending: false })
+        .limit(100)
+    );
+    return { success: true, data: rowsToDocs("campaigns", rows).map(mapCampaign) };
   } catch (err) {
     return failFromError<Campaign[]>(err, []);
   }
@@ -402,16 +440,18 @@ export async function getCampaignByIdFromAppwrite(id: string): Promise<ServiceRe
   const auth = await requireUserId<Campaign>(null as unknown as Campaign);
   if (!auth.ok) return auth.result;
   try {
-    const res = await databases.listDocuments(DB, COLLECTIONS.campaigns, [
-      Query.equal("$id", id),
-      Query.equal("umkmId", auth.userId),
-      Query.limit(1),
-    ]);
-    const doc = res.documents[0];
-    if (!doc) {
+    const row = must(
+      await createClient()
+        .from("campaigns")
+        .select("*")
+        .eq("id", id)
+        .eq("umkm_id", auth.userId)
+        .maybeSingle()
+    );
+    if (!row) {
       return { success: false, data: null, error: "Campaign tidak ditemukan", code: "not_found" };
     }
-    return { success: true, data: mapCampaign(doc as unknown as Doc) };
+    return { success: true, data: mapCampaign(rowToDoc("campaigns", row)) };
   } catch (err) {
     return failFromError<Campaign>(err, null as unknown as Campaign);
   }
@@ -423,22 +463,30 @@ export async function getCampaignSubmissionsFromAppwrite(
   const auth = await requireUserId<CampaignSubmission[]>([]);
   if (!auth.ok) return auth.result;
   try {
+    const supabase = createClient();
     // Kepemilikan: pastikan campaign milik UMKM ini sebelum membaca submission-nya.
-    const owned = await databases.listDocuments(DB, COLLECTIONS.campaigns, [
-      Query.equal("$id", campaignId),
-      Query.equal("umkmId", auth.userId),
-      Query.limit(1),
-    ]);
-    if (!owned.documents[0]) {
+    // (RLS juga membatasi submission ke kreator/pemilik campaign — ini lapis kedua.)
+    const owned = must(
+      await supabase
+        .from("campaigns")
+        .select("id, reward_per_1000_views")
+        .eq("id", campaignId)
+        .eq("umkm_id", auth.userId)
+        .maybeSingle()
+    );
+    if (!owned) {
       return { success: false, data: [], error: "Campaign tidak ditemukan", code: "not_found" };
     }
-    const rate = num((owned.documents[0] as unknown as Doc).rewardPer1000Views);
-    const res = await databases.listDocuments(DB, COLLECTIONS.submissions, [
-      Query.equal("campaignId", campaignId),
-      Query.orderDesc("$createdAt"),
-      Query.limit(100),
-    ]);
-    const docs = res.documents as unknown as Doc[];
+    const rate = num(owned.reward_per_1000_views);
+    const rows = must(
+      await supabase
+        .from("campaign_submissions")
+        .select("*")
+        .eq("campaign_id", campaignId)
+        .order("created_at", { ascending: false })
+        .limit(100)
+    );
+    const docs = rowsToDocs("campaign_submissions", rows);
     const creatorProfiles = await loadCreatorProfiles(docs.map((d) => str(d.creatorId)));
     return {
       success: true,
@@ -467,17 +515,24 @@ export async function getSubmissionCountsFromAppwrite(
   if (!auth.ok) return auth.result;
 
   try {
+    const supabase = createClient();
     const counts: Record<string, { pending: number; valid: number; dispute: number }> = {};
 
-    // Appwrite `equal(field, [...])` dibatasi 100 nilai. <=100 campaign tetap
-    // satu query; >100 dipecah per batch tanpa kembali ke pola N+1.
+    // `.in()` dibatch 100 id (panjang URL), tiap batch dipaginasi sampai habis
+    // (batas lama Query.limit(5000) dipertahankan). Tetap tanpa N+1.
     for (const ids of chunk(campaignIds, 100)) {
-      const res = await databases.listDocuments(DB, COLLECTIONS.submissions, [
-        Query.equal("campaignId", ids),
-        Query.limit(5000),
-      ]);
+      const rows = await fetchAllPages(
+        (from, to) =>
+          supabase
+            .from("campaign_submissions")
+            .select("id, campaign_id, status, fraud_status")
+            .in("campaign_id", ids)
+            .order("id")
+            .range(from, to),
+        5000
+      );
 
-      for (const doc of res.documents as unknown as Doc[]) {
+      for (const doc of rowsToDocs("campaign_submissions", rows)) {
         const cid = str(doc.campaignId);
         if (!counts[cid]) counts[cid] = { pending: 0, valid: 0, dispute: 0 };
         if (str(doc.status) === "pending") counts[cid].pending++;
@@ -501,24 +556,30 @@ export async function getPendingSubmissionsFromAppwrite(): Promise<ServiceResult
   const auth = await requireUserId<CampaignSubmission[]>([]);
   if (!auth.ok) return auth.result;
   try {
-    // submissions tak punya umkmId → ambil campaign milik UMKM dulu, lalu filter.
-    const campaigns = await databases.listDocuments(DB, COLLECTIONS.campaigns, [
-      Query.equal("umkmId", auth.userId),
-      Query.limit(100),
-    ]);
-    const campaignDocs = campaigns.documents as unknown as Doc[];
-    const campaignIds = campaignDocs.map((c) => str(c.$id));
+    const supabase = createClient();
+    // submissions tak punya umkm_id → ambil campaign milik UMKM dulu, lalu filter.
+    const campaignRows = must(
+      await supabase
+        .from("campaigns")
+        .select("id, reward_per_1000_views")
+        .eq("umkm_id", auth.userId)
+        .limit(100)
+    ) ?? [];
+    const campaignIds = campaignRows.map((c) => c.id);
     if (campaignIds.length === 0) return { success: true, data: [] };
 
-    const rateMap = new Map(campaignDocs.map((c) => [str(c.$id), num(c.rewardPer1000Views)]));
+    const rateMap = new Map(campaignRows.map((c) => [c.id, num(c.reward_per_1000_views)]));
 
-    const res = await databases.listDocuments(DB, COLLECTIONS.submissions, [
-      Query.equal("campaignId", campaignIds),
-      Query.equal("status", "pending"),
-      Query.orderDesc("$createdAt"),
-      Query.limit(100),
-    ]);
-    const docs = res.documents as unknown as Doc[];
+    const rows = must(
+      await supabase
+        .from("campaign_submissions")
+        .select("*")
+        .in("campaign_id", campaignIds)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(100)
+    );
+    const docs = rowsToDocs("campaign_submissions", rows);
     const creatorProfiles = await loadCreatorProfiles(docs.map((d) => str(d.creatorId)));
     return {
       success: true,
@@ -546,7 +607,7 @@ export async function getCreatorsFromAppwrite(
   cursor?: string
 ): Promise<ServiceResult<PaginatedCreators>> {
   try {
-    const data = await executeFunction<PaginatedCreators>(FUNCTION_IDS.creatorDirectory, { limit, cursor });
+    const data = await callApi<PaginatedCreators>("creatorDirectory", { limit, cursor });
     return { success: true, data };
   } catch (err) {
     return failFromError<PaginatedCreators>(err, { items: [], total: 0, nextCursor: null });
@@ -555,7 +616,7 @@ export async function getCreatorsFromAppwrite(
 
 export async function getCreatorByIdFromAppwrite(id: string): Promise<ServiceResult<CreatorProfile>> {
   try {
-    const data = await executeFunction<CreatorProfile>(FUNCTION_IDS.creatorDirectory, { creatorId: id });
+    const data = await callApi<CreatorProfile>("creatorDirectory", { creatorId: id });
     return { success: true, data };
   } catch (err) {
     if (err instanceof FunctionExecutionError && err.code === "not_found") {
@@ -571,28 +632,27 @@ export async function getCreatorRateCardsFromAppwrite(
   const auth = await requireUserId<RateCardPackage[]>([]);
   if (!auth.ok) return auth.result;
   try {
-    // creatorId & status ada di parent `rate_cards`; paket ada di `rate_card_packages`.
-    const cards = await databases.listDocuments(DB, COLLECTIONS.rateCards, [
-      Query.equal("creatorId", creatorId),
-      Query.equal("status", "published"),
-      Query.limit(100),
-    ]);
-    if (cards.documents.length === 0) return { success: true, data: [] };
+    const supabase = createClient();
+    // creator_id & status ada di parent `rate_cards`; paket ada di `rate_card_packages`.
+    const cards = must(
+      await supabase
+        .from("rate_cards")
+        .select("id, status")
+        .eq("creator_id", creatorId)
+        .eq("status", "published")
+        .limit(100)
+    ) ?? [];
+    if (cards.length === 0) return { success: true, data: [] };
 
     // Peta rateCardId → status parent, untuk RateCardPackage.status.
     const statusByCard = new Map<string, RateCardStatus>();
-    for (const c of cards.documents) {
-      const cd = c as unknown as Doc;
-      statusByCard.set(str(cd.$id), str(cd.status) as RateCardStatus);
-    }
+    for (const c of cards) statusByCard.set(c.id, c.status as RateCardStatus);
     const cardIds = Array.from(statusByCard.keys());
 
-    const packages = await databases.listDocuments(DB, COLLECTIONS.rateCardPackages, [
-      Query.equal("rateCardId", cardIds),
-      Query.limit(100),
-    ]);
-    const data: RateCardPackage[] = packages.documents.map((p) => {
-      const pd = p as unknown as Doc;
+    const packages = must(
+      await supabase.from("rate_card_packages").select("*").in("rate_card_id", cardIds).limit(100)
+    );
+    const data: RateCardPackage[] = rowsToDocs("rate_card_packages", packages).map((pd) => {
       const rateCardId = str(pd.rateCardId);
       return {
         id: str(pd.$id),
@@ -615,10 +675,8 @@ export async function getCreatorRateCardsFromAppwrite(
 /**
  * Portofolio konten kreator dari collection `creator_portfolios`.
  *
- * Read langsung dari browser UMKM sah: row permission saat create memasang
- * `read("any")` (creator-appwrite.service.ts createCreatorPortfolioInAppwrite),
- * dan koleksinya `read("any")` di level collection — diverifikasi live
- * 2026-09-27 untuk `creator_social_accounts` (11/11 baris terbaca tanpa sesi).
+ * Read langsung dari browser UMKM sah: `creator_portfolios` publik di RLS
+ * (dulu `read("any")`).
  */
 export async function getCreatorPortfolioFromAppwrite(
   creatorId: string
@@ -626,21 +684,21 @@ export async function getCreatorPortfolioFromAppwrite(
   const auth = await requireUserId<CreatorPortfolioItem[]>([]);
   if (!auth.ok) return auth.result;
   try {
-    const res = await databases.listDocuments(DB, COLLECTIONS.creatorPortfolios, [
-      Query.equal("creatorId", creatorId),
-      Query.orderDesc("$createdAt"),
-      Query.limit(100),
-    ]);
-    const data: CreatorPortfolioItem[] = res.documents.map((d) => {
-      const doc = d as unknown as Doc;
-      return {
-        id: str(doc.$id),
-        title: str(doc.title),
-        url: str(doc.portfolioUrl),
-        description: str(doc.description),
-        thumbnailUrl: str(doc.thumbnailUrl) || undefined,
-      };
-    });
+    const rows = must(
+      await createClient()
+        .from("creator_portfolios")
+        .select("*")
+        .eq("creator_id", creatorId)
+        .order("created_at", { ascending: false })
+        .limit(100)
+    );
+    const data: CreatorPortfolioItem[] = rowsToDocs("creator_portfolios", rows).map((doc) => ({
+      id: str(doc.$id),
+      title: str(doc.title),
+      url: str(doc.portfolioUrl),
+      description: str(doc.description),
+      thumbnailUrl: str(doc.thumbnailUrl) || undefined,
+    }));
     return { success: true, data };
   } catch (err) {
     return failFromError<CreatorPortfolioItem[]>(err, []);
@@ -661,21 +719,21 @@ export async function getCreatorSocialAccountsFromAppwrite(
   const auth = await requireUserId<CreatorSocialAccount[]>([]);
   if (!auth.ok) return auth.result;
   try {
-    const res = await databases.listDocuments(DB, COLLECTIONS.creatorSocialAccounts, [
-      Query.equal("creatorId", creatorId),
-      Query.orderDesc("$createdAt"),
-      Query.limit(100),
-    ]);
-    const data: CreatorSocialAccount[] = res.documents.map((d) => {
-      const doc = d as unknown as Doc;
-      return {
-        id: str(doc.$id),
-        platform: str(doc.platform),
-        username: str(doc.username),
-        followers: num(doc.followers),
-        engagementRate: num(doc.engagementRate),
-      };
-    });
+    const rows = must(
+      await createClient()
+        .from("creator_social_accounts")
+        .select("*")
+        .eq("creator_id", creatorId)
+        .order("created_at", { ascending: false })
+        .limit(100)
+    );
+    const data: CreatorSocialAccount[] = rowsToDocs("creator_social_accounts", rows).map((doc) => ({
+      id: str(doc.$id),
+      platform: str(doc.platform),
+      username: str(doc.username),
+      followers: num(doc.followers),
+      engagementRate: num(doc.engagementRate),
+    }));
     return { success: true, data };
   } catch (err) {
     return failFromError<CreatorSocialAccount[]>(err, []);
@@ -694,7 +752,7 @@ export async function getCreatorSocialAccountsFromAppwrite(
  */
 export async function getNegotiationsFromAppwrite(): Promise<ServiceResult<NegotiationOrder[]>> {
   try {
-    const data = await executeFunction<NegotiationOrder[]>(FUNCTION_IDS.umkmNegotiations);
+    const data = await callApi<NegotiationOrder[]>("umkmNegotiations");
     return ok(data);
   } catch (err) {
     return failFromError<NegotiationOrder[]>(err, []);
@@ -707,7 +765,7 @@ export async function getNegotiationByIdFromAppwrite(
 ): Promise<ServiceResult<NegotiationOrder>> {
   const empty = null as unknown as NegotiationOrder;
   try {
-    const data = await executeFunction<NegotiationOrder>(FUNCTION_IDS.umkmNegotiations, {
+    const data = await callApi<NegotiationOrder>("umkmNegotiations", {
       conversationId,
     });
     return ok(data);
@@ -728,6 +786,7 @@ export async function getNegotiationByIdFromAppwrite(
  *
  * Mirror 00_BACKEND/src/services/offer.service.ts:147-150.
  */
+// TODO(fase-07): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function createOfferInAppwrite(
   input: CreateOfferInput
 ): Promise<ServiceResult<string>> {
@@ -769,12 +828,16 @@ export async function getTransactionsFromAppwrite(): Promise<ServiceResult<Trans
   const auth = await requireUserId<Transaction[]>([]);
   if (!auth.ok) return auth.result;
   try {
-    const res = await databases.listDocuments(DB, COLLECTIONS.payments, [
-      Query.equal("user_id", auth.userId),
-      Query.orderDesc("$createdAt"),
-      Query.limit(100),
-    ]);
-    return { success: true, data: res.documents.map((d) => mapTransaction(d as unknown as Doc)) };
+    // `payments` hanya terbaca pemiliknya (RLS); filter user_id tetap dipasang.
+    const rows = must(
+      await createClient()
+        .from("payments")
+        .select("*")
+        .eq("user_id", auth.userId)
+        .order("created_at", { ascending: false })
+        .limit(100)
+    );
+    return { success: true, data: rowsToDocs("payments", rows).map(mapTransaction) };
   } catch (err) {
     return failFromError<Transaction[]>(err, []);
   }
@@ -784,16 +847,18 @@ export async function getTransactionByIdFromAppwrite(id: string): Promise<Servic
   const auth = await requireUserId<Transaction>(null as unknown as Transaction);
   if (!auth.ok) return auth.result;
   try {
-    const res = await databases.listDocuments(DB, COLLECTIONS.payments, [
-      Query.equal("$id", id),
-      Query.equal("user_id", auth.userId),
-      Query.limit(1),
-    ]);
-    const doc = res.documents[0];
-    if (!doc) {
+    const row = must(
+      await createClient()
+        .from("payments")
+        .select("*")
+        .eq("id", id)
+        .eq("user_id", auth.userId)
+        .maybeSingle()
+    );
+    if (!row) {
       return { success: false, data: null, error: "Transaksi tidak ditemukan", code: "not_found" };
     }
-    return { success: true, data: mapTransaction(doc as unknown as Doc) };
+    return { success: true, data: mapTransaction(rowToDoc("payments", row)) };
   } catch (err) {
     return failFromError<Transaction>(err, null as unknown as Transaction);
   }
@@ -839,6 +904,7 @@ export type CampaignDraftResult = {
  * Permission baris read(any)/update+delete(owner) — grant delete adalah satu-
  * satunya cara baris ini nanti bisa dihapus (tak ada collection delete("users")).
  */
+// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function createCampaignDraftInAppwrite(
   input: CreateCampaignDraftInput
 ): Promise<ServiceResult<CampaignDraftResult>> {
@@ -944,6 +1010,7 @@ export async function createCampaignDraftInAppwrite(
  * Dirutekan lewat patch-campaign-status Cloud Function karena baris campaign
  * tidak lagi punya Permission.update dari klien (fix SEC-H1 2026-08-08).
  */
+// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function updateCampaignStatusInAppwrite(
   campaignId: string,
   next: "paused" | "active"
@@ -978,6 +1045,7 @@ export type DuplicateCampaignOptions = {
  * Duplikasi campaign lewat createCampaignDraftInAppwrite (satu jalur create).
  * Baca sumber ownership-filtered + brief/asset opsional sesuai options.
  */
+// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function duplicateCampaignInAppwrite(
   sourceId: string,
   newTitle: string,
@@ -1091,7 +1159,7 @@ const mapUmkmSettingsProfile = (d: Doc): UmkmSettingsProfile => ({
 /**
  * Baca baris umkm_profiles langsung (bukan lewat Function DTO): halaman
  * Pengaturan butuh 9 kolom, sedangkan get-umkm-profile mengembalikan 7 kolom
- * lain. `umkm_profiles` read("any") jadi query klien sah.
+ * lain. `umkm_profiles` publik di RLS jadi query klien sah.
  */
 export async function getUmkmSettingsProfileFromAppwrite(): Promise<
   ServiceResult<UmkmSettingsProfile>
@@ -1100,21 +1168,19 @@ export async function getUmkmSettingsProfileFromAppwrite(): Promise<
   const auth = await requireUserId<UmkmSettingsProfile>(empty);
   if (!auth.ok) return auth.result;
   try {
-    const [resUmkm, resUser] = await Promise.all([
-      databases.listDocuments(DB, COLLECTIONS.umkmProfiles, [
-        Query.equal("userId", auth.userId),
-        Query.limit(1),
-      ]),
-      databases.listDocuments(DB, COLLECTIONS.users, [
-        Query.equal("userId", auth.userId),
-        Query.limit(1),
-      ]),
+    const supabase = createClient();
+    const [umkmRes, userRes] = await Promise.all([
+      supabase.from("umkm_profiles").select("*").eq("user_id", auth.userId).limit(1).maybeSingle(),
+      // `users` hanya terbaca pemiliknya (RLS) — cukup untuk kolom `address`.
+      supabase.from("users").select("id, address").eq("id", auth.userId).maybeSingle(),
     ]);
-    
-    const doc = resUmkm.documents[0] as unknown as Doc | undefined;
-    if (!doc) return fail("Profil UMKM tidak ditemukan.", "not_found", empty);
-    
-    const userDoc = resUser.documents[0] as unknown as Doc | undefined;
+    const umkmRow = must(umkmRes);
+    const userRow = must(userRes);
+
+    if (!umkmRow) return fail("Profil UMKM tidak ditemukan.", "not_found", empty);
+    const doc = rowToDoc("umkm_profiles", umkmRow);
+    const userDoc = userRow ? rowToDoc("users", userRow) : undefined;
+
     const profile = {
       docId: str(doc.$id),
       userId: str(doc.userId),
@@ -1127,7 +1193,7 @@ export async function getUmkmSettingsProfileFromAppwrite(): Promise<
       logoUrl: str(doc.logoUrl),
       isProfileCompleted: doc.isProfileCompleted === true,
     };
-    
+
     return ok(profile);
   } catch (err) {
     return failFromError<UmkmSettingsProfile>(err, empty);
@@ -1154,6 +1220,7 @@ export type UmkmProfileWriteInput = Partial<
   Record<(typeof UMKM_PROFILE_WRITABLE)[number], string>
 >;
 
+// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function updateUmkmProfileInAppwrite(
   input: UmkmProfileWriteInput
 ): Promise<ServiceResult<UmkmSettingsProfile>> {
@@ -1179,6 +1246,7 @@ export async function updateUmkmProfileInAppwrite(
 }
 
 /** Unggah logo ke bucket `logos` (client-writable) dan kembalikan URL-nya. */
+// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function uploadUmkmLogoInAppwrite(file: File): Promise<ServiceResult<string>> {
   const auth = await requireUserId<string>("");
   if (!auth.ok) return auth.result;
@@ -1192,6 +1260,7 @@ export async function uploadUmkmLogoInAppwrite(file: File): Promise<ServiceResul
 }
 
 /** Unggah thumbnail produk campaign (STEP 1) ke bucket `campaign-assets`. */
+// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function uploadCampaignThumbnailInAppwrite(
   file: File
 ): Promise<ServiceResult<string>> {
@@ -1211,6 +1280,7 @@ export async function uploadCampaignThumbnailInAppwrite(
  * di-log (file mungkin jadi yatim, tidak ada risiko data konsistensi).
  * URL yang bukan milik bucket campaign-assets tidak diapa-apakan.
  */
+// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function deleteCampaignThumbnailInAppwrite(
   url: string
 ): Promise<ServiceResult<null>> {
@@ -1253,6 +1323,7 @@ export type AiBrief = {
  *   kosong: baris audit ai_requests terdegradasi, bukan dipalsukan. Handoff
  *   meminta backend membaca header x-appwrite-user-id seperti 10 Function lain.
  */
+// TODO(fase-07): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function generateCampaignBriefFromAppwrite(
   input: AiBriefInput
 ): Promise<ServiceResult<AiBrief>> {
@@ -1296,6 +1367,7 @@ export type PaymentIntent = {
  * `amount` = budget DASAR; Function yang menurunkan fee 2% dan total_amount.
  * `payments` read-only dari klien, jadi jalur ini wajib lewat Function.
  */
+// TODO(fase-08): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function createCampaignPaymentInAppwrite(input: {
   campaignId: string;
   budget: number;
@@ -1327,6 +1399,7 @@ export async function createCampaignPaymentInAppwrite(input: {
  * di sini, karena versi klien tidak bisa dipercaya dan akan menjadi sumber drift
  * kedua. Yang dikerjakan di sini hanya memetakan errornya ke pesan yang terbaca.
  */
+// TODO(fase-08): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function createOrderPaymentInAppwrite(input: {
   orderId: string;
   amount: number;
@@ -1370,6 +1443,7 @@ export async function createOrderPaymentInAppwrite(input: {
  * Dirutekan lewat patch-campaign-status Cloud Function yang memvalidasi
  * remainingBudget > 0 di sisi server (fix SEC-H1 2026-08-08).
  */
+// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function publishCampaignInAppwrite(
   campaignId: string
 ): Promise<ServiceResult<Campaign>> {
@@ -1415,6 +1489,7 @@ export type ReviewSubmissionInput = {
  * langsung membaca `doc.views`. Kalau views ditulis belakangan, Function sudah
  * terlanjur menghitung reward dari angka lama.
  */
+// TODO(fase-07): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function reviewSubmissionInAppwrite(
   input: ReviewSubmissionInput
 ): Promise<ServiceResult<null>> {
@@ -1482,6 +1557,7 @@ const failDelete = (err: unknown, subject: string): ServiceResult<null> => {
  * Kegagalan menghapus anak TIDAK membatalkan operasi: induk yang tersisa jauh
  * lebih mengganggu pengguna daripada satu baris brief yatim.
  */
+// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function deleteCampaignDraftInAppwrite(
   campaignId: string
 ): Promise<ServiceResult<null>> {
@@ -1547,6 +1623,7 @@ export async function deleteCampaignDraftInAppwrite(
  * Hapus satu aset campaign. Hanya selama induknya masih `draft` — setelah tayang
  * kreator sudah bisa melihat asetnya, jadi menghapusnya mengubah brief berjalan.
  */
+// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function removeCampaignAssetInAppwrite(
   assetId: string
 ): Promise<ServiceResult<null>> {
@@ -1585,6 +1662,7 @@ export async function removeCampaignAssetInAppwrite(
  * Hapus custom offer yang masih `pending`. Setelah `accepted` sudah ada order
  * yang terbentuk darinya, dan `rejected` adalah jejak negosiasi yang berguna.
  */
+// TODO(fase-07): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function deleteOfferInAppwrite(offerId: string): Promise<ServiceResult<null>> {
   const auth = await requireUserId<null>(null);
   if (!auth.ok) return auth.result;
@@ -1615,6 +1693,7 @@ export async function deleteOfferInAppwrite(offerId: string): Promise<ServiceRes
  * Batalkan order yang belum dibayar. BUKAN hapus — barisnya tetap ada dengan
  * status `cancelled` supaya riwayat pesanan tetap utuh.
  */
+// TODO(fase-07): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function cancelOrderInAppwrite(orderId: string): Promise<ServiceResult<null>> {
   const auth = await requireUserId<null>(null);
   if (!auth.ok) return auth.result;
@@ -1632,6 +1711,7 @@ export async function cancelOrderInAppwrite(orderId: string): Promise<ServiceRes
  * jadi ini satu-satunya fitur di sprint ini yang wajib lewat Function.
  * Function menegakkan ownership + status `pending` sendiri.
  */
+// TODO(fase-08): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function cancelPaymentInAppwrite(paymentId: string): Promise<ServiceResult<null>> {
   const auth = await requireUserId<null>(null);
   if (!auth.ok) return auth.result;
@@ -1683,28 +1763,31 @@ export async function getCampaignDraftForEditFromAppwrite(
   if (!auth.ok) return auth.result;
 
   try {
+    const supabase = createClient();
     // Guard kepemilikan + status=draft dalam satu query
-    const res = await databases.listDocuments(DB, COLLECTIONS.campaigns, [
-      Query.equal("$id", campaignId),
-      Query.equal("umkmId", auth.userId),
-      Query.equal("status", "draft"),
-      Query.limit(1),
-    ]);
-    const doc = res.documents[0] as unknown as Doc | undefined;
-    if (!doc) return fail("Campaign draft tidak ditemukan atau bukan milik Anda.", "not_found", empty);
+    const row = must(
+      await supabase
+        .from("campaigns")
+        .select("*")
+        .eq("id", campaignId)
+        .eq("umkm_id", auth.userId)
+        .eq("status", "draft")
+        .maybeSingle()
+    );
+    if (!row) return fail("Campaign draft tidak ditemukan atau bukan milik Anda.", "not_found", empty);
 
-    const campaign = mapCampaign(doc);
+    const campaign = mapCampaign(rowToDoc("campaigns", row));
     const warnings: string[] = [];
 
-    // Baca brief (opsional)
+    // Baca brief (opsional). campaign_briefs.campaign_id unik (tabel lama + v2
+    // digabung di Fase 2); `doAndDont` kembali jadi string JSON lewat rowToDoc.
     let brief: CampaignEditRaw["brief"];
     try {
-      const briefRes = await databases.listDocuments(DB, COLLECTIONS.campaignBriefs, [
-        Query.equal("campaignId", campaignId),
-        Query.limit(1),
-      ]);
-      const bd = briefRes.documents[0] as unknown as Doc | undefined;
-      if (bd) {
+      const briefRow = must(
+        await supabase.from("campaign_briefs").select("*").eq("campaign_id", campaignId).limit(1).maybeSingle()
+      );
+      if (briefRow) {
+        const bd = rowToDoc("campaign_briefs", briefRow);
         brief = {
           id: str(bd.$id),
           briefDetail: str(bd.briefDetail),
@@ -1718,15 +1801,20 @@ export async function getCampaignDraftForEditFromAppwrite(
       warnings.push("Brief tidak bisa dimuat — langkah 2 kosong.");
     }
 
-    // Baca asset baris pertama (opsional)
+    // Baca asset baris pertama (opsional) — urutan buat, sama dengan default Appwrite.
     let asset: CampaignEditRaw["asset"];
     try {
-      const assetRes = await databases.listDocuments(DB, COLLECTIONS.campaignAssets, [
-        Query.equal("campaignId", campaignId),
-        Query.limit(1),
-      ]);
-      const ad = assetRes.documents[0] as unknown as Doc | undefined;
-      if (ad) {
+      const assetRow = must(
+        await supabase
+          .from("campaign_assets")
+          .select("*")
+          .eq("campaign_id", campaignId)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle()
+      );
+      if (assetRow) {
+        const ad = rowToDoc("campaign_assets", assetRow);
         asset = {
           id: str(ad.$id),
           fileUrl: str(ad.fileUrl),
@@ -1749,6 +1837,7 @@ export async function getCampaignDraftForEditFromAppwrite(
  * Brief dan asset di-upsert: update baris lama bila ada, buat baru bila belum.
  * Kembalikan `CampaignDraftResult` agar wizard tidak perlu bedakan create vs update.
  */
+// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function updateCampaignDraftInAppwrite(
   campaignId: string,
   input: CreateCampaignDraftInput

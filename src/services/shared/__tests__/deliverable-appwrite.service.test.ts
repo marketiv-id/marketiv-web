@@ -40,6 +40,10 @@ vi.mock("@/lib/appwrite/functions", async () => {
 
 vi.mock("@/services/auth/session.service", () => ({
   getSession: getSessionMock,
+  getCurrentUserId: async () => {
+    const session = await getSessionMock();
+    return session?.success ? session.data.userId : null;
+  },
 }));
 
 import { FunctionExecutionError } from "@/lib/appwrite/functions";

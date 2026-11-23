@@ -2,6 +2,8 @@ import { Query } from "appwrite";
 import { databases } from "@/lib/appwrite/databases";
 import { appwriteConfig } from "@/lib/appwrite/config";
 import { executeFunction, FUNCTION_IDS } from "@/lib/appwrite/functions";
+import { createClient } from "@/lib/supabase/client";
+import { rowToDoc, rowsToDocs } from "@/services/shared/legacy-doc";
 import type { ServiceResult } from "@/types/domain";
 import type { ChatMessage } from "@/types/umkm-dashboard.types";
 import {
@@ -49,6 +51,12 @@ import {
  * `markConversationRead`. Arsip percakapan tetap lewat Function tepercaya.
  *
  * Jangan mengembalikan `databases.createDocument` ke sini.
+ *
+ * Fase 5 (migrasi Supabase): BACA (`getMyConversations…`, riwayat pesan) lewat
+ * supabase-js + RLS (`private.is_conversation_participant`). Kolom Postgres
+ * `conversations`/`messages` tetap snake_case, jadi `rowToDoc()` hanya
+ * menambah `$id`/`$createdAt`. TULIS (buat percakapan, kirim pesan, tandai
+ * dibaca, arsip) masih Appwrite — TODO(fase-06).
  */
 
 const DB = appwriteConfig.databaseId;
@@ -114,20 +122,17 @@ export async function getMyConversationsFromAppwrite(): Promise<
   const auth = await requireUserId<ConversationFlag[]>([]);
   if (!auth.ok) return auth.result;
   try {
+    const supabase = createClient();
     const [asUmkm, asCreator] = await Promise.all([
-      databases.listDocuments(DB, CONVERSATIONS, [
-        Query.equal("umkm_id", auth.userId),
-        Query.limit(100),
-      ]),
-      databases.listDocuments(DB, CONVERSATIONS, [
-        Query.equal("creator_id", auth.userId),
-        Query.limit(100),
-      ]),
+      supabase.from(CONVERSATIONS).select("*").eq("umkm_id", auth.userId).limit(100),
+      supabase.from(CONVERSATIONS).select("*").eq("creator_id", auth.userId).limit(100),
     ]);
+    if (asUmkm.error) throw asUmkm.error;
+    if (asCreator.error) throw asCreator.error;
 
     const byId = new Map<string, ConversationFlag>();
-    for (const doc of [...asUmkm.documents, ...asCreator.documents]) {
-      const mapped = mapConversation(doc as unknown as Doc);
+    for (const doc of rowsToDocs(CONVERSATIONS, [...(asUmkm.data ?? []), ...(asCreator.data ?? [])])) {
+      const mapped = mapConversation(doc);
       byId.set(mapped.id, mapped);
     }
     return ok([...byId.values()]);
@@ -151,6 +156,7 @@ export async function getMyConversationsFromAppwrite(): Promise<
  * Idempotensinya sekarang dipegang penuh Function, yang membaca dengan API key
  * sehingga tidak pernah buta terhadap baris ber-permission rusak.
  */
+// TODO(fase-06): buat percakapan → Route Handler.
 export async function createConversationInAppwrite(
   creatorId: string
 ): Promise<ServiceResult<string>> {
@@ -177,7 +183,39 @@ export async function createConversationInAppwrite(
   }
 }
 
-/** Peserta percakapan + peran pemanggil, atau null bila bukan peserta. */
+type Participation = { umkmId: string; creatorId: string; role: "umkm" | "creator" };
+
+function participationOf(doc: Doc, userId: string): Participation | null {
+  const umkmId = str(doc.umkm_id);
+  const creatorId = str(doc.creator_id);
+  if (umkmId !== userId && creatorId !== userId) return null;
+  return { umkmId, creatorId, role: umkmId === userId ? "umkm" : "creator" };
+}
+
+/**
+ * Peserta percakapan (Supabase) + peran pemanggil, atau null bila bukan peserta
+ * / tidak terbaca. RLS sudah menyembunyikan percakapan orang lain; cek peserta
+ * eksplisit tetap dipasang (sama dengan versi Appwrite).
+ */
+async function loadParticipationFromSupabase(
+  conversationId: string,
+  userId: string
+): Promise<Participation | null> {
+  const { data, error } = await createClient()
+    .from(CONVERSATIONS)
+    .select("id, umkm_id, creator_id")
+    .eq("id", conversationId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return participationOf(rowToDoc(CONVERSATIONS, data), userId);
+}
+
+/**
+ * Peserta percakapan + peran pemanggil (Appwrite), dipakai jalur TULIS
+ * `markConversationReadInAppwrite`.
+ * TODO(fase-06): hapus bersama jalur tulisnya.
+ */
 async function loadParticipation(conversationId: string, userId: string) {
   const doc = (await databases.getDocument(
     DB,
@@ -208,6 +246,7 @@ async function loadParticipation(conversationId: string, userId: string) {
  * tersimpan. Urutan sebaliknya bisa meninggalkan ringkasan percakapan yang
  * menjanjikan pesan yang tidak pernah ada.
  */
+// TODO(fase-06): kirim pesan → Route Handler.
 export async function sendMessageInAppwrite(
   conversationId: string,
   content: string
@@ -255,27 +294,27 @@ export async function getMessagesByConversationIdInAppwrite(
   const auth = await requireUserId<ChatMessage[]>([]);
   if (!auth.ok) return auth.result;
   try {
-    const participation = await loadParticipation(conversationId, auth.userId);
+    const participation = await loadParticipationFromSupabase(conversationId, auth.userId);
     if (!participation) return fail("Percakapan tidak ditemukan.", "not_found", []);
 
+    const supabase = createClient();
     const [messagesRes, offersRes] = await Promise.all([
-      databases.listDocuments(DB, MESSAGES, [
-        Query.equal("conversation_id", conversationId),
-        Query.orderAsc("$createdAt"),
-        Query.limit(200),
-      ]),
-      databases.listDocuments(DB, OFFERS, [
-        Query.equal("conversationId", conversationId),
-        Query.limit(100),
-      ]),
+      supabase
+        .from(MESSAGES)
+        .select("*")
+        .eq("conversation_id", conversationId)
+        .order("created_at", { ascending: true })
+        .limit(200),
+      supabase.from(OFFERS).select("*").eq("conversation_id", conversationId).limit(100),
     ]);
+    if (messagesRes.error) throw messagesRes.error;
+    if (offersRes.error) throw offersRes.error;
 
     const offerById = new Map<string, Doc>(
-      offersRes.documents.map((o) => [str((o as unknown as Doc).$id), o as unknown as Doc])
+      rowsToDocs(OFFERS, offersRes.data).map((o) => [str(o.$id), o])
     );
 
-    const data: ChatMessage[] = messagesRes.documents.map((m) => {
-      const md = m as unknown as Doc;
+    const data: ChatMessage[] = rowsToDocs(MESSAGES, messagesRes.data).map((md) => {
       const senderId = str(md.sender_id);
       const type = str(md.message_type) || "text";
       const offer = str(md.offer_id) ? offerById.get(str(md.offer_id)) : undefined;
@@ -329,6 +368,7 @@ export async function getMessagesByConversationIdInAppwrite(
  * lebih ringan daripada ruang chat yang menolak terbuka. Pemanggil boleh
  * mengabaikan hasilnya.
  */
+// TODO(fase-06): tandai dibaca → Route Handler (satu UPDATE … WHERE read_at IS NULL).
 export async function markConversationReadInAppwrite(
   conversationId: string
 ): Promise<ServiceResult<number>> {
@@ -364,6 +404,7 @@ export async function markConversationReadInAppwrite(
  * Arsipkan / batal arsip. BUKAN hapus — pesan di dalamnya tetap utuh sebagai
  * riwayat negosiasi; yang berubah hanya visibilitas di inbox.
  */
+// TODO(fase-06): arsip percakapan → Route Handler.
 export async function setConversationArchivedInAppwrite(
   conversationId: string,
   archived: boolean

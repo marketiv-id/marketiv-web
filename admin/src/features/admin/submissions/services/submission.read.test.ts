@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-const createExecution = vi.fn();
+import { stubFetch } from "@/test/fetch-mock";
+
 vi.mock("@/lib/admin/appwrite", () => ({
-  functions: { createExecution },
-  FUNCTION_IDS: { getAdminSubmissionQueue: "get-admin-submission-queue" },
-  databases: {}, databaseId: "db", COLLECTIONS: {},
+  functions: { createExecution: vi.fn() },
+  FUNCTION_IDS: { reviewSubmission: "review-submission" },
 }));
 
 const { getCampaignSubmissions, AdminSubmissionReadError } = await import("./submission.service");
@@ -17,19 +17,29 @@ const item = {
 };
 
 describe("getCampaignSubmissions secure read", () => {
-  beforeEach(() => createExecution.mockReset());
+  afterEach(() => vi.unstubAllGlobals());
+
   it("maps successful queue and preserves real empty result", async () => {
-    createExecution.mockResolvedValueOnce({ status: "completed", responseStatusCode: 200, responseBody: JSON.stringify({ items: [item], total: 1 }) });
+    const api = stubFetch().respond(200, { items: [item], total: 1 }).respond(200, { items: [], total: 0 });
     await expect(getCampaignSubmissions("pending")).resolves.toEqual([item]);
-    createExecution.mockResolvedValueOnce({ status: "completed", responseStatusCode: 200, responseBody: JSON.stringify({ items: [], total: 0 }) });
     await expect(getCampaignSubmissions("pending")).resolves.toEqual([]);
+    expect(api.calls[0]).toEqual({ url: "/api/admin/submission-queue?status=pending&limit=50", method: "GET" });
   });
-  it.each([401, 403, 500])("throws Function HTTP %i without fixture fallback", async (statusCode) => {
-    createExecution.mockResolvedValueOnce({ status: "failed", responseStatusCode: statusCode, responseBody: JSON.stringify({ error: "denied" }) });
-    await expect(getCampaignSubmissions("pending")).rejects.toMatchObject({ name: "AdminSubmissionReadError", statusCode });
+
+  it("filters by search query on the client", async () => {
+    stubFetch().respond(200, { items: [item, { ...item, id: "sub-2", creator: { id: "c2", name: "Lain", username: "@lain" }, campaign: { ...item.campaign, title: "X" }, umkm: { id: "u", name: "Y" } }], total: 2 });
+    await expect(getCampaignSubmissions("all", "creator")).resolves.toEqual([item]);
   });
-  it("rejects malformed Function response", async () => {
-    createExecution.mockResolvedValueOnce({ status: "completed", responseStatusCode: 200, responseBody: "not-json" });
+
+  it.each([401, 403, 500])("throws route HTTP %i without fixture fallback", async (statusCode) => {
+    stubFetch().respond(statusCode, { error: "denied" });
+    await expect(getCampaignSubmissions("pending")).rejects.toMatchObject({ name: "AdminSubmissionReadError", statusCode, message: "denied" });
+  });
+
+  it("rejects malformed route response", async () => {
+    stubFetch().respond(200, "not-json");
     await expect(getCampaignSubmissions("pending")).rejects.toBeInstanceOf(AdminSubmissionReadError);
+    stubFetch().respond(200, { items: [{ id: 1 }], total: 1 });
+    await expect(getCampaignSubmissions("pending")).rejects.toMatchObject({ statusCode: 502 });
   });
 });

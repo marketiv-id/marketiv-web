@@ -1,6 +1,6 @@
 import type { ServiceResult, ServiceErrorCode } from "@/types/domain";
-import { FunctionExecutionError } from "@/lib/appwrite/functions";
-import { getSession } from "@/services/auth/session.service";
+import { FunctionExecutionError } from "@/lib/api/errors";
+import { getCurrentUserId } from "@/services/auth/session.service";
 
 /**
  * Helper ServiceResult bersama untuk lapisan Appwrite (baca & tulis).
@@ -31,7 +31,7 @@ const logRawError = (scope: string | undefined, err: unknown): void => {
   if (process.env.NODE_ENV === "production") return;
   const e = err as { code?: unknown; type?: unknown; message?: unknown };
   console.error(
-    `[appwrite] ${scope ?? "unknown"} gagal — code=${String(e?.code)} type=${String(
+    `[data] ${scope ?? "unknown"} gagal — code=${String(e?.code)} type=${String(
       e?.type
     )} message=${String(e?.message)}`,
     err
@@ -45,11 +45,32 @@ export const num = (v: unknown): number => (typeof v === "number" ? v : 0);
 export const noData = <T>(): T => null as unknown as T;
 
 /**
+ * Error supabase-js (PostgrestError / AuthError) membawa `code` STRING, bukan
+ * status HTTP seperti AppwriteException. Dipetakan di sini supaya UI tetap
+ * menerima ServiceErrorCode yang sama.
+ */
+const postgrestCode = (err: unknown, write = false): ServiceErrorCode | null => {
+  const e = err as { code?: unknown; status?: unknown; name?: unknown } | null;
+  if (typeof e?.code !== "string") return null;
+  const code = e.code;
+  if (code === "PGRST301" || code === "PGRST303" || e.name === "AuthSessionMissingError") return "auth";
+  if (code === "42501") return "forbidden";
+  if (code === "PGRST116") return "not_found";
+  if (write && (code === "23505" || code === "23503" || code === "22P02" || code === "23514")) {
+    return "validation";
+  }
+  if (/^(08|53|57|58|XX)/.test(code) || code.startsWith("PGRST0")) return "server";
+  return "unknown";
+};
+
+/**
  * BACA. Tidak pernah menghasilkan "validation" — perilaku identik Sprint 1/2.
  * Function DTO sudah memetakan HTTP status → ServiceErrorCode sendiri.
  */
 export const mapErrorCode = (err: unknown): ServiceErrorCode => {
   if (err instanceof FunctionExecutionError) return err.code;
+  const pg = postgrestCode(err);
+  if (pg) return pg;
 
   const code = (err as { code?: number })?.code;
   if (code === 401) return "auth";
@@ -66,6 +87,8 @@ export const mapErrorCode = (err: unknown): ServiceErrorCode => {
  */
 export const mapWriteErrorCode = (err: unknown): ServiceErrorCode => {
   if (err instanceof FunctionExecutionError) return err.code;
+  const pg = postgrestCode(err, true);
+  if (pg) return pg;
 
   const code = (err as { code?: number })?.code;
   if (code === 400 || code === 409 || code === 422) return "validation";
@@ -139,21 +162,34 @@ export const failFromWriteError = <T>(
   };
 };
 
-/** Ambil userId sesi aktif, atau ServiceResult error yang siap dikembalikan. */
+/**
+ * Ambil userId sesi aktif, atau ServiceResult error yang siap dikembalikan.
+ *
+ * Fase 5: tidak lagi memanggil `getSession()` penuh (3 read). userId diambil
+ * dari cache AuthProvider / cookie sesi lewat `getCurrentUserId()`.
+ */
 export async function requireUserId<T>(
   empty: T
 ): Promise<{ ok: true; userId: string } | { ok: false; result: ServiceResult<T> }> {
-  const session = await getSession();
-  if (!session.success || !session.data) {
+  let userId: string | null = null;
+  try {
+    userId = await getCurrentUserId();
+  } catch {
+    return {
+      ok: false,
+      result: { success: false, data: empty, error: "Gagal memuat sesi. Coba lagi.", code: "server" },
+    };
+  }
+  if (!userId) {
     return {
       ok: false,
       result: {
         success: false,
         data: empty,
-        error: session.error ?? "Sesi tidak ditemukan. Silakan login.",
-        code: session.code ?? "auth",
+        error: "Sesi tidak ditemukan. Silakan login.",
+        code: "auth",
       },
     };
   }
-  return { ok: true, userId: session.data.userId };
+  return { ok: true, userId };
 }

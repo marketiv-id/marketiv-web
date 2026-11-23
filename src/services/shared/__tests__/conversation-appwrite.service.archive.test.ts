@@ -30,7 +30,14 @@ vi.mock("@/lib/appwrite/functions", async () => {
   };
 });
 
-vi.mock("@/services/auth/session.service", () => ({ getSession: mocks.getSession }));
+vi.mock("@/services/auth/session.service", () => ({
+  getSession: mocks.getSession,
+  // requireUserId (Fase 5) membaca userId lewat getCurrentUserId.
+  getCurrentUserId: async () => {
+    const session = await mocks.getSession();
+    return session?.success ? session.data.userId : null;
+  },
+}));
 
 import { FunctionExecutionError } from "@/lib/appwrite/functions";
 import { setConversationArchivedInAppwrite } from "../conversation-appwrite.service";

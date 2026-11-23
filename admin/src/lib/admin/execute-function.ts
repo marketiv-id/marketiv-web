@@ -1,13 +1,16 @@
 import { ExecutionMethod } from "appwrite";
 import { functions } from "./appwrite";
 
-export class AdminFunctionExecutionError extends Error {
-  constructor(public readonly statusCode: number, message: string) {
-    super(message);
-    this.name = "AdminFunctionExecutionError";
-  }
-}
+import { AdminFunctionExecutionError } from "@/lib/api/errors";
 
+// Kelas error dipakai bersama dengan `callAdminApi()` (Route Handler Supabase).
+export { AdminFunctionExecutionError } from "@/lib/api/errors";
+
+/**
+ * Eksekusi Function Appwrite admin. Sejak Fase 5 hanya dipakai jalur TULIS
+ * (review-submission, review-withdrawal, review-ratecard-deliverable);
+ * jalur baca lewat `callAdminApi()`.
+ */
 export async function executeAdminFunction<T>(
   functionId: string,
   payload: unknown,

@@ -1,14 +1,11 @@
-import { executeFunction, FUNCTION_IDS } from "@/lib/appwrite/functions";
+import { callApi } from "@/lib/api/call-api";
 import { failFromError, noData, ok } from "@/services/shared/service-result";
 import type { ServiceResult } from "@/types/domain";
 import type { RatecardReview } from "@/types/ratecard-review.types";
 
 export async function getUmkmRatecardReviews(): Promise<ServiceResult<RatecardReview[]>> {
   try {
-    const reviews = await executeFunction<RatecardReview[]>(
-      FUNCTION_IDS.umkmRatecardReviews,
-      {},
-    );
+    const reviews = await callApi<RatecardReview[]>("umkmRatecardReviews", {});
     return ok(reviews);
   } catch (err) {
     return failFromError<RatecardReview[]>(err, [], "getUmkmRatecardReviews");
@@ -20,10 +17,7 @@ export async function getUmkmRatecardReview(
 ): Promise<ServiceResult<RatecardReview>> {
   const empty = noData<RatecardReview>();
   try {
-    const review = await executeFunction<RatecardReview>(
-      FUNCTION_IDS.umkmRatecardReviews,
-      { orderId },
-    );
+    const review = await callApi<RatecardReview>("umkmRatecardReviews", { orderId });
     return ok(review);
   } catch (err) {
     return failFromError<RatecardReview>(err, empty, "getUmkmRatecardReview");

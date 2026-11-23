@@ -1,7 +1,8 @@
-import { Query } from "appwrite";
 import { databases } from "@/lib/appwrite/databases";
 import { appwriteConfig } from "@/lib/appwrite/config";
 import { executeFunction, FUNCTION_IDS } from "@/lib/appwrite/functions";
+import { createClient } from "@/lib/supabase/client";
+import { rowToDoc, rowsToDocs } from "@/services/shared/legacy-doc";
 import type { ServiceResult } from "@/types/domain";
 import type {
   Deliverable,
@@ -48,6 +49,11 @@ import {
  *   sendirian — penyerang cukup memanggil `updateDocument` langsung.
  * - `revisions` dibuat oleh trusted Function dan dibaca kedua pihak. Tidak ada
  *   browser update permission; status lifecycle harus tetap server-owned.
+ *
+ * Fase 5 (migrasi Supabase): BACA (riwayat deliverable & revisi) lewat
+ * supabase-js + RLS (`private.is_order_party`). TULIS masih Appwrite:
+ * kirim deliverable / minta revisi → TODO(fase-07); setujui deliverable
+ * (memicu pencairan escrow) → TODO(fase-08).
  */
 
 const DB = appwriteConfig.databaseId;
@@ -76,7 +82,29 @@ const mapRevision = (d: Doc): Revision => ({
   createdAt: str(d.$createdAt),
 });
 
-/** Peserta order + peran pemanggil, atau null bila bukan peserta. */
+/**
+ * Peserta order (Supabase) — null bila bukan peserta / tidak terbaca RLS.
+ * Cek peserta eksplisit tetap dipasang, sama dengan versi Appwrite.
+ */
+async function loadOrderParticipationFromSupabase(orderId: string, userId: string) {
+  const { data, error } = await createClient()
+    .from(ORDERS)
+    .select("id, umkm_id, creator_id, status")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const order = rowToDoc(ORDERS, data);
+  const umkmId = str(order.umkmId);
+  const creatorId = str(order.creatorId);
+  if (umkmId !== userId && creatorId !== userId) return null;
+  return { order, umkmId, creatorId, status: str(order.status) };
+}
+
+/**
+ * Peserta order + peran pemanggil (Appwrite), untuk jalur TULIS approve.
+ * TODO(fase-08): hapus bersama `approveDeliverableInAppwrite`.
+ */
 async function loadOrderParticipation(orderId: string, userId: string) {
   const order = (await databases.getDocument(DB, ORDERS, orderId)) as unknown as Doc;
 
@@ -100,15 +128,17 @@ export async function getDeliverablesInAppwrite(
   const auth = await requireUserId<Deliverable[]>([]);
   if (!auth.ok) return auth.result;
   try {
-    const participation = await loadOrderParticipation(orderId, auth.userId);
+    const participation = await loadOrderParticipationFromSupabase(orderId, auth.userId);
     if (!participation) return fail("Pesanan tidak ditemukan.", "not_found", []);
 
-    const res = await databases.listDocuments(DB, DELIVERABLES, [
-      Query.equal("orderId", orderId),
-      Query.orderAsc("version"),
-      Query.limit(50),
-    ]);
-    return ok(res.documents.map((d) => mapDeliverable(d as unknown as Doc)));
+    const { data, error } = await createClient()
+      .from(DELIVERABLES)
+      .select("*")
+      .eq("order_id", orderId)
+      .order("version", { ascending: true })
+      .limit(50);
+    if (error) throw error;
+    return ok(rowsToDocs(DELIVERABLES, data).map(mapDeliverable));
   } catch (err) {
     return failFromError<Deliverable[]>(err, []);
   }
@@ -121,15 +151,17 @@ export async function getRevisionsInAppwrite(
   const auth = await requireUserId<Revision[]>([]);
   if (!auth.ok) return auth.result;
   try {
-    const participation = await loadOrderParticipation(orderId, auth.userId);
+    const participation = await loadOrderParticipationFromSupabase(orderId, auth.userId);
     if (!participation) return fail("Pesanan tidak ditemukan.", "not_found", []);
 
-    const res = await databases.listDocuments(DB, REVISIONS, [
-      Query.equal("orderId", orderId),
-      Query.orderDesc("$createdAt"),
-      Query.limit(50),
-    ]);
-    return ok(res.documents.map((d) => mapRevision(d as unknown as Doc)));
+    const { data, error } = await createClient()
+      .from(REVISIONS)
+      .select("*")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) throw error;
+    return ok(rowsToDocs(REVISIONS, data).map(mapRevision));
   } catch (err) {
     return failFromError<Revision[]>(err, []);
   }
@@ -142,6 +174,7 @@ export async function getRevisionsInAppwrite(
  * akan menghapus jejak apa yang pernah ditolak UMKM, dan `revisionLimit` jadi
  * tidak bisa diaudit.
  */
+// TODO(fase-07): kirim deliverable → Route Handler.
 export async function uploadDeliverableInAppwrite(
   input: UploadDeliverableInput
 ): Promise<ServiceResult<Deliverable>> {
@@ -179,6 +212,7 @@ export async function uploadDeliverableInAppwrite(
  * Semuanya berjalan ASINKRON lewat event database. Pemanggil TIDAK boleh
  * menganggap ordernya langsung `completed` — poll DTO negosiasi.
  */
+// TODO(fase-08): setujui deliverable = pencairan escrow → Route Handler + RPC uang.
 export async function approveDeliverableInAppwrite(
   orderId: string,
   deliverableId: string
@@ -220,6 +254,7 @@ export async function approveDeliverableInAppwrite(
  * deliverables/orders: it cannot assign Creator row permission and orders has
  * no browser update permission.
  */
+// TODO(fase-07): minta revisi → Route Handler.
 export async function requestRevisionInAppwrite(
   input: RequestRevisionInput
 ): Promise<ServiceResult<Revision>> {

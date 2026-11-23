@@ -48,6 +48,7 @@ async function toBase64(file: File): Promise<string> {
   return btoa(binary);
 }
 
+// TODO(fase-06): unggah berkas → Route Handler + Supabase Storage (bucket user-files).
 export async function uploadUserFileInAppwrite(input: {
   file: File;
   /**

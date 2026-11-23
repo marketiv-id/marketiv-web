@@ -17,6 +17,7 @@ import {
   deleteNotification,
 } from "@/services/shared/notification.service";
 import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
+// TODO(fase-06): realtime → Supabase Realtime (`useRealtimeTable`, 06-mutasi-chat-file.md).
 import { realtimeClient, tableChannels } from "@/lib/appwrite/realtime";
 
 export type NotificationRole = "umkm" | "creator";

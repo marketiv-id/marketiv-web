@@ -6,6 +6,7 @@ import {
   logout as logoutSession,
   type SessionUser,
 } from "@/services/auth/session.service";
+import { setCachedSessionUserId } from "@/services/auth/session-cache";
 import type { ServiceErrorCode, ServiceResult } from "@/types/domain";
 
 export interface RefreshOptions {
@@ -36,11 +37,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const applySession = useCallback(
     (res: Awaited<ReturnType<typeof getSession>>, options?: RefreshOptions) => {
       if (res.success && res.data) {
+        setCachedSessionUserId(res.data.userId);
         setUser(res.data);
         setErrorCode(null);
         setError(null);
       } else {
-        if (!options?.preserveUserOnError) setUser(null);
+        if (!options?.preserveUserOnError) {
+          setCachedSessionUserId(null);
+          setUser(null);
+        }
         setErrorCode(res.code ?? "unknown");
         setError(res.error ?? null);
       }
@@ -71,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     const result = await logoutSession();
+    setCachedSessionUserId(null);
     setUser(null);
     // errorCode/error harus ikut dibersihkan: RedirectIfAuthenticated dan
     // RoleGuard sama-sama bercabang di errorCode, jadi sisa "not_found" dari

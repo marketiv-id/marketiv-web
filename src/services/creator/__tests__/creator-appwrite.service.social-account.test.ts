@@ -17,7 +17,14 @@ vi.mock("@/lib/appwrite/databases", () => ({
   },
 }));
 
-vi.mock("@/services/auth/session.service", () => ({ getSession: getSessionMock }));
+vi.mock("@/services/auth/session.service", () => ({
+  getSession: getSessionMock,
+  // requireUserId (Fase 5) membaca userId lewat getCurrentUserId.
+  getCurrentUserId: async () => {
+    const session = await getSessionMock();
+    return session?.success ? session.data.userId : null;
+  },
+}));
 
 import { upsertCreatorSocialAccountInAppwrite } from "../creator-appwrite.service";
 
