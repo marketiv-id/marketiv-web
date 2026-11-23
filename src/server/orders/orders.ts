@@ -5,6 +5,8 @@ import { z } from "zod";
 import { externalDeliverableUrl } from "@/lib/validations/deliverable.schema";
 import type { Deliverable, Revision } from "@/types/umkm-dashboard.types";
 import { callWriteRpc, type WriteDb } from "@/server/conversations/write-rpc";
+import { getMidtransConfig, type MidtransConfig } from "@/server/payments/midtrans";
+import { cancelGatewayBestEffort } from "@/server/payments/payments";
 import { HttpError, parseBody } from "@/server/http";
 
 /**
@@ -68,11 +70,25 @@ export function mapRevisionRow(row: Row): Revision {
 export async function cancelOrder(
   ctx: OrderWriteContext,
   rawOrderId: string,
+  deps: { midtrans?: MidtransConfig | null; fetchImpl?: typeof fetch } = {},
 ): Promise<{ ok: true; status: string }> {
   const orderId = routeId(rawOrderId, "Order tidak ditemukan");
-  // Status pending_payment belum memindahkan uang. Payment pending yang
-  // menyertai dibatalkan lewat cancel-payment. TODO(fase-08): cancel_payment.
-  return callWriteRpc(ctx.db, "cancel_order", { p_order_id: orderId, p_umkm_id: ctx.userId });
+  // Status pending_payment belum memindahkan uang. RPC (0027) membatalkan
+  // payment pending order ini dalam transaksi yang sama dan mengembalikan
+  // gateway_reference-nya; transaksi Snap-nya lalu dibatalkan di Midtrans
+  // (best-effort, gagal → payment_events + alert).
+  const res = await callWriteRpc<{ ok: true; status: string; cancelledPayments?: string[] }>(
+    ctx.db,
+    "cancel_order",
+    { p_order_id: orderId, p_umkm_id: ctx.userId },
+  );
+  const midtrans = deps.midtrans === undefined ? getMidtransConfig() : deps.midtrans;
+  if (midtrans) {
+    for (const ref of res.cancelledPayments ?? []) {
+      await cancelGatewayBestEffort(ctx.db as never, ref, midtrans, deps.fetchImpl);
+    }
+  }
+  return { ok: true, status: res.status };
 }
 
 const MAX_FILE_URL = 2048;

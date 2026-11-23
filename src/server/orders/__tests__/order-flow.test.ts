@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { acceptOffer, createOffer, deleteOffer, rejectOffer } from "@/server/offers/offers";
 import {
@@ -149,6 +149,38 @@ describe("cancel order", () => {
     const err = await httpError(cancelOrder({ db: db as never, userId: UMKM }, "ord-1"));
     expect(err).toMatchObject({ status: 409, message: "Order status tidak dapat dibatalkan: in_progress" });
     expect(db.rpc).toHaveBeenCalledWith("cancel_order", { p_order_id: "ord-1", p_umkm_id: UMKM });
+  });
+
+  const midtrans = { serverKey: "SB-test", isProduction: false } as never;
+  const cancelResponse = (status: number, body: unknown) =>
+    vi.fn(async () => new Response(JSON.stringify(body), { status }));
+
+  it("payment pending ikut dibatalkan di Midtrans (best-effort)", async () => {
+    db.setRpc("cancel_order", () => ({ ok: true, status: "cancelled", cancelledPayments: ["ord-abc"] }));
+    const fetchImpl = cancelResponse(200, { status_code: "200", transaction_status: "cancel" });
+    const res = await cancelOrder({ db: db as never, userId: UMKM }, "ord-1", { midtrans, fetchImpl: fetchImpl as never });
+    expect(res).toEqual({ ok: true, status: "cancelled" });
+    expect(String((fetchImpl.mock.calls[0] as unknown[])[0])).toContain("/v2/ord-abc/cancel");
+    expect(db.rpc).not.toHaveBeenCalledWith("record_payment_event", expect.anything());
+  });
+
+  it("Midtrans gagal → payment_events cancel_failed, order tetap batal", async () => {
+    db.setRpc("cancel_order", () => ({ ok: true, status: "cancelled", cancelledPayments: ["ord-abc"] }));
+    db.setRpc("record_payment_event", () => ({ ok: true }));
+    const fetchImpl = cancelResponse(412, { status_code: "412", status_message: "cannot be updated" });
+    const res = await cancelOrder({ db: db as never, userId: UMKM }, "ord-1", { midtrans, fetchImpl: fetchImpl as never });
+    expect(res.status).toBe("cancelled");
+    expect(db.rpc).toHaveBeenCalledWith(
+      "record_payment_event",
+      expect.objectContaining({ p_gateway_reference: "ord-abc", p_kind: "cancel_failed", p_status_code: "412" }),
+    );
+  });
+
+  it("tanpa konfigurasi Midtrans → hanya DB", async () => {
+    db.setRpc("cancel_order", () => ({ ok: true, status: "cancelled", cancelledPayments: ["ord-abc"] }));
+    const res = await cancelOrder({ db: db as never, userId: UMKM }, "ord-1", { midtrans: null });
+    expect(res.status).toBe("cancelled");
+    expect(db.rpc).toHaveBeenCalledTimes(1);
   });
 });
 

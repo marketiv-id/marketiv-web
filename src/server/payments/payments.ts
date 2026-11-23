@@ -239,18 +239,31 @@ export async function cancelPayment(
   );
 
   if (payment.purpose === "campaign" && !res.alreadyCancelled) {
-    const result = await cancelTransaction(ctx.midtrans, payment.gateway_reference, ctx.fetchImpl).catch(() => null);
-    // 404 = transaksi belum pernah dibuat di gateway (Snap belum dipakai): wajar.
-    if (!result || (!result.cancelled && result.statusCode !== "404")) {
-      await callPaymentRpc(ctx.db, "record_payment_event", {
-        p_gateway_reference: payment.gateway_reference,
-        p_kind: "cancel_failed",
-        p_transaction_status: "cancel",
-        p_status_code: result?.statusCode ?? null,
-        p_payload: { message: result?.message ?? "request gagal" },
-      }).catch((e) => console.error("[payments] gagal mencatat cancel_failed", payment.id, e));
-    }
+    await cancelGatewayBestEffort(ctx.db, payment.gateway_reference, ctx.midtrans, ctx.fetchImpl);
   }
 
   return { ok: true, paymentId: res.paymentId, status: res.status };
+}
+
+/**
+ * Batalkan transaksi di Midtrans SETELAH payment sudah dibatalkan di DB
+ * (best-effort). 404 = transaksi belum pernah dibuat di gateway (Snap belum
+ * dipakai): wajar. Kegagalan lain → `payment_events` `cancel_failed` + alert
+ * admin; bila pembayaran tetap masuk, webhook mencatatnya `late_settlement`.
+ */
+export async function cancelGatewayBestEffort(
+  db: PaymentDb,
+  gatewayReference: string,
+  midtrans: MidtransConfig,
+  fetchImpl?: typeof fetch,
+): Promise<void> {
+  const result = await cancelTransaction(midtrans, gatewayReference, fetchImpl).catch(() => null);
+  if (result && (result.cancelled || result.statusCode === "404")) return;
+  await callPaymentRpc(db, "record_payment_event", {
+    p_gateway_reference: gatewayReference,
+    p_kind: "cancel_failed",
+    p_transaction_status: "cancel",
+    p_status_code: result?.statusCode ?? null,
+    p_payload: { message: result?.message ?? "request gagal" },
+  }).catch((e) => console.error("[payments] gagal mencatat cancel_failed", gatewayReference, e));
 }
