@@ -1,18 +1,19 @@
-// TODO(fase-06|07|08): import Appwrite di bawah hanya untuk jalur TULIS
-// (dan baca-ulang di dalam fungsi tulis). Jalur baca sudah Supabase (Fase 5).
-import { Query, ID, Permission, Role } from "appwrite";
+// TODO(fase-07|08): import Appwrite di bawah hanya untuk jalur TULIS Fase 7/8
+// (offer, order, review submission, AI brief, pembayaran). Jalur baca sudah
+// Supabase (Fase 5); tulis campaign/profil/file sudah Route Handler (Fase 6).
+import { Query } from "appwrite";
 import { databases } from "@/lib/appwrite/databases";
 import { appwriteConfig } from "@/lib/appwrite/config";
 import { executeFunction, FUNCTION_IDS } from "@/lib/appwrite/functions";
 import { callApi, FunctionExecutionError } from "@/lib/api/call-api";
 import { createClient } from "@/lib/supabase/client";
 import { rowToDoc, rowsToDocs } from "@/services/shared/legacy-doc";
-import { uploadPublicFile, FileRuleError } from "@/lib/appwrite/storage";
+import { uploadPublicFile, FileRuleError } from "@/lib/supabase/storage";
 import {
   uploadCampaignThumbnail,
   deleteCampaignThumbnailByUrl,
   copyCampaignThumbnail,
-} from "@/lib/appwrite/campaign-thumbnail";
+} from "@/lib/supabase/campaign-thumbnail";
 import { type CampaignType, MINIMUM_CAMPAIGN_BUDGET, PLATFORM_FEE_RATE } from "@/types/domain";
 import {
   createOfferSchema,
@@ -64,7 +65,10 @@ import {
  * FASE 5 (migrasi Supabase): semua BACA lewat supabase-js (browser, dibatasi
  * RLS — supabase/migrations/0011_rls_select.sql) atau Route Handler `/api/umkm/*`
  * via `callApi()`. Row Postgres → `rowToDoc()` → mapper lama di bawah, jadi DTO
- * tidak berubah. Semua TULIS masih Appwrite dan ditandai `TODO(fase-06|07|08)`.
+ * tidak berubah.
+ * FASE 6: tulis campaign (draft/brief/aset/status), profil, logo, dan thumbnail
+ * lewat Route Handler `/api/campaigns/**` + `/api/profile` dan Supabase Storage.
+ * Tulis Fase 7/8 masih Appwrite dan ditandai `TODO(fase-07|08)`.
  * Nama fungsi `*FromAppwrite` dipertahankan supaya pemanggil tidak berubah.
  *
  * (Catatan lama, sistem Appwrite:)
@@ -897,120 +901,45 @@ export type CampaignDraftResult = {
 };
 
 /**
- * Tulis campaign draft (status "draft") + campaign_briefs + campaign_assets.
- * TANPA transaction — SDK 25 mendukungnya tapi belum teruji di server ini.
- * Kebijakan gagal: campaign row adalah sumber keberhasilan; brief/asset yang
- * gagal hanya menambah warning, campaign tidak di-rollback (draft tetap ada).
- * Permission baris read(any)/update+delete(owner) — grant delete adalah satu-
- * satunya cara baris ini nanti bisa dihapus (tak ada collection delete("users")).
+ * Buat campaign draft + brief + aset lewat `POST /api/campaigns`.
+ * Server menjalankan semuanya dalam SATU transaksi (RPC create_campaign_draft)
+ * dan memaksa status="draft", remaining_budget=0, umkm_id=sesi (celah #2).
  */
-// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function createCampaignDraftInAppwrite(
   input: CreateCampaignDraftInput
 ): Promise<ServiceResult<CampaignDraftResult>> {
   const empty = null as unknown as CampaignDraftResult;
   const auth = await requireUserId<CampaignDraftResult>(empty);
   if (!auth.ok) return auth.result;
-  const uid = auth.userId;
-  const campaignPerms = [
-    Permission.read(Role.user(uid)),
-    Permission.delete(Role.user(uid)),
-  ];
-  const subDocPerms = [
-    Permission.read(Role.any()),
-    Permission.update(Role.user(uid)),
-    Permission.delete(Role.user(uid)),
-  ];
-
-  let campaignDoc: Doc;
   try {
-    campaignDoc = (await databases.createDocument(
-      DB,
-      COLLECTIONS.campaigns,
-      ID.unique(),
-      {
-        umkmId: uid,
-        title: input.title.trim(),
-        thumbnailUrl: input.thumbnailUrl ?? "",
-        category: input.category,
-        type: input.type,
-        platforms: ["tiktok"],
-        description: input.description.trim(),
-        budget: input.budget,
-        rewardPer1000Views: input.rewardPer1000Views,
-        status: "draft",
-        claimLimit: input.claimLimit,
-        submissionDays: input.submissionDays ?? 7,
-        totalClaims: 0,
-        spentAmount: 0,
-        remainingBudget: 0,
-      },
-      campaignPerms
-    )) as unknown as Doc;
+    const { campaign } = await callApi<{ campaign: Record<string, unknown> }>("createCampaign", {
+      title: input.title.trim(),
+      thumbnailUrl: input.thumbnailUrl ?? "",
+      category: input.category,
+      type: input.type,
+      description: input.description.trim(),
+      budget: input.budget,
+      rewardPer1000Views: input.rewardPer1000Views,
+      claimLimit: input.claimLimit,
+      submissionDays: input.submissionDays ?? 7,
+      ...(input.brief ? { brief: input.brief } : {}),
+      ...(input.asset ? { asset: input.asset } : {}),
+    });
+    // Satu transaksi di server (RPC create_campaign_draft): brief/aset tidak
+    // bisa lagi gagal sebagian, jadi selalu `complete`.
+    return ok<CampaignDraftResult>({
+      campaign: mapCampaign(rowToDoc("campaigns", campaign)),
+      complete: true,
+      warnings: [],
+    });
   } catch (err) {
-    return failFromWriteError<CampaignDraftResult>(err, empty);
+    return failFromWriteError<CampaignDraftResult>(err, empty, undefined, "createCampaignDraft");
   }
-
-  const warnings: string[] = [];
-  const campaignId = str(campaignDoc.$id);
-
-  if (input.brief) {
-    try {
-      await databases.createDocument(
-        DB,
-        COLLECTIONS.campaignBriefs,
-        ID.unique(),
-        {
-          campaignId,
-          objective: input.brief.objective ?? "",
-          contentAngle: input.brief.contentAngle,
-          cta: input.brief.cta,
-          briefDetail: input.brief.briefDetail,
-          doAndDont: input.brief.doAndDont ?? "",
-          generatedByAi: input.brief.generatedByAi ?? false,
-        },
-        subDocPerms
-      );
-    } catch (err) {
-      console.error("[createCampaignDraft] Failed to write brief:", err);
-      warnings.push("Brief belum tersimpan — buka draft untuk melengkapi.");
-    }
-  }
-
-  if (input.asset) {
-    try {
-      await databases.createDocument(
-        DB,
-        COLLECTIONS.campaignAssets,
-        ID.unique(),
-        {
-          campaignId,
-          source: "external",
-          type: "link",
-          fileUrl: input.asset.fileUrl,
-          fileName: input.asset.fileName ?? "Folder Aset Eksternal",
-        },
-        subDocPerms
-      );
-    } catch (err) {
-      console.error("[createCampaignDraft] Failed to write asset:", err);
-      warnings.push("Tautan aset belum tersimpan — buka draft untuk melengkapi.");
-    }
-  }
-
-  return ok<CampaignDraftResult>({
-    campaign: mapCampaign(campaignDoc),
-    complete: warnings.length === 0,
-    warnings,
-  });
 }
 
 /**
- * Ubah status campaign (jeda/aktifkan).
- * Dirutekan lewat patch-campaign-status Cloud Function karena baris campaign
- * tidak lagi punya Permission.update dari klien (fix SEC-H1 2026-08-08).
+ * Ubah status campaign (jeda/aktifkan) lewat `PATCH /api/campaigns/[id]/status`.
  */
-// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function updateCampaignStatusInAppwrite(
   campaignId: string,
   next: "paused" | "active"
@@ -1020,16 +949,11 @@ export async function updateCampaignStatusInAppwrite(
   if (!auth.ok) return auth.result;
   try {
     const action = next === "paused" ? "pause" : "resume";
-    await executeFunction(FUNCTION_IDS.patchCampaignStatus, { campaignId, action });
-    // Baca ulang campaign terbaru setelah update
-    const res = await databases.listDocuments(DB, COLLECTIONS.campaigns, [
-      Query.equal("$id", campaignId),
-      Query.equal("umkmId", auth.userId),
-      Query.limit(1),
-    ]);
-    const doc = res.documents[0] as unknown as Doc | undefined;
-    if (!doc) return fail("Campaign tidak ditemukan setelah update.", "not_found", empty);
-    return ok(mapCampaign(doc));
+    const { campaign } = await callApi<{ campaign: Record<string, unknown> }>("patchCampaignStatus", {
+      campaignId,
+      action,
+    });
+    return ok(mapCampaign(rowToDoc("campaigns", campaign)));
   } catch (err) {
     return failFromWriteError<Campaign>(err, empty, undefined, "updateCampaignStatusInAppwrite");
   }
@@ -1045,7 +969,6 @@ export type DuplicateCampaignOptions = {
  * Duplikasi campaign lewat createCampaignDraftInAppwrite (satu jalur create).
  * Baca sumber ownership-filtered + brief/asset opsional sesuai options.
  */
-// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function duplicateCampaignInAppwrite(
   sourceId: string,
   newTitle: string,
@@ -1055,22 +978,25 @@ export async function duplicateCampaignInAppwrite(
   const auth = await requireUserId<CampaignDraftResult>(empty);
   if (!auth.ok) return auth.result;
   try {
-    const srcRes = await databases.listDocuments(DB, COLLECTIONS.campaigns, [
-      Query.equal("$id", sourceId),
-      Query.equal("umkmId", auth.userId),
-      Query.limit(1),
-    ]);
-    const src = srcRes.documents[0] as unknown as Doc | undefined;
-    if (!src) return fail("Campaign sumber tidak ditemukan.", "not_found", empty);
+    const supabase = createClient();
+    const srcRow = must(
+      await supabase
+        .from("campaigns")
+        .select("*")
+        .eq("id", sourceId)
+        .eq("umkm_id", auth.userId)
+        .maybeSingle()
+    );
+    if (!srcRow) return fail("Campaign sumber tidak ditemukan.", "not_found", empty);
+    const src = rowToDoc("campaigns", srcRow);
 
     let brief: CreateCampaignDraftInput["brief"];
     if (options.copyBrief) {
-      const bRes = await databases.listDocuments(DB, COLLECTIONS.campaignBriefs, [
-        Query.equal("campaignId", sourceId),
-        Query.limit(1),
-      ]);
-      const b = bRes.documents[0] as unknown as Doc | undefined;
-      if (b) {
+      const bRow = must(
+        await supabase.from("campaign_briefs").select("*").eq("campaign_id", sourceId).limit(1).maybeSingle()
+      );
+      if (bRow) {
+        const b = rowToDoc("campaign_briefs", bRow);
         brief = {
           briefDetail: str(b.briefDetail),
           contentAngle: str(b.contentAngle),
@@ -1084,12 +1010,19 @@ export async function duplicateCampaignInAppwrite(
 
     let asset: CreateCampaignDraftInput["asset"];
     if (options.copyAssets) {
-      const aRes = await databases.listDocuments(DB, COLLECTIONS.campaignAssets, [
-        Query.equal("campaignId", sourceId),
-        Query.limit(1),
-      ]);
-      const a = aRes.documents[0] as unknown as Doc | undefined;
-      if (a) asset = { fileUrl: str(a.fileUrl), fileName: str(a.fileName) || undefined };
+      const aRow = must(
+        await supabase
+          .from("campaign_assets")
+          .select("*")
+          .eq("campaign_id", sourceId)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle()
+      );
+      if (aRow) {
+        const a = rowToDoc("campaign_assets", aRow);
+        asset = { fileUrl: str(a.fileUrl), fileName: str(a.fileName) || undefined };
+      }
     }
 
     // Thumbnail: salin sebagai file BARU (duplikasi tidak boleh berbagi file).
@@ -1220,7 +1153,6 @@ export type UmkmProfileWriteInput = Partial<
   Record<(typeof UMKM_PROFILE_WRITABLE)[number], string>
 >;
 
-// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function updateUmkmProfileInAppwrite(
   input: UmkmProfileWriteInput
 ): Promise<ServiceResult<UmkmSettingsProfile>> {
@@ -1238,15 +1170,15 @@ export async function updateUmkmProfileInAppwrite(
   }
 
   try {
-    await executeFunction(FUNCTION_IDS.updateProfile, payload);
+    // `PATCH /api/profile` — kontrak sama dengan Function update-profile.
+    await callApi("updateProfile", payload);
     return getUmkmSettingsProfileFromAppwrite();
   } catch (err) {
     return failFromWriteError<UmkmSettingsProfile>(err, empty);
   }
 }
 
-/** Unggah logo ke bucket `logos` (client-writable) dan kembalikan URL-nya. */
-// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
+/** Unggah logo ke bucket `logos` (Supabase, folder `<uid>/`) dan kembalikan URL publiknya. */
 export async function uploadUmkmLogoInAppwrite(file: File): Promise<ServiceResult<string>> {
   const auth = await requireUserId<string>("");
   if (!auth.ok) return auth.result;
@@ -1260,7 +1192,6 @@ export async function uploadUmkmLogoInAppwrite(file: File): Promise<ServiceResul
 }
 
 /** Unggah thumbnail produk campaign (STEP 1) ke bucket `campaign-assets`. */
-// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function uploadCampaignThumbnailInAppwrite(
   file: File
 ): Promise<ServiceResult<string>> {
@@ -1280,7 +1211,6 @@ export async function uploadCampaignThumbnailInAppwrite(
  * di-log (file mungkin jadi yatim, tidak ada risiko data konsistensi).
  * URL yang bukan milik bucket campaign-assets tidak diapa-apakan.
  */
-// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function deleteCampaignThumbnailInAppwrite(
   url: string
 ): Promise<ServiceResult<null>> {
@@ -1439,11 +1369,10 @@ export async function createOrderPaymentInAppwrite(input: {
  * mendapat "belum di-top-up" walau pengguna baru saja membayar.
  */
 /**
- * Terbitkan campaign draft menjadi active.
- * Dirutekan lewat patch-campaign-status Cloud Function yang memvalidasi
- * remainingBudget > 0 di sisi server (fix SEC-H1 2026-08-08).
+ * Terbitkan campaign draft menjadi active lewat `PATCH /api/campaigns/[id]/status`
+ * (action publish). Server memvalidasi remaining_budget ≥ budget dan mengirim
+ * notifikasi "Campaign Baru" ke kreator (RPC publish_campaign).
  */
-// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function publishCampaignInAppwrite(
   campaignId: string
 ): Promise<ServiceResult<Campaign>> {
@@ -1451,18 +1380,14 @@ export async function publishCampaignInAppwrite(
   const auth = await requireUserId<Campaign>(empty);
   if (!auth.ok) return auth.result;
   try {
-    await executeFunction(FUNCTION_IDS.patchCampaignStatus, { campaignId, action: "publish" });
-    // Baca ulang setelah publish
-    const res = await databases.listDocuments(DB, COLLECTIONS.campaigns, [
-      Query.equal("$id", campaignId),
-      Query.equal("umkmId", auth.userId),
-      Query.limit(1),
-    ]);
-    const doc = res.documents[0] as unknown as Doc | undefined;
-    if (!doc) return fail("Campaign tidak ditemukan setelah diterbitkan.", "not_found", empty);
-    return ok(mapCampaign(doc));
+    const { campaign } = await callApi<{ campaign: Record<string, unknown> }>("patchCampaignStatus", {
+      campaignId,
+      action: "publish",
+    });
+    return ok(mapCampaign(rowToDoc("campaigns", campaign)));
   } catch (err) {
-    return failFromError<Campaign>(err, empty);
+    // Pesan route (mis. "Dana campaign belum mencukupi…") diteruskan ke UI.
+    return failFromWriteError<Campaign>(err, empty, undefined, "publishCampaignInAppwrite");
   }
 }
 
@@ -1549,109 +1474,54 @@ const failDelete = (err: unknown, subject: string): ServiceResult<null> => {
 };
 
 /**
- * Hapus campaign berstatus `draft` beserta brief & asetnya.
- *
- * Anak dihapus lebih dulu supaya tidak ada baris yatim bila penghapusan induk
- * gagal — urutan sebaliknya akan meninggalkan brief/aset yang tak terjangkau
- * (keduanya hanya bisa ditemukan lewat `campaignId`).
- * Kegagalan menghapus anak TIDAK membatalkan operasi: induk yang tersisa jauh
- * lebih mengganggu pengguna daripada satu baris brief yatim.
+ * Hapus campaign berstatus `draft` beserta brief & asetnya lewat
+ * `DELETE /api/campaigns/[id]`. Brief & aset terhapus atomik oleh FK cascade,
+ * jadi tidak ada lagi baris yatim. Thumbnail dibersihkan sesudahnya (best-effort).
  */
-// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function deleteCampaignDraftInAppwrite(
   campaignId: string
 ): Promise<ServiceResult<null>> {
   const auth = await requireUserId<null>(null);
   if (!auth.ok) return auth.result;
+  let thumbnailUrl = "";
   try {
-    const res = await databases.listDocuments(DB, COLLECTIONS.campaigns, [
-      Query.equal("$id", campaignId),
-      Query.equal("umkmId", auth.userId),
-      Query.limit(1),
-    ]);
-    const doc = res.documents[0] as unknown as Doc | undefined;
-    if (!doc) return fail("Campaign tidak ditemukan.", "not_found", null);
-
-    if (str(doc.status) !== "draft") {
-      return failValidation(
-        "Hanya campaign draft yang bisa dihapus. Campaign yang sudah tayang cukup dijeda.",
-        null
-      );
-    }
-
-    // Thumbnail diambil SEBELUM penghapusan baris — setelah DB terhapus tidak
-    // ada lagi referensi ke file-nya.
-    const thumbnailUrl = str(doc.thumbnailUrl);
-
-    for (const collection of [COLLECTIONS.campaignBriefs, COLLECTIONS.campaignAssets]) {
-      try {
-        const children = await databases.listDocuments(DB, collection, [
-          Query.equal("campaignId", campaignId),
-          Query.limit(100),
-        ]);
-        for (const child of children.documents) {
-          await databases.deleteDocument(DB, collection, child.$id);
-        }
-      } catch {
-        // Baris anak yatim lebih ringan daripada gagal menghapus induk.
-      }
-    }
-
-    // DB dulu, file belakangan: penghapusan file yang lebih dulu sukses lalu
-    // penghapusan baris gagal akan meninggalkan campaign yang menunjuk file
-    // yang sudah mati. Kegagalan cleanup setelah DB terhapus NON-FATAL —
-    // campaign tetap terhapus, jangan dibuat ulang.
-    await databases.deleteDocument(DB, COLLECTIONS.campaigns, campaignId);
-
-    if (thumbnailUrl) {
-      try {
-        await deleteCampaignThumbnailByUrl(thumbnailUrl);
-      } catch (err) {
-        console.error(
-          "[deleteCampaignDraft] Thumbnail cleanup failed (non-fatal):",
-          err
-        );
-      }
-    }
-    return ok(null);
+    // Route menghapus baris campaign (brief & aset ikut lewat FK cascade) dan
+    // mengembalikan URL thumbnail lama.
+    const res = await callApi<{ ok: true; thumbnailUrl?: string }>("deleteCampaign", { campaignId });
+    thumbnailUrl = str(res?.thumbnailUrl);
   } catch (err) {
     return failDelete(err, "Campaign");
   }
+
+  // DB dulu, file belakangan: kegagalan cleanup setelah DB terhapus NON-FATAL —
+  // campaign tetap terhapus, jangan dibuat ulang.
+  if (thumbnailUrl) {
+    try {
+      await deleteCampaignThumbnailByUrl(thumbnailUrl);
+    } catch (err) {
+      console.error("[deleteCampaignDraft] Thumbnail cleanup failed (non-fatal):", err);
+    }
+  }
+  return ok(null);
 }
 
 /**
  * Hapus satu aset campaign. Hanya selama induknya masih `draft` — setelah tayang
  * kreator sudah bisa melihat asetnya, jadi menghapusnya mengubah brief berjalan.
  */
-// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function removeCampaignAssetInAppwrite(
   assetId: string
 ): Promise<ServiceResult<null>> {
   const auth = await requireUserId<null>(null);
   if (!auth.ok) return auth.result;
   try {
-    const asset = (await databases.getDocument(
-      DB,
-      COLLECTIONS.campaignAssets,
-      assetId
-    )) as unknown as Doc;
-
-    const parent = await databases.listDocuments(DB, COLLECTIONS.campaigns, [
-      Query.equal("$id", str(asset.campaignId)),
-      Query.equal("umkmId", auth.userId),
-      Query.limit(1),
-    ]);
-    const campaign = parent.documents[0] as unknown as Doc | undefined;
-    if (!campaign) return fail("Aset tidak ditemukan.", "not_found", null);
-
-    if (str(campaign.status) !== "draft") {
-      return failValidation(
-        "Aset hanya bisa dihapus selama campaign masih draft.",
-        null
-      );
-    }
-
-    await databases.deleteDocument(DB, COLLECTIONS.campaignAssets, assetId);
+    // Route butuh campaignId di path; aset terbaca lewat RLS hanya bila
+    // campaign induknya terbaca (milik sendiri, atau sudah tayang).
+    const asset = must(
+      await createClient().from("campaign_assets").select("id, campaign_id").eq("id", assetId).maybeSingle()
+    );
+    if (!asset) return fail("Aset tidak ditemukan.", "not_found", null);
+    await callApi("deleteCampaignAsset", { campaignId: asset.campaign_id, assetId });
     return ok(null);
   } catch (err) {
     return failDelete(err, "Aset");
@@ -1837,7 +1707,6 @@ export async function getCampaignDraftForEditFromAppwrite(
  * Brief dan asset di-upsert: update baris lama bila ada, buat baru bila belum.
  * Kembalikan `CampaignDraftResult` agar wizard tidak perlu bedakan create vs update.
  */
-// TODO(fase-06): TULIS masih Appwrite (termasuk baca-ulang/guard di dalamnya).
 export async function updateCampaignDraftInAppwrite(
   campaignId: string,
   input: CreateCampaignDraftInput
@@ -1846,12 +1715,11 @@ export async function updateCampaignDraftInAppwrite(
   const auth = await requireUserId<CampaignDraftResult>(empty);
   if (!auth.ok) return auth.result;
 
-  // Update campaign row via patch-campaign-draft Cloud Function (fix SEC-H1 2026-08-08).
-  // Baris campaign tidak punya Permission.update dari klien — semua field update
-  // disalurkan lewat CF yang memiliki field allowlist ketat (no financial fields).
+  // Kolom campaign lewat `PATCH /api/campaigns/[id]/draft` (allowlist server,
+  // tanpa kolom uang/status — celah #2).
   let campaignDoc: Doc;
   try {
-    await executeFunction(FUNCTION_IDS.patchCampaignDraft, {
+    const { campaign } = await callApi<{ campaign: Record<string, unknown> }>("patchCampaignDraft", {
       campaignId,
       title: input.title.trim(),
       category: input.category,
@@ -1861,17 +1729,10 @@ export async function updateCampaignDraftInAppwrite(
       rewardPer1000Views: input.rewardPer1000Views,
       claimLimit: input.claimLimit,
       submissionDays: input.submissionDays ?? 7,
-      // Opsional: field diabaikan CF bila tidak dikirim (allowlist ketat).
+      // Opsional: field diabaikan server bila tidak dikirim.
       ...(input.thumbnailUrl !== undefined && { thumbnailUrl: input.thumbnailUrl }),
     });
-    // Baca ulang untuk dapatkan doc terbaru (CF tidak mereturn doc lengkap)
-    const refreshed = await databases.listDocuments(DB, COLLECTIONS.campaigns, [
-      Query.equal("$id", campaignId),
-      Query.equal("umkmId", auth.userId),
-      Query.limit(1),
-    ]);
-    const d = refreshed.documents[0] as unknown as Doc | undefined;
-    if (!d) return fail("Campaign draft tidak ditemukan setelah update.", "not_found", empty);
+    const d = rowToDoc("campaigns", campaign);
     // Verifikasi persistensi thumbnail: bila tidak cocok, anggap GAGAL supaya
     // pemanggil melakukan cleanup (Model B: file lama tetap valid, file baru
     // dibersihkan).
@@ -1880,72 +1741,30 @@ export async function updateCampaignDraftInAppwrite(
     }
     campaignDoc = d;
   } catch (err) {
-    return failFromError<CampaignDraftResult>(err, empty);
+    return failFromWriteError<CampaignDraftResult>(err, empty, undefined, "updateCampaignDraft");
   }
 
   const warnings: string[] = [];
-  const perms = [
-    Permission.read(Role.any()),
-    Permission.update(Role.user(auth.userId)),
-    Permission.delete(Role.user(auth.userId)),
-  ];
 
-  // Upsert brief
+  // Upsert brief (unique per campaign) — gagal = warning, campaign tetap tersimpan.
   if (input.brief) {
     try {
-      const briefRes = await databases.listDocuments(DB, COLLECTIONS.campaignBriefs, [
-        Query.equal("campaignId", campaignId),
-        Query.limit(1),
-      ]);
-      const existingBrief = briefRes.documents[0] as unknown as Doc | undefined;
-      const briefData = {
-        objective: input.brief.objective ?? "",
-        contentAngle: input.brief.contentAngle,
-        cta: input.brief.cta,
-        briefDetail: input.brief.briefDetail,
-        doAndDont: input.brief.doAndDont ?? "",
-        generatedByAi: input.brief.generatedByAi ?? false,
-      };
-      if (existingBrief) {
-        try {
-          await databases.updateDocument(DB, COLLECTIONS.campaignBriefs, str(existingBrief.$id), briefData);
-        } catch {
-          await databases.deleteDocument(DB, COLLECTIONS.campaignBriefs, str(existingBrief.$id));
-          await databases.createDocument(DB, COLLECTIONS.campaignBriefs, ID.unique(), { campaignId, ...briefData }, perms);
-        }
-      } else {
-        await databases.createDocument(DB, COLLECTIONS.campaignBriefs, ID.unique(), { campaignId, ...briefData }, perms);
-      }
+      await callApi("putCampaignBrief", { campaignId, ...input.brief });
     } catch (err) {
       console.error("[updateCampaignDraft] Failed to update brief:", err);
       warnings.push("Brief belum tersimpan — buka draft untuk melengkapi.");
     }
   }
 
-  // Upsert asset
+  // Ganti aset pertama (atau buat bila belum ada).
   if (input.asset) {
     try {
-      const assetRes = await databases.listDocuments(DB, COLLECTIONS.campaignAssets, [
-        Query.equal("campaignId", campaignId),
-        Query.limit(1),
-      ]);
-      const existingAsset = assetRes.documents[0] as unknown as Doc | undefined;
-      const assetData = {
-        source: "external",
-        type: "link",
+      await callApi("createCampaignAsset", {
+        campaignId,
         fileUrl: input.asset.fileUrl,
-        fileName: input.asset.fileName ?? "Folder Aset Eksternal",
-      };
-      if (existingAsset) {
-        try {
-          await databases.updateDocument(DB, COLLECTIONS.campaignAssets, str(existingAsset.$id), assetData);
-        } catch {
-          await databases.deleteDocument(DB, COLLECTIONS.campaignAssets, str(existingAsset.$id));
-          await databases.createDocument(DB, COLLECTIONS.campaignAssets, ID.unique(), { campaignId, ...assetData }, perms);
-        }
-      } else {
-        await databases.createDocument(DB, COLLECTIONS.campaignAssets, ID.unique(), { campaignId, ...assetData }, perms);
-      }
+        ...(input.asset.fileName ? { fileName: input.asset.fileName } : {}),
+        replace: true,
+      });
     } catch (err) {
       console.error("[updateCampaignDraft] Failed to update asset:", err);
       warnings.push("Tautan aset belum tersimpan — buka draft untuk melengkapi.");
