@@ -42,3 +42,27 @@ describe("rowToDoc", () => {
     expect(rowToDoc("campaign_briefs", { id: "b", materials: ["a"], do_and_dont: null })).toMatchObject({ materialsJson: '["a"]', doAndDont: null });
   });
 });
+
+describe("fake-supabase — tulis", () => {
+  it("insert/upsert/update/delete + returning", async () => {
+    const db = createFakeSupabase({ claims: [{ id: "k1", campaign_id: "c1", creator_id: "u1", status: "claimed" }] });
+    const ins = await db.from("claims").insert({ campaign_id: "c2", creator_id: "u1", status: "claimed" }).select().single();
+    expect(ins.data).toMatchObject({ campaign_id: "c2", id: expect.any(String) });
+    const dup = await db.from("claims").insert({ id: "k1" });
+    expect(dup.error?.code).toBe("23505");
+    await db.from("claims").upsert({ campaign_id: "c1", creator_id: "u1", status: "submitted" }, { onConflict: "campaign_id,creator_id" });
+    expect(db.tables.claims.find((r) => r.id === "k1")?.status).toBe("submitted");
+    const upd = await db.from("claims").update({ status: "expired" }).eq("creator_id", "u1").select();
+    expect((upd.data as unknown[]).length).toBe(2);
+    await db.from("claims").delete().eq("campaign_id", "c2");
+    expect(db.tables.claims.map((r) => r.id)).toEqual(["k1"]);
+  });
+
+  it("rpc error meneruskan hint", async () => {
+    const db = createFakeSupabase();
+    db.setRpc("x", () => {
+      throw Object.assign(new Error("Kuota penuh"), { code: "P0001", hint: "quota_exceeded" });
+    });
+    expect((await db.rpc("x")).error).toMatchObject({ code: "P0001", hint: "quota_exceeded" });
+  });
+});

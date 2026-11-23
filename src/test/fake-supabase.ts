@@ -5,6 +5,10 @@
  *   db.rpc.mockImplementation(...)          // atau: db.setRpc("nama", (args) => data)
  *   await db.from("campaigns").select("*").eq("umkm_id", "u1").order("created_at", { ascending: false });
  *
+ * Tulis: insert / upsert (`onConflict`, `ignoreDuplicates`) / update / delete
+ * (dengan filter), opsional `.select()` + `.single()` untuk mengembalikan baris.
+ * Error rpc meneruskan `hint`/`details`.
+ *
  * Didukung: select (daftar kolom diabaikan — selalu baris utuh; embed relasi
  * TIDAK didukung), opsi `{ count: "exact", head: true }`, eq/neq/in/is/not
  * ("is"/"in"/"eq"), gt/gte/lt/lte, like/ilike, contains (array), or()
@@ -28,6 +32,8 @@ export interface FakeCall {
 interface FakeError {
   code: string;
   message: string;
+  hint?: string | null;
+  details?: string | null;
 }
 
 function cmp(a: unknown, b: unknown): number {
@@ -112,14 +118,51 @@ class FakeQuery implements PromiseLike<{ data: unknown; error: FakeError | null;
   private countMode: string | undefined;
   private head = false;
 
+  private mutation:
+    | { kind: "insert" | "upsert"; values: Row[]; onConflict?: string; ignoreDuplicates?: boolean }
+    | { kind: "update"; patch: Row }
+    | { kind: "delete" }
+    | null = null;
+  private returning = false;
+
   constructor(
     private readonly table: string,
     private readonly rows: () => Row[],
     private readonly onCall: (call: FakeCall) => void,
     private readonly failWith: FakeError | null,
+    private readonly setRows: (rows: Row[]) => void = () => {},
   ) {}
 
+  insert(values: Row | Row[]) {
+    this.mutation = { kind: "insert", values: Array.isArray(values) ? values : [values] };
+    return this;
+  }
+
+  upsert(values: Row | Row[], options?: { onConflict?: string; ignoreDuplicates?: boolean }) {
+    this.mutation = {
+      kind: "upsert",
+      values: Array.isArray(values) ? values : [values],
+      onConflict: options?.onConflict,
+      ignoreDuplicates: options?.ignoreDuplicates,
+    };
+    return this;
+  }
+
+  update(patch: Row) {
+    this.mutation = { kind: "update", patch };
+    return this;
+  }
+
+  delete() {
+    this.mutation = { kind: "delete" };
+    return this;
+  }
+
   select(_columns?: string, options?: { count?: string; head?: boolean }) {
+    if (this.mutation) {
+      this.returning = true;
+      return this;
+    }
     this.countMode = options?.count;
     this.head = options?.head === true;
     return this;
@@ -186,6 +229,7 @@ class FakeQuery implements PromiseLike<{ data: unknown; error: FakeError | null;
   private execute(): { data: unknown; error: FakeError | null; count: number | null } {
     this.onCall({ table: this.table, filters: this.filterLog, count: this.countMode });
     if (this.failWith) return { data: null, error: this.failWith, count: null };
+    if (this.mutation) return this.executeMutation();
 
     let result = this.rows().filter((row) => this.filters.every((f) => f(row)));
     const count = result.length;
@@ -217,6 +261,58 @@ class FakeQuery implements PromiseLike<{ data: unknown; error: FakeError | null;
       return { data: copy[0] ?? null, error: null, count: this.countMode ? count : null };
     }
     return { data: copy, error: null, count: this.countMode ? count : null };
+  }
+
+  /** insert/upsert/update/delete in-memory. id & created_at diisi bila kosong. */
+  private executeMutation(): { data: unknown; error: FakeError | null; count: number | null } {
+    const m = this.mutation!;
+    const all = this.rows().map((r) => r);
+    let affected: Row[] = [];
+    if (m.kind === "insert" || m.kind === "upsert") {
+      const keys = (m.onConflict ?? "id").split(",").map((k) => k.trim());
+      for (const value of m.values) {
+        const row: Row = {
+          id: value.id ?? globalThis.crypto.randomUUID(),
+          created_at: value.created_at ?? new Date().toISOString(),
+          ...structuredClone(value),
+        };
+        const existing = all.findIndex((r) => keys.every((k) => r[k] !== undefined && String(r[k]) === String(row[k])));
+        if (existing >= 0) {
+          if (m.kind === "insert") {
+            return { data: null, error: { code: "23505", message: "duplicate key value violates unique constraint" }, count: null };
+          }
+          if (m.ignoreDuplicates) continue;
+          all[existing] = { ...all[existing], ...structuredClone(value) };
+          affected.push(all[existing]);
+        } else {
+          all.push(row);
+          affected.push(row);
+        }
+      }
+    } else {
+      const match = (row: Row) => this.filters.every((f) => f(row));
+      if (m.kind === "update") {
+        for (let i = 0; i < all.length; i += 1) {
+          if (match(all[i])) {
+            all[i] = { ...all[i], ...structuredClone(m.patch) };
+            affected.push(all[i]);
+          }
+        }
+      } else {
+        affected = all.filter(match);
+        for (const row of affected) all.splice(all.indexOf(row), 1);
+      }
+    }
+    this.setRows(all);
+    const out = affected.map((r) => structuredClone(r));
+    if (!this.returning) return { data: null, error: null, count: null };
+    if (this.mode === "single" || this.mode === "maybeSingle") {
+      if (out.length > 1 || (this.mode === "single" && out.length === 0)) {
+        return { data: null, error: { code: "PGRST116", message: "JSON object requested, multiple (or no) rows returned" }, count: null };
+      }
+      return { data: out[0] ?? null, error: null, count: null };
+    }
+    return { data: out, error: null, count: null };
   }
 
   then<R1 = { data: unknown; error: FakeError | null; count: number | null }, R2 = never>(
@@ -261,8 +357,11 @@ export function createFakeSupabase(seed: Record<string, Row[]> = {}): FakeSupaba
     try {
       return { data: await impl(args), error: null };
     } catch (err) {
-      const e = err as { code?: string; message?: string };
-      return { data: null, error: { code: e.code ?? "P0001", message: e.message ?? String(err) } };
+      const e = err as { code?: string; message?: string; hint?: string; details?: string };
+      return {
+        data: null,
+        error: { code: e.code ?? "P0001", message: e.message ?? String(err), hint: e.hint ?? null, details: e.details ?? null },
+      };
     }
   });
 
@@ -276,7 +375,15 @@ export function createFakeSupabase(seed: Record<string, Row[]> = {}): FakeSupaba
       rpcs.set(name, impl);
     },
     from(table: string) {
-      return new FakeQuery(table, () => tables[table] ?? [], (c) => calls.push(c), failures.get(table) ?? null);
+      return new FakeQuery(
+        table,
+        () => tables[table] ?? [],
+        (c) => calls.push(c),
+        failures.get(table) ?? null,
+        (rows) => {
+          tables[table] = rows;
+        },
+      );
     },
     rpc,
     auth: {
