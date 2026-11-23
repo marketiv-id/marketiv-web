@@ -1,7 +1,7 @@
 # Fase 08 — Keuangan: payment, escrow, wallet, withdrawal
 
 - Tanggal: 2026-11-23
-- PR: (diisi setelah PR dibuat)
+- PR: https://github.com/marketiv-id/marketiv-web/pull/43
 - Status: selesai di sisi kode dan staging. Semua perpindahan uang lewat RPC atomik + idempoten; test finance, uji konkurensi, dan smoke uang di staging lulus. **Satu verifikasi menunggu pemilik:** E2E Midtrans **sandbox sungguhan** (butuh kunci sandbox + Notification URL + branch deploy yang bisa dijangkau Midtrans) — lihat "Isu terbuka".
 
 ## Status task
