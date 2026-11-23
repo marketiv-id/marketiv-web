@@ -1465,6 +1465,7 @@ export type Database = {
           file_name: string;
           id: string;
           mime_type: string;
+          shared_with_order_id: string | null;
           size_bytes: number;
           status: string;
           storage_file_id: string;
@@ -1479,6 +1480,7 @@ export type Database = {
           file_name: string;
           id?: string;
           mime_type: string;
+          shared_with_order_id?: string | null;
           size_bytes: number;
           status?: string;
           storage_file_id: string;
@@ -1492,6 +1494,7 @@ export type Database = {
           file_name?: string;
           id?: string;
           mime_type?: string;
+          shared_with_order_id?: string | null;
           size_bytes?: number;
           status?: string;
           storage_file_id?: string;
@@ -1499,6 +1502,13 @@ export type Database = {
           user_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "user_files_shared_with_order_id_fkey";
+            columns: ["shared_with_order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "user_files_user_id_fkey";
             columns: ["user_id"];
@@ -1728,6 +1738,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      accept_tos: { Args: { p_user_id: string; p_version: string }; Returns: Json };
       admin_ratecard_deliverable_queue: {
         Args: { p_limit?: number };
         Returns: {
@@ -1746,7 +1757,87 @@ export type Database = {
           version: number;
         }[];
       };
+      confirm_user_file: {
+        Args: {
+          p_file_name: string;
+          p_path: string;
+          p_shared_with_order_id?: string;
+          p_user_id: string;
+        };
+        Returns: {
+          bucket_id: string;
+          created_at: string;
+          deleted_at: string | null;
+          file_name: string;
+          id: string;
+          mime_type: string;
+          shared_with_order_id: string | null;
+          size_bytes: number;
+          status: string;
+          storage_file_id: string;
+          updated_at: string;
+          user_id: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "user_files";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      create_appeal: {
+        Args: { p_action_ref?: string; p_evidence?: string; p_reason: string; p_user_id: string };
+        Returns: Json;
+      };
+      create_campaign_draft: {
+        Args: { p_asset?: Json; p_brief?: Json; p_campaign: Json; p_umkm_id: string };
+        Returns: {
+          budget: number;
+          category: string;
+          claim_limit: number;
+          created_at: string;
+          description: string | null;
+          id: string;
+          platforms: string[];
+          published_at: string | null;
+          remaining_budget: number;
+          reward_per_1000_views: number;
+          spent_amount: number;
+          status: string;
+          submission_days: number;
+          thumbnail_url: string;
+          title: string;
+          total_claims: number;
+          type: string;
+          umkm_id: string;
+          updated_at: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "campaigns";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      create_conversation: { Args: { p_creator_id: string; p_umkm_id: string }; Returns: string };
+      creator_create_rate_card: {
+        Args: {
+          p_creator_id: string;
+          p_delivery_days: number;
+          p_description: string;
+          p_name: string;
+          p_output: string;
+          p_price: number;
+          p_revision_limit: number;
+          p_status: string;
+        };
+        Returns: Json;
+      };
       creator_dashboard_summary: { Args: { p_user_id: string }; Returns: Json };
+      creator_delete_rate_card: {
+        Args: { p_creator_id: string; p_package_id?: string; p_rate_card_id: string };
+        Returns: boolean;
+      };
       creator_directory_page: { Args: { p_cursor?: string; p_limit: number }; Returns: Json };
       creator_negotiation_rows: {
         Args: { p_conversation_id?: string; p_user_id: string };
@@ -1769,6 +1860,45 @@ export type Database = {
           starting_price: number;
         }[];
       };
+      creator_update_rate_card_package: {
+        Args: {
+          p_creator_id: string;
+          p_delivery_days: number;
+          p_description: string;
+          p_name: string;
+          p_output: string;
+          p_package_id: string;
+          p_price: number;
+          p_rate_card_id: string;
+          p_revision_limit: number;
+          p_status?: string;
+        };
+        Returns: Json;
+      };
+      delete_notification: { Args: { p_id: string; p_user_id: string }; Returns: boolean };
+      delete_user_file: {
+        Args: { p_file_id: string; p_user_id: string };
+        Returns: {
+          bucket_id: string;
+          created_at: string;
+          deleted_at: string | null;
+          file_name: string;
+          id: string;
+          mime_type: string;
+          shared_with_order_id: string | null;
+          size_bytes: number;
+          status: string;
+          storage_file_id: string;
+          updated_at: string;
+          user_id: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "user_files";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       hit_otp_rate_limit: {
         Args: {
           p_email: string;
@@ -1782,6 +1912,11 @@ export type Database = {
           retry_after_seconds: number;
         }[];
       };
+      mark_conversation_read: {
+        Args: { p_conversation_id: string; p_user_id: string };
+        Returns: number;
+      };
+      mark_notifications_read: { Args: { p_ids: string[]; p_user_id: string }; Returns: number };
       provision_user: {
         Args: {
           p_display_name?: string;
@@ -1814,6 +1949,19 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      publish_campaign: { Args: { p_campaign_id: string; p_umkm_id: string }; Returns: string };
+      send_message: {
+        Args: { p_content: string; p_conversation_id: string; p_sender_id: string };
+        Returns: Json;
+      };
+      set_conversation_archived: {
+        Args: { p_archived: boolean; p_conversation_id: string; p_user_id: string };
+        Returns: Json;
+      };
+      set_notification_read: {
+        Args: { p_id: string; p_is_read: boolean; p_user_id: string };
+        Returns: boolean;
+      };
       umkm_dashboard_summary: { Args: { p_umkm_id: string }; Returns: Json };
       umkm_finance_summary: { Args: { p_umkm_id: string }; Returns: Json };
       umkm_negotiation_context: {
@@ -1824,6 +1972,7 @@ export type Database = {
         Args: { p_order_id?: string; p_umkm_id: string };
         Returns: Json;
       };
+      update_profile: { Args: { p_patch: Json; p_user_id: string }; Returns: Json };
     };
     Enums: {
       [_ in never]: never;

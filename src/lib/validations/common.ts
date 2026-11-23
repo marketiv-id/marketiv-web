@@ -16,7 +16,7 @@ import { z } from "zod";
 /**
  * @deprecated Batas ukuran file beda per bucket (5MB avatars/logos, 50MB
  * portfolios, 50MB campaign-assets). Gunakan BUCKET_RULES/assertFileAllowed di
- * src/lib/appwrite/storage.ts, bukan konstanta tunggal ini.
+ * src/lib/supabase/storage.ts, bukan konstanta tunggal ini.
  */
 export const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024; // 100 MB
 
