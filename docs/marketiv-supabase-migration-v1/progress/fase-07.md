@@ -1,7 +1,7 @@
 # Fase 07 — Alur campaign & order rate card
 
 - Tanggal: 2026-11-23
-- PR: (diisi setelah PR dibuat)
+- PR: https://github.com/marketiv-id/marketiv-web/pull/42
 - Status: selesai (tanpa uang). Alur campaign dan rate card berjalan end-to-end di staging lewat Route Handler + RPC; semua titik uang adalah stub status untuk Fase 8 (daftar di bawah). Migration 0022–0024 sudah di staging, job `pg_cron` terdaftar.
 
 ## Status task
