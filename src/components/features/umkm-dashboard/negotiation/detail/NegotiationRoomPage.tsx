@@ -34,8 +34,7 @@ import { NegotiationRoomSkeleton } from "./NegotiationRoomSkeleton";
 import { NegotiationNotFoundState } from "./NegotiationNotFoundState";
 import { NegotiationErrorState } from "../NegotiationErrorState";
 import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
-// TODO(fase-06): realtime chat masih Appwrite → useRealtimeTable (Supabase Realtime).
-import { realtimeClient, tableChannels } from "@/lib/appwrite/realtime";
+import { useRealtimeTable } from "@/lib/supabase/realtime";
 import {
   buildPaymentReturnUrl,
   isPaymentConfirmedStage,
@@ -158,16 +157,15 @@ export function NegotiationRoomPage({ conversationId }: NegotiationRoomPageProps
     onPaymentVerificationTimeout: handlePaymentVerificationTimeout,
   });
 
-  useEffect(() => {
-    if (DATA_SOURCE_CONFIG.useMockData) return;
-    const channels = tableChannels("messages");
-    if (channels.length === 0) return;
-
-    return realtimeClient.subscribe(channels, (event) => {
-      const payload = event.payload as { conversation_id?: string };
-      if (payload.conversation_id === conversationId) void reloadAuthoritativeRoom();
-    });
-  }, [conversationId, reloadAuthoritativeRoom]);
+  // Pesan baru/berubah di percakapan ini → baca ulang ruang (RLS: hanya peserta).
+  useRealtimeTable(
+    "messages",
+    conversationId ? `conversation_id=eq.${conversationId}` : null,
+    () => {
+      void reloadAuthoritativeRoom();
+    },
+    { enabled: !DATA_SOURCE_CONFIG.useMockData },
+  );
 
   useEffect(() => {
     if (searchParams.get("payment_return") !== "1") return;

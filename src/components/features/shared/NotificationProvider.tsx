@@ -17,8 +17,8 @@ import {
   deleteNotification,
 } from "@/services/shared/notification.service";
 import { DATA_SOURCE_CONFIG } from "@/config/data-source.config";
-// TODO(fase-06): realtime → Supabase Realtime (`useRealtimeTable`, 06-mutasi-chat-file.md).
-import { realtimeClient, tableChannels } from "@/lib/appwrite/realtime";
+import { useRealtimeTable } from "@/lib/supabase/realtime";
+import { getCurrentUserId } from "@/services/auth/session.service";
 
 export type NotificationRole = "umkm" | "creator";
 
@@ -71,14 +71,32 @@ export function NotificationProvider({ role, children }: NotificationProviderPro
     void reload();
   }, [reload]);
 
+  // userId untuk filter realtime. Diambil dari cache sesi (tanpa read tambahan).
+  const [userId, setUserId] = useState<string | null>(null);
   useEffect(() => {
     if (DATA_SOURCE_CONFIG.useMockData) return;
-    const channels = tableChannels("notifications");
-    if (channels.length === 0) return;
-    return realtimeClient.subscribe(channels, () => {
+    let active = true;
+    getCurrentUserId()
+      .then((id) => {
+        if (active) setUserId(id);
+      })
+      .catch(() => {
+        // Tanpa userId → tanpa realtime; daftar tetap bisa dimuat ulang manual.
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Event hanya sinyal; sumber kebenaran tetap baca ulang (RLS: notifikasi milik sendiri).
+  useRealtimeTable(
+    "notifications",
+    userId ? `user_id=eq.${userId}` : null,
+    () => {
       void reload();
-    });
-  }, [reload]);
+    },
+    { enabled: !DATA_SOURCE_CONFIG.useMockData },
+  );
 
   const markAsRead = useCallback(
     async (id: string) => {
