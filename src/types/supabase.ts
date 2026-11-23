@@ -1728,6 +1728,47 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      admin_ratecard_deliverable_queue: {
+        Args: { p_limit?: number };
+        Returns: {
+          amount: number;
+          creator_display_name: string;
+          creator_id: string;
+          deliverable_id: string;
+          file_url: string;
+          notes: string;
+          order_id: string;
+          package_name_snapshot: string;
+          source: string;
+          submitted_at: string;
+          umkm_business_name: string;
+          umkm_id: string;
+          version: number;
+        }[];
+      };
+      creator_dashboard_summary: { Args: { p_user_id: string }; Returns: Json };
+      creator_directory_page: { Args: { p_cursor?: string; p_limit: number }; Returns: Json };
+      creator_negotiation_rows: {
+        Args: { p_conversation_id?: string; p_user_id: string };
+        Returns: {
+          conversation: Json;
+          deliverable: Json;
+          escrow: Json;
+          offer: Json;
+          order: Json;
+          package: Json;
+          umkm: Json;
+          unread_count: number;
+          validation: Json;
+        }[];
+      };
+      creator_starting_prices: {
+        Args: { p_creator_ids: string[] };
+        Returns: {
+          creator_id: string;
+          starting_price: number;
+        }[];
+      };
       hit_otp_rate_limit: {
         Args: {
           p_email: string;
@@ -1772,6 +1813,16 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      umkm_dashboard_summary: { Args: { p_umkm_id: string }; Returns: Json };
+      umkm_finance_summary: { Args: { p_umkm_id: string }; Returns: Json };
+      umkm_negotiation_context: {
+        Args: { p_conversation_id?: string; p_umkm_id: string };
+        Returns: Json;
+      };
+      umkm_ratecard_review_context: {
+        Args: { p_order_id?: string; p_umkm_id: string };
+        Returns: Json;
       };
     };
     Enums: {
