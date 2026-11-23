@@ -1,6 +1,4 @@
-import { databases } from "@/lib/appwrite/databases";
-import { appwriteConfig } from "@/lib/appwrite/config";
-import { executeFunction, FUNCTION_IDS } from "@/lib/appwrite/functions";
+import { callApi } from "@/lib/api/call-api";
 import { createClient } from "@/lib/supabase/client";
 import { rowToDoc, rowsToDocs } from "@/services/shared/legacy-doc";
 import type { ServiceResult } from "@/types/domain";
@@ -38,25 +36,20 @@ import {
  *
  * Mirror 00_BACKEND/src/services/order.service.ts:195-360.
  *
- * ⚠️ INI JALUR UANG. Menandai deliverable `approved` MEMICU `release-escrow`
- * lewat event `deliverables.rows.*.update`, dan Function itu langsung
- * memindahkan dana escrow ke wallet kreator. Karena itu:
+ * ⚠️ JALUR UANG. Menyetujui deliverable akan mencairkan escrow ke wallet
+ * kreator (Fase 8). Browser TIDAK punya hak tulis apa pun ke `deliverables`,
+ * `revisions`, atau `orders` (RLS SELECT-only); semua tulis lewat Route
+ * Handler + RPC 0023 yang memeriksa peran & kepemilikan di server:
  *
- * - Baris deliverable dibuat dengan `update` HANYA untuk UMKM. Kreator tidak
- *   membutuhkannya (kirim ulang membuat baris baru `version + 1`), dan memberi
- *   hak itu sama dengan mengizinkannya menyetujui pekerjaannya sendiri lalu
- *   menarik dananya tanpa UMKM. Guard peran di fungsi-fungsi bawah TIDAK cukup
- *   sendirian — penyerang cukup memanggil `updateDocument` langsung.
- * - `revisions` dibuat oleh trusted Function dan dibaca kedua pihak. Tidak ada
- *   browser update permission; status lifecycle harus tetap server-owned.
+ * - kirim deliverable  → `POST /api/orders/[orderId]/deliverables` (kreator)
+ * - minta revisi       → `POST /api/orders/[orderId]/revisions` (UMKM)
+ * - setujui deliverable→ `POST /api/deliverables/[id]/approve` (UMKM; STUB
+ *   status sampai Fase 8 — TODO(fase-08): release_escrow)
  *
- * Fase 5 (migrasi Supabase): BACA (riwayat deliverable & revisi) lewat
- * supabase-js + RLS (`private.is_order_party`). TULIS masih Appwrite:
- * kirim deliverable / minta revisi → TODO(fase-07); setujui deliverable
- * (memicu pencairan escrow) → TODO(fase-08).
+ * BACA (riwayat deliverable & revisi) lewat supabase-js + RLS
+ * (`private.is_order_party`).
  */
 
-const DB = appwriteConfig.databaseId;
 const ORDERS = "orders";
 const DELIVERABLES = "deliverables";
 const REVISIONS = "revisions";
@@ -99,26 +92,6 @@ async function loadOrderParticipationFromSupabase(orderId: string, userId: strin
   const creatorId = str(order.creatorId);
   if (umkmId !== userId && creatorId !== userId) return null;
   return { order, umkmId, creatorId, status: str(order.status) };
-}
-
-/**
- * Peserta order + peran pemanggil (Appwrite), untuk jalur TULIS approve.
- * TODO(fase-08): hapus bersama `approveDeliverableInAppwrite`.
- */
-async function loadOrderParticipation(orderId: string, userId: string) {
-  const order = (await databases.getDocument(DB, ORDERS, orderId)) as unknown as Doc;
-
-  const umkmId = str(order.umkmId);
-  const creatorId = str(order.creatorId);
-  if (umkmId !== userId && creatorId !== userId) return null;
-
-  return {
-    order,
-    umkmId,
-    creatorId,
-    status: str(order.status),
-    role: umkmId === userId ? ("umkm" as const) : ("creator" as const),
-  };
 }
 
 /** Riwayat deliverable satu order, versi menaik. */
@@ -174,7 +147,6 @@ export async function getRevisionsInAppwrite(
  * akan menghapus jejak apa yang pernah ditolak UMKM, dan `revisionLimit` jadi
  * tidak bisa diaudit.
  */
-// TODO(fase-07): kirim deliverable → Route Handler.
 export async function uploadDeliverableInAppwrite(
   input: UploadDeliverableInput
 ): Promise<ServiceResult<Deliverable>> {
@@ -192,10 +164,9 @@ export async function uploadDeliverableInAppwrite(
   const payload = parsed.data;
 
   try {
-    const created = await executeFunction<Deliverable>(
-      FUNCTION_IDS.submitRatecardDeliverable,
-      payload
-    );
+    // `orderId` mengisi path; sisanya body. Untuk `storage`, server menyimpan
+    // URL stabil `/api/files/<fileId>/url?redirect=1` (bukan URL dari klien).
+    const created = await callApi<Deliverable>("submitDeliverable", payload);
     return ok(created);
   } catch (err) {
     return failFromWriteError<Deliverable>(err, empty, "Data deliverable tidak valid.");
@@ -203,16 +174,12 @@ export async function uploadDeliverableInAppwrite(
 }
 
 /**
- * Setujui deliverable. UMKM-ONLY.
+ * Setujui deliverable. UMKM-ONLY (ditegakkan route + RPC `approve_deliverable`).
  *
- * ⚠️ INI YANG MENCAIRKAN DANA. Tulisan `status: "approved"` memicu
- * `release-escrow`, yang memindahkan escrow ke wallet kreator dikurangi fee 2%
- * (ADR-008) dan menandai order `completed`.
- *
- * Semuanya berjalan ASINKRON lewat event database. Pemanggil TIDAK boleh
- * menganggap ordernya langsung `completed` — poll DTO negosiasi.
+ * ⚠️ Di Fase 8 ini yang MENCAIRKAN DANA (escrow → wallet kreator dikurangi fee,
+ * order `completed`). Sampai saat itu route hanya menandai status.
+ * TODO(fase-08): release_escrow di dalam route/RPC yang sama.
  */
-// TODO(fase-08): setujui deliverable = pencairan escrow → Route Handler + RPC uang.
 export async function approveDeliverableInAppwrite(
   orderId: string,
   deliverableId: string
@@ -220,27 +187,7 @@ export async function approveDeliverableInAppwrite(
   const auth = await requireUserId<null>(null);
   if (!auth.ok) return auth.result;
   try {
-    const participation = await loadOrderParticipation(orderId, auth.userId);
-    if (!participation) return fail("Pesanan tidak ditemukan.", "not_found", null);
-
-    if (participation.role !== "umkm") {
-      return fail("Hanya UMKM pemilik pesanan yang dapat menyetujui deliverable.", "forbidden", null);
-    }
-
-    const deliverable = (await databases.getDocument(
-      DB,
-      DELIVERABLES,
-      deliverableId
-    )) as unknown as Doc;
-
-    if (str(deliverable.orderId) !== orderId) {
-      return fail("Deliverable tidak sesuai dengan pesanan.", "validation", null);
-    }
-    if (str(deliverable.status) === "approved") {
-      return fail("Deliverable ini sudah disetujui.", "validation", null);
-    }
-
-    await databases.updateDocument(DB, DELIVERABLES, deliverableId, { status: "approved" });
+    await callApi("approveDeliverable", { deliverableId, orderId });
     return ok(null);
   } catch (err) {
     return failFromWriteError<null>(err, null);
@@ -250,11 +197,9 @@ export async function approveDeliverableInAppwrite(
 /**
  * Minta revisi. UMKM-ONLY.
  *
- * Trusted Function command. Browser must not create a revision or update
- * deliverables/orders: it cannot assign Creator row permission and orders has
- * no browser update permission.
+ * Route + RPC `request_revision`: batas revisi, status deliverable terbaru,
+ * order → `revision`, dan notifikasi kreator dalam satu transaksi.
  */
-// TODO(fase-07): minta revisi → Route Handler.
 export async function requestRevisionInAppwrite(
   input: RequestRevisionInput
 ): Promise<ServiceResult<Revision>> {
@@ -272,10 +217,7 @@ export async function requestRevisionInAppwrite(
   const payload = parsed.data;
 
   try {
-    const created = await executeFunction<Revision>(
-      FUNCTION_IDS.requestRatecardRevision,
-      payload
-    );
+    const created = await callApi<Revision>("requestRevision", payload);
     return ok(created);
   } catch (err) {
     return failFromWriteError<Revision>(err, empty, "Alasan revisi tidak valid.");
