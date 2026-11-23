@@ -2,10 +2,11 @@
 
 - Tanggal: 2026-11-08
 - PR: https://github.com/marketiv-id/marketiv-web/pull/37
-- Status: sebagian.
+- Status: **selesai** (QA staging 2026-11-18 dan 2026-11-23). Login Google ditunda ke Supabase prod (keputusan pemilik).
   - Semua kode selesai dan terverifikasi end-to-end di Supabase **lokal**: browser Chromium + Mailpit, 30/30 skenario QA lulus.
   - Migration `0014` sudah diterapkan ke Supabase staging.
-  - **QA manual di preview staging belum bisa dilakukan.** Langkahnya diblokir aksi dashboard pemilik: SMTP, URL Configuration, template email, setelan Auth, dan secret Netlify. Daftarnya ada di bagian "Aksi pemilik".
+  - Aksi dashboard pemilik (bagian "Aksi pemilik" A–C) selesai 2026-11-18, kecuali Google OAuth.
+  - QA di Supabase **staging** lulus 18/18 (2026-11-23), ditambah lupa password dan login admin yang diuji pemilik langsung di branch deploy Netlify (2026-11-18). Lihat "QA staging".
 
 ## Status task
 - [x] Port `auth.service.ts` dan `session.service.ts`. Bentuk return tetap sama: form, `AuthProvider`, dan `RoleGuard` tidak berubah logikanya.
@@ -18,13 +19,16 @@
   - `admin/src/lib/admin/auth.ts` di-port.
   - Admin = `users.role = 'admin'` **dan** `app_metadata.role = 'admin'`, status `active`. Fallback label dan `prefs.role` dihapus.
   - `admin/src/proxy.ts` ditambahkan.
-- [ ] Template email Bahasa Indonesia:
+- [x] Template email Bahasa Indonesia:
   - [x] Disiapkan sebagai file di repo: `supabase/templates/{confirmation,magic_link,recovery,email_change}.html`, terpasang di `config.toml` lokal.
-  - [ ] Dipasang di Dashboard staging (aksi pemilik).
-- [ ] Site URL dan Redirect URLs:
+  - [x] Dipasang di Dashboard staging (pemilik, 2026-11-18).
+  - [ ] Dipasang di Supabase prod (Fase 10).
+- [x] Site URL dan Redirect URLs:
   - [x] Lokal (`config.toml`).
-  - [ ] Dashboard staging/prod (aksi pemilik).
-- [ ] QA manual di preview staging (menunggu aksi pemilik). Padanannya di lokal sudah lulus, lihat Hasil verifikasi.
+  - [x] Dashboard staging (pemilik, 2026-11-18).
+  - [ ] Supabase prod (Fase 10).
+- [x] QA staging, lihat "QA staging" di bawah.
+- [ ] Login Google: **ditunda** ke Supabase prod (kartu Trello "Supabase prod (Free) + kredensial produksi", ditandai WAJIB karena 2 user produksi memakai Google).
 
 ## File dibuat / diubah
 
@@ -138,13 +142,44 @@
 | — rate limit password OTP: permintaan ke-4 → 429 | PASS |
 | — akun suspended ditolak saat login, sesi dihapus | PASS |
 | — admin: proxy → `/login`; admin sah → `/dashboard`; kreator ditolak (sesi dihapus); `users.role=admin` tanpa `app_metadata` ditolak | PASS |
-| QA manual di preview staging | **belum** — menunggu aksi pemilik |
+| QA staging | **lulus**, lihat "QA staging" |
+
+## QA staging
+
+**Bagian 1, oleh pemilik di branch deploy Netlify `migrasi-supabase` (2026-11-18):**
+- Lupa password: OTP reset terkirim lewat Mailtrap (template Indonesia), lalu password baru berhasil disimpan.
+- Login admin app dengan `admin@example.test` berhasil masuk `/dashboard`. Antrean di dashboard masih error karena datanya dibaca dari Appwrite (Fase 5).
+- Hasil ini sekaligus membuktikan `SUPABASE_SERVICE_ROLE_KEY` terbaca di Netlify, karena route `password-reset` memakai service role.
+
+**Bagian 2, oleh Claude (2026-11-23), 18/18 lulus.**
+- Kode branch `migrasi-supabase` dijalankan di sesi cloud (`next dev`) dengan Supabase **staging**.
+- Branch deploy Netlify tidak bisa dibuka dari sesi cloud karena situs dilindungi *Netlify team login* (401).
+- Kode OTP diambil lewat Admin API `generate_link`. Pengiriman email sendiri sudah terbukti di bagian 1.
+
+| Skenario | Hasil |
+|---|---|
+| Tanpa sesi: `/dashboard/umkm` → `/login?next=` | PASS |
+| Register UMKM → layar OTP | PASS |
+| `provision_user`: users (role umkm, phone) + wallet + profil | PASS |
+| OTP salah → 400 | PASS |
+| OTP benar → `/onboarding`, `users.email_verified_at` terisi | PASS |
+| Register kreator → users creator + `display_name`, "Lewati dulu" → `/onboarding` | PASS |
+| Register email duplikat → "sudah terdaftar" | PASS |
+| Login password salah → "tidak cocok"; login benar | PASS |
+| Dengan sesi, proxy meloloskan `/dashboard/umkm` | PASS |
+| Non-admin (UMKM) ditolak di admin app | PASS |
+| Akun suspended ditolak, kartu "Akun Ditangguhkan", cookie sesi terhapus | PASS |
+| Admin app tanpa sesi → `/login` | PASS |
+
+Catatan:
+- Dari sesi cloud, login akun suspended butuh sekitar 7 detik: 5 request berurutan ke Supabase Singapura, masing-masing sekitar 1 detik.
+- Akun QA `qa-umkm-…@example.test` dan `qa-kreator-…@example.test` dibiarkan di staging sebagai data uji.
 
 ## Env / secret baru (nama saja)
 - Tidak ada nama env baru. `SUPABASE_SERVICE_ROLE_KEY` (Fase 2) **sekarang wajib saat runtime** untuk route `/api/auth/*`.
 - `NEXT_PUBLIC_SUPABASE_URL` dan `NEXT_PUBLIC_SUPABASE_ANON_KEY` (publishable key staging) sekarang ada di `netlify.toml` / `admin/netlify.toml` untuk konteks non-produksi.
 
-## Aksi pemilik (wajib sebelum QA preview staging)
+## Aksi pemilik (selesai di staging 2026-11-18; ulangi di prod saat Fase 10)
 
 ### A. Supabase staging (`zwrzwkesaetzbnajjxqc`) → Dashboard
 1. **Authentication → Sign In / Providers → Email**:
@@ -191,7 +226,6 @@ on conflict (id) do update set role = 'admin', status = 'active';
 ```
 
 ## Isu terbuka
-- **QA preview staging** menunggu aksi A dan B.
 - **Rate limit Supabase per IP** untuk sign-up dan verifikasi token. Semua permintaan dari server Netlify (US East) terlihat sebagai satu IP. Mitigasi: naikkan batas (aksi A.5). Bila trafik membesar, pertimbangkan `signUp` dari browser + `POST /api/auth/provision` (role tetap di-whitelist server).
 - **Env shell sesi cloud** berisi `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, dan `SUPABASE_ANON_KEY` milik **staging**. `SUPABASE_SERVICE_ROLE_KEY` mengalahkan `.env.local` saat `next dev`/`next build`. Jalankan app lokal dengan `env -u SUPABASE_SERVICE_ROLE_KEY -u SUPABASE_URL -u SUPABASE_ANON_KEY npx next dev`. Tanpa itu, key staging terkirim ke stack lokal (ditolak 401). Kalau URL juga staging, route akan menulis ke staging.
 - **`auth_leaked_password_protection`** (WARN staging): tetap dari Fase 3. Fitur plan Pro.
