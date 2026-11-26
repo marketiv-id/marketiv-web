@@ -60,6 +60,8 @@ Aturan:
 
 ## 3. Daftar env per situs
 
+> **Daftar terkini (setelah Fase 8, termasuk Supabase/Midtrans/AI/withdrawal dan checklist cutover): [../env-inventory.md](../env-inventory.md).** Tabel di bawah adalah kondisi Fase 1 (masih Appwrite) dan dipertahankan sebagai riwayat.
+
 Prinsip:
 - `NEXT_PUBLIC_*` diinline ke bundle saat **build**. Nilai non-produksi yang publik disimpan di `netlify.toml` (konteks `deploy-preview` dan `branch-deploy`), supaya bisa direview di PR.
 - Nilai **produksi** dan semua **secret** hanya di UI Netlify. `netlify.toml` sengaja tidak punya blok produksi, jadi tidak bisa menimpa nilai produksi.
