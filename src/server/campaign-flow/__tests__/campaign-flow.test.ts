@@ -111,6 +111,14 @@ describe("review", () => {
     });
   });
 
+  it("review approve meneruskan reward yang dikredit RPC (Fase 8)", async () => {
+    db.setRpc("review_submission", () => ({ success: true, campaignId: "c1", status: "approved", reward: 6000 }));
+    expect(await reviewSubmission({ ...ctx(), isAdmin: true }, "s1", { status: "approved", views: 2000 })).toMatchObject({
+      status: "approved",
+      reward: 6000,
+    });
+  });
+
   it("observationHours dari env, fallback 72", () => {
     expect(observationHours({})).toBe(72);
     expect(observationHours({ VIEW_VALIDATION_DELAY_HOURS: "0" })).toBe(0);

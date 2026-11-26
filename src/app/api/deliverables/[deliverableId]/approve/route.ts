@@ -9,8 +9,8 @@ type Context = { params: Promise<{ deliverableId: string }> };
 
 /**
  * POST /api/deliverables/[deliverableId]/approve — UMKM pemilik order.
- * Body opsional `{ orderId }` (dicocokkan). STUB Fase 7: status saja.
- * TODO(fase-08): release_escrow.
+ * Body opsional `{ orderId }` (dicocokkan). Approve + `release_escrow` dalam
+ * satu transaksi (0026).
  */
 export function POST(request: Request, context: Context) {
   return apiRoute("deliverables.approve", async () => {

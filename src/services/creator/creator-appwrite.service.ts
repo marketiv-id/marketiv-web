@@ -1,7 +1,4 @@
-// TODO(fase-08): import Appwrite di bawah hanya untuk tulis Fase 8
-// (withdrawal). Klaim/bukti (Fase 7) dan tulis Fase 6 sudah lewat Route Handler.
 import { uploadPublicFile, FileRuleError, type PublicBucket } from "@/lib/supabase/storage";
-import { executeFunction, FUNCTION_IDS } from "@/lib/appwrite/functions";
 import { callApi, FunctionExecutionError } from "@/lib/api/call-api";
 import { createClient } from "@/lib/supabase/client";
 import { rowToDoc, rowsToDocs, type LegacyTableName } from "@/services/shared/legacy-doc";
@@ -965,11 +962,10 @@ export type WithdrawalReceipt = {
 };
 
 /**
- * Ajukan penarikan lewat Function `request-withdrawal`.
- * WAJIB lewat Function: `wallets` & `transactions` punya $permissions kosong,
- * jadi klien tak bisa mendebit saldo sendiri.
+ * Ajukan penarikan lewat `POST /api/withdrawals` (RPC `request_withdrawal`).
+ * Saldo didebit di server dalam satu transaksi bersama baris withdrawal dan
+ * ledger; browser tidak pernah menyentuh `wallets`/`transactions`.
  */
-// TODO(fase-08): penarikan → Route Handler + RPC uang.
 export async function requestWithdrawalInAppwrite(
   input: WithdrawRequestInput
 ): Promise<ServiceResult<WithdrawalReceipt>> {
@@ -977,7 +973,7 @@ export async function requestWithdrawalInAppwrite(
   const auth = await requireUserId<WithdrawalReceipt>(empty);
   if (!auth.ok) return auth.result;
   try {
-    const res = await executeFunction<WithdrawalReceipt>(FUNCTION_IDS.requestWithdrawal, input);
+    const res = await callApi<WithdrawalReceipt>("requestWithdrawal", input);
     return ok(res);
   } catch (err) {
     return failFromWriteError<WithdrawalReceipt>(err, empty);

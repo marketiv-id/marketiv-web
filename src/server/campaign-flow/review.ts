@@ -32,14 +32,14 @@ export interface ReviewContext extends FlowContext {
 
 /**
  * Review bukti kerja — RPC `review_submission`. Hanya Admin Marketiv (sama
- * dengan Function lama); non-admin → 403 dari RPC. Approve tidak memindah uang
- * (TODO(fase-08): credit_campaign_reward di dalam RPC).
+ * dengan Function lama); non-admin → 403 dari RPC. Approve mengkredit reward
+ * kreator lewat `credit_campaign_reward` dalam transaksi yang sama (0026).
  */
 export function reviewSubmission(
   ctx: ReviewContext,
   submissionId: string,
   input: ReviewSubmissionInput,
-): Promise<{ success: true; campaignId: string; status: "approved" | "rejected" }> {
+): Promise<{ success: true; campaignId: string; status: "approved" | "rejected"; reward: number }> {
   const notes = input.notes?.trim().slice(0, 1000);
   return callFlowRpc(ctx, "review_submission", {
     p_reviewer_id: ctx.userId,

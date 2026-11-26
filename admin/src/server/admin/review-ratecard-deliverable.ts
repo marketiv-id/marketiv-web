@@ -11,7 +11,9 @@ import { throwIfRpcError } from "../rpc-error";
  * keputusan final per deliverable, notifikasi) ada di RPC
  * `review_ratecard_deliverable` (0024) dalam satu transaksi dengan row lock.
  *
- * TODO(fase-08): tidak ada efek uang di sini; pencairan escrow ada di approve.
+ * Tidak ada efek uang di sini. Escrow cair saat UMKM approve (`approve_deliverable`
+ * → `release_escrow`, 0026); bila approve datang lebih dulu, job
+ * `reconcile-release-escrow` (tiap 15 menit) mencairkannya setelah validasi ini.
  */
 
 export type DeliverableDecision = "valid" | "invalid";

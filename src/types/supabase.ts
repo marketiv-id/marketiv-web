@@ -3,6 +3,45 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      admin_actions: {
+        Row: {
+          action: string;
+          admin_id: string;
+          created_at: string;
+          id: string;
+          payload: NonNullable<Json>;
+          target_id: string;
+          target_type: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          action: string;
+          admin_id: string;
+          created_at?: string;
+          id?: string;
+          payload?: NonNullable<Json>;
+          target_id: string;
+          target_type: string;
+        };
+        Update: {
+          action?: string;
+          admin_id?: string;
+          created_at?: string;
+          id?: string;
+          payload?: NonNullable<Json>;
+          target_id?: string;
+          target_type?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admin_actions_admin_id_fkey";
+            columns: ["admin_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ai_requests: {
         Row: {
           created_at: string;
@@ -1077,6 +1116,54 @@ export type Database = {
         };
         Relationships: [];
       };
+      payment_events: {
+        Row: {
+          created_at: string;
+          fraud_status: string | null;
+          gateway_reference: string;
+          gross_amount: number | null;
+          id: string;
+          kind: string;
+          payload: NonNullable<Json>;
+          payment_id: string | null;
+          status_code: string | null;
+          transaction_status: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          fraud_status?: string | null;
+          gateway_reference: string;
+          gross_amount?: number | null;
+          id?: string;
+          kind: string;
+          payload?: NonNullable<Json>;
+          payment_id?: string | null;
+          status_code?: string | null;
+          transaction_status: string;
+        };
+        Update: {
+          created_at?: string;
+          fraud_status?: string | null;
+          gateway_reference?: string;
+          gross_amount?: number | null;
+          id?: string;
+          kind?: string;
+          payload?: NonNullable<Json>;
+          payment_id?: string | null;
+          status_code?: string | null;
+          transaction_status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payment_events_payment_id_fkey";
+            columns: ["payment_id"];
+            isOneToOne: false;
+            referencedRelation: "payments";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       payments: {
         Row: {
           amount: number;
@@ -1735,7 +1822,24 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      finance_reconciliation: {
+        Row: {
+          balance: number;
+          diff: number | null;
+          ledger_balance: number | null;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Relationships: [
+          {
+            foreignKeyName: "wallets_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Functions: {
       accept_offer: {
@@ -1761,11 +1865,36 @@ export type Database = {
           version: number;
         }[];
       };
+      admin_review_appeal: {
+        Args: { p_admin_id: string; p_appeal_id: string; p_decision: string; p_note?: string };
+        Returns: Json;
+      };
+      admin_suspend_user: {
+        Args: { p_admin_id: string; p_reason: string; p_status: string; p_user_id: string };
+        Returns: Json;
+      };
+      admin_unsuspend_user: {
+        Args: { p_admin_id: string; p_note?: string; p_user_id: string };
+        Returns: Json;
+      };
+      admin_verify_kyc: { Args: { p_admin_id: string; p_user_id: string }; Returns: Json };
+      apply_payment_paid: {
+        Args: { p_gateway_reference: string; p_gross_amount: number; p_payment_id: string };
+        Returns: Json;
+      };
       approve_deliverable: {
         Args: { p_deliverable_id: string; p_order_id?: string; p_umkm_id: string };
         Returns: Json;
       };
+      attach_payment_gateway: {
+        Args: { p_payment_id: string; p_redirect_url: string; p_snap_token: string };
+        Returns: boolean;
+      };
       cancel_order: { Args: { p_order_id: string; p_umkm_id: string }; Returns: Json };
+      cancel_payment: {
+        Args: { p_gateway_confirmed?: boolean; p_payment_id: string; p_user_id: string };
+        Returns: Json;
+      };
       claim_campaign: { Args: { p_campaign_id: string; p_creator_id: string }; Returns: Json };
       confirm_user_file: {
         Args: {
@@ -1844,6 +1973,17 @@ export type Database = {
         };
         Returns: Json;
       };
+      create_payment: {
+        Args: {
+          p_amount: number;
+          p_campaign_id?: string;
+          p_fee_rate?: number;
+          p_order_id?: string;
+          p_purpose: string;
+          p_user_id: string;
+        };
+        Returns: Json;
+      };
       creator_create_rate_card: {
         Args: {
           p_creator_id: string;
@@ -1899,6 +2039,7 @@ export type Database = {
         };
         Returns: Json;
       };
+      credit_campaign_reward: { Args: { p_submission_id: string }; Returns: Json };
       delete_notification: { Args: { p_id: string; p_user_id: string }; Returns: boolean };
       delete_offer: { Args: { p_offer_id: string; p_umkm_id: string }; Returns: boolean };
       delete_user_file: {
@@ -1924,6 +2065,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      get_fee_rate: { Args: Record<PropertyKey, never>; Returns: number };
       hit_otp_rate_limit: {
         Args: {
           p_email: string;
@@ -1942,6 +2084,7 @@ export type Database = {
         Returns: number;
       };
       mark_notifications_read: { Args: { p_ids: string[]; p_user_id: string }; Returns: number };
+      mark_payment_status: { Args: { p_payment_id: string; p_status: string }; Returns: Json };
       provision_user: {
         Args: {
           p_display_name?: string;
@@ -1979,9 +2122,43 @@ export type Database = {
         Args: { p_reason: string; p_result: string; p_score: number; p_submission_id: string };
         Returns: undefined;
       };
+      record_payment_event: {
+        Args: {
+          p_fraud_status?: string;
+          p_gateway_reference: string;
+          p_gross_amount?: number;
+          p_kind: string;
+          p_payload?: Json;
+          p_status_code?: string;
+          p_transaction_status: string;
+        };
+        Returns: Json;
+      };
+      refund_campaign_budget: { Args: { p_campaign_id: string }; Returns: Json };
+      refund_escrow: { Args: { p_order_id: string; p_reason?: string }; Returns: Json };
       reject_offer: { Args: { p_creator_id: string; p_offer_id: string }; Returns: Json };
+      release_escrow: { Args: { p_order_id: string }; Returns: Json };
       request_revision: {
         Args: { p_message: string; p_order_id: string; p_umkm_id: string };
+        Returns: Json;
+      };
+      request_withdrawal: {
+        Args: {
+          p_account_name: string;
+          p_account_number: string;
+          p_advanced_guards?: boolean;
+          p_amount: number;
+          p_cooling_days?: number;
+          p_kyc_threshold?: number;
+          p_minimum?: number;
+          p_payout_method: string;
+          p_per_day_limit?: number;
+          p_provider_name: string;
+          p_request_key: string;
+          p_source_origin?: string;
+          p_tos_version: string;
+          p_user_id: string;
+        };
         Returns: Json;
       };
       review_ratecard_deliverable: {
@@ -2036,6 +2213,17 @@ export type Database = {
           p_notes?: string;
           p_order_id: string;
           p_source: string;
+        };
+        Returns: Json;
+      };
+      transition_withdrawal: {
+        Args: {
+          p_action: string;
+          p_admin_id: string;
+          p_admin_note?: string;
+          p_failure_reason?: string;
+          p_transfer_reference?: string;
+          p_withdrawal_id: string;
         };
         Returns: Json;
       };

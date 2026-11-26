@@ -131,6 +131,7 @@ Midtrans ──► /api/webhooks/midtrans
 
 - **Prompt siap pakai per fase:** [prompts/](./prompts/README.md). Salin `prompts/fase-NN.md` ke sesi chat baru.
 - **Runbook hosting Netlify** (peta situs, aturan rilis hemat kredit, daftar env, pindah domain): [runbook/netlify-hosting.md](./runbook/netlify-hosting.md).
+- **Inventaris environment variable** (semua env app user & admin, tempat menyimpan, status per context, checklist cutover): [env-inventory.md](./env-inventory.md).
 - **Log serah-terima antar sesi:** [progress/](./progress/README.md). Setiap fase wajib menulis `progress/fase-NN.md` sebelum membuka PR, dan fase berikutnya membaca semua log tersebut.
 
 ## Verifikasi global

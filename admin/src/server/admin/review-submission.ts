@@ -9,8 +9,8 @@ import { throwIfRpcError } from "../rpc-error";
  * Port jalur Admin `review-submission`: setujui / tolak bukti kerja campaign.
  *
  * Logika status ada di RPC `review_submission` (0022, alur campaign — dipakai
- * juga UMKM) dengan `p_as_admin = true`. Kredit reward = Fase 8
- * (`credit_campaign_reward`); RPC hanya mengubah status.
+ * juga UMKM) dengan `p_as_admin = true`. Approve mengkredit reward kreator
+ * (`credit_campaign_reward`, 0026) dalam transaksi yang sama.
  *
  * Kontrak body = Function lama: `{ status: "approved" | "rejected", views?, notes? }`.
  * Respons = Function lama: `{ success: true, campaignId, status }`.
